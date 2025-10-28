@@ -32,6 +32,8 @@ export { CRMSync } from '../crm/CRMSync'
 export { ChannelsSettings } from '../crm/ChannelsSettings'
 export { KnowledgeBaseSettings } from '../crm/KnowledgeBaseSettings'
 export { InteractionSettings } from '../crm/InteractionSettings'
+export { CRMSelector } from '../crm/CRMSelector'
+export { UniversalSync } from '../crm/UniversalSync'
 
 // Dashboard компоненты
 export { StatCard } from '../dashboard/StatCard'
