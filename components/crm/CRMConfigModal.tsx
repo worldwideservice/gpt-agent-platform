@@ -18,14 +18,14 @@ interface CRMConfigModalProps {
 interface CRMConnectionConfig {
   id: string
   crmType: string
-  secretKey: string
-  integrationId: string
-  longTermToken?: string
-  authCode?: string
-  authCodeExpiresAt?: Date
+  clientId: string
+  clientSecret: string
+  redirectUri: string
+  domain?: string // для Kommo
   isConnected: boolean
   accessToken?: string
   refreshToken?: string
+  expiresAt?: Date
   lastSyncAt?: Date
 }
 
@@ -34,14 +34,14 @@ export const CRMConfigModal = ({ isOpen, onClose, crmType, onSave }: CRMConfigMo
   const [config, setConfig] = useState<CRMConnectionConfig>({
     id: '',
     crmType,
-    secretKey: '',
-    integrationId: '',
-    longTermToken: '',
-    authCode: '',
-    authCodeExpiresAt: undefined,
+    clientId: '',
+    clientSecret: '',
+    redirectUri: '',
+    domain: '',
     isConnected: false,
     accessToken: '',
     refreshToken: '',
+    expiresAt: undefined,
     lastSyncAt: undefined
   })
   
@@ -49,96 +49,62 @@ export const CRMConfigModal = ({ isOpen, onClose, crmType, onSave }: CRMConfigMo
   const [copiedField, setCopiedField] = useState<string | null>(null)
   const [isConnecting, setIsConnecting] = useState(false)
 
-  // Генерация Secret Key
-  const generateSecretKey = async () => {
-    setIsGenerating(true)
-    try {
-      const response = await fetch('/api/crm/generate-secret', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ crmType })
-      })
-      const data = await response.json()
-      
-      if (data.success) {
-        setConfig(prev => ({
-          ...prev,
-          secretKey: data.secretKey,
-          integrationId: data.integrationId
-        }))
-      }
-    } catch (error) {
-      console.error('Error generating secret key:', error)
-    } finally {
-      setIsGenerating(false)
-    }
-  }
-
-  // Генерация Long-term Token
-  const generateLongTermToken = async () => {
-    if (!config.secretKey) {
-      alert('Сначала сгенерируйте Secret Key')
+  // OAuth авторизация
+  const startOAuthFlow = async () => {
+    if (!config.clientId || !config.clientSecret || !config.redirectUri) {
+      alert('Заполните все обязательные поля: Client ID, Client Secret, Redirect URI')
       return
     }
 
-    setIsGenerating(true)
+    setIsConnecting(true)
     try {
-      const response = await fetch('/api/crm/generate-token', {
+      const response = await fetch('/api/crm/oauth/authorize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           crmType,
-          secretKey: config.secretKey,
-          integrationId: config.integrationId
+          clientId: config.clientId,
+          clientSecret: config.clientSecret,
+          redirectUri: config.redirectUri,
+          domain: config.domain
         })
       })
       const data = await response.json()
       
-      if (data.success) {
-        setConfig(prev => ({
-          ...prev,
-          longTermToken: data.longTermToken
-        }))
+      if (data.success && data.authUrl) {
+        // Открываем OAuth авторизацию в новом окне
+        window.open(data.authUrl, 'oauth', 'width=600,height=700,scrollbars=yes,resizable=yes')
+        
+        // Слушаем сообщения от popup окна
+        const messageListener = (event: MessageEvent) => {
+          if (event.origin !== window.location.origin) return
+          
+          if (event.data.type === 'oauth-success') {
+            setConfig(prev => ({
+              ...prev,
+              isConnected: true,
+              accessToken: event.data.accessToken,
+              refreshToken: event.data.refreshToken,
+              expiresAt: event.data.expiresAt,
+              lastSyncAt: new Date()
+            }))
+            
+            onSave(config)
+            onClose()
+            window.removeEventListener('message', messageListener)
+          } else if (event.data.type === 'oauth-error') {
+            alert(`Ошибка авторизации: ${event.data.error}`)
+            window.removeEventListener('message', messageListener)
+          }
+        }
+        
+        window.addEventListener('message', messageListener)
       }
     } catch (error) {
-      console.error('Error generating long-term token:', error)
+      console.error('Error starting OAuth flow:', error)
+      alert('Ошибка при запуске авторизации')
     } finally {
-      setIsGenerating(false)
-    }
-  }
-
-  // Генерация Authorization Code
-  const generateAuthCode = async () => {
-    if (!config.secretKey) {
-      alert('Сначала сгенерируйте Secret Key')
-      return
-    }
-
-    setIsGenerating(true)
-    try {
-      const response = await fetch('/api/crm/generate-auth-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          crmType,
-          secretKey: config.secretKey,
-          integrationId: config.integrationId
-        })
-      })
-      const data = await response.json()
-      
-      if (data.success) {
-        const expiresAt = new Date(Date.now() + 20 * 60 * 1000) // 20 минут
-        setConfig(prev => ({
-          ...prev,
-          authCode: data.authCode,
-          authCodeExpiresAt: expiresAt
-        }))
-      }
-    } catch (error) {
-      console.error('Error generating auth code:', error)
-    } finally {
-      setIsGenerating(false)
+      setIsConnecting(false)
     }
   }
 
@@ -153,45 +119,6 @@ export const CRMConfigModal = ({ isOpen, onClose, crmType, onSave }: CRMConfigMo
     }
   }
 
-  // Подключение к CRM
-  const handleConnect = async () => {
-    if (!config.authCode) {
-      alert('Сначала сгенерируйте Authorization Code')
-      return
-    }
-
-    setIsConnecting(true)
-    try {
-      const response = await fetch('/api/crm/connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          crmType,
-          authCode: config.authCode,
-          integrationId: config.integrationId
-        })
-      })
-      const data = await response.json()
-      
-      if (data.success) {
-        setConfig(prev => ({
-          ...prev,
-          isConnected: true,
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
-          lastSyncAt: new Date()
-        }))
-        
-        // Сохраняем конфигурацию
-        onSave(config)
-        onClose()
-      }
-    } catch (error) {
-      console.error('Error connecting to CRM:', error)
-    } finally {
-      setIsConnecting(false)
-    }
-  }
 
   const getCRMInfo = () => {
     switch (crmType) {
@@ -203,8 +130,10 @@ export const CRMConfigModal = ({ isOpen, onClose, crmType, onSave }: CRMConfigMo
           instructions: [
             '1. Войдите в ваш аккаунт Kommo CRM',
             '2. Перейдите в Настройки → Интеграции → API',
-            '3. Создайте новое приложение или используйте существующее',
-            '4. Используйте сгенерированные ключи для подключения'
+            '3. Создайте новое приложение',
+            '4. Скопируйте Client ID и Client Secret',
+            '5. Укажите Redirect URI: https://ваш-домен.com/api/crm/oauth/callback',
+            '6. Нажмите "Авторизоваться" для получения токенов'
           ]
         }
       case 'zoho':
@@ -297,178 +226,95 @@ export const CRMConfigModal = ({ isOpen, onClose, crmType, onSave }: CRMConfigMo
           <TabsContent value="keys">
             <Card>
               <CardBody className="space-y-6">
-                {/* Secret Key */}
+                {/* Client ID */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Секретный ключ (Secret key)
+                    Client ID <span className="text-red-500">*</span>
                   </label>
-                  <div className="flex space-x-2">
-                    <Input
-                      value={config.secretKey}
-                      readOnly
-                      placeholder="Сгенерируйте секретный ключ"
-                      className="flex-1"
-                    />
-                    <Button
-                      onClick={generateSecretKey}
-                      disabled={isGenerating}
-                      variant="outline"
-                      size="sm"
-                    >
-                      {isGenerating ? (
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                      ) : (
-                        'Сгенерировать новый ключ'
-                      )}
-                    </Button>
-                    {config.secretKey && (
-                      <Button
-                        onClick={() => copyToClipboard(config.secretKey, 'secretKey')}
-                        variant="ghost"
-                        size="sm"
-                      >
-                        {copiedField === 'secretKey' ? (
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <Copy className="w-4 h-4" />
-                        )}
-                      </Button>
-                    )}
-                  </div>
+                  <Input
+                    value={config.clientId}
+                    onChange={(e) => setConfig(prev => ({ ...prev, clientId: e.target.value }))}
+                    placeholder="Введите Client ID из CRM"
+                    className="flex-1"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Получите в настройках приложения CRM
+                  </p>
                 </div>
 
-                {/* Integration ID */}
+                {/* Client Secret */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    ID интеграции (Integration ID)
+                    Client Secret <span className="text-red-500">*</span>
                   </label>
-                  <div className="flex space-x-2">
-                    <Input
-                      value={config.integrationId}
-                      readOnly
-                      placeholder="2a5c1463-43dd-4ccc-abd0-79516f785e57"
-                      className="flex-1"
-                    />
-                    {config.integrationId && (
-                      <Button
-                        onClick={() => copyToClipboard(config.integrationId, 'integrationId')}
-                        variant="ghost"
-                        size="sm"
-                      >
-                        {copiedField === 'integrationId' ? (
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <Copy className="w-4 h-4" />
-                        )}
-                      </Button>
-                    )}
-                  </div>
+                  <Input
+                    type="password"
+                    value={config.clientSecret}
+                    onChange={(e) => setConfig(prev => ({ ...prev, clientSecret: e.target.value }))}
+                    placeholder="Введите Client Secret из CRM"
+                    className="flex-1"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Секретный ключ приложения
+                  </p>
                 </div>
 
-                {/* Long-term Token */}
+                {/* Redirect URI */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Долгосрочный токен (Long-term token)
+                    Redirect URI <span className="text-red-500">*</span>
                   </label>
-                  <div className="flex space-x-2">
-                    <Input
-                      value={config.longTermToken || ''}
-                      readOnly
-                      placeholder="Сгенерируйте долгосрочный токен"
-                      className="flex-1"
-                    />
-                    <Button
-                      onClick={generateLongTermToken}
-                      disabled={isGenerating || !config.secretKey}
-                      variant="outline"
-                      size="sm"
-                    >
-                      {isGenerating ? (
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                      ) : (
-                        'Сгенерировать токен'
-                      )}
-                    </Button>
-                    {config.longTermToken && (
-                      <Button
-                        onClick={() => copyToClipboard(config.longTermToken!, 'longTermToken')}
-                        variant="ghost"
-                        size="sm"
-                      >
-                        {copiedField === 'longTermToken' ? (
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <Copy className="w-4 h-4" />
-                        )}
-                      </Button>
-                    )}
-                  </div>
+                  <Input
+                    value={config.redirectUri}
+                    onChange={(e) => setConfig(prev => ({ ...prev, redirectUri: e.target.value }))}
+                    placeholder="https://ваш-домен.com/api/crm/oauth/callback"
+                    className="flex-1"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    URL для возврата после авторизации
+                  </p>
                 </div>
 
-                {/* Authorization Code */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Код авторизации (действителен 20 минут)
-                  </label>
-                  <div className="flex space-x-2">
+                {/* Domain (только для Kommo) */}
+                {crmType === 'kommo' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Домен Kommo <span className="text-red-500">*</span>
+                    </label>
                     <Input
-                      value={config.authCode || ''}
-                      readOnly
-                      placeholder="def50200a98af1eeb65c962dbe5c96f9e00..."
+                      value={config.domain || ''}
+                      onChange={(e) => setConfig(prev => ({ ...prev, domain: e.target.value }))}
+                      placeholder="your-domain.kommo.com"
                       className="flex-1"
                     />
-                    <Button
-                      onClick={generateAuthCode}
-                      disabled={isGenerating || !config.secretKey}
-                      variant="outline"
-                      size="sm"
-                    >
-                      {isGenerating ? (
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                      ) : (
-                        'Сгенерировать код'
-                      )}
-                    </Button>
-                    {config.authCode && (
-                      <Button
-                        onClick={() => copyToClipboard(config.authCode!, 'authCode')}
-                        variant="ghost"
-                        size="sm"
-                      >
-                        {copiedField === 'authCode' ? (
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <Copy className="w-4 h-4" />
-                        )}
-                      </Button>
-                    )}
-                  </div>
-                  {config.authCodeExpiresAt && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Истекает: {config.authCodeExpiresAt.toLocaleString('ru-RU')}
+                      Ваш домен в Kommo CRM
                     </p>
-                  )}
-                </div>
+                  </div>
+                )}
 
-                {/* Кнопка подключения */}
+                {/* Кнопка авторизации */}
                 <div className="pt-4 border-t">
                   <Button
-                    onClick={handleConnect}
-                    disabled={!config.authCode || isConnecting}
+                    onClick={startOAuthFlow}
+                    disabled={!config.clientId || !config.clientSecret || !config.redirectUri || isConnecting}
                     className="w-full"
                   >
                     {isConnecting ? (
                       <>
                         <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        Подключение...
+                        Авторизация...
                       </>
                     ) : (
                       <>
                         <ExternalLink className="w-4 h-4 mr-2" />
-                        Подключить к CRM
+                        Авторизоваться в CRM
                       </>
                     )}
                   </Button>
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    Откроется окно авторизации CRM
+                  </p>
                 </div>
               </CardBody>
             </Card>

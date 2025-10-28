@@ -46,11 +46,16 @@ export default function IntegrationsPage() {
 
   const handleCRMConnection = (connection: any) => {
     const newConnection: CRMConnection = {
-      id: connection.id,
+      id: connection.id || Date.now().toString(),
       crmType: connection.crmType,
+      clientId: connection.clientId || '',
+      clientSecret: connection.clientSecret || '',
+      redirectUri: connection.redirectUri || '',
+      domain: connection.domain || '',
       isConnected: connection.isConnected,
       accessToken: connection.accessToken,
       refreshToken: connection.refreshToken,
+      expiresAt: connection.expiresAt,
       lastSyncAt: new Date(),
       config: {
         id: connection.crmType,
@@ -203,7 +208,7 @@ export default function IntegrationsPage() {
                 lastSyncAt={connection.lastSyncAt}
                 isConnected={connection.isConnected}
                 accessToken={connection.accessToken}
-                domain={connection.config.baseUrl}
+                domain={connection.domain}
               />
             </Card>
           ))}
