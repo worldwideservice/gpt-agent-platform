@@ -32,9 +32,38 @@ export const UniversalSync = ({
 
     setIsLoading(true)
     try {
-      const result = await onSync()
-      setSyncResult(result)
-      setLastSync(result.lastSyncAt)
+      // Используем реальный API endpoint для синхронизации
+      const response = await fetch('/api/crm/kommo/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          connection: {
+            crmType: 'kommo',
+            accessToken: 'your_token_here', // В реальном приложении это будет из состояния
+            isConnected: true
+          }
+        })
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        setSyncResult(data.data)
+        setLastSync(data.data.lastSyncAt)
+      } else {
+        setSyncResult({
+          success: false,
+          pipelines: [],
+          channels: [],
+          contacts: [],
+          deals: [],
+          tasks: [],
+          errors: [data.error || 'Ошибка синхронизации'],
+          lastSyncAt: new Date()
+        })
+      }
     } catch (error) {
       console.error('Ошибка синхронизации:', error)
       setSyncResult({

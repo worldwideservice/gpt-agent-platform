@@ -35,6 +35,7 @@ export { InteractionSettings } from '../crm/InteractionSettings'
 export { CRMSelector } from '../crm/CRMSelector'
 export { UniversalSync } from '../crm/UniversalSync'
 export { KommoSetup } from '../crm/KommoSetup'
+export { KommoAPIDebugger } from '../crm/KommoAPIDebugger'
 
 // Dashboard компоненты
 export { StatCard } from '../dashboard/StatCard'

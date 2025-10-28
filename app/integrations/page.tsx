@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { CRMSelector } from '@/components/crm/CRMSelector'
 import { UniversalSync } from '@/components/crm/UniversalSync'
 import { KommoSetup } from '@/components/crm/KommoSetup'
+import { KommoAPIDebugger } from '@/components/crm/KommoAPIDebugger'
 import type { CRMConfig, CRMConnection, SyncResult } from '@/types/crm'
 
 // Mock данные для демонстрации
@@ -35,6 +36,7 @@ export default function IntegrationsPage() {
   const [showCRMSelector, setShowCRMSelector] = useState(false)
   const [selectedCRM, setSelectedCRM] = useState<CRMConfig | null>(null)
   const [showKommoSetup, setShowKommoSetup] = useState(false)
+  const [showDebugger, setShowDebugger] = useState(false)
 
   const handleSelectCRM = (crmConfig: CRMConfig) => {
     setSelectedCRM(crmConfig)
@@ -104,10 +106,18 @@ export default function IntegrationsPage() {
             Подключите CRM системы для автоматической синхронизации данных
           </p>
         </div>
-        <Button onClick={() => setShowCRMSelector(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Подключить CRM
-        </Button>
+        <div className="flex items-center space-x-3">
+          <Button 
+            variant="outline"
+            onClick={() => setShowDebugger(!showDebugger)}
+          >
+            Отладка API
+          </Button>
+          <Button onClick={() => setShowCRMSelector(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Подключить CRM
+          </Button>
+        </div>
       </div>
 
       {/* CRM Selector */}
@@ -118,6 +128,11 @@ export default function IntegrationsPage() {
             connectedCRMs={connections.map(conn => conn.crmType)}
           />
         </Card>
+      )}
+
+      {/* API Debugger */}
+      {showDebugger && (
+        <KommoAPIDebugger />
       )}
 
       {/* Kommo Setup */}
