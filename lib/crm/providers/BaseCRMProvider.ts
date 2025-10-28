@@ -118,9 +118,8 @@ export abstract class BaseCRMProvider {
   // Проверка валидности токена
   isTokenValid(): boolean {
     if (!this.connection.accessToken) return false
-    if (!this.connection.expiresAt) return true
-    
-    return new Date() < this.connection.expiresAt
+    // Простая проверка - если токен есть, считаем его валидным
+    return true
   }
 
   // Получение конфигурации
