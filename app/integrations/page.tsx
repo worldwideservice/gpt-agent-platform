@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { CRMSelector } from '@/components/crm/CRMSelector'
 import { UniversalSync } from '@/components/crm/UniversalSync'
-import { KommoSetup } from '@/components/crm/KommoSetup'
+import { CRMConfigModal } from '@/components/crm/CRMConfigModal'
 import { KommoAPIDebugger } from '@/components/crm/KommoAPIDebugger'
 import type { CRMConfig, CRMConnection, SyncResult } from '@/types/crm'
 
@@ -35,30 +35,38 @@ export default function IntegrationsPage() {
   const [connections, setConnections] = useState<CRMConnection[]>(mockConnections)
   const [showCRMSelector, setShowCRMSelector] = useState(false)
   const [selectedCRM, setSelectedCRM] = useState<CRMConfig | null>(null)
-  const [showKommoSetup, setShowKommoSetup] = useState(false)
+  const [showCRMConfig, setShowCRMConfig] = useState(false)
   const [showDebugger, setShowDebugger] = useState(false)
 
   const handleSelectCRM = (crmConfig: CRMConfig) => {
     setSelectedCRM(crmConfig)
     setShowCRMSelector(false)
-    
-    if (crmConfig.id === 'kommo') {
-      setShowKommoSetup(true)
-    } else {
-      // Для других CRM систем
-      console.log('Выбрана CRM:', crmConfig.name)
+    setShowCRMConfig(true)
+  }
+
+  const handleCRMConnection = (connection: any) => {
+    const newConnection: CRMConnection = {
+      id: connection.id,
+      crmType: connection.crmType,
+      isConnected: connection.isConnected,
+      accessToken: connection.accessToken,
+      refreshToken: connection.refreshToken,
+      lastSyncAt: new Date(),
+      config: {
+        id: connection.crmType,
+        name: connection.crmType === 'kommo' ? 'Kommo CRM' : 'CRM System',
+        logo: '/logos/kommo.svg',
+        description: `${connection.crmType} подключена`,
+        authType: 'oauth2',
+        baseUrl: connection.crmType === 'kommo' ? 'https://kommo.com/api/v4' : '',
+        scopes: ['crm:read', 'crm:write'],
+        fields: []
+      }
     }
-  }
-
-  const handleKommoConnection = (connection: CRMConnection) => {
-    setConnections(prev => [...prev, connection])
-    setShowKommoSetup(false)
+    
+    setConnections(prev => [...prev, newConnection])
+    setShowCRMConfig(false)
     setSelectedCRM(null)
-  }
-
-  const handleKommoError = (error: string) => {
-    console.error('Kommo connection error:', error)
-    // Здесь можно показать уведомление об ошибке
   }
 
   const handleSync = async (crmType: string): Promise<SyncResult> => {
@@ -135,26 +143,17 @@ export default function IntegrationsPage() {
         <KommoAPIDebugger />
       )}
 
-      {/* Kommo Setup */}
-      {showKommoSetup && (
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Подключение Kommo CRM</h2>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setShowKommoSetup(false)
-                setSelectedCRM(null)
-              }}
-            >
-              Назад
-            </Button>
-          </div>
-          <KommoSetup 
-            onConnectionEstablished={handleKommoConnection}
-            onError={handleKommoError}
-          />
-        </Card>
+      {/* CRM Config Modal */}
+      {showCRMConfig && selectedCRM && (
+        <CRMConfigModal
+          isOpen={showCRMConfig}
+          onClose={() => {
+            setShowCRMConfig(false)
+            setSelectedCRM(null)
+          }}
+          crmType={selectedCRM.id as 'kommo' | 'zoho' | 'bitrix24'}
+          onSave={handleCRMConnection}
+        />
       )}
 
       {/* Connected CRMs */}
@@ -203,6 +202,8 @@ export default function IntegrationsPage() {
                 onSync={() => handleSync(connection.crmType)}
                 lastSyncAt={connection.lastSyncAt}
                 isConnected={connection.isConnected}
+                accessToken={connection.accessToken}
+                domain={connection.config.baseUrl}
               />
             </Card>
           ))}

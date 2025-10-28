@@ -12,13 +12,17 @@ interface UniversalSyncProps {
   onSync: () => Promise<SyncResult>
   lastSyncAt?: Date
   isConnected: boolean
+  accessToken?: string
+  domain?: string
 }
 
 export const UniversalSync = ({ 
   crmType, 
   onSync, 
   lastSyncAt, 
-  isConnected 
+  isConnected,
+  accessToken,
+  domain
 }: UniversalSyncProps) => {
   const [isLoading, setIsLoading] = useState(false)
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null)
@@ -32,18 +36,16 @@ export const UniversalSync = ({
 
     setIsLoading(true)
     try {
-      // Используем реальный API endpoint для синхронизации
-      const response = await fetch('/api/crm/kommo/sync', {
+      // Используем новый универсальный API endpoint для синхронизации
+      const response = await fetch('/api/crm/sync', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          connection: {
-            crmType: 'kommo',
-            accessToken: 'your_token_here', // В реальном приложении это будет из состояния
-            isConnected: true
-          }
+          crmType: crmType.toLowerCase(),
+          accessToken: accessToken,
+          domain: domain
         })
       })
 

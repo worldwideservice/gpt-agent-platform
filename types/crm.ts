@@ -77,6 +77,11 @@ export interface CRMFieldMapping {
 export interface CRMConnection {
   id: string
   crmType: string
+  secretKey?: string
+  integrationId?: string
+  longTermToken?: string
+  authCode?: string
+  authCodeExpiresAt?: Date
   isConnected: boolean
   accessToken?: string
   refreshToken?: string
