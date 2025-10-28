@@ -15,6 +15,10 @@ const mockConnections: CRMConnection[] = [
   {
     id: '1',
     crmType: 'kommo',
+    clientId: 'mock_client_id',
+    clientSecret: 'mock_client_secret',
+    redirectUri: 'https://example.com/callback',
+    domain: 'example.kommo.com',
     isConnected: true,
     accessToken: 'mock_token',
     lastSyncAt: new Date(Date.now() - 3600000), // 1 час назад
