@@ -102,8 +102,7 @@ export class ZohoProvider extends BaseCRMProvider {
       // В реальном приложении здесь будет обновление токена Zoho
       return {
         ...this.connection,
-        accessToken: 'refreshed_zoho_token',
-        expiresAt: new Date(Date.now() + 3600000)
+        accessToken: 'refreshed_zoho_token'
       }
     } catch (error) {
       throw new Error(`Ошибка обновления токена Zoho: ${error}`)
