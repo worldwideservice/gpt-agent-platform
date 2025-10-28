@@ -5,7 +5,7 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-filesystem",
-        "/Users/maksimgolovaty/Library/Mobile Documents/com~apple~CloudDocs/Development/AI agent"
+        "/path/to/your/project"
       ]
     },
     "playwright": {
@@ -42,6 +42,17 @@
       "args": ["-y", "@mendable/firecrawl-mcp"],
       "env": {
         "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}"
+      }
+    },
+    "shadcn": {
+      "command": "npx",
+      "args": ["-y", "@shadcn/mcp-server"]
+    },
+    "magic": {
+      "command": "npx",
+      "args": ["-y", "@21st-dev/magic-mcp"],
+      "env": {
+        "MAGIC_API_KEY": "${MAGIC_API_KEY}"
       }
     }
   }
