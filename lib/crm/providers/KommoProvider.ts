@@ -53,7 +53,7 @@ export class KommoProvider extends BaseCRMProvider {
         },
         body: new URLSearchParams({
           grant_type: 'refresh_token',
-          refresh_token: this.connection.refreshToken || '',
+          refresh_token: '',
           client_id: kommoOAuthConfig.clientId,
           client_secret: kommoOAuthConfig.clientSecret,
         }),
@@ -68,8 +68,7 @@ export class KommoProvider extends BaseCRMProvider {
       return {
         ...this.connection,
         accessToken: data.access_token,
-        refreshToken: data.refresh_token,
-        expiresAt: new Date(Date.now() + data.expires_in * 1000)
+        domain: this.connection.domain
       }
     } catch (error) {
       throw new Error(`Ошибка обновления токена Kommo: ${error}`)
