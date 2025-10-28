@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     // Проверяем ошибки от Kommo
     if (error) {
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_API_URL}/integrations?error=${encodeURIComponent(error)}`
+        `${process.env.NEXT_PUBLIC_API_URL || 'https://gpt-agent-platform.vercel.app'}/integrations?error=${encodeURIComponent(error)}`
       )
     }
 
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
       const errorData = await tokenResponse.text()
       console.error('Token exchange error:', errorData)
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_API_URL}/integrations?error=token_exchange_failed`
+        `${process.env.NEXT_PUBLIC_API_URL || 'https://gpt-agent-platform.vercel.app'}/integrations?error=token_exchange_failed`
       )
     }
 
@@ -73,13 +73,13 @@ export async function GET(request: NextRequest) {
 
     // Редиректим на страницу интеграций с успехом
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_API_URL}/integrations?success=kommo_connected`
+      `${process.env.NEXT_PUBLIC_API_URL || 'https://gpt-agent-platform.vercel.app'}/integrations?success=kommo_connected`
     )
 
   } catch (error) {
     console.error('Kommo OAuth callback error:', error)
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_API_URL}/integrations?error=oauth_callback_failed`
+      `${process.env.NEXT_PUBLIC_API_URL || 'https://gpt-agent-platform.vercel.app'}/integrations?error=oauth_callback_failed`
     )
   }
 }
