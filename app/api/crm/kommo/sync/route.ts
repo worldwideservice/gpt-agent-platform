@@ -53,12 +53,9 @@ export async function GET(request: NextRequest) {
     const connection: CRMConnection = {
       id: 'test',
       crmType: 'kommo',
-      clientId: 'test_client_id',
-      clientSecret: 'test_client_secret',
-      redirectUri: 'https://test.com/callback',
+      accessToken: accessToken,
       domain: 'test.kommo.com',
       isConnected: true,
-      accessToken: accessToken,
       lastSyncAt: new Date(),
       config: {
         id: 'kommo',

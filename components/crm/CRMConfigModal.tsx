@@ -18,14 +18,9 @@ interface CRMConfigModalProps {
 interface CRMConnectionConfig {
   id: string
   crmType: string
-  clientId: string
-  clientSecret: string
-  redirectUri: string
+  accessToken: string
   domain?: string // для Kommo
   isConnected: boolean
-  accessToken?: string
-  refreshToken?: string
-  expiresAt?: Date
   lastSyncAt?: Date
 }
 
@@ -34,14 +29,9 @@ export const CRMConfigModal = ({ isOpen, onClose, crmType, onSave }: CRMConfigMo
   const [config, setConfig] = useState<CRMConnectionConfig>({
     id: '',
     crmType,
-    clientId: '',
-    clientSecret: '',
-    redirectUri: '',
+    accessToken: '',
     domain: '',
     isConnected: false,
-    accessToken: '',
-    refreshToken: '',
-    expiresAt: undefined,
     lastSyncAt: undefined
   })
   
@@ -49,60 +39,42 @@ export const CRMConfigModal = ({ isOpen, onClose, crmType, onSave }: CRMConfigMo
   const [copiedField, setCopiedField] = useState<string | null>(null)
   const [isConnecting, setIsConnecting] = useState(false)
 
-  // OAuth авторизация
-  const startOAuthFlow = async () => {
-    if (!config.clientId || !config.clientSecret || !config.redirectUri) {
-      alert('Заполните все обязательные поля: Client ID, Client Secret, Redirect URI')
+  // Простое подключение по токену
+  const handleConnect = async () => {
+    if (!config.accessToken) {
+      alert('Введите Access Token')
       return
     }
 
     setIsConnecting(true)
     try {
-      const response = await fetch('/api/crm/oauth/authorize', {
+      // Простая проверка токена
+      const response = await fetch('/api/crm/test-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           crmType,
-          clientId: config.clientId,
-          clientSecret: config.clientSecret,
-          redirectUri: config.redirectUri,
+          accessToken: config.accessToken,
           domain: config.domain
         })
       })
       const data = await response.json()
       
-      if (data.success && data.authUrl) {
-        // Открываем OAuth авторизацию в новом окне
-        window.open(data.authUrl, 'oauth', 'width=600,height=700,scrollbars=yes,resizable=yes')
+      if (data.success) {
+        setConfig(prev => ({
+          ...prev,
+          isConnected: true,
+          lastSyncAt: new Date()
+        }))
         
-        // Слушаем сообщения от popup окна
-        const messageListener = (event: MessageEvent) => {
-          if (event.origin !== window.location.origin) return
-          
-          if (event.data.type === 'oauth-success') {
-            setConfig(prev => ({
-              ...prev,
-              isConnected: true,
-              accessToken: event.data.accessToken,
-              refreshToken: event.data.refreshToken,
-              expiresAt: event.data.expiresAt,
-              lastSyncAt: new Date()
-            }))
-            
-            onSave(config)
-            onClose()
-            window.removeEventListener('message', messageListener)
-          } else if (event.data.type === 'oauth-error') {
-            alert(`Ошибка авторизации: ${event.data.error}`)
-            window.removeEventListener('message', messageListener)
-          }
-        }
-        
-        window.addEventListener('message', messageListener)
+        onSave(config)
+        onClose()
+      } else {
+        alert(`Ошибка: ${data.error}`)
       }
     } catch (error) {
-      console.error('Error starting OAuth flow:', error)
-      alert('Ошибка при запуске авторизации')
+      console.error('Error testing token:', error)
+      alert('Ошибка при проверке токена')
     } finally {
       setIsConnecting(false)
     }
@@ -130,10 +102,9 @@ export const CRMConfigModal = ({ isOpen, onClose, crmType, onSave }: CRMConfigMo
           instructions: [
             '1. Войдите в ваш аккаунт Kommo CRM',
             '2. Перейдите в Настройки → Интеграции → API',
-            '3. Создайте новое приложение',
-            '4. Скопируйте Client ID и Client Secret',
-            '5. Укажите Redirect URI: https://ваш-домен.com/api/crm/oauth/callback',
-            '6. Нажмите "Авторизоваться" для получения токенов'
+            '3. Создайте новое приложение или используйте существующее',
+            '4. Скопируйте Access Token из настроек приложения',
+            '5. Вставьте токен в поле ниже и нажмите "Подключить"'
           ]
         }
       case 'zoho':
@@ -222,56 +193,24 @@ export const CRMConfigModal = ({ isOpen, onClose, crmType, onSave }: CRMConfigMo
             </Card>
           </TabsContent>
 
-          {/* Вкладка: Ключи и доступы */}
+          {/* Вкладка: Подключение */}
           <TabsContent value="keys">
             <Card>
               <CardBody className="space-y-6">
-                {/* Client ID */}
+                {/* Access Token */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Client ID <span className="text-red-500">*</span>
+                    Access Token <span className="text-red-500">*</span>
                   </label>
                   <Input
-                    value={config.clientId}
-                    onChange={(e) => setConfig(prev => ({ ...prev, clientId: e.target.value }))}
-                    placeholder="Введите Client ID из CRM"
+                    type="password"
+                    value={config.accessToken}
+                    onChange={(e) => setConfig(prev => ({ ...prev, accessToken: e.target.value }))}
+                    placeholder="Вставьте Access Token из CRM"
                     className="flex-1"
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     Получите в настройках приложения CRM
-                  </p>
-                </div>
-
-                {/* Client Secret */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Client Secret <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    type="password"
-                    value={config.clientSecret}
-                    onChange={(e) => setConfig(prev => ({ ...prev, clientSecret: e.target.value }))}
-                    placeholder="Введите Client Secret из CRM"
-                    className="flex-1"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Секретный ключ приложения
-                  </p>
-                </div>
-
-                {/* Redirect URI */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Redirect URI <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    value={config.redirectUri}
-                    onChange={(e) => setConfig(prev => ({ ...prev, redirectUri: e.target.value }))}
-                    placeholder="https://ваш-домен.com/api/crm/oauth/callback"
-                    className="flex-1"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    URL для возврата после авторизации
                   </p>
                 </div>
 
@@ -293,27 +232,27 @@ export const CRMConfigModal = ({ isOpen, onClose, crmType, onSave }: CRMConfigMo
                   </div>
                 )}
 
-                {/* Кнопка авторизации */}
+                {/* Кнопка подключения */}
                 <div className="pt-4 border-t">
                   <Button
-                    onClick={startOAuthFlow}
-                    disabled={!config.clientId || !config.clientSecret || !config.redirectUri || isConnecting}
+                    onClick={handleConnect}
+                    disabled={!config.accessToken || isConnecting}
                     className="w-full"
                   >
                     {isConnecting ? (
                       <>
                         <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        Авторизация...
+                        Подключение...
                       </>
                     ) : (
                       <>
                         <ExternalLink className="w-4 h-4 mr-2" />
-                        Авторизоваться в CRM
+                        Подключить к CRM
                       </>
                     )}
                   </Button>
                   <p className="text-xs text-gray-500 mt-2 text-center">
-                    Откроется окно авторизации CRM
+                    Проверим токен и подключимся к CRM
                   </p>
                 </div>
               </CardBody>

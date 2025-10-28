@@ -77,14 +77,9 @@ export interface CRMFieldMapping {
 export interface CRMConnection {
   id: string
   crmType: string
-  clientId: string
-  clientSecret: string
-  redirectUri: string
+  accessToken: string
   domain?: string // для Kommo
   isConnected: boolean
-  accessToken?: string
-  refreshToken?: string
-  expiresAt?: Date
   lastSyncAt?: Date
   config: CRMConfig
 }
