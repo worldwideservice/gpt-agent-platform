@@ -275,7 +275,7 @@ export const CRMConfigModal = ({ isOpen, onClose, crmType, onSave }: CRMConfigMo
                         <p>CRM: {crmInfo.name}</p>
                         <p>Последняя синхронизация: {config.lastSyncAt?.toLocaleString('ru-RU') || 'Никогда'}</p>
                         <p>Access Token: {config.accessToken ? '✓ Установлен' : '✗ Отсутствует'}</p>
-                        <p>Refresh Token: {config.refreshToken ? '✓ Установлен' : '✗ Отсутствует'}</p>
+                        <p>Домен: {config.domain || 'Не указан'}</p>
                       </div>
                     </div>
                   ) : (
