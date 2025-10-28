@@ -21,6 +21,8 @@ import { InteractionSettings } from '@/components/crm/InteractionSettings'
 import { CRMSync } from '@/components/crm/CRMSync'
 import { ChannelsSettings } from '@/components/crm/ChannelsSettings'
 import { KnowledgeBaseSettings } from '@/components/crm/KnowledgeBaseSettings'
+import { useCRMData } from '@/hooks/useCRMData'
+import type { CRMConnection, UniversalPipeline, UniversalChannel } from '@/types/crm'
 
 const tabs = [
   { value: 'general', label: 'Основные', icon: Settings },
@@ -55,73 +57,53 @@ export default function EditAgentPage({ params }: { params: { id: string } }) {
   const [createTaskOnNotFound, setCreateTaskOnNotFound] = useState(false)
   const [notFoundMessage, setNotFoundMessage] = useState('Ответ на этот вопрос предоставит ваш персональный immigration advisor, когда свяжется с вами напрямую.')
 
-  // Mock CRM Data
-  const [pipelines, setPipelines] = useState([
+  // CRM Connection (mock)
+  const [crmConnection] = useState<CRMConnection | null>({
+    id: '1',
+    crmType: 'kommo',
+    isConnected: true,
+    accessToken: 'mock_token',
+    lastSyncAt: new Date(Date.now() - 3600000),
+    config: {
+      id: 'kommo',
+      name: 'Kommo CRM',
+      logo: '/logos/kommo.svg',
+      description: 'Kommo CRM',
+      authType: 'oauth2',
+      baseUrl: 'https://kommo.com/api/v4',
+      scopes: ['crm:read', 'crm:write'],
+      fields: []
+    }
+  })
+
+  // Pipeline Settings
+  const [pipelineSettings, setPipelineSettings] = useState([
     {
       id: '1',
       name: 'GENERATION LEAD',
       isActive: true,
       allStages: false,
-      selectedStages: ['1', '2', '3'],
-      stages: [
-        { id: '1', name: 'Сделка не распределена', pipelineId: '1' },
-        { id: '2', name: 'Сделка распределена', pipelineId: '1' },
-        { id: '3', name: 'Social media', pipelineId: '1' },
-        { id: '4', name: 'Первичный контакт', pipelineId: '1' },
-        { id: '5', name: 'Квалификация', pipelineId: '1' },
-      ]
-    },
-    {
-      id: '2',
-      name: 'WORK VISA IN POLAND',
-      isActive: false,
-      allStages: false,
-      selectedStages: [],
-      stages: [
-        { id: '6', name: 'Заявка получена', pipelineId: '2' },
-        { id: '7', name: 'Документы проверены', pipelineId: '2' },
-        { id: '8', name: 'Одобрено', pipelineId: '2' },
-      ]
-    },
-    {
-      id: '3',
-      name: 'SEASONAL VISA IN POLAND',
-      isActive: false,
-      allStages: false,
-      selectedStages: [],
-      stages: [
-        { id: '9', name: 'Заявка получена', pipelineId: '3' },
-        { id: '10', name: 'Документы проверены', pipelineId: '3' },
-        { id: '11', name: 'Одобрено', pipelineId: '3' },
-      ]
+      selectedStages: ['1', '2', '3']
     }
   ])
 
-  const [channels, setChannels] = useState([
-    { id: '1', name: 'Email', type: 'email' as const, isActive: true },
-    { id: '2', name: 'Телефон', type: 'phone' as const, isActive: true },
-    { id: '3', name: 'Чат', type: 'chat' as const, isActive: true },
-    { id: '4', name: 'Facebook', type: 'social' as const, isActive: false },
-    { id: '5', name: 'Instagram', type: 'social' as const, isActive: false },
-  ])
+  // CRM Data Hook
+  const { pipelines, channels, syncData } = useCRMData(crmConnection)
 
   // CRM Handlers
   const handlePipelineUpdate = (pipelineId: string, updates: any) => {
-    setPipelines(prev => prev.map(p => 
+    setPipelineSettings(prev => prev.map(p => 
       p.id === pipelineId ? { ...p, ...updates } : p
     ))
   }
 
   const handleChannelToggle = (channelId: string, enabled: boolean) => {
-    setChannels(prev => prev.map(c => 
-      c.id === channelId ? { ...c, isActive: enabled } : c
-    ))
+    // В реальном приложении здесь будет обновление настроек каналов
+    console.log(`Channel ${channelId} toggled to ${enabled}`)
   }
 
   const handleCRMSync = async () => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    console.log('CRM data synchronized')
+    await syncData()
   }
 
   const handleOpenKnowledgeBase = () => {
@@ -263,8 +245,8 @@ export default function EditAgentPage({ params }: { params: { id: string } }) {
           />
           
           <CRMSync
-            onSync={handleCRMSync}
-            pipelines={pipelines}
+            connection={crmConnection}
+            pipelineSettings={pipelineSettings}
             onPipelineUpdate={handlePipelineUpdate}
           />
         </TabsContent>

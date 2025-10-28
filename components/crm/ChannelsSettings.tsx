@@ -5,15 +5,10 @@ import { MessageSquare, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Toggle } from '@/components/ui/Toggle'
 
-interface Channel {
-  id: string
-  name: string
-  type: 'email' | 'phone' | 'chat' | 'social'
-  isActive: boolean
-}
+import type { UniversalChannel } from '@/types/crm'
 
 interface ChannelsSettingsProps {
-  channels: Channel[]
+  channels: UniversalChannel[]
   allChannelsEnabled: boolean
   onAllChannelsToggle: (enabled: boolean) => void
   onChannelToggle: (channelId: string, enabled: boolean) => void
