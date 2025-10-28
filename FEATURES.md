@@ -1,4 +1,4 @@
-# Полный список функций AI Agent Platform
+# Полный список функций GPT Agent - Trainable virtual employee
 
 ## ✨ Реализованные возможности
 

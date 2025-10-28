@@ -4,8 +4,39 @@
   "framework": "nextjs",
   "regions": ["iad1"],
   "env": {
-    "NEXT_PUBLIC_APP_NAME": "AI Agent Platform",
-    "NEXT_PUBLIC_APP_URL": "https://your-domain.vercel.app"
-  }
+    "NEXT_PUBLIC_APP_NAME": "GPT Agent - Trainable virtual employee",
+    "NEXT_PUBLIC_API_URL": "https://gpt-agent-platform.vercel.app"
+  },
+  "build": {
+    "env": {
+      "GITHUB_PERSONAL_ACCESS_TOKEN": "@github_token",
+      "TAVILY_API_KEY": "@tavily_key",
+      "CONTEXT7_API_KEY": "@context7_key",
+      "FIRECRAWL_API_KEY": "@firecrawl_key"
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "origin-when-cross-origin"
+        }
+      ]
+    }
+  ]
 }
 

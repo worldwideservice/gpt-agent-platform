@@ -9,8 +9,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin', 'cyrillic'] })
 
 export const metadata: Metadata = {
-  title: 'AI Agent Platform - Управление ИИ-агентами',
-  description: 'Платформа для управления AI-агентами, интеграциями и базой знаний',
+  title: 'GPT Agent - Trainable virtual employee',
+  description: 'Обучаемый виртуальный сотрудник для автоматизации общения с клиентами',
 }
 
 interface RootLayoutProps {

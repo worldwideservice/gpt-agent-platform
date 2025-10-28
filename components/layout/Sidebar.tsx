@@ -72,11 +72,11 @@ export const Sidebar = () => {
       <div className="p-6">
         <div className="flex items-center space-x-3 mb-8">
           <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-lg">AI</span>
+            <span className="text-white font-bold text-lg">GPT</span>
           </div>
           <div>
-            <h1 className="font-bold text-lg text-gray-900">AI Agent</h1>
-            <p className="text-xs text-gray-500">Platform</p>
+            <h1 className="font-bold text-lg text-gray-900">GPT Agent</h1>
+            <p className="text-xs text-gray-500">Trainable virtual employee</p>
           </div>
         </div>
 

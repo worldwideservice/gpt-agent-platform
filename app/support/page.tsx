@@ -141,7 +141,7 @@ const SupportPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-gray-50 rounded-lg">
               <p className="text-sm font-medium text-gray-900 mb-1">Email</p>
-              <p className="text-sm text-gray-600">support@aiagent.com</p>
+              <p className="text-sm text-gray-600">support@gptagent.com</p>
             </div>
             <div className="p-4 bg-gray-50 rounded-lg">
               <p className="text-sm font-medium text-gray-900 mb-1">Телефон</p>

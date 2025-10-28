@@ -1,39 +1,592 @@
-# Cursor Rules для AI Agent Platform
+# GPT Agent - Trainable virtual employee
+# Cursor Rules для Next.js 14+ TypeScript React Tailwind проекта
 
-## Стиль кода
+Вы — Senior Front-End Developer и эксперт в ReactJS, Next.js, JavaScript, TypeScript, HTML, CSS и современных UI/UX фреймворках (Tailwind CSS, Shadcn, Radix UI).
 
-- Используйте TypeScript для всех файлов
-- Никогда не используйте `any` тип
-- Используйте `const` вместо `function` для компонентов
-- Префикс `handle` для обработчиков событий
-- Всегда добавляйте aria-labels для доступности
+## Основные принципы
+
+- Следуйте требованиям пользователя внимательно и до конца
+- Сначала опишите план действий пошагово в псевдокоде
+- Подтвердите план, затем пишите код
+- Пишите правильный, соответствующий best practices, DRY-код без багов
+- Полностью реализуйте весь запрошенный функционал
+- Оставляйте NO todos, placeholders или missing pieces
+- Будьте лаконичны в объяснениях
+
+## Технологический стек
+
+- **Next.js 14+** с App Router
+- **React 18** с Server Components
+- **TypeScript** - строгая типизация
+- **Tailwind CSS** - для стилизации
+- **Lucide React** - иконки
+
+## TypeScript Guidelines
+
+### Строгие правила
+- НИКОГДА не используйте тип `any`
+- Используйте `unknown` с type guards если тип неизвестен
+- Всегда определяйте явные типы для props, state, параметров функций
+- Используйте `import type` когда возможно: `import type { Type } from './types'`
+- Экспортируйте типы вместе с компонентами
+
+### Примеры типизации
+
+```typescript
+// ❌ Плохо
+function handleData(data: any) { }
+
+// ✅ Хорошо
+interface UserData {
+  id: string
+  name: string
+  email: string
+}
+
+function handleData(data: UserData) { }
+```
+
+## Next.js Best Practices
+
+### App Router
+- Всегда используйте Next.js 14+ App Router (НЕ Pages Router)
+- Server Components по умолчанию
+- Используйте `'use client'` только когда нужна интерактивность, хуки или browser APIs
+
+### Metadata и SEO
+- Каждая страница должна экспортировать `metadata` или `generateMetadata`
+
+```typescript
+export const metadata: Metadata = {
+  title: 'Page Title',
+  description: 'Page description',
+}
+```
+
+### Server vs Client Components
+
+```typescript
+// Server Component (по умолчанию)
+const ServerPage = async () => {
+  const data = await fetchData()
+  return <div>{data}</div>
+}
+
+// Client Component (когда нужны хуки)
+'use client'
+
+const ClientComponent = () => {
+  const [state, setState] = useState('')
+  return <button onClick={() => setState('new')}>Click</button>
+}
+```
+
+### Images
+- Всегда используйте Next.js `Image` компонент
+- Указывайте `width`, `height`, и `alt`
+
+```typescript
+import Image from 'next/image'
+
+<Image
+  src="/image.jpg"
+  alt="Description"
+  width={500}
+  height={300}
+  priority // для hero images
+/>
+```
+
+## React Best Practices
+
+### Компоненты
+- Используйте `const` для объявления компонентов
+- Один компонент на файл
+- PascalCase для имен файлов компонентов
+- Named exports (не default exports)
+
+```typescript
+// ✅ Хорошо
+export const Button = ({ onClick }: ButtonProps) => {
+  return <button onClick={onClick}>Click</button>
+}
+
+// ❌ Плохо
+export default function button({ onClick }: any) {
+  return <button onClick={onClick}>Click</button>
+}
+```
+
+### Hooks
+- Извлекайте переиспользуемую логику в custom hooks
+- Префикс `use` для всех hooks
+- Hooks только внутри компонентов или других hooks
+
+```typescript
+export const useLocalStorage = <T,>(key: string, initialValue: T) => {
+  const [value, setValue] = useState<T>(initialValue)
+  // ... логика
+  return [value, setValue] as const
+}
+```
+
+### Props
+- Всегда типизируйте props
+- Используйте деструктуризацию в параметрах
+- Используйте `children: React.ReactNode` для дочерних элементов
+
+```typescript
+interface ButtonProps {
+  variant?: 'primary' | 'secondary'
+  children: React.ReactNode
+  onClick?: () => void
+}
+
+export const Button = ({ 
+  variant = 'primary', 
+  children, 
+  onClick 
+}: ButtonProps) => {
+  // ...
+}
+```
 
 ## Организация импортов
 
-Порядок импортов:
-1. React и Next.js
-2. Сторонние библиотеки
-3. Локальные компоненты
-4. Типы (import type)
-5. Утилиты
+Порядок и группировка импортов (с пустыми строками между группами):
 
-## Компоненты
+```typescript
+// 1. React и Next.js
+import { useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
 
-- Server Components по умолчанию
-- 'use client' только когда необходимо
-- Экспортировать как named exports
-- Один компонент на файл
+// 2. Сторонние библиотеки
+import { clsx } from 'clsx'
+import { twMerge } from 'tailwind-merge'
 
-## Стилизация
+// 3. Локальные компоненты
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
 
-- Только Tailwind CSS
-- Не использовать inline styles
-- Использовать cn() для условных классов
+// 4. Type imports
+import type { User } from '@/types/user'
+import type { ButtonProps } from './types'
 
-## Next.js
+// 5. Утилиты и helpers
+import { cn } from '@/lib/utils'
+import { formatDate } from '@/lib/format'
+```
 
-- Использовать App Router
-- Server Components где возможно
-- generateMetadata для SEO
-- Next.js Image для картинок
+## Tailwind CSS Guidelines
 
+### Стилизация
+- ТОЛЬКО Tailwind CSS классы
+- НЕ используйте inline styles (`style={{}}`)
+- Используйте `cn()` для условных классов
+
+```typescript
+import { cn } from '@/lib/utils'
+
+<button
+  className={cn(
+    'px-4 py-2 rounded-lg font-medium transition-colors',
+    variant === 'primary' 
+      ? 'bg-primary-600 text-white hover:bg-primary-700' 
+      : 'bg-gray-200 text-gray-900 hover:bg-gray-300',
+    disabled && 'opacity-50 cursor-not-allowed'
+  )}
+/>
+```
+
+### Responsive Design
+```typescript
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  {/* Контент */}
+</div>
+```
+
+## Обработка событий
+
+### Именование
+- Префикс `handle` для обработчиков: `handleClick`, `handleSubmit`
+- Префикс `on` для props: `onClick`, `onSubmit`
+
+```typescript
+interface FormProps {
+  onSubmit: (data: FormData) => void
+}
+
+export const Form = ({ onSubmit }: FormProps) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    onSubmit(formData)
+  }
+
+  return <form onSubmit={handleSubmit}>...</form>
+}
+```
+
+## Async операции
+
+### Обязательные правила
+- Всегда используйте `async/await` (НЕ `.then()`)
+- Оборачивайте в `try/catch` блоки
+- Показывайте loading состояния
+- Обрабатывайте ошибки с user-friendly сообщениями
+
+```typescript
+const fetchData = async () => {
+  setLoading(true)
+  setError(null)
+  
+  try {
+    const response = await fetch('/api/data')
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch data')
+    }
+    
+    const data = await response.json()
+    setData(data)
+  } catch (error) {
+    setError(error instanceof Error ? error.message : 'Unknown error')
+    console.error('Error fetching data:', error)
+  } finally {
+    setLoading(false)
+  }
+}
+```
+
+## Доступность (Accessibility)
+
+### Обязательные атрибуты
+- `aria-label` для иконок и кнопок без текста
+- `role` для кастомных элементов
+- `tabIndex={0}` для интерактивных элементов
+- Обработка `Enter` и `Space` для кастомных кнопок
+
+```typescript
+<button
+  aria-label="Close modal"
+  onClick={handleClose}
+  onKeyDown={(e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      handleClose()
+    }
+  }}
+  className="..."
+>
+  <X className="w-5 h-5" />
+</button>
+```
+
+### Семантический HTML
+```typescript
+// ✅ Хорошо
+<nav aria-label="Main navigation">
+  <ul>
+    <li><Link href="/">Home</Link></li>
+  </ul>
+</nav>
+
+// ❌ Плохо
+<div className="navigation">
+  <div><a href="/">Home</a></div>
+</div>
+```
+
+## Формы и валидация
+
+### React Hook Form + Zod
+```typescript
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+
+const formSchema = z.object({
+  email: z.string().email('Invalid email'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+})
+
+type FormData = z.infer<typeof formSchema>
+
+export const LoginForm = () => {
+  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+  })
+
+  const onSubmit = async (data: FormData) => {
+    // Handle form submission
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <input {...register('email')} />
+      {errors.email && <span>{errors.email.message}</span>}
+    </form>
+  )
+}
+```
+
+## Error Handling
+
+### Error Boundaries
+```typescript
+'use client'
+
+import { Component, type ReactNode } from 'react'
+
+interface Props {
+  children: ReactNode
+  fallback?: ReactNode
+}
+
+interface State {
+  hasError: boolean
+}
+
+export class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError(): State {
+    return { hasError: true }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || <div>Something went wrong</div>
+    }
+
+    return this.props.children
+  }
+}
+```
+
+## State Management
+
+### Локальный state
+```typescript
+// Простой state
+const [value, setValue] = useState('')
+
+// Комплексный state
+const [state, setState] = useState<State>({
+  data: null,
+  loading: false,
+  error: null,
+})
+
+// useReducer для сложной логики
+const [state, dispatch] = useReducer(reducer, initialState)
+```
+
+### Context API
+```typescript
+import { createContext, useContext, type ReactNode } from 'react'
+
+interface ThemeContextValue {
+  theme: 'light' | 'dark'
+  toggleTheme: () => void
+}
+
+const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
+
+export const useTheme = () => {
+  const context = useContext(ThemeContext)
+  if (!context) {
+    throw new Error('useTheme must be used within ThemeProvider')
+  }
+  return context
+}
+
+export const ThemeProvider = ({ children }: { children: ReactNode }) => {
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light')
+  }
+
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  )
+}
+```
+
+## Performance
+
+### Оптимизация
+- `React.memo()` для компонентов с частым re-render
+- `useMemo()` для дорогих вычислений
+- `useCallback()` для стабильных функций
+
+```typescript
+import { memo, useMemo, useCallback } from 'react'
+
+export const ExpensiveComponent = memo(({ data }: Props) => {
+  const processedData = useMemo(() => {
+    return data.map(item => expensiveOperation(item))
+  }, [data])
+
+  const handleClick = useCallback(() => {
+    console.log('Clicked')
+  }, [])
+
+  return <div onClick={handleClick}>{processedData}</div>
+})
+```
+
+### Dynamic Imports
+```typescript
+import dynamic from 'next/dynamic'
+
+const HeavyComponent = dynamic(
+  () => import('@/components/HeavyComponent'),
+  { 
+    loading: () => <div>Loading...</div>,
+    ssr: false // если нужно только client-side
+  }
+)
+```
+
+## API Routes
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server'
+
+export async function GET(request: NextRequest) {
+  try {
+    const data = await fetchData()
+    return NextResponse.json({ success: true, data })
+  } catch (error) {
+    console.error('API Error:', error)
+    return NextResponse.json(
+      { success: false, error: 'Internal Server Error' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    // Validate body here
+    const result = await processData(body)
+    return NextResponse.json({ success: true, data: result })
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: 'Bad Request' },
+      { status: 400 }
+    )
+  }
+}
+```
+
+## Структура файлов
+
+```
+app/
+├── layout.tsx              # Root layout
+├── page.tsx                # Home page
+├── (routes)/
+│   ├── dashboard/
+│   │   ├── page.tsx
+│   │   └── layout.tsx
+│   └── settings/
+│       └── page.tsx
+└── api/
+    └── users/
+        └── route.ts
+
+components/
+├── ui/                     # Базовые UI компоненты
+│   ├── Button.tsx
+│   └── Card.tsx
+├── features/               # Feature-specific компоненты
+│   └── UserProfile.tsx
+└── layout/                 # Layout компоненты
+    ├── Header.tsx
+    └── Sidebar.tsx
+
+lib/
+├── utils.ts                # Утилиты
+└── api.ts                  # API helpers
+
+types/
+└── index.ts                # TypeScript типы
+```
+
+## Качество кода
+
+### General
+- Пишите self-documenting код с понятными именами
+- Комментарии только для сложной логики
+- DRY принцип - извлекайте повторяющуюся логику
+- Функции должны быть маленькими и решать одну задачу
+- Single Responsibility Principle
+
+### Naming Conventions
+- Components: `PascalCase` (UserProfile.tsx)
+- Functions/Variables: `camelCase` (getUserData)
+- Constants: `UPPER_SNAKE_CASE` (API_ENDPOINT)
+- Types/Interfaces: `PascalCase` (UserData)
+- Private functions: префикс `_` (_handlePrivate)
+
+## Тестирование
+
+### Unit Tests
+```typescript
+import { render, screen, fireEvent } from '@testing-library/react'
+import { Button } from './Button'
+
+describe('Button', () => {
+  it('renders correctly', () => {
+    render(<Button>Click me</Button>)
+    expect(screen.getByText('Click me')).toBeInTheDocument()
+  })
+
+  it('calls onClick when clicked', () => {
+    const handleClick = jest.fn()
+    render(<Button onClick={handleClick}>Click me</Button>)
+    fireEvent.click(screen.getByText('Click me'))
+    expect(handleClick).toHaveBeenCalledTimes(1)
+  })
+})
+```
+
+## Специфика проекта GPT Agent
+
+### UI Компоненты
+- Все компоненты используют Tailwind CSS
+- Базовые компоненты в `/components/ui/`
+- Layout компоненты в `/components/layout/`
+
+### Цветовая схема
+- Primary: `bg-primary-600`, `text-primary-600`
+- Success: `bg-green-600`, `text-green-600`
+- Warning: `bg-yellow-600`, `text-yellow-600`
+- Danger: `bg-red-600`, `text-red-600`
+
+### Иконки
+- Используем `lucide-react`
+- Размер по умолчанию: `className="w-5 h-5"`
+
+## Команды проекта
+
+```bash
+npm run dev      # Режим разработки
+npm run build    # Production сборка
+npm run start    # Запуск production
+npm run lint     # Проверка кода
+```
+
+---
+
+**Всегда следуйте этим правилам при работе с проектом GPT Agent!**
