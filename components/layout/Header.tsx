@@ -1,57 +1,55 @@
-'use client'
-
-import { useState } from 'react'
-import { Search, Bell, User } from 'lucide-react'
-
-import { Input } from '@/components/ui/Input'
+import { Search, Calendar, Bell, User } from 'lucide-react'
 
 export const Header = () => {
-  const [searchQuery, setSearchQuery] = useState('')
-
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value)
-  }
+  const today = new Date().toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
 
   return (
-    <header className="fixed top-0 right-0 left-64 h-16 bg-white border-b border-gray-200 z-10">
-      <div className="h-full px-6 flex items-center justify-between">
-        <div className="flex-1 max-w-xl">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <Input
-              type="search"
-              placeholder="Поиск..."
-              value={searchQuery}
-              onChange={handleSearch}
-              className="pl-10 pr-4"
-            />
+    <header className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="flex items-center justify-between">
+        {/* Left side - Logo and Search */}
+        <div className="flex items-center space-x-8 flex-1">
+          <h1 className="text-2xl font-bold text-gray-900">GPT Агент</h1>
+          
+          <div className="flex-1 max-w-md">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Поиск"
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center space-x-4">
-          <button
-            className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
-            aria-label="Уведомления"
-          >
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-          </button>
+        {/* Right side - Date, Notifications, Avatar */}
+        <div className="flex items-center space-x-6">
+          {/* Date */}
+          <div className="flex items-center space-x-2 text-gray-600">
+            <Calendar className="w-5 h-5" />
+            <span className="text-sm font-medium">{today}</span>
+          </div>
 
-          <div className="flex items-center space-x-3 pl-4 border-l border-gray-200">
-            <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">Admin</p>
-              <p className="text-xs text-gray-500">Администратор</p>
-            </div>
-            <button
-              className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white hover:bg-primary-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-              aria-label="Профиль пользователя"
-            >
-              <User className="w-5 h-5" />
+          {/* Notifications */}
+          <div className="relative">
+            <button className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors">
+              <Bell className="w-6 h-6" />
+              <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                5
+              </span>
             </button>
+          </div>
+
+          {/* User Avatar */}
+          <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors">
+            <User className="w-6 h-6 text-white" />
           </div>
         </div>
       </div>
     </header>
   )
 }
-

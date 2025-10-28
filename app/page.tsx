@@ -6,11 +6,11 @@ import type { DashboardStats } from '@/types'
 const getDashboardStats = async (): Promise<DashboardStats> => {
   // В реальном приложении здесь будет запрос к API
   return {
-    monthlyResponses: 45230,
-    monthlyChange: 12.5,
-    weeklyResponses: 10458,
-    todayResponses: 1247,
-    totalAgents: 8,
+    monthlyResponses: 14897,
+    monthlyChange: -2.7,
+    weeklyResponses: 2730,
+    todayResponses: 0,
+    totalAgents: 1,
   }
 }
 
@@ -19,37 +19,19 @@ const DashboardPage = async () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Инфопанель</h1>
-          <p className="text-gray-600 mt-1">
-            Обзор активности ИИ-агентов и системы
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="text-sm text-gray-500">
-            {new Date().toLocaleDateString('ru-RU', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </p>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title="Ответы ИИ за месяц"
+          title="Ответы ИИ за этот месяц"
           value={stats.monthlyResponses}
           change={stats.monthlyChange}
+          subtitle="к прошлому месяцу"
           icon={MessageSquare}
         />
         
         <StatCard
-          title="Ответы за 7 дней"
+          title="Ответы ИИ за последние 7 дней"
           value={stats.weeklyResponses}
-          subtitle={`За период ${new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toLocaleDateString('ru-RU')} - ${new Date().toLocaleDateString('ru-RU')}`}
+          subtitle="Последние 7 дней"
           icon={Calendar}
         />
         
@@ -60,8 +42,9 @@ const DashboardPage = async () => {
         />
         
         <StatCard
-          title="Всего агентов"
+          title="Агенты"
           value={stats.totalAgents}
+          subtitle="Всего агентов"
           icon={Bot}
         />
       </div>
