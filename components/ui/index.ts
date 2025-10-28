@@ -11,6 +11,7 @@ export { Table } from './Table'
 export { Modal } from './Modal'
 export { Badge } from './Badge'
 export { Tabs } from './Tabs'
+export { Toggle } from './Toggle'
 
 // Shadcn компоненты
 export * from './shadcn'
@@ -28,6 +29,9 @@ export { TriggerManager } from '../agents/TriggerManager'
 
 // CRM компоненты
 export { CRMSync } from '../crm/CRMSync'
+export { ChannelsSettings } from '../crm/ChannelsSettings'
+export { KnowledgeBaseSettings } from '../crm/KnowledgeBaseSettings'
+export { InteractionSettings } from '../crm/InteractionSettings'
 
 // Dashboard компоненты
 export { StatCard } from '../dashboard/StatCard'
