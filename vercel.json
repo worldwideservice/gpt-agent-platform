@@ -7,14 +7,6 @@
     "NEXT_PUBLIC_APP_NAME": "GPT Agent - Trainable virtual employee",
     "NEXT_PUBLIC_API_URL": "https://gpt-agent-platform.vercel.app"
   },
-  "build": {
-    "env": {
-      "GITHUB_PERSONAL_ACCESS_TOKEN": "@github_token",
-      "TAVILY_API_KEY": "@tavily_key",
-      "CONTEXT7_API_KEY": "@context7_key",
-      "FIRECRAWL_API_KEY": "@firecrawl_key"
-    }
-  },
   "headers": [
     {
       "source": "/(.*)",
