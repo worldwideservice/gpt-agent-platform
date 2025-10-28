@@ -34,6 +34,7 @@ export { KnowledgeBaseSettings } from '../crm/KnowledgeBaseSettings'
 export { InteractionSettings } from '../crm/InteractionSettings'
 export { CRMSelector } from '../crm/CRMSelector'
 export { UniversalSync } from '../crm/UniversalSync'
+export { KommoSetup } from '../crm/KommoSetup'
 
 // Dashboard компоненты
 export { StatCard } from '../dashboard/StatCard'

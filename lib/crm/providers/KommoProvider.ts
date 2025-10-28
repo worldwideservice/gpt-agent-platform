@@ -26,20 +26,18 @@ export class KommoProvider extends BaseCRMProvider {
 
   async authenticate(): Promise<CRMConnection> {
     try {
-      const authUrl = new URL(kommoOAuthConfig.authUrl)
-      authUrl.searchParams.set('client_id', kommoOAuthConfig.clientId)
-      authUrl.searchParams.set('redirect_uri', kommoOAuthConfig.redirectUri)
-      authUrl.searchParams.set('response_type', 'code')
-      authUrl.searchParams.set('scope', kommoOAuthConfig.scope)
+      // В реальном приложении OAuth flow происходит на фронтенде
+      // Здесь мы просто проверяем валидность токена
+      if (!this.connection.accessToken) {
+        throw new Error('Access token not provided')
+      }
 
-      // В реальном приложении здесь будет редирект на OAuth
-      // Пока возвращаем mock данные
+      // Проверяем токен, делая тестовый запрос
+      await this.makeRequest('/account')
+      
       return {
         ...this.connection,
-        isConnected: true,
-        accessToken: 'mock_access_token',
-        refreshToken: 'mock_refresh_token',
-        expiresAt: new Date(Date.now() + 3600000) // 1 час
+        isConnected: true
       }
     } catch (error) {
       throw new Error(`Ошибка аутентификации Kommo: ${error}`)
@@ -263,20 +261,39 @@ export class KommoProvider extends BaseCRMProvider {
     }
 
     const url = `${this.config.baseUrl}${endpoint}`
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Authorization': `Bearer ${this.connection.accessToken}`,
-        'Content-Type': 'application/json',
-        ...options.headers
+    
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          'Authorization': `Bearer ${this.connection.accessToken}`,
+          'Content-Type': 'application/json',
+          ...options.headers
+        }
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error(`Kommo API Error ${response.status}:`, errorText)
+        
+        if (response.status === 401) {
+          throw new Error('Токен доступа недействителен или истек')
+        } else if (response.status === 403) {
+          throw new Error('Недостаточно прав доступа')
+        } else if (response.status === 429) {
+          throw new Error('Превышен лимит запросов к API')
+        } else {
+          throw new Error(`API ошибка: ${response.status} ${response.statusText}`)
+        }
       }
-    })
 
-    if (!response.ok) {
-      throw new Error(`API ошибка: ${response.status} ${response.statusText}`)
+      return response.json()
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error
+      }
+      throw new Error(`Ошибка сети: ${error}`)
     }
-
-    return response.json()
   }
 
   private getCustomFieldValue(fields: any[] | undefined, fieldName: string): any {

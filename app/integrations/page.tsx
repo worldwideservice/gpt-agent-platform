@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { CRMSelector } from '@/components/crm/CRMSelector'
 import { UniversalSync } from '@/components/crm/UniversalSync'
+import { KommoSetup } from '@/components/crm/KommoSetup'
 import type { CRMConfig, CRMConnection, SyncResult } from '@/types/crm'
 
 // Mock данные для демонстрации
@@ -33,12 +34,29 @@ export default function IntegrationsPage() {
   const [connections, setConnections] = useState<CRMConnection[]>(mockConnections)
   const [showCRMSelector, setShowCRMSelector] = useState(false)
   const [selectedCRM, setSelectedCRM] = useState<CRMConfig | null>(null)
+  const [showKommoSetup, setShowKommoSetup] = useState(false)
 
   const handleSelectCRM = (crmConfig: CRMConfig) => {
     setSelectedCRM(crmConfig)
     setShowCRMSelector(false)
-    // Здесь будет логика подключения CRM
-    console.log('Выбрана CRM:', crmConfig.name)
+    
+    if (crmConfig.id === 'kommo') {
+      setShowKommoSetup(true)
+    } else {
+      // Для других CRM систем
+      console.log('Выбрана CRM:', crmConfig.name)
+    }
+  }
+
+  const handleKommoConnection = (connection: CRMConnection) => {
+    setConnections(prev => [...prev, connection])
+    setShowKommoSetup(false)
+    setSelectedCRM(null)
+  }
+
+  const handleKommoError = (error: string) => {
+    console.error('Kommo connection error:', error)
+    // Здесь можно показать уведомление об ошибке
   }
 
   const handleSync = async (crmType: string): Promise<SyncResult> => {
@@ -98,6 +116,28 @@ export default function IntegrationsPage() {
           <CRMSelector 
             onSelect={handleSelectCRM}
             connectedCRMs={connections.map(conn => conn.crmType)}
+          />
+        </Card>
+      )}
+
+      {/* Kommo Setup */}
+      {showKommoSetup && (
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Подключение Kommo CRM</h2>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowKommoSetup(false)
+                setSelectedCRM(null)
+              }}
+            >
+              Назад
+            </Button>
+          </div>
+          <KommoSetup 
+            onConnectionEstablished={handleKommoConnection}
+            onError={handleKommoError}
           />
         </Card>
       )}
