@@ -90,9 +90,7 @@ export class ZohoProvider extends BaseCRMProvider {
       return {
         ...this.connection,
         isConnected: true,
-        accessToken: 'mock_zoho_access_token',
-        refreshToken: 'mock_zoho_refresh_token',
-        expiresAt: new Date(Date.now() + 3600000) // 1 час
+        accessToken: 'mock_zoho_access_token'
       }
     } catch (error) {
       throw new Error(`Ошибка аутентификации Zoho: ${error}`)
