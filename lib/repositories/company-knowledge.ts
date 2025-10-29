@@ -88,21 +88,24 @@ export const getCompanyKnowledgeForContext = async (
     throw new Error('Не удалось загрузить знания компании')
   }
 
-  return ((data as unknown[]) ?? []).map((row: Record<string, unknown>) => ({
-    id: row.id as string,
-    orgId: row.org_id as string,
-    agentId: (row.agent_id as string | null) ?? null,
-    category: row.category as CompanyKnowledge['category'],
-    title: row.title as string,
-    content: row.content as string,
-    metadata: (row.metadata as Record<string, unknown>) ?? {},
-    pipelineStageId: (row.pipeline_stage_id as string | null) ?? null,
-    isGlobal: (row.is_global as boolean) ?? true,
-    priority: (row.priority as number) ?? 0,
-    usageCount: (row.usage_count as number) ?? 0,
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-  }))
+  return ((data as unknown[]) ?? []).map((row) => {
+    const typedRow = row as Record<string, unknown>
+    return {
+      id: typedRow.id as string,
+      orgId: typedRow.org_id as string,
+      agentId: (typedRow.agent_id as string | null) ?? null,
+      category: typedRow.category as CompanyKnowledge['category'],
+      title: typedRow.title as string,
+      content: typedRow.content as string,
+      metadata: (typedRow.metadata as Record<string, unknown>) ?? {},
+      pipelineStageId: (typedRow.pipeline_stage_id as string | null) ?? null,
+      isGlobal: (typedRow.is_global as boolean) ?? true,
+      priority: (typedRow.priority as number) ?? 0,
+      usageCount: (typedRow.usage_count as number) ?? 0,
+      createdAt: typedRow.created_at as string,
+      updatedAt: typedRow.updated_at as string,
+    }
+  })
 }
 
 /**
@@ -134,21 +137,24 @@ export const getSalesScriptForStage = async (
     throw new Error('Не удалось загрузить скрипты продаж')
   }
 
-  return ((data as unknown[]) ?? []).map((row: Record<string, unknown>) => ({
-    id: row.id as string,
-    orgId: row.org_id as string,
-    agentId: (row.agent_id as string | null) ?? null,
-    pipelineStageId: (row.pipeline_stage_id as string | null) ?? null,
-    title: row.title as string,
-    scriptType: row.script_type as SalesScript['scriptType'],
-    content: row.content as string,
-    variables: (row.variables as Record<string, unknown>) ?? {},
-    conditions: (row.conditions as Record<string, unknown>) ?? {},
-    effectivenessScore: (row.effectiveness_score as number) ?? 0.5,
-    usageCount: (row.usage_count as number) ?? 0,
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-  }))
+  return ((data as unknown[]) ?? []).map((row) => {
+    const typedRow = row as Record<string, unknown>
+    return {
+      id: typedRow.id as string,
+      orgId: typedRow.org_id as string,
+      agentId: (typedRow.agent_id as string | null) ?? null,
+      pipelineStageId: (typedRow.pipeline_stage_id as string | null) ?? null,
+      title: typedRow.title as string,
+      scriptType: typedRow.script_type as SalesScript['scriptType'],
+      content: typedRow.content as string,
+      variables: (typedRow.variables as Record<string, unknown>) ?? {},
+      conditions: (typedRow.conditions as Record<string, unknown>) ?? {},
+      effectivenessScore: (typedRow.effectiveness_score as number) ?? 0.5,
+      usageCount: (typedRow.usage_count as number) ?? 0,
+      createdAt: typedRow.created_at as string,
+      updatedAt: typedRow.updated_at as string,
+    }
+  })
 }
 
 /**
@@ -175,18 +181,21 @@ export const getObjectionResponses = async (
     throw new Error('Не удалось загрузить ответы на возражения')
   }
 
-  return ((data as unknown[]) ?? []).map((row: Record<string, unknown>) => ({
-    id: row.id as string,
-    orgId: row.org_id as string,
-    objectionType: row.objection_type as ObjectionResponse['objectionType'],
-    objectionText: (row.objection_text as string | null) ?? null,
-    responseScript: row.response_script as string,
-    context: (row.context as Record<string, unknown>) ?? {},
-    effectivenessScore: (row.effectiveness_score as number) ?? 0.5,
-    usageCount: (row.usage_count as number) ?? 0,
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-  }))
+  return ((data as unknown[]) ?? []).map((row) => {
+    const typedRow = row as Record<string, unknown>
+    return {
+      id: typedRow.id as string,
+      orgId: typedRow.org_id as string,
+      objectionType: typedRow.objection_type as ObjectionResponse['objectionType'],
+      objectionText: (typedRow.objection_text as string | null) ?? null,
+      responseScript: typedRow.response_script as string,
+      context: (typedRow.context as Record<string, unknown>) ?? {},
+      effectivenessScore: (typedRow.effectiveness_score as number) ?? 0.5,
+      usageCount: (typedRow.usage_count as number) ?? 0,
+      createdAt: typedRow.created_at as string,
+      updatedAt: typedRow.updated_at as string,
+    }
+  })
 }
 
 /**

@@ -411,7 +411,7 @@ export const TriggerManager = ({ agentId }: TriggerManagerProps) => {
             label="Название триггера*"
             placeholder="Например: Создание сделки при готовности"
             value={formData.name}
-            onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
           />
 
           <Textarea
@@ -419,7 +419,7 @@ export const TriggerManager = ({ agentId }: TriggerManagerProps) => {
             placeholder="Краткое описание триггера"
             rows={3}
             value={formData.description}
-            onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
           />
 
           <div>
@@ -476,11 +476,11 @@ export const TriggerManager = ({ agentId }: TriggerManagerProps) => {
                   <Select
                     options={ACTION_TYPES}
                     value={action.actionType}
-                    onChange={(e) =>
+                    onChange={(value: string) =>
                       setFormData((prev) => ({
                         ...prev,
                         actions: prev.actions.map((a, i) =>
-                          i === index ? { ...a, actionType: e.target.value } : a,
+                          i === index ? { ...a, actionType: value } : a,
                         ),
                       }))
                     }

@@ -53,21 +53,24 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
       throw new Error('Не удалось загрузить скрипты')
     }
 
-    const scripts: SalesScript[] = ((data as unknown[]) ?? []).map((row: Record<string, unknown>) => ({
-      id: row.id as string,
-      orgId: row.org_id as string,
-      agentId: (row.agent_id as string | null) ?? null,
-      pipelineStageId: (row.pipeline_stage_id as string | null) ?? null,
-      title: row.title as string,
-      scriptType: row.script_type as SalesScript['scriptType'],
-      content: row.content as string,
-      variables: (row.variables as Record<string, unknown>) ?? {},
-      conditions: (row.conditions as Record<string, unknown>) ?? {},
-      effectivenessScore: Number(row.effectiveness_score ?? 0.5),
-      usageCount: Number(row.usage_count ?? 0),
-      createdAt: row.created_at as string,
-      updatedAt: row.updated_at as string,
-    }))
+    const scripts: SalesScript[] = ((data as unknown[]) ?? []).map((row) => {
+      const typedRow = row as Record<string, unknown>
+      return {
+        id: typedRow.id as string,
+        orgId: typedRow.org_id as string,
+        agentId: (typedRow.agent_id as string | null) ?? null,
+        pipelineStageId: (typedRow.pipeline_stage_id as string | null) ?? null,
+        title: typedRow.title as string,
+        scriptType: typedRow.script_type as SalesScript['scriptType'],
+        content: typedRow.content as string,
+        variables: (typedRow.variables as Record<string, unknown>) ?? {},
+        conditions: (typedRow.conditions as Record<string, unknown>) ?? {},
+        effectivenessScore: Number(typedRow.effectiveness_score ?? 0.5),
+        usageCount: Number(typedRow.usage_count ?? 0),
+        createdAt: typedRow.created_at as string,
+        updatedAt: typedRow.updated_at as string,
+      }
+    })
 
     return NextResponse.json({
       success: true,
@@ -120,7 +123,7 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
         {
           success: false,
           error: 'Некорректные данные',
-          details: parsed.error.errors,
+          details: parsed.error.issues,
         },
         { status: 400 },
       )

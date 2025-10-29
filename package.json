@@ -24,6 +24,8 @@
     "check:env": "node scripts/check-env.js",
     "check:redis": "node scripts/check-redis.js",
     "check:worker": "node scripts/check-worker.js",
+    "check:all": "bash scripts/check-all-errors.sh",
+    "predeploy": "npm run check:all",
     "setup:env": "bash scripts/auto-setup-env.sh",
     "docker:redis": "docker-compose up -d redis",
     "docker:down": "docker-compose down",

@@ -75,7 +75,7 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
         {
           success: false,
           error: 'Некорректные данные',
-          details: parsed.error.errors,
+          details: parsed.error.issues,
         },
         { status: 400 },
       )

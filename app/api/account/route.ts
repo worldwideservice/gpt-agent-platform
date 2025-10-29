@@ -73,6 +73,13 @@ export const PATCH = async (request: NextRequest) => {
 
     const user = await updateUser(session.user.id, parsed.data)
 
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'User not found' },
+        { status: 404 }
+      )
+    }
+
     return NextResponse.json({
       success: true,
       data: {

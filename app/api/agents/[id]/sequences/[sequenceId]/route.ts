@@ -81,13 +81,13 @@ export const PATCH = async (
     }
 
     const updated = await updateAgentSequence(session.user.orgId, id, sequenceId, {
-      name: parsed.data.name,
+      name: parsed.data.name ?? undefined,
       description: parsed.data.description ?? null,
       isActive: parsed.data.isActive,
       sortOrder: parsed.data.sortOrder,
       settings: parsed.data.settings ?? {},
       steps: parsed.data.steps?.map((step, index) => ({
-        id: step.id,
+        id: step.id ?? undefined,
         stepType: step.stepType,
         payload: (step.payload as Record<string, unknown> | undefined) ?? {},
         delaySeconds: step.delaySeconds ?? 0,

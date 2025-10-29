@@ -172,7 +172,7 @@ export const POST = async (request: NextRequest) => {
       metadata: {
         model: llmResponse.model,
         usage: llmResponse.usage,
-        usedKnowledgeBase: useKnowledgeBase && knowledgeContext.length > 0,
+        usedKnowledgeBase: useKnowledgeBase && (fullSystemPrompt?.includes('Контекст из базы знаний') ?? false),
       },
     })
 

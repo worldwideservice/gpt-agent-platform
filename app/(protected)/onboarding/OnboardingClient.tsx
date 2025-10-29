@@ -543,7 +543,7 @@ export const OnboardingClient = ({ initialState }: OnboardingClientProps) => {
                   id="crm-client-id"
                   placeholder="XXXXXXXXXXXXXX"
                   value={crmForm.clientId}
-                  onChange={(event) => setCrmForm((prev) => ({ ...prev, clientId: event.target.value }))}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCrmForm((prev) => ({ ...prev, clientId: e.target.value }))}
                   required
                 />
               </div>
@@ -557,7 +557,7 @@ export const OnboardingClient = ({ initialState }: OnboardingClientProps) => {
                   placeholder="••••••••••••••"
                   type="password"
                   value={crmForm.clientSecret}
-                  onChange={(event) => setCrmForm((prev) => ({ ...prev, clientSecret: event.target.value }))}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCrmForm((prev) => ({ ...prev, clientSecret: e.target.value }))}
                   required
                 />
               </div>
@@ -570,7 +570,7 @@ export const OnboardingClient = ({ initialState }: OnboardingClientProps) => {
                   id="crm-redirect-uri"
                   placeholder="https://app.example.com/integrations/kommo/oauth/callback"
                   value={crmForm.redirectUri}
-                  onChange={(event) => setCrmForm((prev) => ({ ...prev, redirectUri: event.target.value }))}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCrmForm((prev) => ({ ...prev, redirectUri: e.target.value }))}
                   required
                 />
               </div>
@@ -583,7 +583,7 @@ export const OnboardingClient = ({ initialState }: OnboardingClientProps) => {
                   id="crm-base-domain"
                   placeholder="example.amocrm.ru"
                   value={crmForm.baseDomain}
-                  onChange={(event) => setCrmForm((prev) => ({ ...prev, baseDomain: event.target.value }))}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCrmForm((prev) => ({ ...prev, baseDomain: e.target.value }))}
                   required
                 />
               </div>
@@ -648,7 +648,7 @@ export const OnboardingClient = ({ initialState }: OnboardingClientProps) => {
                   id="agent-name"
                   placeholder="AI менеджер"
                   value={agentForm.name}
-                  onChange={(event) => setAgentForm((prev) => ({ ...prev, name: event.target.value }))}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAgentForm((prev) => ({ ...prev, name: e.target.value }))}
                   required
                 />
               </div>
@@ -660,7 +660,7 @@ export const OnboardingClient = ({ initialState }: OnboardingClientProps) => {
                 <Select
                   id="agent-model"
                   value={agentForm.model}
-                  onChange={(event) => setAgentForm((prev) => ({ ...prev, model: event.target.value }))}
+                  onChange={(value: string) => setAgentForm((prev) => ({ ...prev, model: value }))}
                   options={agentModels}
                   required
                 />
@@ -675,7 +675,7 @@ export const OnboardingClient = ({ initialState }: OnboardingClientProps) => {
                 id="agent-goal"
                 rows={4}
                 value={agentForm.goal}
-                onChange={(event) => setAgentForm((prev) => ({ ...prev, goal: event.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setAgentForm((prev) => ({ ...prev, goal: e.target.value }))}
                 required
               />
             </div>
@@ -706,7 +706,7 @@ export const OnboardingClient = ({ initialState }: OnboardingClientProps) => {
               <Select
                 id="agent-schedule"
                 value={agentForm.schedule}
-                onChange={(event) => setAgentForm((prev) => ({ ...prev, schedule: event.target.value }))}
+                onChange={(value: string) => setAgentForm((prev) => ({ ...prev, schedule: value }))}
                 options={schedules}
                 required
               />

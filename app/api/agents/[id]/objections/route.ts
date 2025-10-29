@@ -44,18 +44,21 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
       throw new Error('Не удалось загрузить ответы на возражения')
     }
 
-    const objections: ObjectionResponse[] = ((data as unknown[]) ?? []).map((row: Record<string, unknown>) => ({
-      id: row.id as string,
-      orgId: row.org_id as string,
-      objectionType: row.objection_type as ObjectionResponse['objectionType'],
-      objectionText: (row.objection_text as string | null) ?? null,
-      responseScript: row.response_script as string,
-      context: (row.context as Record<string, unknown>) ?? {},
-      effectivenessScore: Number(row.effectiveness_score ?? 0.5),
-      usageCount: Number(row.usage_count ?? 0),
-      createdAt: row.created_at as string,
-      updatedAt: row.updated_at as string,
-    }))
+    const objections: ObjectionResponse[] = ((data as unknown[]) ?? []).map((row) => {
+      const typedRow = row as Record<string, unknown>
+      return {
+        id: typedRow.id as string,
+        orgId: typedRow.org_id as string,
+        objectionType: typedRow.objection_type as ObjectionResponse['objectionType'],
+        objectionText: (typedRow.objection_text as string | null) ?? null,
+        responseScript: typedRow.response_script as string,
+        context: (typedRow.context as Record<string, unknown>) ?? {},
+        effectivenessScore: Number(typedRow.effectiveness_score ?? 0.5),
+        usageCount: Number(typedRow.usage_count ?? 0),
+        createdAt: typedRow.created_at as string,
+        updatedAt: typedRow.updated_at as string,
+      }
+    })
 
     return NextResponse.json({
       success: true,
@@ -106,7 +109,7 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
         {
           success: false,
           error: 'Некорректные данные',
-          details: parsed.error.errors,
+          details: parsed.error.issues,
         },
         { status: 400 },
       )

@@ -245,7 +245,7 @@ const PricingPage = () => {
             defaultValue={selectedResponses}
             options={responsesOptions}
             className="w-48"
-            onChange={(event) => setSelectedResponses(event.target.value)}
+            onChange={(value: string) => setSelectedResponses(value)}
           />
           <div className="rounded-full border border-slate-200 bg-slate-50 px-1 py-1">
             <div className="flex items-center gap-1">
@@ -310,7 +310,7 @@ const PricingPage = () => {
               </ul>
               <Button
                 variant={isCurrent ? 'secondary' : 'default'}
-                disabled={isCurrent}
+                disabled={isCurrent ?? false}
                 className="mt-auto text-sm"
               >
                 {isCurrent ? 'Текущий план' : 'Выбрать план'}
