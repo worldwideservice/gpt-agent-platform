@@ -429,7 +429,7 @@ const ChatPage = () => {
                   aria-label="Выберите агента"
                   className="w-60"
                   value={selectedAgentId}
-                  onChange={(value) => setSelectedAgentId(value)}
+                  onChange={(value: string) => setSelectedAgentId(value)}
                   options={agentOptions}
                 />
               )}
