@@ -243,9 +243,10 @@ create index if not exists idx_agent_assets_agent on agent_assets(agent_id);
 
 create table if not exists knowledge_chunks (
   id uuid primary key default gen_random_uuid(),
-  agent_id uuid not null references agents(id) on delete cascade,
+  agent_id uuid references agents(id) on delete cascade,
   org_id uuid not null references organizations(id) on delete cascade,
   asset_id uuid references agent_assets(id) on delete cascade,
+  article_id uuid references knowledge_base_articles(id) on delete cascade,
   content text not null,
   metadata jsonb default '{}'::jsonb,
   embedding vector(1536),
@@ -253,7 +254,158 @@ create table if not exists knowledge_chunks (
 );
 
 create index if not exists idx_knowledge_chunks_agent on knowledge_chunks(agent_id);
+create index if not exists idx_knowledge_chunks_article on knowledge_chunks(article_id);
 create index if not exists idx_knowledge_chunks_embedding on knowledge_chunks using ivfflat (embedding);
+
+create or replace function match_knowledge_chunks(
+  query_embedding vector(1536),
+  org_uuid uuid,
+  agent_uuid uuid default null,
+  article_uuid uuid default null,
+  match_count integer default 5,
+  similarity_threshold double precision default 0.3
+)
+returns table (
+  id uuid,
+  org_id uuid,
+  agent_id uuid,
+  article_id uuid,
+  content text,
+  metadata jsonb,
+  embedding vector(1536),
+  similarity double precision
+)
+language sql
+stable
+as $$
+  select
+    kc.id,
+    kc.org_id,
+    kc.agent_id,
+    kc.article_id,
+    kc.content,
+    kc.metadata,
+    kc.embedding,
+    1 - (kc.embedding <=> query_embedding) as similarity
+  from knowledge_chunks kc
+  where kc.org_id = org_uuid
+    and kc.embedding is not null
+    and (agent_uuid is null or kc.agent_id = agent_uuid)
+    and (article_uuid is null or kc.article_id = article_uuid)
+    and 1 - (kc.embedding <=> query_embedding) >= similarity_threshold
+  order by kc.embedding <-> query_embedding
+  limit match_count;
+$$;
+
+-- Knowledge Base ------------------------------------------------------------
+create table if not exists knowledge_base_categories (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references organizations(id) on delete cascade,
+  name text not null,
+  description text,
+  parent_id uuid references knowledge_base_categories(id) on delete cascade,
+  sort_order integer default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique (org_id, name, parent_id)
+);
+
+create trigger knowledge_base_categories_updated_at
+before update on knowledge_base_categories
+for each row execute procedure trigger_set_timestamp();
+
+create index if not exists idx_kb_categories_org on knowledge_base_categories(org_id);
+create index if not exists idx_kb_categories_parent on knowledge_base_categories(parent_id);
+
+create table if not exists knowledge_base_articles (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references organizations(id) on delete cascade,
+  category_id uuid references knowledge_base_categories(id) on delete set null,
+  title text not null,
+  content text not null,
+  slug text,
+  is_published boolean default true,
+  views_count integer default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique (org_id, slug)
+);
+
+create trigger knowledge_base_articles_updated_at
+before update on knowledge_base_articles
+for each row execute procedure trigger_set_timestamp();
+
+create index if not exists idx_kb_articles_org on knowledge_base_articles(org_id);
+create index if not exists idx_kb_articles_category on knowledge_base_articles(category_id);
+create index if not exists idx_kb_articles_slug on knowledge_base_articles(slug);
+
+create table if not exists agent_sequences (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references organizations(id) on delete cascade,
+  agent_id uuid not null references agents(id) on delete cascade,
+  name text not null,
+  description text,
+  is_active boolean default true,
+  sort_order integer default 0,
+  settings jsonb default '{}'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create trigger agent_sequences_updated_at
+before update on agent_sequences
+for each row execute procedure trigger_set_timestamp();
+
+create index if not exists idx_agent_sequences_agent on agent_sequences(agent_id);
+
+create table if not exists agent_sequence_steps (
+  id uuid primary key default gen_random_uuid(),
+  sequence_id uuid not null references agent_sequences(id) on delete cascade,
+  step_type text not null,
+  payload jsonb default '{}'::jsonb,
+  delay_seconds integer default 0,
+  sort_order integer default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create trigger agent_sequence_steps_updated_at
+before update on agent_sequence_steps
+for each row execute procedure trigger_set_timestamp();
+
+create index if not exists idx_agent_sequence_steps_sequence on agent_sequence_steps(sequence_id, sort_order);
+
+create table if not exists agent_channels (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references organizations(id) on delete cascade,
+  agent_id uuid not null references agents(id) on delete cascade,
+  channel text not null,
+  is_enabled boolean default false,
+  settings jsonb default '{}'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique(org_id, agent_id, channel)
+);
+
+create trigger agent_channels_updated_at
+before update on agent_channels
+for each row execute procedure trigger_set_timestamp();
+
+create index if not exists idx_agent_channels_agent on agent_channels(agent_id);
+
+create table if not exists audit_logs (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references organizations(id) on delete cascade,
+  user_id uuid references users(id) on delete set null,
+  action text not null,
+  entity text not null,
+  entity_id uuid,
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_audit_logs_org_created on audit_logs(org_id, created_at desc);
+create index if not exists idx_audit_logs_entity on audit_logs(org_id, entity, entity_id);
 
 -- Pipelines and stages -----------------------------------------------------
 create table if not exists agent_pipelines (
@@ -420,3 +572,79 @@ create table if not exists webhook_events (
   created_at timestamptz default now(),
   processed_at timestamptz
 );
+
+-- Notifications -------------------------------------------------------------
+create table if not exists notifications (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references organizations(id) on delete cascade,
+  user_id uuid references users(id) on delete cascade,
+  type text not null default 'info',
+  title text not null,
+  message text,
+  link_url text,
+  link_text text,
+  is_read boolean default false,
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_notifications_org on notifications(org_id);
+create index if not exists idx_notifications_user on notifications(user_id);
+create index if not exists idx_notifications_read on notifications(is_read);
+create index if not exists idx_notifications_created on notifications(created_at desc);
+
+-- Knowledge Graph для связей между сущностями --------------------------------
+create table if not exists knowledge_graph_entities (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references organizations(id) on delete cascade,
+  agent_id uuid references agents(id) on delete set null,
+  article_id uuid references knowledge_base_articles(id) on delete set null,
+  entity_type text not null, -- 'person', 'organization', 'product', 'service', 'event', 'concept'
+  entity_name text not null,
+  entity_value text,
+  metadata jsonb default '{}'::jsonb,
+  confidence numeric(3,2) default 1.0,
+  source_chunk_id uuid references knowledge_chunks(id) on delete set null,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create index if not exists idx_kg_entities_org on knowledge_graph_entities(org_id);
+create index if not exists idx_kg_entities_agent on knowledge_graph_entities(agent_id);
+create index if not exists idx_kg_entities_type on knowledge_graph_entities(entity_type);
+create index if not exists idx_kg_entities_name on knowledge_graph_entities(entity_name);
+
+create trigger knowledge_graph_entities_updated_at
+before update on knowledge_graph_entities
+for each row execute procedure trigger_set_timestamp();
+
+create table if not exists knowledge_graph_relationships (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references organizations(id) on delete cascade,
+  source_entity_id uuid not null references knowledge_graph_entities(id) on delete cascade,
+  target_entity_id uuid not null references knowledge_graph_entities(id) on delete cascade,
+  relationship_type text not null, -- 'works_for', 'provides', 'uses', 'related_to', 'part_of', etc.
+  metadata jsonb default '{}'::jsonb,
+  confidence numeric(3,2) default 1.0,
+  source_chunk_id uuid references knowledge_chunks(id) on delete set null,
+  created_at timestamptz default now(),
+  unique (source_entity_id, target_entity_id, relationship_type)
+);
+
+create index if not exists idx_kg_relationships_org on knowledge_graph_relationships(org_id);
+create index if not exists idx_kg_relationships_source on knowledge_graph_relationships(source_entity_id);
+create index if not exists idx_kg_relationships_target on knowledge_graph_relationships(target_entity_id);
+create index if not exists idx_kg_relationships_type on knowledge_graph_relationships(relationship_type);
+
+-- Улучшение таблицы agent_assets для поддержки различных типов файлов --------
+alter table agent_assets add column if not exists file_size bigint;
+alter table agent_assets add column if not exists mime_type text;
+alter table agent_assets add column if not exists chunks_count integer default 0;
+alter table agent_assets add column if not exists processing_error text;
+
+create index if not exists idx_agent_assets_status on agent_assets(status);
+create index if not exists idx_agent_assets_type on agent_assets(type);
+
+-- Применяем миграцию для обучения агентов
+-- Все таблицы для company_knowledge, sales_scripts, objection_responses, agent_memory
+-- См. supabase/migrations/add_company_knowledge.sql

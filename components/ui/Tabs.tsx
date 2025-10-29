@@ -46,7 +46,7 @@ export const TabsList = ({ children, className }: TabsListProps) => {
   return (
     <div
       className={cn(
-        'inline-flex items-center justify-start border-b border-gray-200 w-full',
+        'inline-flex items-center justify-start w-full border-b border-slate-200',
         className
       )}
       role="tablist"
@@ -88,7 +88,7 @@ export const TabsTrigger = ({ value, children, className }: TabsTriggerProps) =>
         'px-4 py-3 text-sm font-medium transition-colors relative focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
         isActive
           ? 'text-primary-600 border-b-2 border-primary-600'
-          : 'text-gray-600 hover:text-gray-900',
+          : 'text-slate-600 hover:text-slate-900',
         className
       )}
     >

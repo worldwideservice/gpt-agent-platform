@@ -25,7 +25,7 @@ interface TableHeaderProps extends HTMLAttributes<HTMLTableSectionElement> {
 
 export const TableHeader = ({ className, children, ...props }: TableHeaderProps) => {
   return (
-    <thead className={cn('bg-gray-50 border-b border-gray-200', className)} {...props}>
+    <thead className={cn('bg-slate-50 border-b border-slate-200', className)} {...props}>
       {children}
     </thead>
   )
@@ -37,7 +37,7 @@ interface TableBodyProps extends HTMLAttributes<HTMLTableSectionElement> {
 
 export const TableBody = ({ className, children, ...props }: TableBodyProps) => {
   return (
-    <tbody className={cn('divide-y divide-gray-200', className)} {...props}>
+    <tbody className={cn('divide-y divide-slate-100', className)} {...props}>
       {children}
     </tbody>
   )
@@ -49,7 +49,7 @@ interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
 
 export const TableRow = ({ className, children, ...props }: TableRowProps) => {
   return (
-    <tr className={cn('hover:bg-gray-50 transition-colors', className)} {...props}>
+    <tr className={cn('hover:bg-slate-50 transition-colors border-b border-slate-100', className)} {...props}>
       {children}
     </tr>
   )
@@ -63,7 +63,7 @@ export const TableHead = ({ className, children, ...props }: TableHeadProps) => 
   return (
     <th
       className={cn(
-        'px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider',
+        'px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider',
         className
       )}
       {...props}
@@ -79,7 +79,7 @@ interface TableCellProps extends TdHTMLAttributes<HTMLTableCellElement> {
 
 export const TableCell = ({ className, children, ...props }: TableCellProps) => {
   return (
-    <td className={cn('px-6 py-4 text-sm text-gray-900', className)} {...props}>
+    <td className={cn('px-6 py-4 text-sm text-slate-900', className)} {...props}>
       {children}
     </td>
   )

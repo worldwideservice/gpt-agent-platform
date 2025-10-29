@@ -18,10 +18,17 @@ interface AgentTableProps {
   agents: Agent[]
   onDelete: (id: string) => void
   onDuplicate: (id: string) => void
+  onStatusChange?: (id: string, status: boolean) => void
   isLoading?: boolean
 }
 
-export const AgentTable = ({ agents, onDelete, onDuplicate, isLoading = false }: AgentTableProps) => {
+export const AgentTable = ({
+  agents,
+  onDelete,
+  onDuplicate,
+  onStatusChange,
+  isLoading = false,
+}: AgentTableProps) => {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <Table>
@@ -63,7 +70,11 @@ export const AgentTable = ({ agents, onDelete, onDuplicate, isLoading = false }:
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Toggle checked={agent.status === 'active'} disabled aria-label="Статус агента" />
+                  <Toggle
+                    checked={agent.status === 'active'}
+                    onChange={(checked) => onStatusChange?.(agent.id, checked)}
+                    aria-label={`Переключить статус агента ${agent.name}`}
+                  />
                 </TableCell>
                 <TableCell className="text-sm text-slate-600">{agent.model ?? 'Не указана'}</TableCell>
                 <TableCell className="text-right">

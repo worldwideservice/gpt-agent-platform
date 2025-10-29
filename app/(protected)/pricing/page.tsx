@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Check, Info, Star, X } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
@@ -104,13 +104,49 @@ const responsesOptions = [
   { value: '20000', label: '20,000' },
 ]
 
+interface SubscriptionData {
+  plan: string
+  status: string
+  tokenQuota: number
+  tokenUsed: number
+  renewsAt: string | null
+}
+
 const PricingPage = () => {
+  const [subscription, setSubscription] = useState<SubscriptionData | null>(null)
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
   const [selectedResponses, setSelectedResponses] = useState('15000')
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [autoRenew, setAutoRenew] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
 
-  const currentPlan = useMemo(() => plans.find((plan) => plan.isCurrent), [])
+  const fetchSubscription = useCallback(async () => {
+    try {
+      const response = await fetch('/api/subscriptions')
+      if (response.ok) {
+        const payload = (await response.json()) as { success: boolean; data: SubscriptionData | null }
+        if (payload.success && payload.data) {
+          setSubscription(payload.data)
+          setSelectedResponses(payload.data.tokenQuota.toString())
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch subscription', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchSubscription()
+  }, [fetchSubscription])
+
+  const currentPlan = useMemo(() => {
+    if (!subscription) {
+      return plans.find((plan) => plan.isCurrent)
+    }
+    return plans.find((plan) => plan.id === subscription.plan.toLowerCase())
+  }, [subscription])
 
   const formatPrice = (plan: Plan) => {
     if (billingCycle === 'monthly') {
@@ -119,6 +155,36 @@ const PricingPage = () => {
 
     return `$${plan.priceYearly}`
   }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        <header className="space-y-2">
+          <h1 className="text-3xl font-semibold text-slate-900">Тарифные планы</h1>
+          <p className="text-sm text-slate-500">Загрузка...</p>
+        </header>
+      </div>
+    )
+  }
+
+  const formatDate = (dateString: string | null): string => {
+    if (!dateString) {
+      return '—'
+    }
+    return new Intl.DateTimeFormat('ru-RU', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }).format(new Date(dateString))
+  }
+
+  const usagePercentage = subscription
+    ? Math.min((subscription.tokenUsed / subscription.tokenQuota) * 100, 100)
+    : 0
+
+  const nextResetDate = subscription?.renewsAt
+    ? formatDate(subscription.renewsAt)
+    : formatDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString())
 
   return (
     <div className="space-y-8">
@@ -137,28 +203,39 @@ const PricingPage = () => {
         </div>
       </header>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Ваш текущий план</p>
-            <h2 className="text-lg font-semibold text-slate-900">Scale (15,000 ответов ИИ в месяц)</h2>
-            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
-              <span>Активно до: 31.10.2025</span>
-              <span>Платёжный цикл: Ежемесячно</span>
-              <button type="button" className="text-primary-600 hover:underline">
-                Перейти на годовой
-              </button>
+      {subscription && (
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Ваш текущий план</p>
+              <h2 className="text-lg font-semibold text-slate-900">
+                {currentPlan?.name ?? subscription.plan} ({subscription.tokenQuota.toLocaleString('ru-RU')} ответов ИИ в месяц)
+              </h2>
+              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                {subscription.renewsAt && <span>Активно до: {formatDate(subscription.renewsAt)}</span>}
+                <span>Платёжный цикл: {billingCycle === 'monthly' ? 'Ежемесячно' : 'Ежегодно'}</span>
+                <button type="button" className="text-primary-600 hover:underline">
+                  Перейти на годовой
+                </button>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2 text-sm text-slate-500">
+              <span>
+                Использовано: {subscription.tokenUsed.toLocaleString('ru-RU')} из{' '}
+                {subscription.tokenQuota.toLocaleString('ru-RU')} (Сбросится: {nextResetDate})
+              </span>
+              <div className="w-72 rounded-full bg-slate-100">
+                <div
+                  className={`h-2 rounded-full ${
+                    usagePercentage >= 100 ? 'bg-rose-500' : usagePercentage >= 80 ? 'bg-yellow-500' : 'bg-primary-500'
+                  }`}
+                  style={{ width: `${usagePercentage}%` }}
+                />
+              </div>
             </div>
           </div>
-          <div className="flex flex-col gap-2 text-sm text-slate-500">
-            <span>Использовано: 15,002 из 15,000 (Сбросится: окт 30)</span>
-            <div className="w-72 rounded-full bg-slate-100">
-              <div className="h-2 rounded-full bg-rose-500" style={{ width: '100%' }} />
-            </div>
-          </div>
-        </div>
 
-        <div className="mt-6 flex flex-wrap items-center gap-4">
+          <div className="mt-6 flex flex-wrap items-center gap-4">
           <div className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-600">
             Ответов ИИ: {Number(selectedResponses).toLocaleString('ru-RU')}
           </div>
@@ -193,45 +270,54 @@ const PricingPage = () => {
             label="Автопродление"
             description="30-дневная гарантия возврата денег"
           />
+          </div>
         </div>
       </section>
+      )}
 
       <section className="grid gap-6 lg:grid-cols-3">
-        {plans.map((plan) => (
-          <div
-            key={plan.id}
-            className={`flex flex-col gap-5 rounded-2xl border p-6 shadow-sm ${
-              plan.isCurrent ? 'border-primary-600 bg-primary-50' : 'border-slate-200 bg-white'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">Тариф</p>
-                <h3 className="text-2xl font-semibold text-slate-900">{plan.name}</h3>
+        {plans.map((plan) => {
+          const isCurrent = subscription && plan.id === subscription.plan.toLowerCase()
+          return (
+            <div
+              key={plan.id}
+              className={`flex flex-col gap-5 rounded-2xl border p-6 shadow-sm ${
+                isCurrent ? 'border-primary-600 bg-primary-50' : 'border-slate-200 bg-white'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">Тариф</p>
+                  <h3 className="text-2xl font-semibold text-slate-900">{plan.name}</h3>
+                </div>
+                {isCurrent ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary-600 px-3 py-1 text-xs font-semibold text-white">
+                    <Star className="h-3.5 w-3.5" /> Текущий план
+                  </span>
+                ) : null}
               </div>
-              {plan.isCurrent ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-primary-600 px-3 py-1 text-xs font-semibold text-white">
-                  <Star className="h-3.5 w-3.5" /> Текущий план
-                </span>
-              ) : null}
+              <div>
+                <p className="text-4xl font-bold text-slate-900">{formatPrice(plan)}/мес</p>
+                <p className="mt-1 text-sm text-slate-500">{plan.description}</p>
+              </div>
+              <ul className="space-y-2 text-sm text-slate-600">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex items-start gap-2">
+                    <Check className="mt-0.5 h-4 w-4 text-primary-500" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              <Button
+                variant={isCurrent ? 'secondary' : 'default'}
+                disabled={isCurrent}
+                className="mt-auto text-sm"
+              >
+                {isCurrent ? 'Текущий план' : 'Выбрать план'}
+              </Button>
             </div>
-            <div>
-              <p className="text-4xl font-bold text-slate-900">{formatPrice(plan)}/мес</p>
-              <p className="mt-1 text-sm text-slate-500">{plan.description}</p>
-            </div>
-            <ul className="space-y-2 text-sm text-slate-600">
-              {plan.features.map((feature) => (
-                <li key={feature} className="flex items-start gap-2">
-                  <Check className="mt-0.5 h-4 w-4 text-primary-500" />
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
-            <Button variant={plan.isCurrent ? 'secondary' : 'default'} disabled={plan.isCurrent} className="mt-auto text-sm">
-              {plan.isCurrent ? 'Текущий план' : 'Выбрать план'}
-            </Button>
-          </div>
-        ))}
+          )
+        })}
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

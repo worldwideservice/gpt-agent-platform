@@ -1,3 +1,18 @@
+export interface AgentSettings {
+  language?: string
+  welcomeMessage?: string
+  description?: string
+  presencePenalty?: number
+  frequencyPenalty?: number
+  defaultChannels?: string[]
+  knowledgeBaseAllCategories?: boolean
+  createTaskOnNotFound?: boolean
+  notFoundMessage?: string
+  checkBeforeSending?: boolean
+  dealFields?: string[]
+  contactFields?: string[]
+}
+
 export interface Agent {
   id: string
   name: string
@@ -8,6 +23,11 @@ export interface Agent {
   ownerName: string | null
   createdAt: string
   updatedAt: string
+  temperature: number
+  maxTokens: number
+  responseDelaySeconds: number
+  instructions?: string | null
+  settings: AgentSettings
 }
 
 export interface DashboardStats {
@@ -23,6 +43,8 @@ export interface KnowledgeBaseCategory {
   name: string
   articlesCount: number
   createdAt: Date
+  description?: string | null
+  parentId?: string | null
 }
 
 export interface KnowledgeBaseArticle {
@@ -60,5 +82,19 @@ export interface PricingPlan {
     knowledgeBase: number
   }
   features: string[]
+}
+
+export interface Notification {
+  id: string
+  orgId: string
+  userId: string | null
+  type: 'info' | 'warning' | 'error' | 'success'
+  title: string
+  message: string | null
+  linkUrl: string | null
+  linkText: string | null
+  isRead: boolean
+  metadata: Record<string, unknown>
+  createdAt: string
 }
 

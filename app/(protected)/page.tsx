@@ -1,16 +1,15 @@
 import { redirect } from 'next/navigation'
 import { Bot, CalendarCheck2, MessageSquare, Sparkles } from 'lucide-react'
 
-import { LineChartCard } from '@/components/dashboard/LineChartCard'
+import { BarChartCard } from '@/components/dashboard/BarChartCard'
+import { RecentUpdates } from '@/components/dashboard/RecentUpdates'
 import { StatCard } from '@/components/dashboard/StatCard'
-import { ClientMarker } from '@/components/system/ClientMarker'
 
 import { auth } from '@/auth'
 import { getOnboardingState } from '@/lib/onboarding/server'
 import {
   getDashboardStats,
-  getDailyResponsesSeries,
-  getMonthlyResponsesSeries,
+  getWeeklyBarChartData,
 } from '@/lib/repositories/agents'
 
 const DashboardPage = async () => {
@@ -28,35 +27,59 @@ const DashboardPage = async () => {
     redirect('/onboarding')
   }
 
-  const [stats, monthlySeries, dailySeries] = await Promise.all([
+  const [stats, weeklyBarData] = await Promise.all([
     getDashboardStats(orgId),
-    getMonthlyResponsesSeries(orgId, 6),
-    getDailyResponsesSeries(orgId, 10),
+    getWeeklyBarChartData(orgId),
   ])
+
+  const recentUpdates = [
+    {
+      id: '1',
+      message: 'Агент "Консультант" активирован',
+      timestamp: '2 часа назад',
+      color: 'green' as const,
+    },
+    {
+      id: '2',
+      message: 'Добавлена новая интеграция с Kommo CRM',
+      timestamp: '5 часов назад',
+      color: 'blue' as const,
+    },
+    {
+      id: '3',
+      message: 'База знаний обновлена: +15 статей',
+      timestamp: '1 день назад',
+      color: 'purple' as const,
+    },
+    {
+      id: '4',
+      message: 'Создан новый агент "Поддержка"',
+      timestamp: '2 дня назад',
+      color: 'yellow' as const,
+    },
+  ]
 
   return (
     <div className="space-y-8">
-      <ClientMarker />
       <section className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="Ответы ИИ за этот месяц"
           value={stats.monthlyResponses}
           change={stats.monthlyChange}
-          subtitle="По сравнению с прошлым месяцем"
+          subtitle="к прошлому месяцу"
           icon={MessageSquare}
         />
 
         <StatCard
           title="Ответы ИИ за последние 7 дней"
           value={stats.weeklyResponses}
-          subtitle="Обновляется ежедневно"
+          subtitle="Последние 7 дней"
           icon={CalendarCheck2}
         />
 
         <StatCard
           title="Ответы ИИ сегодня"
           value={stats.todayResponses}
-          subtitle="С начала суток"
           icon={Sparkles}
         />
 
@@ -69,16 +92,11 @@ const DashboardPage = async () => {
       </section>
 
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <LineChartCard
-          title="Ответы ИИ за этот месяц"
-          subtitle="Последние 6 месяцев"
-          data={monthlySeries}
+        <BarChartCard
+          title="Активность за последние 7 дней"
+          data={weeklyBarData}
         />
-        <LineChartCard
-          title="Ответы ИИ за день"
-          subtitle="Последние 10 дней"
-          data={dailySeries}
-        />
+        <RecentUpdates updates={recentUpdates} />
       </section>
     </div>
   )

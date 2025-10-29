@@ -199,13 +199,6 @@ export const Sidebar = ({ organizations, activeOrganizationId }: SidebarProps) =
             </div>
           ))}
         </nav>
-
-        <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
-          <p className="font-semibold text-slate-900">Нужна помощь?</p>
-          <p className="mt-1 text-xs leading-5 text-slate-500">
-            Ознакомьтесь с базой знаний и гайдами, чтобы быстрее запустить AI-агента в работу.
-          </p>
-        </div>
       </div>
     </aside>
   )

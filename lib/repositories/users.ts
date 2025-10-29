@@ -55,3 +55,46 @@ export const updateUserPasswordHash = async (userId: string, passwordHash: strin
     throw error
   }
 }
+
+export const updateUser = async (
+  userId: string,
+  data: {
+    fullName?: string
+    email?: string
+    avatarUrl?: string | null
+    locale?: string
+  },
+) => {
+  const supabase = getSupabaseServiceRoleClient()
+
+  const updatePayload: Record<string, unknown> = {}
+
+  if (data.fullName !== undefined) {
+    updatePayload.full_name = data.fullName
+  }
+
+  if (data.email !== undefined) {
+    updatePayload.email = data.email.toLowerCase()
+  }
+
+  if (data.avatarUrl !== undefined) {
+    updatePayload.avatar_url = data.avatarUrl
+  }
+
+  if (data.locale !== undefined) {
+    updatePayload.locale = data.locale
+  }
+
+  const { data: userData, error } = await supabase
+    .from('users')
+    .update(updatePayload)
+    .eq('id', userId)
+    .select('*')
+    .single()
+
+  if (error) {
+    throw error
+  }
+
+  return (userData as UserRow | null) ?? null
+}

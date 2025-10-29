@@ -18,8 +18,9 @@ BACKEND_API_URL="http://localhost:4000"
 ENCRYPTION_KEY="<base64 32-byte key>"
 KOMMO_OAUTH_REDIRECT_BASE="http://localhost:3000/integrations/kommo/oauth/callback"
 KOMMO_WEBHOOK_SECRET="change-me"
-OPENROUTER_API_KEY="<your-openrouter-token>"
+OPENROUTER_API_KEY="sk-or-v1-<your-openrouter-api-key>"
 REDIS_URL="redis://localhost:6379"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
 Создайте файл `.env` в `services/worker` со значениями:
@@ -39,6 +40,27 @@ OPENROUTER_API_KEY="<your-openrouter-token>"
 ```bash
 openssl rand -base64 32
 ```
+
+### Получение OpenRouter API ключа
+
+1. Зарегистрируйтесь на [OpenRouter.ai](https://openrouter.ai/)
+2. Создайте API ключ в разделе [Keys](https://openrouter.ai/keys)
+3. Скопируйте ключ и добавьте в `.env.local` и `services/api/.env`
+
+📖 Подробные инструкции: [docs/OPENROUTER_SETUP.md](./OPENROUTER_SETUP.md)
+
+### Проверка настройки переменных окружения
+
+После настройки всех переменных окружения, запустите проверку:
+
+```bash
+npm run check:env
+```
+
+Скрипт проверит наличие всех необходимых переменных в:
+- `.env.local` (корневой проект)
+- `services/api/.env`
+- `services/worker/.env`
 
 ## Supabase
 

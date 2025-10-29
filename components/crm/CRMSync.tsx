@@ -14,6 +14,7 @@ interface PipelineSettings {
   isActive: boolean
   allStages: boolean
   selectedStages: string[]
+  stageInstructions?: Record<string, string>
 }
 
 interface CRMSyncProps {
@@ -88,7 +89,8 @@ export const CRMSync = ({ connection, pipelineSettings, onPipelineUpdate }: CRMS
       name: pipeline?.name || 'Неизвестная воронка',
       isActive: false,
       allStages: false,
-      selectedStages: []
+      selectedStages: [],
+      stageInstructions: {},
     }
   }
 
@@ -207,14 +209,50 @@ export const CRMSync = ({ connection, pipelineSettings, onPipelineUpdate }: CRMS
                     )}
 
                     {/* Instructions for Deal Stage */}
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">
-                        Инструкции для этапа сделки
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        Настройте, как агент отвечает на каждом этапе сделки
-                      </p>
-                    </div>
+                    {settings.selectedStages.length > 0 && (
+                      <div className="space-y-3">
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">
+                            Инструкции для этапа сделки
+                          </h4>
+                          <p className="text-sm text-gray-600 mb-3">
+                            Настройте, как агент отвечает на каждом этапе сделки
+                          </p>
+                        </div>
+                        {settings.selectedStages.map((stageId) => {
+                          const stage = pipeline.stages.find(s => s.id === stageId)
+                          if (!stage) return null
+
+                          const instructions = (settings.stageInstructions as Record<string, string>) || {}
+                          const currentInstruction = instructions[stageId] || ''
+
+                          return (
+                            <div key={stageId} className="border border-gray-200 rounded-lg p-3">
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                {stage.name}
+                              </label>
+                              <textarea
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[80px]"
+                                placeholder="Введите инструкции для этого этапа..."
+                                value={currentInstruction}
+                                onChange={(e) => {
+                                  const newInstructions = {
+                                    ...instructions,
+                                    [stageId]: e.target.value,
+                                  }
+                                  onPipelineUpdate(pipeline.id, {
+                                    stageInstructions: newInstructions,
+                                  })
+                                }}
+                              />
+                              <p className="mt-1 text-xs text-gray-500">
+                                Эти инструкции будут использоваться агентом при работе с этой стадией сделки
+                              </p>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

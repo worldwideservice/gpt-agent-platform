@@ -50,11 +50,11 @@ export const Toggle = React.forwardRef<HTMLButtonElement, ToggleProps>(
         {(label || description) && (
           <div className="flex-1">
             {label && (
-              <label htmlFor={toggleId} className="block cursor-pointer text-sm font-medium text-gray-700">
+              <label htmlFor={toggleId} className="block cursor-pointer text-sm font-medium text-slate-700">
                 {label}
               </label>
             )}
-            {description && <p className="mt-1 text-sm text-gray-500">{description}</p>}
+            {description && <p className="mt-1 text-sm text-slate-500">{description}</p>}
           </div>
         )}
 
@@ -68,7 +68,7 @@ export const Toggle = React.forwardRef<HTMLButtonElement, ToggleProps>(
             onClick={handleToggle}
             className={cn(
               'relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-              isChecked ? 'bg-primary-600' : 'bg-gray-200',
+              isChecked ? 'bg-primary-600' : 'bg-slate-200',
               disabled && 'cursor-not-allowed opacity-50',
             )}
             {...props}
@@ -80,7 +80,7 @@ export const Toggle = React.forwardRef<HTMLButtonElement, ToggleProps>(
               )}
             />
           </button>
-          {children ? <span className="text-sm text-gray-600">{children}</span> : null}
+          {children ? <span className="text-sm text-slate-600">{children}</span> : null}
         </div>
       </div>
     )

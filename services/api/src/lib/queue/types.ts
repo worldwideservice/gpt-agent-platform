@@ -30,8 +30,23 @@ export type KommoSendMessageJob = {
   }
 }
 
+export type ProcessAssetJob = {
+  assetId: string
+  organizationId: string
+}
+
+export type ExtractKnowledgeGraphJob = {
+  assetId?: string
+  articleId?: string
+  organizationId: string
+  agentId?: string | null
+  chunkIds?: string[]
+}
+
 export type JobPayload =
   | ({ type: 'kommo:webhook' } & KommoWebhookJob)
   | ({ type: 'crm:sync-pipelines' } & CrmSyncPipelinesJob)
   | ({ type: 'kommo:sync-pipelines' } & LegacyKommoSyncPipelinesJob)
   | ({ type: 'kommo:send-message' } & KommoSendMessageJob)
+  | ({ type: 'process-asset' } & ProcessAssetJob)
+  | ({ type: 'extract-knowledge-graph' } & ExtractKnowledgeGraphJob)

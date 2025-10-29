@@ -539,6 +539,165 @@ export type Database = {
           },
         ]
       }
+      knowledge_base_categories: {
+        Row: {
+          id: string
+          org_id: string
+          name: string
+          description: string | null
+          parent_id: string | null
+          sort_order: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          name: string
+          description?: string | null
+          parent_id?: string | null
+          sort_order?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          name?: string
+          description?: string | null
+          parent_id?: string | null
+          sort_order?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'knowledge_base_categories_org_id_fkey'
+            columns: ['org_id']
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'knowledge_base_categories_parent_id_fkey'
+            columns: ['parent_id']
+            referencedRelation: 'knowledge_base_categories'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      knowledge_base_articles: {
+        Row: {
+          id: string
+          org_id: string
+          category_id: string | null
+          title: string
+          content: string
+          slug: string | null
+          is_published: boolean | null
+          views_count: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          category_id?: string | null
+          title: string
+          content: string
+          slug?: string | null
+          is_published?: boolean | null
+          views_count?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          category_id?: string | null
+          title?: string
+          content?: string
+          slug?: string | null
+          is_published?: boolean | null
+          views_count?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'knowledge_base_articles_category_id_fkey'
+            columns: ['category_id']
+            referencedRelation: 'knowledge_base_categories'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'knowledge_base_articles_org_id_fkey'
+            columns: ['org_id']
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      knowledge_chunks: {
+        Row: {
+          id: string
+          agent_id: string | null
+          org_id: string
+          asset_id: string | null
+          article_id: string | null
+          content: string
+          metadata: Json | null
+          embedding: number[] | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          agent_id?: string | null
+          org_id: string
+          asset_id?: string | null
+          article_id?: string | null
+          content: string
+          metadata?: Json | null
+          embedding?: number[] | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          agent_id?: string | null
+          org_id?: string
+          asset_id?: string | null
+          article_id?: string | null
+          content?: string
+          metadata?: Json | null
+          embedding?: number[] | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'knowledge_chunks_agent_id_fkey'
+            columns: ['agent_id']
+            referencedRelation: 'agents'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'knowledge_chunks_article_id_fkey'
+            columns: ['article_id']
+            referencedRelation: 'knowledge_base_articles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'knowledge_chunks_asset_id_fkey'
+            columns: ['asset_id']
+            referencedRelation: 'agent_assets'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'knowledge_chunks_org_id_fkey'
+            columns: ['org_id']
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       oauth_states: {
         Row: {
           id: string
@@ -619,6 +778,144 @@ export type Database = {
           },
         ]
       }
+      agent_sequences: {
+        Row: {
+          id: string
+          org_id: string
+          agent_id: string
+          name: string
+          description: string | null
+          is_active: boolean | null
+          sort_order: number | null
+          settings: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          agent_id: string
+          name: string
+          description?: string | null
+          is_active?: boolean | null
+          sort_order?: number | null
+          settings?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          agent_id?: string
+          name?: string
+          description?: string | null
+          is_active?: boolean | null
+          sort_order?: number | null
+          settings?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'agent_sequences_agent_id_fkey'
+            columns: ['agent_id']
+            referencedRelation: 'agents'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'agent_sequences_org_id_fkey'
+            columns: ['org_id']
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      agent_sequence_steps: {
+        Row: {
+          id: string
+          sequence_id: string
+          step_type: string
+          payload: Json | null
+          delay_seconds: number | null
+          sort_order: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          sequence_id: string
+          step_type: string
+          payload?: Json | null
+          delay_seconds?: number | null
+          sort_order?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          sequence_id?: string
+          step_type?: string
+          payload?: Json | null
+          delay_seconds?: number | null
+          sort_order?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'agent_sequence_steps_sequence_id_fkey'
+            columns: ['sequence_id']
+            referencedRelation: 'agent_sequences'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      agent_channels: {
+        Row: {
+          id: string
+          org_id: string
+          agent_id: string
+          channel: string
+          is_enabled: boolean | null
+          settings: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          agent_id: string
+          channel: string
+          is_enabled?: boolean | null
+          settings?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          agent_id?: string
+          channel?: string
+          is_enabled?: boolean | null
+          settings?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'agent_channels_agent_id_fkey'
+            columns: ['agent_id']
+            referencedRelation: 'agents'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'agent_channels_org_id_fkey'
+            columns: ['org_id']
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       webhook_events: {
         Row: {
           id: string
@@ -658,6 +955,52 @@ export type Database = {
             foreignKeyName: 'webhook_events_org_id_fkey'
             columns: ['org_id']
             referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      audit_logs: {
+        Row: {
+          id: string
+          org_id: string
+          user_id: string | null
+          action: string
+          entity: string
+          entity_id: string | null
+          metadata: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          user_id?: string | null
+          action: string
+          entity: string
+          entity_id?: string | null
+          metadata?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          user_id?: string | null
+          action?: string
+          entity?: string
+          entity_id?: string | null
+          metadata?: Json | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'audit_logs_org_id_fkey'
+            columns: ['org_id']
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'audit_logs_user_id_fkey'
+            columns: ['user_id']
+            referencedRelation: 'users'
             referencedColumns: ['id']
           },
         ]
@@ -710,6 +1053,13 @@ export type OAuthStateRow = Database['public']['Tables']['oauth_states']['Row']
 export type PasswordResetRow = Database['public']['Tables']['password_resets']['Row']
 export type UsageDailyRow = Database['public']['Tables']['usage_daily']['Row']
 export type WebhookEventRow = Database['public']['Tables']['webhook_events']['Row']
+export type KnowledgeBaseCategoryRow = Database['public']['Tables']['knowledge_base_categories']['Row']
+export type KnowledgeBaseArticleRow = Database['public']['Tables']['knowledge_base_articles']['Row']
+export type KnowledgeChunkRow = Database['public']['Tables']['knowledge_chunks']['Row']
+export type AgentSequenceRow = Database['public']['Tables']['agent_sequences']['Row']
+export type AgentSequenceStepRow = Database['public']['Tables']['agent_sequence_steps']['Row']
+export type AgentChannelRow = Database['public']['Tables']['agent_channels']['Row']
+export type AuditLogRow = Database['public']['Tables']['audit_logs']['Row']
 
 export type AgentActivityMetricRow = Database['public']['Tables']['agent_activity_metrics']['Row']
 

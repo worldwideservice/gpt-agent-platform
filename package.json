@@ -21,6 +21,12 @@
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "check:env": "node scripts/check-env.js",
+    "check:redis": "node scripts/check-redis.js",
+    "check:worker": "node scripts/check-worker.js",
+    "setup:env": "bash scripts/auto-setup-env.sh",
+    "docker:redis": "docker-compose up -d redis",
+    "docker:down": "docker-compose down",
     "vercel:deploy": "vercel --prod",
     "vercel:preview": "vercel"
   },

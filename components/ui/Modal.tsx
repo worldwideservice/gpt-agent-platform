@@ -67,7 +67,7 @@ export const Modal = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
@@ -75,27 +75,27 @@ export const Modal = ({
     >
       <div
         className={cn(
-          'bg-white rounded-lg shadow-xl w-full animate-fadeIn',
+          'w-full rounded-2xl border border-slate-200 bg-white shadow-xl',
           sizes[size]
         )}
       >
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-            <h2 id="modal-title" className="text-xl font-semibold text-gray-900">
+          <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+            <h2 id="modal-title" className="text-xl font-semibold text-slate-900">
               {title}
             </h2>
             <Button
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="p-2"
+              className="p-2 text-slate-400 hover:text-slate-600"
               aria-label="Закрыть"
             >
-              <X className="w-5 h-5" />
+              <X className="h-5 w-5" />
             </Button>
           </div>
         )}
-        <div className="px-6 py-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+        <div className="max-h-[calc(100vh-200px)] overflow-y-auto px-6 py-6">
           {children}
         </div>
       </div>

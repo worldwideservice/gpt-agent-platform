@@ -1,9 +1,13 @@
 'use client'
 
-import { useState } from 'react'
-import { Bell, Calendar, LogOut, Menu, Moon, Search, Sun } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { Bell, Calendar, LogOut, Menu, Moon, Search, Sun, X } from 'lucide-react'
+import Link from 'next/link'
 
 import { SignOutButton } from '@/components/auth/SignOutButton'
+import { formatTimestamp } from '@/lib/repositories/notifications'
+
+import type { Notification } from '@/lib/repositories/notifications'
 
 interface HeaderProps {
   user: {
@@ -11,34 +15,6 @@ interface HeaderProps {
     email?: string | null
   }
 }
-
-type Notification = {
-  id: string
-  title: string
-  description: string
-  timestamp: string
-}
-
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    title: 'Месячный лимит достигнут: ответы ИИ отключены',
-    description: 'Ответы ИИ отключены, вы достигли месячного лимита в 15000 ответов.',
-    timestamp: '21 минуту назад',
-  },
-  {
-    id: '2',
-    title: 'Месячный лимит достигнут: ответы ИИ отключены',
-    description: 'Ответы ИИ отключены, вы достигли месячного лимита в 15000 ответов.',
-    timestamp: '46 минут назад',
-  },
-  {
-    id: '3',
-    title: 'Месячный лимит достигнут: ответы ИИ отключены',
-    description: 'Ответы ИИ отключены, вы достигли месячного лимита в 15000 ответов.',
-    timestamp: '1 час назад',
-  },
-]
 
 const formatInitials = (value?: string | null): string => {
   if (!value) {
@@ -62,16 +38,53 @@ const formatInitials = (value?: string | null): string => {
 
 export const Header = ({ user }: HeaderProps) => {
   const today = new Intl.DateTimeFormat('ru-RU', {
+    weekday: 'short',
     day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
+    month: 'short',
   }).format(new Date())
 
   const userName = user.name ?? 'Пользователь'
   const userEmail = user.email ?? '—'
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(true)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      setIsLoadingNotifications(true)
+      const response = await fetch('/api/notifications?limit=20')
+
+      if (response.ok) {
+        const payload = (await response.json()) as {
+          success: boolean
+          data: Notification[]
+          unreadCount: number
+        }
+
+        if (payload.success) {
+          setNotifications(payload.data)
+          setUnreadCount(payload.unreadCount)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch notifications', error)
+    } finally {
+      setIsLoadingNotifications(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchNotifications()
+
+    const interval = setInterval(() => {
+      fetchNotifications()
+    }, 30000)
+
+    return () => clearInterval(interval)
+  }, [fetchNotifications])
 
   const handleThemeToggle = () => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))
@@ -85,6 +98,78 @@ export const Header = ({ user }: HeaderProps) => {
   const toggleUserMenu = () => {
     setUserMenuOpen((prev) => !prev)
     setNotificationsOpen(false)
+  }
+
+  const handleMarkAllRead = async () => {
+    try {
+      const response = await fetch('/api/notifications/actions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'mark_all_read' }),
+      })
+
+      if (response.ok) {
+        await fetchNotifications()
+      }
+    } catch (error) {
+      console.error('Failed to mark all as read', error)
+    }
+  }
+
+  const handleDeleteAll = async () => {
+    if (!confirm('Вы уверены, что хотите удалить все уведомления?')) {
+      return
+    }
+
+    try {
+      const response = await fetch('/api/notifications/actions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'delete_all' }),
+      })
+
+      if (response.ok) {
+        await fetchNotifications()
+      }
+    } catch (error) {
+      console.error('Failed to delete all notifications', error)
+    }
+  }
+
+  const handleDeleteNotification = async (id: string) => {
+    try {
+      const response = await fetch(`/api/notifications/${id}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        await fetchNotifications()
+      }
+    } catch (error) {
+      console.error('Failed to delete notification', error)
+    }
+  }
+
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      const response = await fetch(`/api/notifications/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isRead: true }),
+      })
+
+      if (response.ok) {
+        await fetchNotifications()
+      }
+    } catch (error) {
+      console.error('Failed to mark as read', error)
+    }
   }
 
   return (
@@ -124,32 +209,89 @@ export const Header = ({ user }: HeaderProps) => {
               onClick={toggleNotifications}
             >
               <Bell className="h-5 w-5" />
-              <span className="absolute right-1 top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
-                {mockNotifications.length}
-              </span>
+              {unreadCount > 0 && (
+                <span className="absolute right-1 top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </button>
 
             {notificationsOpen && (
               <div className="absolute right-0 mt-3 w-80 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-slate-900">Уведомления</h3>
-                  <button type="button" className="text-xs font-medium text-primary-600 hover:underline">
-                    Отметить как прочитанное
-                  </button>
+                  <h3 className="text-sm font-semibold text-slate-900">
+                    Уведомления <span className="text-slate-500">({notifications.length})</span>
+                  </h3>
+                  <div className="flex gap-2">
+                    {unreadCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleMarkAllRead}
+                        className="text-xs font-medium text-primary-600 hover:underline"
+                      >
+                        Отметить как прочитанное
+                      </button>
+                    )}
+                    {notifications.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleDeleteAll}
+                        className="text-xs font-medium text-rose-600 hover:underline"
+                      >
+                        Удалить
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="max-h-72 space-y-3 overflow-y-auto pr-1">
-                  {mockNotifications.map((notification) => (
-                    <div key={notification.id} className="rounded-xl border border-slate-100 p-3">
-                      <p className="text-sm font-semibold text-slate-900">{notification.title}</p>
-                      <p className="mt-1 text-xs text-slate-500">{notification.description}</p>
-                      <p className="mt-2 text-[11px] uppercase tracking-wide text-slate-400">
-                        {notification.timestamp}
-                      </p>
-                      <button type="button" className="mt-3 inline-flex items-center text-xs font-semibold text-primary-600">
-                        Обновить план
-                      </button>
-                    </div>
-                  ))}
+                  {isLoadingNotifications ? (
+                    <div className="py-8 text-center text-sm text-slate-500">Загрузка...</div>
+                  ) : notifications.length === 0 ? (
+                    <div className="py-8 text-center text-sm text-slate-500">Нет уведомлений</div>
+                  ) : (
+                    notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`relative rounded-xl border p-3 ${
+                          notification.isRead ? 'border-slate-100 bg-slate-50' : 'border-slate-200 bg-white'
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteNotification(notification.id)}
+                          className="absolute right-2 top-2 text-slate-400 transition-colors hover:text-slate-600"
+                          aria-label="Закрыть уведомление"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                        <p className="pr-6 text-sm font-semibold text-slate-900">{notification.title}</p>
+                        {notification.message && (
+                          <p className="mt-1 text-xs text-slate-500">{notification.message}</p>
+                        )}
+                        <p className="mt-2 text-[11px] uppercase tracking-wide text-slate-400">
+                          {formatTimestamp(notification.createdAt)}
+                        </p>
+                        {notification.linkUrl && notification.linkText && (
+                          <Link
+                            href={notification.linkUrl}
+                            onClick={() => !notification.isRead && handleMarkAsRead(notification.id)}
+                            className="mt-3 inline-flex items-center text-xs font-semibold text-primary-600 hover:underline"
+                          >
+                            {notification.linkText}
+                          </Link>
+                        )}
+                        {!notification.isRead && !notification.linkUrl && (
+                          <button
+                            type="button"
+                            onClick={() => handleMarkAsRead(notification.id)}
+                            className="mt-2 text-xs text-slate-500 hover:text-slate-700"
+                          >
+                            Отметить как прочитанное
+                          </button>
+                        )}
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}

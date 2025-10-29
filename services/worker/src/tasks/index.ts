@@ -3,6 +3,8 @@ import { decryptSecret } from '../lib/crypto'
 import { getSupabaseClient } from '../lib/supabase'
 import { kommoApiRequest, refreshKommoToken } from '../providers/kommo'
 import type { Database, Json } from '../lib/types'
+import { processAsset } from './process-asset'
+import { extractKnowledgeGraph } from './extract-knowledge-graph'
 
 const supabase = getSupabaseClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY)
 
@@ -544,6 +546,18 @@ export const getTaskHandlers = () => {
       message: { subject?: string; body: string; attachments?: Array<{ url: string; name: string }> }
     }) => {
       await sendKommoMessage(payload)
+    },
+    'process-asset': async (payload: { assetId: string; organizationId: string }) => {
+      await processAsset(payload)
+    },
+    'extract-knowledge-graph': async (payload: {
+      assetId?: string
+      articleId?: string
+      organizationId: string
+      agentId?: string | null
+      chunkIds?: string[]
+    }) => {
+      await extractKnowledgeGraph(payload)
     },
   }
 }

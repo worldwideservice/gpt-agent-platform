@@ -19,6 +19,8 @@ const querySchema = z.object({
     .optional(),
 })
 
+import { createAgent } from '@/lib/repositories/agents'
+
 export const GET = async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
   const parsedParams = querySchema.safeParse(Object.fromEntries(searchParams))
@@ -66,6 +68,82 @@ export const GET = async (request: NextRequest) => {
       {
         success: false,
         error: 'Не удалось загрузить агентов',
+      },
+      { status: 500 },
+    )
+  }
+}
+
+const settingsSchema = z
+  .object({
+    language: z.string().optional(),
+    welcomeMessage: z.string().optional(),
+    description: z.string().optional(),
+    presencePenalty: z.number().min(-2).max(2).optional(),
+    frequencyPenalty: z.number().min(-2).max(2).optional(),
+    defaultChannels: z.array(z.string()).optional(),
+    knowledgeBaseAllCategories: z.boolean().optional(),
+    createTaskOnNotFound: z.boolean().optional(),
+    notFoundMessage: z.string().optional(),
+  })
+  .optional()
+
+const createAgentSchema = z.object({
+  name: z.string().min(1, 'Название обязательно'),
+  status: z.enum(['active', 'inactive', 'draft']).optional(),
+  model: z.string().optional(),
+  instructions: z.string().optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  maxTokens: z.number().int().min(128).max(8000).optional(),
+  responseDelaySeconds: z.number().int().min(0).max(86400).optional(),
+  settings: settingsSchema,
+})
+
+export const POST = async (request: NextRequest) => {
+  const session = await auth()
+
+  if (!session?.user?.orgId) {
+    return NextResponse.json({ success: false, error: 'Не авторизовано' }, { status: 401 })
+  }
+
+  try {
+    const body = await request.json()
+    const parsed = createAgentSchema.safeParse(body)
+
+    if (!parsed.success) {
+      const issues = parsed.error.issues.map((issue) => issue.message)
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Некорректные данные',
+          details: issues,
+        },
+        { status: 400 },
+      )
+    }
+
+    const agent = await createAgent(session.user.orgId, {
+      name: parsed.data.name,
+      status: parsed.data.status,
+      model: parsed.data.model,
+      instructions: parsed.data.instructions,
+      temperature: parsed.data.temperature,
+      maxTokens: parsed.data.maxTokens,
+      responseDelaySeconds: parsed.data.responseDelaySeconds,
+      settings: parsed.data.settings ?? {},
+    })
+
+    return NextResponse.json({
+      success: true,
+      data: agent,
+    })
+  } catch (error) {
+    console.error('Agent create API error', error)
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Не удалось создать агента',
       },
       { status: 500 },
     )

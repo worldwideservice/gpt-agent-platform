@@ -1,57 +1,40 @@
-'use client'
+import { redirect } from 'next/navigation'
 
-import Link from 'next/link'
-import { ArrowLeft, Plus } from 'lucide-react'
+import { CategoryForm } from './_components/CategoryForm'
 
-import { Button } from '@/components/ui/Button'
+import { auth } from '@/auth'
+import { getKnowledgeBaseCategoryById } from '@/lib/repositories/knowledge-base'
 
-const CategoryDetailsPage = () => {
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="space-y-2">
-          <button type="button" className="inline-flex items-center gap-2 text-xs font-semibold uppercase text-slate-400">
-            <ArrowLeft className="h-3.5 w-3.5" /> Назад к списку категорий
-          </button>
-          <h1 className="text-3xl font-semibold text-slate-900">Общее</h1>
-          <p className="text-sm text-slate-500">Категория для общих статей и инструкций</p>
-        </div>
-        <Button className="gap-2 text-sm">
-          <Plus className="h-4 w-4" /> Создать
-        </Button>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <EmptyCard title="Подкатегории отсутствуют" actionLabel="Создать подкатегорию" />
-        <EmptyCard
-          title="Статьи в «Общее»"
-          actionLabel="Создать статью"
-          description="Статьи, добавленные в эту категорию, появятся здесь."
-        />
-      </div>
-    </div>
-  )
+interface CategoryPageProps {
+  params: Promise<{
+    id: string
+  }>
 }
 
-const EmptyCard = ({
-  title,
-  actionLabel,
-  description,
-}: {
-  title: string
-  actionLabel: string
-  description?: string
-}) => (
-  <div className="flex h-64 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-white text-center shadow-sm">
-    <div className="h-12 w-12 rounded-full bg-slate-100" />
-    <div className="space-y-1">
-      <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
-      {description ? <p className="text-xs text-slate-500">{description}</p> : null}
-    </div>
-    <Button variant="outline" size="sm">
-      {actionLabel}
-    </Button>
-  </div>
-)
+const CategoryPage = async ({ params }: CategoryPageProps) => {
+  const { id } = await params
+  const session = await auth()
 
-export default CategoryDetailsPage
+  if (!session?.user?.orgId) {
+    redirect('/login')
+  }
+
+  let category = null
+
+  if (id !== 'new') {
+    try {
+      category = await getKnowledgeBaseCategoryById(id, session.user.orgId)
+      
+      if (!category) {
+        redirect('/knowledge-base/categories')
+      }
+    } catch (error) {
+      console.error('Failed to load category', error)
+      redirect('/knowledge-base/categories')
+    }
+  }
+
+  return <CategoryForm categoryId={id} initialCategory={category} />
+}
+
+export default CategoryPage

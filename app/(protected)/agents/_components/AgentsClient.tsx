@@ -106,13 +106,108 @@ export const AgentsClient = ({ initialAgents, total }: AgentsClientProps) => {
     setTotalCount(total)
   }, [initialAgents, total])
 
-  const handleDuplicate = useCallback((id: string) => {
-    console.info('Duplicate agent feature is not implemented yet', id)
-  }, [])
+  const handleStatusChange = useCallback(
+    async (id: string, checked: boolean) => {
+      try {
+        const response = await fetch(`/api/agents/${id}/status`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: checked ? 'active' : 'inactive',
+          }),
+        })
 
-  const handleDelete = useCallback((id: string) => {
-    console.info('Delete agent feature is not implemented yet', id)
-  }, [])
+        if (!response.ok) {
+          throw new Error('Не удалось обновить статус')
+        }
+
+        const payload = (await response.json()) as { success: boolean; data: Agent }
+
+        if (!payload.success) {
+          throw new Error('Не удалось обновить статус')
+        }
+
+        setAgents((prev) =>
+          prev.map((agent) => (agent.id === id ? { ...agent, status: payload.data.status } : agent)),
+        )
+      } catch (err) {
+        console.error('Failed to update agent status', err)
+        setError('Не удалось обновить статус агента')
+      }
+    },
+    [],
+  )
+
+  const handleDuplicate = useCallback(
+    async (id: string) => {
+      const agent = agents.find((a) => a.id === id)
+      if (!agent) {
+        return
+      }
+
+      try {
+        const response = await fetch('/api/agents', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: `${agent.name} (копия)`,
+            status: 'draft',
+            model: agent.model,
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error('Не удалось создать копию агента')
+        }
+
+        const payload = (await response.json()) as { success: boolean; data: Agent }
+
+        if (!payload.success) {
+          throw new Error('Не удалось создать копию агента')
+        }
+
+        await fetchAgents(searchTerm)
+      } catch (err) {
+        console.error('Failed to duplicate agent', err)
+        setError('Не удалось создать копию агента')
+      }
+    },
+    [agents, fetchAgents, searchTerm],
+  )
+
+  const handleDelete = useCallback(
+    async (id: string) => {
+      if (!confirm('Вы уверены, что хотите удалить этого агента? Это действие нельзя отменить.')) {
+        return
+      }
+
+      try {
+        const response = await fetch(`/api/agents/${id}`, {
+          method: 'DELETE',
+        })
+
+        if (!response.ok) {
+          throw new Error('Не удалось удалить агента')
+        }
+
+        const payload = (await response.json()) as { success: boolean }
+
+        if (!payload.success) {
+          throw new Error('Не удалось удалить агента')
+        }
+
+        await fetchAgents(searchTerm)
+      } catch (err) {
+        console.error('Failed to delete agent', err)
+        setError('Не удалось удалить агента')
+      }
+    },
+    [fetchAgents, searchTerm],
+  )
 
   const resultLabel = useMemo(() => {
     if (!hasAgents) {
@@ -159,7 +254,13 @@ export const AgentsClient = ({ initialAgents, total }: AgentsClientProps) => {
         </div>
       )}
 
-      <AgentTable agents={agents} onDelete={handleDelete} onDuplicate={handleDuplicate} isLoading={isPending} />
+      <AgentTable
+        agents={agents}
+        onDelete={handleDelete}
+        onDuplicate={handleDuplicate}
+        onStatusChange={handleStatusChange}
+        isLoading={isPending}
+      />
 
       <div className="flex items-center justify-between text-sm text-slate-500">
         <p aria-live="polite">{resultLabel}</p>

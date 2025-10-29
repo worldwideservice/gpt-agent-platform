@@ -22,10 +22,25 @@
 ## Документация
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md) — целевая архитектура
 - [`docs/SETUP.md`](./docs/SETUP.md) — шаги развёртывания (Supabase, Backend, Worker)
+- [`docs/OPENROUTER_SETUP.md`](./docs/OPENROUTER_SETUP.md) — настройка OpenRouter для работы с LLM
 - [`docs/TOKENS.md`](./docs/TOKENS.md) — переменные окружения и токены
 - [`.cursor/mcp.json`](./.cursor/mcp.json) — актуальная конфигурация MCP (секреты добавляйте локально)
 
 ## Запуск
+
+### Требования
+- Node.js 20+
+- Redis (локально или Docker)
+- Supabase проект
+- OpenRouter API ключ (для работы чата с LLM)
+
+### Настройка окружения
+
+1. Скопируйте переменные окружения (см. `docs/SETUP.md`)
+2. Получите OpenRouter API ключ: [Инструкции](./docs/OPENROUTER_SETUP.md)
+
+### Запуск сервисов
+
 ```bash
 # Frontend
 npm install
@@ -41,6 +56,7 @@ cd services/worker
 npm install
 npm run dev
 ```
+
 Redis и Supabase должны быть доступны; переменные окружения описаны в `docs/SETUP.md`.
 
 ## Структура

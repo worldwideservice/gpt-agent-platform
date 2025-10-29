@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # Redis для очередей задач
+  redis:
+    image: redis:7-alpine
+    container_name: gpt-agent-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Backend API Service
+  # Примечание: Запускайте отдельно через npm run dev в services/api
+  # или создайте Dockerfile для продакшена
+  # api:
+  #   build:
+  #     context: .
+  #     dockerfile: services/api/Dockerfile
+  #   ports:
+  #     - "4000:4000"
+  #   env_file:
+  #     - services/api/.env
+  #   depends_on:
+  #     - redis
+  #   restart: unless-stopped
+
+  # Worker Service
+  # Примечание: Запускайте отдельно через npm run dev в services/worker
+  # или создайте Dockerfile для продакшена
+  # worker:
+  #   build:
+  #     context: .
+  #     dockerfile: services/worker/Dockerfile
+  #   env_file:
+  #     - services/worker/.env
+  #   depends_on:
+  #     - redis
+  #   restart: unless-stopped
+
+volumes:
+  redis-data:
+
+networks:
+  default:
+    name: gpt-agent-network
+

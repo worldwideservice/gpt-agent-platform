@@ -10,6 +10,7 @@ import { registerCrmRoutes } from './routes/crm'
 import { registerAgentRoutes } from './routes/agents'
 import { registerHealthRoutes } from './routes/health'
 import { registerKommoRoutes } from './routes/kommo'
+import { registerJobRoutes } from './routes/jobs'
 
 const buildServer = () => {
   const app = Fastify({
@@ -27,6 +28,7 @@ const buildServer = () => {
   app.register(registerCrmRoutes, { prefix: '/crm' })
   app.register(registerKommoRoutes, { prefix: '/kommo' })
   app.register(registerAgentRoutes, { prefix: '/' })
+  app.register(registerJobRoutes, { prefix: '/jobs' })
 
   return app
 }

@@ -1,6 +1,6 @@
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
-import type { Agent } from '@/types'
+import type { Agent, AgentSettings } from '@/types'
 import type {
   AgentActivityMetricRow,
   AgentRow,
@@ -31,6 +31,70 @@ interface ActivitySeriesPoint {
   value: number
 }
 
+const AGENT_SELECT_FIELDS = `
+  id,
+  name,
+  status,
+  default_model,
+  owner_name,
+  messages_total,
+  last_activity_at,
+  created_at,
+  updated_at,
+  temperature,
+  max_tokens,
+  response_delay_seconds,
+  instructions,
+  settings
+`
+
+const parseAgentSettings = (raw: unknown): AgentSettings => {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return {}
+  }
+
+  const value = raw as Record<string, unknown>
+  const settings: AgentSettings = {}
+
+  if (typeof value.language === 'string') {
+    settings.language = value.language
+  }
+
+  if (typeof value.welcomeMessage === 'string') {
+    settings.welcomeMessage = value.welcomeMessage
+  }
+
+  if (typeof value.description === 'string') {
+    settings.description = value.description
+  }
+
+  if (typeof value.presencePenalty === 'number') {
+    settings.presencePenalty = value.presencePenalty
+  }
+
+  if (typeof value.frequencyPenalty === 'number') {
+    settings.frequencyPenalty = value.frequencyPenalty
+  }
+
+  if (Array.isArray(value.defaultChannels)) {
+    settings.defaultChannels = value.defaultChannels.filter((item): item is string => typeof item === 'string')
+  }
+
+  if (typeof value.knowledgeBaseAllCategories === 'boolean') {
+    settings.knowledgeBaseAllCategories = value.knowledgeBaseAllCategories
+  }
+
+  if (typeof value.createTaskOnNotFound === 'boolean') {
+    settings.createTaskOnNotFound = value.createTaskOnNotFound
+  }
+
+  if (typeof value.notFoundMessage === 'string') {
+    settings.notFoundMessage = value.notFoundMessage
+  }
+
+  return settings
+}
+
 const mapAgentRowToDomain = (row: AgentRow): Agent => {
   return {
     id: row.id,
@@ -42,6 +106,11 @@ const mapAgentRowToDomain = (row: AgentRow): Agent => {
     ownerName: row.owner_name,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    temperature: Number(row.temperature ?? 0.7),
+    maxTokens: Number(row.max_tokens ?? 2048),
+    responseDelaySeconds: Number(row.response_delay_seconds ?? 0),
+    instructions: row.instructions ?? null,
+    settings: parseAgentSettings(row.settings),
   }
 }
 
@@ -75,10 +144,7 @@ export const getAgents = async (params: AgentListParams): Promise<AgentListResul
 
   let query = supabase
     .from('agents')
-    .select(
-      `id, name, status, default_model, owner_name, messages_total, last_activity_at, created_at, updated_at`,
-      { count: 'exact' },
-    )
+    .select(AGENT_SELECT_FIELDS, { count: 'exact' })
     .eq('org_id', params.organizationId)
     .order('created_at', { ascending: false })
 
@@ -215,6 +281,40 @@ export const getDailyResponsesSeries = async (
     const key = date.toISOString().slice(0, 10)
     series.push({
       label: formatter.format(date),
+      value: totalsByDate.get(key) ?? 0,
+    })
+  }
+
+  return series
+}
+
+export const getWeeklyBarChartData = async (
+  organizationId: string,
+): Promise<ActivitySeriesPoint[]> => {
+  const supabase = getSupabaseServiceRoleClient()
+  const now = new Date()
+  const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 6))
+  
+  const metrics = await fetchActivityMetrics(supabase, organizationId, startDate)
+
+  const totalsByDate = new Map<string, number>()
+
+  metrics.forEach((metric) => {
+    const key = new Date(metric.activity_date).toISOString().slice(0, 10)
+    totalsByDate.set(key, (totalsByDate.get(key) ?? 0) + metric.messages_count)
+  })
+
+  const dayFormatter = new Intl.DateTimeFormat('ru-RU', { weekday: 'long' })
+  const series: ActivitySeriesPoint[] = []
+
+  for (let offset = 6; offset >= 0; offset -= 1) {
+    const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - offset))
+    const key = date.toISOString().slice(0, 10)
+    const dayName = dayFormatter.format(date)
+    const capitalizedDayName = dayName.charAt(0).toUpperCase() + dayName.slice(1)
+    
+    series.push({
+      label: capitalizedDayName,
       value: totalsByDate.get(key) ?? 0,
     })
   }
@@ -439,6 +539,192 @@ const buildWeeklyActivitySeries = (
   }
 
   return series
+}
+
+export const getAgentById = async (
+  agentId: string,
+  organizationId: string,
+): Promise<Agent | null> => {
+  const supabase = getSupabaseServiceRoleClient()
+
+  const { data, error } = await supabase
+    .from('agents')
+    .select(AGENT_SELECT_FIELDS)
+    .eq('id', agentId)
+    .eq('org_id', organizationId)
+    .maybeSingle()
+
+  if (error) {
+    console.error('Failed to fetch agent from Supabase', error)
+    throw new Error('Не удалось загрузить агента')
+  }
+
+  if (!data) {
+    return null
+  }
+
+  return mapAgentRowToDomain(data as AgentRow)
+}
+
+export const updateAgentStatus = async (
+  agentId: string,
+  organizationId: string,
+  status: Agent['status'],
+): Promise<Agent> => {
+  const supabase = getSupabaseServiceRoleClient()
+
+  const { data, error } = await supabase
+    .from('agents')
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', agentId)
+    .eq('org_id', organizationId)
+    .select(AGENT_SELECT_FIELDS)
+    .single()
+
+  if (error) {
+    console.error('Failed to update agent status', error)
+    throw new Error('Не удалось обновить статус агента')
+  }
+
+  if (!data) {
+    throw new Error('Агент не найден')
+  }
+
+  return mapAgentRowToDomain(data as AgentRow)
+}
+
+export const createAgent = async (
+  organizationId: string,
+  agentData: {
+    name: string
+    status?: Agent['status']
+    model?: string
+    instructions?: string
+    temperature?: number
+    maxTokens?: number
+    responseDelaySeconds?: number
+    settings?: AgentSettings
+  },
+): Promise<Agent> => {
+  const supabase = getSupabaseServiceRoleClient()
+
+  const insertPayload = {
+    org_id: organizationId,
+    name: agentData.name,
+    status: agentData.status ?? 'draft',
+    default_model: agentData.model ?? null,
+    instructions: agentData.instructions ?? null,
+    system_prompt: agentData.instructions ?? null,
+    temperature: agentData.temperature ?? 0.7,
+    max_tokens: agentData.maxTokens ?? 2048,
+    response_delay_seconds: agentData.responseDelaySeconds ?? 0,
+    settings: agentData.settings ?? {},
+  }
+
+  const { data, error } = await supabase
+    .from('agents')
+    .insert(insertPayload)
+    .select(AGENT_SELECT_FIELDS)
+    .single()
+
+  if (error) {
+    console.error('Failed to create agent', error)
+    throw new Error('Не удалось создать агента')
+  }
+
+  if (!data) {
+    throw new Error('Не удалось создать агента')
+  }
+
+  return mapAgentRowToDomain(data as AgentRow)
+}
+
+export const updateAgent = async (
+  agentId: string,
+  organizationId: string,
+  agentData: {
+    name?: string
+    status?: Agent['status']
+    model?: string
+    instructions?: string
+    temperature?: number
+    maxTokens?: number
+    responseDelaySeconds?: number
+    settings?: AgentSettings
+  },
+): Promise<Agent> => {
+  const supabase = getSupabaseServiceRoleClient()
+
+  const updatePayload: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  }
+
+  if (agentData.name !== undefined) {
+    updatePayload.name = agentData.name
+  }
+
+  if (agentData.status !== undefined) {
+    updatePayload.status = agentData.status
+  }
+
+  if (agentData.model !== undefined) {
+    updatePayload.default_model = agentData.model
+  }
+
+  if (agentData.instructions !== undefined) {
+    updatePayload.instructions = agentData.instructions
+    updatePayload.system_prompt = agentData.instructions
+  }
+
+  if (agentData.temperature !== undefined) {
+    updatePayload.temperature = agentData.temperature
+  }
+
+  if (agentData.maxTokens !== undefined) {
+    updatePayload.max_tokens = agentData.maxTokens
+  }
+
+  if (agentData.responseDelaySeconds !== undefined) {
+    updatePayload.response_delay_seconds = agentData.responseDelaySeconds
+  }
+
+  if (agentData.settings !== undefined) {
+    updatePayload.settings = agentData.settings
+  }
+
+  const { data, error } = await supabase
+    .from('agents')
+    .update(updatePayload)
+    .eq('id', agentId)
+    .eq('org_id', organizationId)
+    .select(AGENT_SELECT_FIELDS)
+    .single()
+
+  if (error) {
+    console.error('Failed to update agent', error)
+    throw new Error('Не удалось обновить агента')
+  }
+
+  if (!data) {
+    throw new Error('Агент не найден')
+  }
+
+  return mapAgentRowToDomain(data as AgentRow)
+}
+
+export const deleteAgent = async (agentId: string, organizationId: string): Promise<void> => {
+  const supabase = getSupabaseServiceRoleClient()
+
+  const { error } = await supabase
+    .from('agents')
+    .delete()
+    .eq('id', agentId)
+    .eq('org_id', organizationId)
+
+  if (error) {
+    console.error('Failed to delete agent', error)
+    throw new Error('Не удалось удалить агента')
+  }
 }
 
 export type { AgentListParams, AgentListResult, ActivitySummaryItem, ActivitySeriesPoint }
