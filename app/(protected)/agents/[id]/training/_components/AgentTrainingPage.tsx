@@ -677,21 +677,21 @@ export const AgentTrainingPage = ({ agentId, agentName }: AgentTrainingPageProps
                           className="text-slate-400 transition-colors hover:text-rose-500"
                           aria-label="Удалить"
                           onClick={async () => {
-                            if (!confirm('Удалить этот скрипт?')) return
+                            if (!confirm('Удалить этот ответ на возражение?')) return
 
                             try {
-                              const response = await fetch(`/api/agents/${agentId}/scripts/${script.id}`, {
+                              const response = await fetch(`/api/agents/${agentId}/objections/${objection.id}`, {
                                 method: 'DELETE',
                               })
 
                               if (!response.ok) {
-                                throw new Error('Не удалось удалить скрипт')
+                                throw new Error('Не удалось удалить ответ')
                               }
 
-                              await fetchScripts()
+                              await fetchObjections()
                             } catch (error) {
-                              console.error('Failed to delete script', error)
-                              alert('Ошибка удаления скрипта')
+                              console.error('Failed to delete objection', error)
+                              alert('Ошибка удаления ответа')
                             }
                           }}
                         >
