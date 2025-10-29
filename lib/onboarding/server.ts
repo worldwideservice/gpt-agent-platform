@@ -290,17 +290,19 @@ export const upsertOnboardingAgent = async (
   const settings = buildAgentSettings(input)
 
   if (existingAgent) {
+    const updatePayload: Database['public']['Tables']['agents']['Update'] = {
+      name: input.name,
+      default_model: input.model,
+      status: 'active',
+      connection_id: connection.id,
+      instructions: input.goal,
+      system_prompt: input.goal,
+      settings,
+    }
+
     const { data, error } = await supabase
       .from('agents')
-      .update<Partial<AgentRow>>({
-        name: input.name,
-        default_model: input.model,
-        status: 'active',
-        connection_id: connection.id,
-        instructions: input.goal,
-        system_prompt: input.goal,
-        settings,
-      })
+      .update(updatePayload)
       .eq('id', existingAgent.id)
       .select('*')
       .single()
@@ -312,18 +314,20 @@ export const upsertOnboardingAgent = async (
     return data as AgentRow
   }
 
+  const insertPayload: Database['public']['Tables']['agents']['Insert'] = {
+    org_id: input.orgId,
+    connection_id: connection.id,
+    name: input.name,
+    status: 'active',
+    default_model: input.model,
+    instructions: input.goal,
+    system_prompt: input.goal,
+    settings,
+  }
+
   const { data, error } = await supabase
     .from('agents')
-    .insert<Partial<AgentRow>>({
-      org_id: input.orgId,
-      connection_id: connection.id,
-      name: input.name,
-      status: 'active',
-      default_model: input.model,
-      instructions: input.goal,
-      system_prompt: input.goal,
-      settings,
-    })
+    .insert(insertPayload)
     .select('*')
     .single()
 
