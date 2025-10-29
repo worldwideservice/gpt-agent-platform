@@ -247,12 +247,14 @@ export type CreateOnboardingAgentInput = {
 
 const buildAgentSettings = (
   input: CreateOnboardingAgentInput,
-): Database['public']['Tables']['agents']['Insert']['settings'] => {
-  return {
+): Database['public']['Tables']['agents']['Row']['settings'] => {
+  const settings = {
     channels: input.channels,
     schedule: input.schedule,
     goal: input.goal,
   }
+
+  return settings as Database['public']['Tables']['agents']['Row']['settings']
 }
 
 export const upsertOnboardingAgent = async (
