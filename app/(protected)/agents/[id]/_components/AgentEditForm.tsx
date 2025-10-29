@@ -17,7 +17,7 @@ import {
   Users,
   Zap,
   Clock,
-  PuzzlePiece,
+  Plug,
   Settings2,
 } from 'lucide-react'
 
@@ -37,7 +37,6 @@ import { Textarea } from '@/components/ui/Textarea'
 import { Toggle } from '@/components/ui/Toggle'
 
 import type { Agent } from '@/types'
-import type { AgentChannel } from '@/lib/repositories/agent-sequences'
 import type { AgentChannel } from '@/lib/repositories/agent-sequences'
 
 interface AgentEditFormProps {
@@ -101,6 +100,7 @@ type AgentFormState = {
   knowledgeBaseAllCategories: boolean
   createTaskOnNotFound: boolean
   notFoundMessage: string
+  checkBeforeSending: boolean
   defaultChannels: string[]
 }
 
@@ -168,6 +168,8 @@ const deriveFormState = (agent?: Agent | null): AgentFormState => {
     defaultChannels: Array.isArray(settings.defaultChannels)
       ? settings.defaultChannels.filter((item): item is string => typeof item === 'string')
       : [],
+    checkBeforeSending:
+      typeof settings.checkBeforeSending === 'boolean' ? settings.checkBeforeSending : false,
   }
 }
 
@@ -594,7 +596,7 @@ const handleChannelSync = useCallback(async () => {
             Цепочки
           </TabsTrigger>
           <TabsTrigger value="integrations" className="flex-1 rounded-xl px-4 py-2 text-sm">
-            <PuzzlePiece className="mr-2 h-4 w-4" />
+            <Plug className="mr-2 h-4 w-4" />
             Интеграции
           </TabsTrigger>
           <TabsTrigger value="training" className="flex-1 rounded-xl px-4 py-2 text-sm">
@@ -648,7 +650,7 @@ const handleChannelSync = useCallback(async () => {
                       { value: 'gpt-4', label: 'OpenAI GPT-4' },
                     ]}
                     value={formData.model}
-                    onChange={(value) => setFormData((prev) => ({ ...prev, model: value }))}
+                    onChange={(value: string) => setFormData((prev) => ({ ...prev, model: value }))}
                   />
                   <Select
                     label="Рабочий язык"
@@ -658,7 +660,7 @@ const handleChannelSync = useCallback(async () => {
                       { value: 'ru', label: 'Русский' },
                     ]}
                     value={formData.language}
-                    onChange={(value) => setFormData((prev) => ({ ...prev, language: value }))}
+                    onChange={(value: string) => setFormData((prev) => ({ ...prev, language: value }))}
                   />
                   <Textarea
                     label="Описание"
@@ -718,7 +720,12 @@ const handleChannelSync = useCallback(async () => {
         <TabsContent value="crm" className="space-y-6">
           <Card className="shadow-sm">
             <CardContent className="space-y-6 p-6">
-              <InteractionSettings />
+              <InteractionSettings 
+                checkBeforeSending={formData.checkBeforeSending}
+                onCheckBeforeSendingToggle={(enabled: boolean) => 
+                  setFormData((prev) => ({ ...prev, checkBeforeSending: enabled }))
+                }
+              />
 
               <Select
                 label="Рабочая воронка"
