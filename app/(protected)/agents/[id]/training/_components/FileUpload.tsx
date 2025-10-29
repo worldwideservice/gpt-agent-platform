@@ -240,7 +240,8 @@ export const FileUpload = ({ agentId, onUploadComplete }: FileUploadProps) => {
           disabled={isUploading}
         />
         <label htmlFor="file-upload">
-          <Button as="span" className="mt-6 cursor-pointer" disabled={isUploading}>
+          <Button type="button" className="mt-6 cursor-pointer" disabled={isUploading} asChild>
+            <span>
             {isUploading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
