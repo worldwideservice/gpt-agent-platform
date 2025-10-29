@@ -155,7 +155,7 @@ export const ArticleForm = ({ articleId, initialArticle, categories }: ArticleFo
                 label="Категория"
                 options={categoryOptions}
                 value={formData.categoryId}
-                onChange={(e) => setFormData((prev) => ({ ...prev, categoryId: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData((prev) => ({ ...prev, categoryId: e.target.value }))}
               />
 
               <Textarea
