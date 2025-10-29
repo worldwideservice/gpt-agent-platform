@@ -239,20 +239,21 @@ export const FileUpload = ({ agentId, onUploadComplete }: FileUploadProps) => {
           onChange={(e) => handleUpload(e.target.files)}
           disabled={isUploading}
         />
-        <label htmlFor="file-upload">
-          <Button type="button" className="mt-6 cursor-pointer" disabled={isUploading} asChild>
+        <label htmlFor="file-upload" className="cursor-pointer">
+          <Button type="button" className="mt-6" disabled={isUploading} asChild>
             <span>
-            {isUploading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Загрузка...
-              </>
-            ) : (
-              <>
-                <Upload className="mr-2 h-4 w-4" />
-                Выбрать файлы
-              </>
-            )}
+              {isUploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Загрузка...
+                </>
+              ) : (
+                <>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Выбрать файлы
+                </>
+              )}
+            </span>
           </Button>
         </label>
       </div>
