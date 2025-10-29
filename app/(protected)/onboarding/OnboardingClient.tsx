@@ -522,10 +522,10 @@ export const OnboardingClient = ({ initialState }: OnboardingClientProps) => {
               <Select
                 id="crm-provider"
                 value={crmForm.provider}
-                onChange={(event) =>
+                onChange={(value: string) =>
                   setCrmForm((prev) => ({
                     ...prev,
-                    provider: event.target.value,
+                    provider: value,
                   }))
                 }
                 options={crmProviders}
