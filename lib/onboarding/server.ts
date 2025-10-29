@@ -245,7 +245,9 @@ export type CreateOnboardingAgentInput = {
   schedule: string
 }
 
-const buildAgentSettings = (input: CreateOnboardingAgentInput) => {
+const buildAgentSettings = (
+  input: CreateOnboardingAgentInput,
+): Database['public']['Tables']['agents']['Insert']['settings'] => {
   return {
     channels: input.channels,
     schedule: input.schedule,
