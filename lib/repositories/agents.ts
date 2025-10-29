@@ -26,6 +26,11 @@ interface ActivitySummaryItem {
   messagesCount: number
 }
 
+interface ActivitySeriesPoint {
+  label: string
+  value: number
+}
+
 const mapAgentRowToDomain = (row: AgentRow): Agent => {
   return {
     id: row.id,
@@ -38,6 +43,26 @@ const mapAgentRowToDomain = (row: AgentRow): Agent => {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
+}
+
+const fetchActivityMetrics = async (
+  supabase: ReturnType<typeof getSupabaseServiceRoleClient>,
+  organizationId: string,
+  startDate: Date,
+): Promise<AgentActivityMetricRow[]> => {
+  const { data, error } = await supabase
+    .from('agent_activity_metrics')
+    .select('activity_date, messages_count')
+    .eq('org_id', organizationId)
+    .gte('activity_date', startDate.toISOString())
+    .order('activity_date', { ascending: true })
+
+  if (error) {
+    console.error('Failed to load agent activity metrics', error)
+    return []
+  }
+
+  return (data as AgentActivityMetricRow[] | null) ?? []
 }
 
 export const getAgents = async (params: AgentListParams): Promise<AgentListResult> => {
@@ -109,19 +134,11 @@ export const getWeeklyActivitySummary = async (
   const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
   startDate.setUTCDate(startDate.getUTCDate() - 6)
 
-  const { data, error } = await supabase
-    .from('agent_activity_metrics')
-    .select('activity_date, messages_count')
-    .eq('org_id', organizationId)
-    .gte('activity_date', startDate.toISOString())
-    .order('activity_date', { ascending: true })
+  const metrics = await fetchActivityMetrics(supabase, organizationId, startDate)
 
-  if (error) {
-    console.error('Failed to load weekly activity metrics', error)
+  if (metrics.length === 0) {
     return buildEmptyWeeklyActivity(startDate)
   }
-
-  const metrics = (data as AgentActivityMetricRow[] | null) ?? []
   const activityMap: Record<string, number> = {}
 
   metrics.forEach((metric: AgentActivityMetricRow) => {
@@ -131,6 +148,78 @@ export const getWeeklyActivitySummary = async (
   })
 
   return buildWeeklyActivitySeries(startDate, activityMap)
+}
+
+export const getMonthlyResponsesSeries = async (
+  organizationId: string,
+  months = 6,
+): Promise<ActivitySeriesPoint[]> => {
+  const appliedMonths = months > 0 ? months : 1
+  const supabase = getSupabaseServiceRoleClient()
+  const now = new Date()
+  const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (appliedMonths - 1), 1))
+  const metrics = await fetchActivityMetrics(supabase, organizationId, startDate)
+
+  const totalsByMonth = new Map<string, number>()
+
+  metrics.forEach((metric) => {
+    const activityDate = new Date(metric.activity_date)
+    const key = `${activityDate.getUTCFullYear()}-${activityDate.getUTCMonth()}`
+    totalsByMonth.set(key, (totalsByMonth.get(key) ?? 0) + metric.messages_count)
+  })
+
+  const formatter = new Intl.DateTimeFormat('ru-RU', { month: 'short', year: 'numeric' })
+  const series: ActivitySeriesPoint[] = []
+
+  for (let offset = appliedMonths - 1; offset >= 0; offset -= 1) {
+    const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - offset, 1))
+    const key = `${date.getUTCFullYear()}-${date.getUTCMonth()}`
+    series.push({
+      label: formatter.format(date),
+      value: totalsByMonth.get(key) ?? 0,
+    })
+  }
+
+  return series
+}
+
+export const getDailyResponsesSeries = async (
+  organizationId: string,
+  days = 10,
+): Promise<ActivitySeriesPoint[]> => {
+  const appliedDays = days > 0 ? days : 1
+  const supabase = getSupabaseServiceRoleClient()
+  const now = new Date()
+  const startDate = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - (appliedDays - 1)),
+  )
+  const metrics = await fetchActivityMetrics(supabase, organizationId, startDate)
+
+  const totalsByDate = new Map<string, number>()
+
+  metrics.forEach((metric) => {
+    const key = new Date(metric.activity_date).toISOString().slice(0, 10)
+    totalsByDate.set(key, (totalsByDate.get(key) ?? 0) + metric.messages_count)
+  })
+
+  const formatter = new Intl.DateTimeFormat('ru-RU', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+  })
+
+  const series: ActivitySeriesPoint[] = []
+
+  for (let offset = appliedDays - 1; offset >= 0; offset -= 1) {
+    const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - offset))
+    const key = date.toISOString().slice(0, 10)
+    series.push({
+      label: formatter.format(date),
+      value: totalsByDate.get(key) ?? 0,
+    })
+  }
+
+  return series
 }
 
 const loadDashboardStatsFromView = async (
@@ -352,4 +441,4 @@ const buildWeeklyActivitySeries = (
   return series
 }
 
-export type { AgentListParams, AgentListResult, ActivitySummaryItem }
+export type { AgentListParams, AgentListResult, ActivitySummaryItem, ActivitySeriesPoint }

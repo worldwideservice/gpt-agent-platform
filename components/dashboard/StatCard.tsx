@@ -1,4 +1,18 @@
-import { LucideIcon } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, LucideIcon } from 'lucide-react'
+
+const formatNumber = (value: number | string): string => {
+  if (typeof value === 'string') {
+    return value
+  }
+
+  return new Intl.NumberFormat('ru-RU').format(value)
+}
+
+const formatChange = (value: number): string => {
+  const rounded = Number.parseFloat(value.toFixed(1))
+  const prefix = rounded > 0 ? '+' : ''
+  return `${prefix}${rounded}%`
+}
 
 export interface StatCardProps {
   title: string
@@ -8,56 +22,39 @@ export interface StatCardProps {
   icon?: LucideIcon
 }
 
-export const StatCard = ({
-  title,
-  value,
-  change,
-  subtitle,
-  icon: Icon,
-}: StatCardProps) => {
-  const formatNumber = (num: number | string) => {
-    if (typeof num === 'string') return num
-    return new Intl.NumberFormat('ru-RU').format(num)
-  }
+export const StatCard = ({ title, value, change, subtitle, icon: Icon }: StatCardProps) => {
+  const hasChange = typeof change === 'number'
+  const isPositive = (change ?? 0) >= 0
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className="text-sm font-medium text-gray-600 mb-2">{title}</p>
-          <div className="flex items-baseline space-x-2">
-            <p className="text-3xl font-bold text-gray-900">{formatNumber(value)}</p>
-            {change && (
-              <p className={`text-sm font-medium ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {change > 0 ? '+' : ''}{change}%
-              </p>
-            )}
-          </div>
-          {subtitle && (
-            <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
-          )}
+    <article className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-lg">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium text-slate-500">{title}</p>
+          <p className="mt-3 text-3xl font-bold tracking-tight text-slate-900">{formatNumber(value)}</p>
+          {subtitle && <p className="mt-1 text-xs text-slate-400">{subtitle}</p>}
         </div>
-        
         {Icon && (
-          <div className="w-10 h-10 bg-primary-50 rounded-lg flex items-center justify-center">
-            <Icon className="w-6 h-6 text-primary-600" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary-600">
+            <Icon className="h-6 w-6" />
           </div>
         )}
       </div>
-      
-      {/* Mini chart/indicator */}
-      {change && (
-        <div className="mt-4 flex items-center space-x-2">
-          <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className={`h-full ${
-                change >= 0 ? 'bg-green-500' : 'bg-red-500'
-              }`}
-              style={{ width: `${Math.min(Math.abs(change), 100)}%` }}
-            />
-          </div>
+
+      {hasChange && (
+        <div
+          className={`mt-6 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
+            isPositive ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
+          }`}
+        >
+          {isPositive ? (
+            <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+          ) : (
+            <ArrowDownRight className="h-4 w-4" aria-hidden="true" />
+          )}
+          <span>{formatChange(change ?? 0)}</span>
         </div>
       )}
-    </div>
+    </article>
   )
 }

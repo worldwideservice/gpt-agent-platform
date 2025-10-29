@@ -1,188 +1,174 @@
 'use client'
 
-import { useState } from 'react'
-import { Send, Bot, User } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Bot, LayoutList, MessageSquarePlus, Send, User } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
-import { Card, CardContent } from '@/components/ui/Card'
 import { Select } from '@/components/ui/Select'
-import type { ChatMessage } from '@/types'
+
+interface ChatPreview {
+  id: string
+  title: string
+  excerpt: string
+  lastActivity: string
+}
+
+interface ChatMessage {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: string
+}
+
+const mockChats: ChatPreview[] = [
+  {
+    id: 'chat-1',
+    title: 'Thank you for your interest! A person…',
+    excerpt: 'Thank you for your interest! A personal consultant will contact you shortly.',
+    lastActivity: '3 месяца назад',
+  },
+]
+
+const mockMessages: ChatMessage[] = [
+  {
+    id: 'msg-1',
+    role: 'assistant',
+    content: 'Thank you for your interest! A personal consultant will contact you shortly.',
+    timestamp: '3 месяца назад',
+  },
+]
+
+const agents = [
+  { value: 'ai-assistant', label: 'AI ассистент' },
+  { value: 'immigration', label: 'Assistant Immigration Advisor World Wide Services' },
+]
 
 const ChatPage = () => {
-  const [selectedAgent, setSelectedAgent] = useState('1')
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: 'Здравствуйте! Я AI-консультант. Чем могу помочь?',
-      timestamp: new Date(),
-    },
-  ])
-  const [inputValue, setInputValue] = useState('')
-  const [isTyping, setIsTyping] = useState(false)
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
+  const [messageValue, setMessageValue] = useState('')
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim()) return
-
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: inputValue,
-      timestamp: new Date(),
+  const selectedChatMessages = useMemo(() => {
+    if (!selectedChatId) {
+      return []
     }
+    return mockMessages
+  }, [selectedChatId])
 
-    setMessages(prev => [...prev, userMessage])
-    setInputValue('')
-    setIsTyping(true)
-
-    // Имитация ответа AI
-    setTimeout(() => {
-      const aiMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: 'Спасибо за ваше сообщение! Это тестовый ответ AI-агента. В реальной системе здесь будет полноценный ответ на основе настроенных инструкций и базы знаний.',
-        timestamp: new Date(),
-      }
-      setMessages(prev => [...prev, aiMessage])
-      setIsTyping(false)
-    }, 1500)
+  const handleOpenChat = (chatId: string) => {
+    setSelectedChatId(chatId)
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
+  const handleNewChat = () => {
+    setSelectedChatId('new')
+  }
+
+  const handleSend = () => {
+    if (!messageValue.trim()) {
+      return
     }
+    setMessageValue('')
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Тестовый чат</h1>
-        <p className="text-gray-600 mt-1">
-          Протестируйте работу AI-агента в реальном времени
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-1">
-          <Card>
-            <CardContent>
-              <h3 className="font-semibold text-gray-900 mb-4">Настройки чата</h3>
-              <Select
-                label="Выберите агента"
-                value={selectedAgent}
-                onChange={(e) => setSelectedAgent(e.target.value)}
-                options={[
-                  { value: '1', label: 'Консультант по продажам' },
-                  { value: '2', label: 'Техническая поддержка' },
-                  { value: '3', label: 'Квалификация лидов' },
-                ]}
-              />
-              <Button
-                variant="outline"
-                className="w-full mt-4"
-                onClick={() => setMessages([{
-                  id: '1',
-                  role: 'assistant',
-                  content: 'Здравствуйте! Я AI-консультант. Чем могу помочь?',
-                  timestamp: new Date(),
-                }])}
-              >
-                Очистить чат
-              </Button>
-            </CardContent>
-          </Card>
+    <div className="grid gap-6 lg:grid-cols-[360px_1fr] xl:grid-cols-[400px_1fr]">
+      <aside className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+          <h2 className="text-lg font-semibold text-slate-900">Чаты</h2>
+          <Button variant="outline" className="gap-2 text-sm" onClick={handleNewChat}>
+            <MessageSquarePlus className="h-4 w-4" /> Новый чат
+          </Button>
         </div>
+        <div className="max-h-[calc(100vh-280px)] overflow-y-auto px-4 py-3">
+          <div className="space-y-2">
+            {mockChats.map((chat) => {
+              const isActive = selectedChatId === chat.id
+              return (
+                <button
+                  key={chat.id}
+                  type="button"
+                  onClick={() => handleOpenChat(chat.id)}
+                  className={`w-full rounded-xl border px-4 py-3 text-left text-sm transition-colors ${
+                    isActive ? 'border-primary-200 bg-primary-50 text-primary-700' : 'border-transparent bg-slate-50 hover:bg-slate-100'
+                  }`}
+                >
+                  <p className="font-medium">{chat.title}</p>
+                  <p className="mt-1 line-clamp-1 text-xs text-slate-500">{chat.excerpt}</p>
+                  <p className="mt-2 text-[11px] uppercase tracking-wide text-slate-400">{chat.lastActivity}</p>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      </aside>
 
-        <div className="lg:col-span-3">
-          <Card className="h-[calc(100vh-280px)] flex flex-col">
-            <CardContent className="flex-1 flex flex-col">
-              <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-                {messages.map((message) => (
+      <section className="flex h-[calc(100vh-224px)] flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <header className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+              <LayoutList className="h-5 w-5" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-slate-900">
+                {selectedChatId ? 'История диалога' : 'Выберите чат или начните новый'}
+              </p>
+              <p className="text-xs text-slate-500">
+                Выберите агента и протестируйте поведение в реальном времени
+              </p>
+            </div>
+          </div>
+          <div className="w-64">
+            <Select label="Выберите агента ИИ" defaultValue="ai-assistant" options={agents} />
+          </div>
+        </header>
+
+        <div className="flex flex-1 flex-col">
+          <div className="flex-1 overflow-y-auto px-6 py-6">
+            {selectedChatMessages.length === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-slate-400">
+                <div className="h-16 w-16 rounded-full bg-slate-100" />
+                <p className="text-sm font-medium text-slate-500">Выберите чат или начните новый</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {selectedChatMessages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex items-start space-x-3 ${
-                      message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
-                    }`}
+                    className={`flex items-start gap-3 ${message.role === 'user' ? 'flex-row-reverse text-right' : ''}`}
                   >
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        message.role === 'assistant'
-                          ? 'bg-primary-100 text-primary-600'
-                          : 'bg-gray-100 text-gray-600'
+                      className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                        message.role === 'assistant' ? 'bg-primary-100 text-primary-600' : 'bg-slate-100 text-slate-500'
                       }`}
                     >
-                      {message.role === 'assistant' ? (
-                        <Bot className="w-5 h-5" />
-                      ) : (
-                        <User className="w-5 h-5" />
-                      )}
+                      {message.role === 'assistant' ? <Bot className="h-5 w-5" /> : <User className="h-5 w-5" />}
                     </div>
-                    <div
-                      className={`flex-1 max-w-2xl ${
-                        message.role === 'user' ? 'flex justify-end' : ''
-                      }`}
-                    >
-                      <div
-                        className={`p-4 rounded-lg ${
-                          message.role === 'assistant'
-                            ? 'bg-gray-100 text-gray-900'
-                            : 'bg-primary-600 text-white'
-                        }`}
-                      >
-                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                        <p
-                          className={`text-xs mt-2 ${
-                            message.role === 'assistant' ? 'text-gray-500' : 'text-primary-100'
-                          }`}
-                        >
-                          {message.timestamp.toLocaleTimeString('ru-RU', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </p>
-                      </div>
+                    <div className="max-w-xl rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                      <p>{message.content}</p>
+                      <p className="mt-2 text-xs text-slate-400">{message.timestamp}</p>
                     </div>
                   </div>
                 ))}
-                {isTyping && (
-                  <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-primary-100 text-primary-600">
-                      <Bot className="w-5 h-5" />
-                    </div>
-                    <div className="bg-gray-100 text-gray-900 p-4 rounded-lg">
-                      <div className="flex space-x-2">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
+            )}
+          </div>
 
-              <div className="flex items-end space-x-3">
-                <textarea
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  placeholder="Введите сообщение..."
-                  rows={3}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors resize-none"
-                />
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={!inputValue.trim() || isTyping}
-                  className="px-4 py-2 h-[76px]"
-                >
-                  <Send className="w-5 h-5" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <footer className="border-t border-slate-200 px-6 py-4">
+            <div className="flex items-center gap-3">
+              <Select label=" " aria-label="Выберите агента" className="w-60" options={agents} defaultValue="ai-assistant" />
+              <textarea
+                value={messageValue}
+                onChange={(event) => setMessageValue(event.target.value)}
+                placeholder="Введите сообщение здесь..."
+                rows={2}
+                className="flex-1 resize-none rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-600 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              />
+              <Button onClick={handleSend} disabled={!messageValue.trim()} className="h-[52px] w-36 gap-2 text-sm">
+                <Send className="h-4 w-4" /> Отправить
+              </Button>
+            </div>
+          </footer>
         </div>
-      </div>
+      </section>
     </div>
   )
 }

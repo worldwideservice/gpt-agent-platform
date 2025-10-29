@@ -1,11 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Copy, Edit, Trash2 } from 'lucide-react'
 
-import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
+import { Toggle } from '@/components/ui/Toggle'
 import {
   Table,
   TableBody,
@@ -16,7 +13,6 @@ import {
 } from '@/components/ui/Table'
 
 import type { Agent } from '@/types'
-import { formatNumber } from '@/lib/utils'
 
 interface AgentTableProps {
   agents: Agent[]
@@ -26,170 +22,76 @@ interface AgentTableProps {
 }
 
 export const AgentTable = ({ agents, onDelete, onDuplicate, isLoading = false }: AgentTableProps) => {
-  const [selectedAgents, setSelectedAgents] = useState<string[]>([])
-
-  useEffect(() => {
-    setSelectedAgents((prev) => prev.filter((id) => agents.some((agent) => agent.id === id)))
-  }, [agents])
-
-  const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.checked) {
-      setSelectedAgents(agents.map((agent) => agent.id))
-      return
-    }
-
-    setSelectedAgents([])
-  }
-
-  const handleSelectAgent = (id: string) => {
-    setSelectedAgents((prev) =>
-      prev.includes(id) ? prev.filter((agentId) => agentId !== id) : [...prev, id],
-    )
-  }
-
-  const getStatusBadge = (status: Agent['status']) => {
-    const statusConfig = {
-      active: { variant: 'success' as const, label: 'Активен' },
-      inactive: { variant: 'warning' as const, label: 'Неактивен' },
-      draft: { variant: 'default' as const, label: 'Черновик' },
-    }
-
-    const config = statusConfig[status]
-    return <Badge variant={config.variant}>{config.label}</Badge>
-  }
-
-  const renderTableBody = () => {
-    if (isLoading) {
-      return (
-        <TableRow>
-          <TableCell colSpan={7} className="py-10 text-center text-sm text-gray-500">
-            Загрузка агентов...
-          </TableCell>
-        </TableRow>
-      )
-    }
-
-    if (agents.length === 0) {
-      return (
-        <TableRow>
-          <TableCell colSpan={7} className="py-10 text-center text-sm text-gray-500">
-            Агенты не найдены
-          </TableCell>
-        </TableRow>
-      )
-    }
-
-    return agents.map((agent) => (
-      <TableRow key={agent.id}>
-        <TableCell>
-          <input
-            type="checkbox"
-            checked={selectedAgents.includes(agent.id)}
-            onChange={() => handleSelectAgent(agent.id)}
-            className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
-            aria-label={`Выбрать ${agent.name}`}
-          />
-        </TableCell>
-        <TableCell>
-          <Link
-            href={`/agents/${agent.id}`}
-            className="font-medium text-primary-600 hover:text-primary-700 hover:underline"
-          >
-            {agent.name}
-          </Link>
-        </TableCell>
-        <TableCell>{getStatusBadge(agent.status)}</TableCell>
-        <TableCell>
-          <span className="text-sm text-gray-600">{agent.model ?? '—'}</span>
-        </TableCell>
-        <TableCell>
-          <span className="text-sm text-gray-600">{formatNumber(agent.messagesTotal)}</span>
-        </TableCell>
-        <TableCell>
-          <span className="text-sm text-gray-600">{formatRelativeActivity(agent.lastActivityAt)}</span>
-        </TableCell>
-        <TableCell>
-          <span className="text-sm text-gray-600">{formatDate(agent.createdAt)}</span>
-        </TableCell>
-        <TableCell>
-          <span className="text-sm text-gray-600">{formatDate(agent.updatedAt)}</span>
-        </TableCell>
-        <TableCell>
-          <div className="flex items-center justify-end space-x-2">
-            <Link href={`/agents/${agent.id}`}>
-              <Button variant="ghost" size="sm" className="p-2" aria-label="Редактировать">
-                <Edit className="w-4 h-4" />
-              </Button>
-            </Link>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="p-2"
-              onClick={() => onDuplicate(agent.id)}
-              aria-label="Дублировать"
-            >
-              <Copy className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-              onClick={() => onDelete(agent.id)}
-              aria-label="Удалить"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
-        </TableCell>
-      </TableRow>
-    ))
-  }
-
   return (
-    <div className="space-y-4">
-      {selectedAgents.length > 0 && (
-        <div className="flex items-center justify-between rounded-lg border border-primary-200 bg-primary-50 p-4">
-          <span className="text-sm font-medium text-primary-900">
-            Выбрано: {selectedAgents.length}
-          </span>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm">
-              Массовое изменение статуса
-            </Button>
-            <Button variant="destructive" size="sm">
-              Удалить выбранные
-            </Button>
-          </div>
-        </div>
-      )}
-
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        <Table>
-          <TableHeader>
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-slate-50">
+            <TableHead>Название</TableHead>
+            <TableHead className="w-32">Активно</TableHead>
+            <TableHead>Модель ИИ</TableHead>
+            <TableHead className="text-right">Действия</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
             <TableRow>
-              <TableHead className="w-12">
-                <input
-                  type="checkbox"
-                  checked={agents.length > 0 && selectedAgents.length === agents.length}
-                  onChange={handleSelectAll}
-                  className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                  aria-label="Выбрать все"
-                  disabled={agents.length === 0 || isLoading}
-                />
-              </TableHead>
-              <TableHead>Название</TableHead>
-              <TableHead>Статус</TableHead>
-              <TableHead>Модель</TableHead>
-              <TableHead>Сообщений</TableHead>
-              <TableHead>Последняя активность</TableHead>
-              <TableHead>Создан</TableHead>
-              <TableHead>Обновлён</TableHead>
-              <TableHead className="text-right">Действия</TableHead>
+              <TableCell colSpan={4} className="py-12 text-center text-sm text-slate-500">
+                Загрузка агентов...
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>{renderTableBody()}</TableBody>
-        </Table>
-      </div>
+          ) : agents.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={4} className="py-12 text-center text-sm text-slate-500">
+                Агенты не найдены. Создайте первого агента, чтобы начать работу.
+              </TableCell>
+            </TableRow>
+          ) : (
+            agents.map((agent) => (
+              <TableRow key={agent.id} className="border-b border-slate-100">
+                <TableCell>
+                  <div className="flex flex-col">
+                    <Link
+                      href={`/agents/${agent.id}`}
+                      className="text-sm font-semibold text-slate-900 hover:text-primary-600 hover:underline"
+                    >
+                      {agent.name}
+                    </Link>
+                    <span className="mt-1 text-xs uppercase tracking-wide text-slate-400">
+                      Обновлён {formatDate(agent.updatedAt)}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Toggle checked={agent.status === 'active'} disabled aria-label="Статус агента" />
+                </TableCell>
+                <TableCell className="text-sm text-slate-600">{agent.model ?? 'Не указана'}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-3 text-sm font-medium">
+                    <Link href={`/agents/${agent.id}`} className="text-primary-600 hover:text-primary-700">
+                      Изменить
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => onDuplicate(agent.id)}
+                      className="text-slate-500 transition-colors hover:text-slate-700"
+                    >
+                      Копировать
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDelete(agent.id)}
+                      className="text-rose-500 transition-colors hover:text-rose-600"
+                    >
+                      Удалить
+                    </button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
     </div>
   )
 }
@@ -201,44 +103,10 @@ const formatDate = (value: string): string => {
     return '—'
   }
 
-  return date.toLocaleDateString('ru-RU')
-}
-
-const formatRelativeActivity = (value: string | null): string => {
-  if (!value) {
-    return 'нет данных'
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return 'нет данных'
-  }
-
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMinutes = Math.floor(diffMs / (1000 * 60))
-
-  if (diffMinutes < 1) {
-    return 'только что'
-  }
-
-  if (diffMinutes < 60) {
-    return `${diffMinutes} мин назад`
-  }
-
-  const diffHours = Math.floor(diffMinutes / 60)
-
-  if (diffHours < 24) {
-    return `${diffHours} ч назад`
-  }
-
-  const diffDays = Math.floor(diffHours / 24)
-
-  if (diffDays < 7) {
-    return `${diffDays} дн назад`
-  }
-
-  return date.toLocaleDateString('ru-RU')
+  return date.toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
 }
 
