@@ -45,3 +45,6 @@ next-env.d.ts
 /playwright-report/
 /playwright/.cache/
 
+# services build artifacts
+/services/api/dist
+/services/worker/dist
