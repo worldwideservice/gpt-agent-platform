@@ -292,7 +292,7 @@ export const upsertOnboardingAgent = async (
   if (existingAgent) {
     const { data, error } = await supabase
       .from('agents')
-      .update({
+      .update<Partial<AgentRow>>({
         name: input.name,
         default_model: input.model,
         status: 'active',
@@ -314,7 +314,7 @@ export const upsertOnboardingAgent = async (
 
   const { data, error } = await supabase
     .from('agents')
-    .insert({
+    .insert<Partial<AgentRow>>({
       org_id: input.orgId,
       connection_id: connection.id,
       name: input.name,
