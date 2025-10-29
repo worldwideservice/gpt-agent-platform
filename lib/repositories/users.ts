@@ -9,13 +9,13 @@ export const findUserByEmail = async (email: string) => {
     .from('users')
     .select('*')
     .eq('email', email.toLowerCase())
-    .maybeSingle<UserRow>()
+    .maybeSingle()
 
   if (error) {
     throw error
   }
 
-  return data ?? null
+  return (data as UserRow | null) ?? null
 }
 
 export const findUserById = async (userId: string) => {
@@ -25,13 +25,13 @@ export const findUserById = async (userId: string) => {
     .from('users')
     .select('*')
     .eq('id', userId)
-    .maybeSingle<UserRow>()
+    .maybeSingle()
 
   if (error) {
     throw error
   }
 
-  return data ?? null
+  return (data as UserRow | null) ?? null
 }
 
 export const updateUserLastSignIn = async (userId: string) => {

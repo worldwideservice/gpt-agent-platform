@@ -13,7 +13,7 @@ const handlers = getTaskHandlers()
 const worker = new Worker(
   env.JOB_QUEUE_NAME,
   async (job) => {
-    const handler = handlers[job.name]
+    const handler = handlers[job.name as keyof typeof handlers]
 
     if (!handler) {
       throw new Error(`No handler registered for job ${job.name}`)

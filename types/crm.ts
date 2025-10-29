@@ -79,6 +79,10 @@ export interface CRMConnection {
   crmType: string
   accessToken: string
   domain?: string // для Kommo
+  clientId?: string
+  clientSecret?: string
+  redirectUri?: string
+  refreshToken?: string
   isConnected: boolean
   lastSyncAt?: Date
   config: CRMConfig

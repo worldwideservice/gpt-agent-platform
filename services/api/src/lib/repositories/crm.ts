@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 import { decryptSecret, encryptSecret } from '../crypto'
-import type { Database } from '../types'
+import type { Database, Json } from '../types'
 
 const CREDENTIALS_TABLE = 'crm_credentials'
 const CONNECTIONS_TABLE = 'crm_connections'
@@ -134,7 +134,7 @@ export const saveCrmConnection = async (
         expires_at: input.expiresAt ?? null,
         scope: input.scope ?? null,
         account_id: input.accountId ?? null,
-        metadata: input.metadata ?? {},
+        metadata: (input.metadata ?? {}) as Json,
       },
       { onConflict: 'org_id,provider,base_domain' },
     )
@@ -230,7 +230,7 @@ export const listCrmConnections = async (
     throw error
   }
 
-  return data ?? []
+  return (data as CrmConnectionRow[] | null) ?? []
 }
 
 export const deleteCrmConnection = async (

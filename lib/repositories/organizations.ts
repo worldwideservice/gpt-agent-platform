@@ -38,14 +38,20 @@ export const createOrganizationWithOwner = async ({ name, ownerId }: CreateOrgan
     .from('organizations')
     .insert({ name, slug: slugCandidate })
     .select('*')
-    .single<OrganizationRow>()
+    .single()
 
   if (organizationError) {
     throw organizationError
   }
 
+  const organizationRow = organization as OrganizationRow | null
+
+  if (!organizationRow) {
+    throw new Error('Failed to create organization')
+  }
+
   const { error: memberError } = await supabase.from('organization_members').insert({
-    org_id: organization.id,
+    org_id: organizationRow.id,
     user_id: ownerId,
     role: 'owner',
     status: 'active',
@@ -57,14 +63,14 @@ export const createOrganizationWithOwner = async ({ name, ownerId }: CreateOrgan
 
   const { error: updateUserError } = await supabase
     .from('users')
-    .update({ default_org_id: organization.id })
+    .update({ default_org_id: organizationRow.id })
     .eq('id', ownerId)
 
   if (updateUserError) {
     throw updateUserError
   }
 
-  return organization
+  return organizationRow
 }
 
 export const getOrganizationsForUser = async (userId: string) => {
@@ -81,9 +87,14 @@ export const getOrganizationsForUser = async (userId: string) => {
     throw error
   }
 
-  return (
-    data ?? []
-  ).map((item) => ({
+  type MembershipRow = {
+    role: string
+    organizations?: { id?: string; name?: string; slug?: string } | null
+  }
+
+  const rows = (data as MembershipRow[] | null) ?? []
+
+  return rows.map((item) => ({
     id: item.organizations?.id ?? '',
     name: item.organizations?.name ?? '',
     slug: item.organizations?.slug ?? '',

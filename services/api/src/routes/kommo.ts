@@ -22,9 +22,9 @@ const isRecord = (value: unknown): value is Record<string, unknown> => {
 }
 
 const mergeSyncMetadata = (
-  current: Record<string, unknown> | null | undefined,
+  current: unknown,
   patch: Record<string, unknown>,
-) => {
+): Record<string, unknown> => {
   const metadata: Record<string, unknown> = isRecord(current) ? { ...current } : {}
   const currentSync = isRecord(metadata.sync) ? { ...(metadata.sync as Record<string, unknown>) } : {}
 
@@ -315,8 +315,9 @@ export const registerKommoRoutes = async (fastify: FastifyInstance) => {
       }
     }
 
-    const payload = request.body
-    const baseDomainRaw = payload?.account?.base_domain || payload?.account?.subdomain
+    const payload = request.body as Record<string, unknown> | undefined
+    const account = payload && isRecord(payload.account) ? (payload.account as Record<string, unknown>) : undefined
+    const baseDomainRaw = account?.base_domain ?? account?.subdomain
     const baseDomain = typeof baseDomainRaw === 'string' && !baseDomainRaw.includes('.')
       ? `${baseDomainRaw}.amocrm.ru`
       : typeof baseDomainRaw === 'string'

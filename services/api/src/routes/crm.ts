@@ -39,7 +39,7 @@ const createConnectionSchema = z.object({
   expiresAt: z.string().datetime().optional(),
   scope: z.array(z.string()).optional(),
   accountId: z.string().min(1).optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 })
 
 const listConnectionsSchema = z.object({
@@ -72,9 +72,9 @@ const isRecord = (value: unknown): value is Record<string, unknown> => {
 }
 
 const mergeSyncMetadata = (
-  current: Record<string, unknown> | null | undefined,
+  current: unknown,
   patch: Record<string, unknown>,
-) => {
+): Record<string, unknown> => {
   const metadata: Record<string, unknown> = isRecord(current) ? { ...current } : {}
   const currentSync = isRecord(metadata.sync) ? { ...(metadata.sync as Record<string, unknown>) } : {}
 
@@ -87,8 +87,8 @@ const mergeSyncMetadata = (
   }
 }
 
-const extractSyncState = (metadata: Record<string, unknown>) => {
-  if (!isRecord(metadata.sync)) {
+const extractSyncState = (metadata: unknown): Record<string, unknown> | null => {
+  if (!isRecord(metadata) || !isRecord(metadata.sync)) {
     return null
   }
 
@@ -188,7 +188,7 @@ export const registerCrmRoutes = async (fastify: FastifyInstance) => {
 
       if (provider === 'kommo') {
         const queuedAt = new Date().toISOString()
-        const metadata = mergeSyncMetadata(connection.metadata, {
+        const metadata: Record<string, unknown> = mergeSyncMetadata(connection.metadata, {
           status: 'queued',
           requestedAt: queuedAt,
           error: null,
@@ -243,7 +243,7 @@ export const registerCrmRoutes = async (fastify: FastifyInstance) => {
 
       reply.send({
         success: true,
-        connections: connections.map((connection) => sanitizeConnection(connection)),
+        connections: connections.map((connection: CrmConnectionRow) => sanitizeConnection(connection)),
       })
     } catch (error) {
       fastify.log.error({ err: error }, 'Failed to list CRM connections')
@@ -311,7 +311,7 @@ export const registerCrmRoutes = async (fastify: FastifyInstance) => {
 
       if (provider === 'kommo') {
         const queuedAt = new Date().toISOString()
-        const metadata = mergeSyncMetadata(connectionWithMetadata.metadata, {
+      const metadata: Record<string, unknown> = mergeSyncMetadata(connectionWithMetadata.metadata, {
           status: 'queued',
           requestedAt: queuedAt,
           error: null,

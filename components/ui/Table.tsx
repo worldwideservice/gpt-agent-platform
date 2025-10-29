@@ -1,4 +1,4 @@
-import type { HTMLAttributes, ReactNode } from 'react'
+import type { HTMLAttributes, ReactNode, ThHTMLAttributes, TdHTMLAttributes } from 'react'
 
 import { cn } from '@/lib/utils'
 
@@ -55,7 +55,7 @@ export const TableRow = ({ className, children, ...props }: TableRowProps) => {
   )
 }
 
-interface TableHeadProps extends HTMLAttributes<HTMLTableCellElement> {
+interface TableHeadProps extends ThHTMLAttributes<HTMLTableCellElement> {
   children: ReactNode
 }
 
@@ -73,7 +73,7 @@ export const TableHead = ({ className, children, ...props }: TableHeadProps) => 
   )
 }
 
-interface TableCellProps extends HTMLAttributes<HTMLTableCellElement> {
+interface TableCellProps extends TdHTMLAttributes<HTMLTableCellElement> {
   children: ReactNode
 }
 
@@ -84,4 +84,3 @@ export const TableCell = ({ className, children, ...props }: TableCellProps) => 
     </td>
   )
 }
-

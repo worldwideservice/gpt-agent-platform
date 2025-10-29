@@ -33,7 +33,7 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  const session = await auth(request)
+  const session = await auth()
 
   if (!session?.user?.orgId) {
     return NextResponse.json({ success: false, error: 'Не авторизовано' }, { status: 401 })

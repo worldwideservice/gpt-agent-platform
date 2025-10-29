@@ -1,4 +1,12 @@
-export interface Database {
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
   public: {
     Tables: {
       organizations: {
@@ -7,7 +15,7 @@ export interface Database {
           name: string
           slug: string
           country: string | null
-          settings: Record<string, unknown> | null
+          settings: Json | null
           created_at: string
           updated_at: string
         }
@@ -16,7 +24,7 @@ export interface Database {
           name: string
           slug: string
           country?: string | null
-          settings?: Record<string, unknown> | null
+          settings?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -25,7 +33,7 @@ export interface Database {
           name?: string
           slug?: string
           country?: string | null
-          settings?: Record<string, unknown> | null
+          settings?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -299,7 +307,7 @@ export interface Database {
           instructions: string | null
           system_prompt: string | null
           response_delay_seconds: number | null
-          settings: Record<string, unknown> | null
+          settings: Json | null
           created_at: string
           updated_at: string
         }
@@ -318,7 +326,7 @@ export interface Database {
           instructions?: string | null
           system_prompt?: string | null
           response_delay_seconds?: number | null
-          settings?: Record<string, unknown> | null
+          settings?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -337,7 +345,7 @@ export interface Database {
           instructions?: string | null
           system_prompt?: string | null
           response_delay_seconds?: number | null
-          settings?: Record<string, unknown> | null
+          settings?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -367,7 +375,7 @@ export interface Database {
           expires_at: string | null
           scope: string[] | null
           account_id: string | null
-          metadata: Record<string, unknown> | null
+          metadata: Json | null
           created_at: string
           updated_at: string
         }
@@ -381,7 +389,7 @@ export interface Database {
           expires_at?: string | null
           scope?: string[] | null
           account_id?: string | null
-          metadata?: Record<string, unknown> | null
+          metadata?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -395,7 +403,7 @@ export interface Database {
           expires_at?: string | null
           scope?: string[] | null
           account_id?: string | null
-          metadata?: Record<string, unknown> | null
+          metadata?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -456,7 +464,7 @@ export interface Database {
           name: string
           is_active: boolean | null
           sort_order: number | null
-          metadata: Record<string, unknown> | null
+          metadata: Json | null
           created_at: string
           updated_at: string
         }
@@ -467,7 +475,7 @@ export interface Database {
           name: string
           is_active?: boolean | null
           sort_order?: number | null
-          metadata?: Record<string, unknown> | null
+          metadata?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -478,7 +486,7 @@ export interface Database {
           name?: string
           is_active?: boolean | null
           sort_order?: number | null
-          metadata?: Record<string, unknown> | null
+          metadata?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -498,7 +506,7 @@ export interface Database {
           external_id: string
           name: string
           sort_order: number | null
-          metadata: Record<string, unknown> | null
+          metadata: Json | null
           created_at: string
           updated_at: string
         }
@@ -508,7 +516,7 @@ export interface Database {
           external_id: string
           name: string
           sort_order?: number | null
-          metadata?: Record<string, unknown> | null
+          metadata?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -518,7 +526,7 @@ export interface Database {
           external_id?: string
           name?: string
           sort_order?: number | null
-          metadata?: Record<string, unknown> | null
+          metadata?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -617,7 +625,7 @@ export interface Database {
           org_id: string
           provider: string
           event_type: string
-          payload: Record<string, unknown>
+          payload: Json
           status: string
           error: string | null
           created_at: string
@@ -628,7 +636,7 @@ export interface Database {
           org_id: string
           provider: string
           event_type: string
-          payload: Record<string, unknown>
+          payload: Json
           status?: string
           error?: string | null
           created_at?: string
@@ -639,7 +647,7 @@ export interface Database {
           org_id?: string
           provider?: string
           event_type?: string
-          payload?: Record<string, unknown>
+          payload?: Json
           status?: string
           error?: string | null
           created_at?: string
@@ -708,4 +716,3 @@ export type AgentActivityMetricRow = Database['public']['Tables']['agent_activit
 export type DashboardStatsViewRow = Database['public']['Views']['dashboard_kpis']['Row']
 
 export type DashboardStatsFunctionResult = Database['public']['Functions']['calculate_dashboard_stats']['Returns']
-

@@ -1,60 +1,90 @@
 import * as React from 'react'
+import type { ButtonHTMLAttributes, ReactNode } from 'react'
+
 import { cn } from '@/lib/utils'
 
-export interface ToggleProps {
-  checked: boolean
-  onChange: (checked: boolean) => void
+export interface ToggleProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onChange'> {
+  checked?: boolean
+  onChange?: (checked: boolean) => void
+  /**
+   * Radix UI compatible props (pressed/onPressedChange) to simplify migration.
+   */
+  pressed?: boolean
+  onPressedChange?: (pressed: boolean) => void
   label?: string
   description?: string
-  className?: string
-  disabled?: boolean
+  children?: ReactNode
 }
 
-export const Toggle = React.forwardRef<HTMLInputElement, ToggleProps>(
-  ({ checked, onChange, label, description, className, disabled = false, ...props }, ref) => {
+export const Toggle = React.forwardRef<HTMLButtonElement, ToggleProps>(
+  (
+    {
+      checked,
+      onChange,
+      pressed,
+      onPressedChange,
+      label,
+      description,
+      className,
+      disabled = false,
+      children,
+      ...props
+    },
+    _ref,
+  ) => {
     const toggleId = React.useId()
+    const isChecked = typeof checked === 'boolean' ? checked : Boolean(pressed)
+
+    const handleToggle = () => {
+      if (disabled) {
+        return
+      }
+
+      const nextValue = !isChecked
+      onChange?.(nextValue)
+      onPressedChange?.(nextValue)
+    }
 
     return (
       <div className={cn('flex items-start space-x-3', className)}>
         {(label || description) && (
           <div className="flex-1">
             {label && (
-              <label 
-                htmlFor={toggleId}
-                className="block text-sm font-medium text-gray-700 cursor-pointer"
-              >
+              <label htmlFor={toggleId} className="block cursor-pointer text-sm font-medium text-gray-700">
                 {label}
               </label>
             )}
-            {description && (
-              <p className="text-sm text-gray-500 mt-1">{description}</p>
-            )}
+            {description && <p className="mt-1 text-sm text-gray-500">{description}</p>}
           </div>
         )}
-        
-        <button
-          type="button"
-          role="switch"
-          aria-checked={checked}
-          disabled={disabled}
-          onClick={() => !disabled && onChange(!checked)}
-          className={cn(
-            "relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2",
-            checked ? 'bg-primary-600' : 'bg-gray-200',
-            disabled && 'opacity-50 cursor-not-allowed'
-          )}
-        >
-          <span
+
+        <div className="flex items-center space-x-2">
+          <button
+            id={toggleId}
+            type="button"
+            role="switch"
+            aria-checked={isChecked}
+            disabled={disabled}
+            onClick={handleToggle}
             className={cn(
-              "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-              checked ? 'translate-x-5' : 'translate-x-0'
+              'relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
+              isChecked ? 'bg-primary-600' : 'bg-gray-200',
+              disabled && 'cursor-not-allowed opacity-50',
             )}
-          />
-        </button>
+            {...props}
+          >
+            <span
+              className={cn(
+                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                isChecked ? 'translate-x-5' : 'translate-x-0',
+              )}
+            />
+          </button>
+          {children ? <span className="text-sm text-gray-600">{children}</span> : null}
+        </div>
       </div>
     )
-  }
+  },
 )
 
 Toggle.displayName = 'Toggle'
-

@@ -2,6 +2,7 @@ import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
 import type { Agent } from '@/types'
 import type {
+  AgentActivityMetricRow,
   AgentRow,
   DashboardStatsFunctionResult,
   DashboardStatsViewRow,
@@ -71,7 +72,7 @@ export const getAgents = async (params: AgentListParams): Promise<AgentListResul
     throw new Error('Не удалось загрузить агентов')
   }
 
-  const agents = (data ?? []).map(mapAgentRowToDomain)
+  const agents = ((data as AgentRow[] | null) ?? []).map(mapAgentRowToDomain)
 
   return {
     agents,
@@ -120,12 +121,13 @@ export const getWeeklyActivitySummary = async (
     return buildEmptyWeeklyActivity(startDate)
   }
 
-  const activityMap = new Map<string, number>()
+  const metrics = (data as AgentActivityMetricRow[] | null) ?? []
+  const activityMap: Record<string, number> = {}
 
-  data?.forEach((metric) => {
+  metrics.forEach((metric: AgentActivityMetricRow) => {
     const dateKey = metric.activity_date.slice(0, 10)
-    const currentValue = activityMap.get(dateKey) ?? 0
-    activityMap.set(dateKey, currentValue + metric.messages_count)
+    const currentValue = activityMap[dateKey] ?? 0
+    activityMap[dateKey] = currentValue + metric.messages_count
   })
 
   return buildWeeklyActivitySeries(startDate, activityMap)
@@ -139,24 +141,26 @@ const loadDashboardStatsFromView = async (
     .from('dashboard_kpis')
     .select('monthly_responses, monthly_change, weekly_responses, today_responses')
     .eq('organization_id', organizationId)
-    .maybeSingle<DashboardStatsViewRow>()
+    .maybeSingle()
 
   if (error) {
     console.warn('Dashboard KPI view is not available', error)
     return null
   }
 
-  if (!data) {
+  const row = data as DashboardStatsViewRow | null
+
+  if (!row) {
     return null
   }
 
   const totalAgents = await countAgents(supabase, organizationId)
 
   return {
-    monthlyResponses: data.monthly_responses,
-    monthlyChange: data.monthly_change,
-    weeklyResponses: data.weekly_responses,
-    todayResponses: data.today_responses,
+    monthlyResponses: row.monthly_responses,
+    monthlyChange: row.monthly_change,
+    weeklyResponses: row.weekly_responses,
+    todayResponses: row.today_responses,
     totalAgents,
   }
 }
@@ -167,24 +171,26 @@ const loadDashboardStatsFromFunction = async (
 ): Promise<import('@/types').DashboardStats | null> => {
   const { data, error } = await supabase
     .rpc('calculate_dashboard_stats', { organization_uuid: organizationId })
-    .single<DashboardStatsFunctionResult>()
+    .single()
 
   if (error) {
     console.warn('Dashboard stats function is not available', error)
     return null
   }
 
-  if (!data) {
+  const result = data as DashboardStatsFunctionResult | null
+
+  if (!result) {
     return null
   }
 
   const totalAgents = await countAgents(supabase, organizationId)
 
   return {
-    monthlyResponses: data.monthly_responses,
-    monthlyChange: data.monthly_change,
-    weeklyResponses: data.weekly_responses,
-    todayResponses: data.today_responses,
+    monthlyResponses: result.monthly_responses,
+    monthlyChange: result.monthly_change,
+    weeklyResponses: result.weekly_responses,
+    todayResponses: result.today_responses,
     totalAgents,
   }
 }
@@ -211,7 +217,9 @@ const buildDashboardStatsFromAgents = async (
     }
   }
 
-  if (!data || data.length === 0) {
+  const metrics = (data as AgentActivityMetricRow[] | null) ?? []
+
+  if (metrics.length === 0) {
     return {
       monthlyResponses: 0,
       monthlyChange: 0,
@@ -229,7 +237,7 @@ const buildDashboardStatsFromAgents = async (
   let monthlyResponses = 0
   let todayResponses = 0
 
-  data.forEach((metric) => {
+  metrics.forEach((metric) => {
     const activityDate = new Date(metric.activity_date)
 
     if (activityDate >= startOfWeek) {
@@ -245,7 +253,7 @@ const buildDashboardStatsFromAgents = async (
     }
   })
 
-  const previousMonthResponses = calculatePreviousMonthTotal(data, now)
+  const previousMonthResponses = calculatePreviousMonthTotal(metrics, now)
   const monthlyChange = calculatePercentageChange(previousMonthResponses, monthlyResponses)
 
   return {
@@ -319,12 +327,12 @@ const calculatePercentageChange = (previousValue: number, currentValue: number):
 }
 
 const buildEmptyWeeklyActivity = (startDate: Date): ActivitySummaryItem[] => {
-  return buildWeeklyActivitySeries(startDate, new Map())
+  return buildWeeklyActivitySeries(startDate, {})
 }
 
 const buildWeeklyActivitySeries = (
   startDate: Date,
-  activityMap: Map<string, number>,
+  activityMap: Record<string, number>,
 ): ActivitySummaryItem[] => {
   const series: ActivitySummaryItem[] = []
 
@@ -333,7 +341,7 @@ const buildWeeklyActivitySeries = (
     currentDate.setUTCDate(startDate.getUTCDate() + index)
 
     const dateKey = currentDate.toISOString().slice(0, 10)
-    const messagesCount = activityMap.get(dateKey) ?? 0
+    const messagesCount = activityMap[dateKey] ?? 0
 
     series.push({
       date: dateKey,
@@ -345,4 +353,3 @@ const buildWeeklyActivitySeries = (
 }
 
 export type { AgentListParams, AgentListResult, ActivitySummaryItem }
-

@@ -5,9 +5,7 @@ test.describe('Полный мастер онбординга', () => {
   const adminPassword = process.env.E2E_ADMIN_PASSWORD ?? 'Demo1234!'
 
   test('подключение CRM и запуск агента', async ({ page }, testInfo) => {
-    if (testInfo.project.name !== 'chromium') {
-      test.skip('Полный мастер прогоняется только в Chromium для ускорения')
-    }
+    test.skip(testInfo.project.name !== 'chromium', 'Полный мастер прогоняется только в Chromium для ускорения')
 
     await page.addInitScript(() => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

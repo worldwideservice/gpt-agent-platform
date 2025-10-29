@@ -6,12 +6,14 @@ import { findValidPasswordResetByToken, markPasswordResetAsUsed } from '@/lib/re
 import { updateUserPasswordHash } from '@/lib/repositories/users'
 
 const confirmSchema = z.object({
-  token: z.string({
-    required_error: 'Токен обязателен',
-  }).min(20, 'Токен слишком короткий'),
-  password: z.string({
-    required_error: 'Пароль обязателен',
-  }).min(8, 'Минимум 8 символов'),
+  token: z
+    .string()
+    .min(1, 'Токен обязателен')
+    .min(20, 'Токен слишком короткий'),
+  password: z
+    .string()
+    .min(1, 'Пароль обязателен')
+    .min(8, 'Минимум 8 символов'),
 })
 
 const PASSWORD_SALT_ROUNDS = 12

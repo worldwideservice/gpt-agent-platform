@@ -32,8 +32,11 @@ export const {
         password: { label: 'Password', type: 'password' },
       },
       authorize: async (credentials) => {
-        const email = credentials?.email?.toLowerCase().trim()
-        const password = credentials?.password
+        const rawEmail = typeof credentials?.email === 'string' ? credentials.email : null
+        const rawPassword = typeof credentials?.password === 'string' ? credentials.password : null
+
+        const email = rawEmail?.toLowerCase().trim()
+        const password = rawPassword?.trim()
 
         if (!email || !password) {
           return null
@@ -80,7 +83,7 @@ export const {
           return null
         }
 
-        const passwordMatch = await compare(password, user.password_hash)
+        const passwordMatch = await compare(password, user.password_hash ?? '')
 
         if (!passwordMatch) {
           return null
@@ -94,8 +97,9 @@ export const {
           const memberships = await getOrganizationsForUser(user.id)
 
           if (memberships.length > 0) {
-            defaultOrgId = memberships[0].id
-            await setDefaultOrganizationForUser(user.id, defaultOrgId)
+            const membershipOrgId = memberships[0].id
+            defaultOrgId = membershipOrgId
+            await setDefaultOrganizationForUser(user.id, membershipOrgId)
           } else {
             const organization = await createOrganizationWithOwner({
               name: user.full_name ?? user.email.split('@')[0] ?? 'Организация',
@@ -137,11 +141,12 @@ export const {
         session.user.id = token.sub ?? ''
         session.user.email = (token.email as string | undefined) ?? session.user.email
         session.user.name = (token.name as string | undefined) ?? session.user.name
-        session.user.orgId = token.orgId as string | undefined
+        if (typeof token.orgId === 'string') {
+          session.user.orgId = token.orgId
+        }
       }
 
       return session
     },
   },
 })
-

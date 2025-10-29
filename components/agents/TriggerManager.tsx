@@ -199,11 +199,16 @@ export const TriggerManager = () => {
         size="lg"
       >
         <div className="space-y-4">
-          <Input
-            label="Название триггера"
-            placeholder="Например: Создание сделки при готовности"
-            defaultValue={editingTrigger?.name}
-          />
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="trigger-name">
+              Название триггера
+            </label>
+            <Input
+              id="trigger-name"
+              placeholder="Например: Создание сделки при готовности"
+              defaultValue={editingTrigger?.name}
+            />
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -220,11 +225,16 @@ export const TriggerManager = () => {
                 ]}
                 defaultValue={editingTrigger?.condition.type || 'message_contains'}
               />
-              <Input
-                label="Значение"
-                placeholder="купить, заказать"
-                defaultValue={editingTrigger?.condition.value}
-              />
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="trigger-condition-value">
+                  Значение
+                </label>
+                <Input
+                  id="trigger-condition-value"
+                  placeholder="купить, заказать"
+                  defaultValue={editingTrigger?.condition.value}
+                />
+              </div>
             </div>
           </div>
 
@@ -272,4 +282,3 @@ export const TriggerManager = () => {
     </div>
   )
 }
-

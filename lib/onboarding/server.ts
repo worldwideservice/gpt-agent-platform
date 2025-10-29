@@ -256,6 +256,8 @@ const buildAgentSettings = (input: CreateOnboardingAgentInput) => {
 export const upsertOnboardingAgent = async (
   input: CreateOnboardingAgentInput,
 ): Promise<AgentRow> => {
+  const supabase = getSupabase()
+
   if (isE2EMode) {
     return {
       id: 'agent-e2e',

@@ -5,9 +5,10 @@ import { createPasswordReset } from '@/lib/repositories/passwordResets'
 import { findUserByEmail } from '@/lib/repositories/users'
 
 const requestSchema = z.object({
-  email: z.string({
-    required_error: 'Email обязателен',
-  }).email('Некорректный email'),
+  email: z
+    .string()
+    .min(1, 'Email обязателен')
+    .email('Некорректный email'),
 })
 
 const buildResetUrl = (request: NextRequest, token: string): string => {

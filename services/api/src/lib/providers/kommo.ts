@@ -7,6 +7,7 @@ interface KommoTokenResponse {
   refresh_token: string
   scope?: string
   base_domain: string
+  account_id?: number | string
 }
 
 const toJSON = async (response: Response) => {

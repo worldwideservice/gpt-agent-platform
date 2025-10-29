@@ -33,6 +33,8 @@ interface UseCRMDataReturn {
   createTask: (task: Omit<UniversalTask, 'id' | 'createdAt'>) => Promise<UniversalTask>
 }
 
+const generateId = () => Math.random().toString(36).slice(2)
+
 export const useCRMData = (connection: CRMConnection | null): UseCRMDataReturn => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -97,22 +99,32 @@ export const useCRMData = (connection: CRMConnection | null): UseCRMDataReturn =
       ])
 
       // Преобразуем данные в универсальный формат
-      const pipelines: UniversalPipeline[] = pipelinesData.map(pipeline => ({
-        id: pipeline.id.toString(),
-        name: pipeline.name,
-        stages: pipeline._embedded.statuses.map(stage => ({
-          id: stage.id.toString(),
-          name: stage.name,
-          sort: stage.sort
-        }))
-      }))
+      const pipelines: UniversalPipeline[] = pipelinesData.map((pipeline) => {
+        const pipelineId = pipeline.id?.toString() ?? `pipeline-${generateId()}`
+        const statuses = pipeline._embedded?.statuses ?? []
 
-      const contacts: UniversalContact[] = contactsData.map(contact => ({
-        id: contact.id?.toString() || '',
-        name: contact.name,
-        email: contact.custom_fields_values?.find(f => f.field_name === 'email')?.values[0]?.value || '',
-        phone: contact.custom_fields_values?.find(f => f.field_name === 'phone')?.values[0]?.value || '',
-        createdAt: new Date()
+        const archiveFlag = (pipeline as { is_archive?: boolean }).is_archive
+        return {
+          id: pipelineId,
+          name: pipeline.name ?? 'Без названия',
+          isActive: archiveFlag ? false : true,
+          stages: statuses.map((stage, index) => ({
+            id: stage.id?.toString() ?? `${pipelineId}-stage-${index}-${generateId()}`,
+            name: stage.name ?? `Этап ${index + 1}`,
+            pipelineId,
+            order: stage.sort ?? index,
+            isActive: (stage as { is_active?: boolean }).is_active ?? true,
+          })),
+        }
+      })
+
+      const contacts: UniversalContact[] = contactsData.map((contact) => ({
+        id: contact.id?.toString() ?? `contact-${generateId()}`,
+        name: contact.name ?? 'Без имени',
+        email: contact.custom_fields_values?.find((field) => field.field_name === 'email')?.values?.[0]?.value,
+        phone: contact.custom_fields_values?.find((field) => field.field_name === 'phone')?.values?.[0]?.value,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       }))
 
       setPipelines(pipelines)
@@ -164,7 +176,7 @@ export const useCRMData = (connection: CRMConnection | null): UseCRMDataReturn =
     if (!provider) return false
 
     try {
-      await provider.updateLead(parseInt(dealId), { status_id: parseInt(stageId) })
+      await provider.updateLead(Number.parseInt(dealId, 10), { status_id: Number.parseInt(stageId, 10) })
       // Обновляем локальное состояние
       setDeals(prev => prev.map(deal => 
         deal.id === dealId ? { ...deal, stageId } : deal
@@ -188,10 +200,11 @@ export const useCRMData = (connection: CRMConnection | null): UseCRMDataReturn =
         id: Date.now().toString(),
         title: task.title,
         description: task.description,
-        status: 'pending',
-        priority: task.priority,
+        dealId: task.dealId,
+        contactId: task.contactId,
         dueDate: task.dueDate,
-        createdAt: new Date()
+        isCompleted: task.isCompleted ?? false,
+        createdAt: new Date(),
       }
       
       setTasks(prev => [...prev, newTask])

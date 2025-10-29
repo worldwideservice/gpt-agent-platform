@@ -49,25 +49,27 @@ export const findValidPasswordResetByToken = async (token: string): Promise<Pass
     .from('password_resets')
     .select('*')
     .eq('token_hash', tokenHash)
-    .maybeSingle<PasswordResetRow>()
+    .maybeSingle()
 
   if (error) {
     throw error
   }
 
-  if (!data) {
+  const row = data as PasswordResetRow | null
+
+  if (!row) {
     return null
   }
 
-  if (data.used_at) {
+  if (row.used_at) {
     return null
   }
 
-  if (new Date(data.expires_at).getTime() < Date.now()) {
+  if (new Date(row.expires_at).getTime() < Date.now()) {
     return null
   }
 
-  return data
+  return row
 }
 
 export const markPasswordResetAsUsed = async (id: string, userId: string) => {

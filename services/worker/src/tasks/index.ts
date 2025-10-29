@@ -2,7 +2,7 @@ import { env } from '../lib/env'
 import { decryptSecret } from '../lib/crypto'
 import { getSupabaseClient } from '../lib/supabase'
 import { kommoApiRequest, refreshKommoToken } from '../providers/kommo'
-import type { Database } from '../lib/types'
+import type { Database, Json } from '../lib/types'
 
 const supabase = getSupabaseClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY)
 
@@ -46,7 +46,7 @@ type PipelineInput = {
   name: string
   isActive: boolean
   sortOrder: number
-  metadata: Record<string, unknown>
+  metadata: Json
   stages: StageInput[]
 }
 
@@ -54,7 +54,7 @@ type StageInput = {
   externalId: string
   name: string
   sortOrder: number
-  metadata: Record<string, unknown>
+  metadata: Json
 }
 
 type CrmCredentials = Pick<CrmCredentialsRow, 'client_id' | 'redirect_uri'> & { client_secret: string }
@@ -74,9 +74,9 @@ const isRecord = (value: unknown): value is Record<string, unknown> => {
 }
 
 const mergeSyncMetadata = (
-  current: Record<string, unknown> | null | undefined,
+  current: unknown,
   patch: Record<string, unknown>,
-) => {
+): Record<string, unknown> => {
   const metadata: Record<string, unknown> = isRecord(current) ? { ...current } : {}
   const currentSync = isRecord(metadata.sync) ? { ...(metadata.sync as Record<string, unknown>) } : {}
 
@@ -91,9 +91,9 @@ const mergeSyncMetadata = (
 
 const updateSyncMetadata = async (
   connectionId: string,
-  currentMetadata: Record<string, unknown> | null | undefined,
+  currentMetadata: unknown,
   patch: Record<string, unknown>,
-) => {
+): Promise<Record<string, unknown>> => {
   const metadata = mergeSyncMetadata(currentMetadata, patch)
   const { error } = await supabase.from('crm_connections').update({ metadata }).eq('id', connectionId)
 
@@ -243,7 +243,7 @@ const replaceConnectionPipelines = async (
     throw insertError ?? new Error('Failed to insert CRM pipelines')
   }
 
-  const stageRows: CrmPipelineStageInsert[] = insertedPipelines.flatMap((pipelineRow) => {
+  const stageRows: CrmPipelineStageInsert[] = insertedPipelines.flatMap((pipelineRow: { id: string; external_id: string }) => {
     const stages = stagesByPipeline.get(pipelineRow.external_id) ?? []
 
     return stages.map((stage) => ({
@@ -278,13 +278,13 @@ const buildPipelineInputs = (pipelines: KommoPipeline[]): PipelineInput[] => {
       name: pipeline.name,
       isActive: pipeline.is_archive ? false : true,
       sortOrder: pipeline.sort ?? pipelineIndex,
-      metadata: pipeline as Record<string, unknown>,
+      metadata: pipeline as Json,
       stages: statuses.map((status, statusIndex) => {
         return {
           externalId: String(status.id),
           name: status.name,
           sortOrder: status.sort ?? statusIndex,
-          metadata: status as Record<string, unknown>,
+          metadata: status as Json,
         }
       }),
     }
