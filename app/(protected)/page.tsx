@@ -3,6 +3,7 @@ import { Bot, CalendarCheck2, MessageSquare, Sparkles } from 'lucide-react'
 
 import { LineChartCard } from '@/components/dashboard/LineChartCard'
 import { StatCard } from '@/components/dashboard/StatCard'
+import { ClientMarker } from '@/components/system/ClientMarker'
 
 import { auth } from '@/auth'
 import { getOnboardingState } from '@/lib/onboarding/server'
@@ -35,6 +36,7 @@ const DashboardPage = async () => {
 
   return (
     <div className="space-y-8">
+      <ClientMarker />
       <section className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="Ответы ИИ за этот месяц"
