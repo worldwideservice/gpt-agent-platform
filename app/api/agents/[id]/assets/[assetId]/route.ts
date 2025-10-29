@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { getSupabaseClient } from '@/lib/supabase/server'
+import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { getAgentById } from '@/lib/repositories/agents'
 
 /**
@@ -43,7 +43,7 @@ export const DELETE = async (
 
     // Удаляем файл из Storage
     if (asset.storage_path) {
-      const supabaseClient = getSupabaseClient()
+      const supabaseClient = getSupabaseServerClient()
       await supabaseClient.storage.from('agent-assets').remove([asset.storage_path])
     }
 

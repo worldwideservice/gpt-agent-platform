@@ -480,7 +480,7 @@ export const AgentTrainingPage = ({ agentId, agentName }: AgentTrainingPageProps
                   <Select
                     label="Тип скрипта"
                     value={scriptForm.scriptType}
-                    onChange={(value) => setScriptForm({ ...scriptForm, scriptType: value as SalesScript['scriptType'] })}
+                    onChange={(value: string) => setScriptForm({ ...scriptForm, scriptType: value as SalesScript['scriptType'] })}
                     options={[
                       { value: 'greeting', label: 'Приветствие' },
                       { value: 'qualification', label: 'Квалификация' },

@@ -3,7 +3,7 @@ import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { getSupabaseClient } from '@/lib/supabase/server'
+import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { getAgentById } from '@/lib/repositories/agents'
 
 /**
@@ -60,7 +60,7 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
     }
 
     // Загружаем файл в Supabase Storage
-    const supabaseClient = getSupabaseClient()
+    const supabaseClient = getSupabaseServerClient()
     const storagePath = `agents/${session.user.orgId}/${agentId}/${Date.now()}-${file.name}`
 
     const fileBuffer = await file.arrayBuffer()
