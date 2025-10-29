@@ -156,7 +156,7 @@ export const AgentTable = ({ agents, onDelete, onDuplicate, isLoading = false }:
             <Button variant="outline" size="sm">
               Массовое изменение статуса
             </Button>
-            <Button variant="danger" size="sm">
+            <Button variant="destructive" size="sm">
               Удалить выбранные
             </Button>
           </div>

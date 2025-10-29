@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Plus, Edit, Trash2, CheckCircle } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
-import { Card, CardBody } from '@/components/ui/Card'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -113,18 +113,18 @@ export const TriggerManager = () => {
 
       {triggers.length === 0 ? (
         <Card>
-          <CardBody className="text-center py-12">
+          <CardContent className="text-center py-12">
             <p className="text-gray-500 mb-4">
               Триггеры позволяют автоматизировать действия агента на основе условий
             </p>
             <Button onClick={handleCreate}>Создать первый триггер</Button>
-          </CardBody>
+          </CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
           {triggers.map(trigger => (
             <Card key={trigger.id} className={!trigger.isActive ? 'opacity-60' : ''}>
-              <CardBody>
+              <CardContent>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
@@ -186,7 +186,7 @@ export const TriggerManager = () => {
                     </Button>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           ))}
         </div>

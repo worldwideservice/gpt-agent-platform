@@ -1,6 +1,6 @@
 import { Book, Video, FileText, HelpCircle } from 'lucide-react'
 
-import { Card, CardBody } from '@/components/ui/Card'
+import { Card, CardContent } from '@/components/ui/Card'
 
 const SupportPage = () => {
   return (
@@ -14,7 +14,7 @@ const SupportPage = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-          <CardBody>
+          <CardContent>
             <div className="flex items-start space-x-4">
               <div className="w-12 h-12 bg-primary-50 rounded-lg flex items-center justify-center flex-shrink-0">
                 <Book className="w-6 h-6 text-primary-600" />
@@ -39,11 +39,11 @@ const SupportPage = () => {
                 </ul>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-          <CardBody>
+          <CardContent>
             <div className="flex items-start space-x-4">
               <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
                 <Video className="w-6 h-6 text-green-600" />
@@ -68,11 +68,11 @@ const SupportPage = () => {
                 </ul>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-          <CardBody>
+          <CardContent>
             <div className="flex items-start space-x-4">
               <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center flex-shrink-0">
                 <FileText className="w-6 h-6 text-purple-600" />
@@ -97,11 +97,11 @@ const SupportPage = () => {
                 </ul>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-          <CardBody>
+          <CardContent>
             <div className="flex items-start space-x-4">
               <div className="w-12 h-12 bg-orange-50 rounded-lg flex items-center justify-center flex-shrink-0">
                 <HelpCircle className="w-6 h-6 text-orange-600" />
@@ -126,12 +126,12 @@ const SupportPage = () => {
                 </ul>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
 
       <Card>
-        <CardBody>
+        <CardContent>
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Нужна помощь?
           </h3>
@@ -152,7 +152,7 @@ const SupportPage = () => {
               <p className="text-sm text-gray-600">Пн-Пт, 9:00 - 18:00 МСК</p>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   )

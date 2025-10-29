@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { ArrowLeft, Save } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
-import { Card, CardBody } from '@/components/ui/Card'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
@@ -88,12 +88,16 @@ const AgentEditPage = ({ params }: AgentEditPageProps) => {
 
         <TabsContent value="basic">
           <Card>
-            <CardBody className="space-y-6">
-              <Input
-                label="Название агента"
-                placeholder="Например: Консультант по продажам"
-                defaultValue="Консультант по продажам"
-              />
+            <CardContent className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Название агента
+                </label>
+                <Input
+                  placeholder="Например: Консультант по продажам"
+                  defaultValue="Консультант по продажам"
+                />
+              </div>
 
               <Select
                 label="Статус"
@@ -138,13 +142,13 @@ const AgentEditPage = ({ params }: AgentEditPageProps) => {
                 placeholder="Приветствие, которое увидит пользователь"
                 defaultValue="Здравствуйте! Я AI-консультант. Чем могу помочь?"
               />
-            </CardBody>
+            </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="instructions">
           <Card>
-            <CardBody className="space-y-6">
+            <CardContent className="space-y-6">
               <Textarea
                 label="Роль и задачи агента"
                 placeholder="Опишите, кем является агент и какие задачи он решает"
@@ -177,13 +181,13 @@ const AgentEditPage = ({ params }: AgentEditPageProps) => {
                 rows={4}
                 defaultValue="Не обсуждать цены без согласования с менеджером&#10;Не делать скидки более 10%&#10;Не передавать личные данные клиентов"
               />
-            </CardBody>
+            </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="crm">
           <Card>
-            <CardBody className="space-y-6">
+            <CardContent className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-900">
                 Интеграция с CRM
               </h3>
@@ -253,7 +257,7 @@ const AgentEditPage = ({ params }: AgentEditPageProps) => {
                   ))}
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </TabsContent>
 
@@ -263,7 +267,7 @@ const AgentEditPage = ({ params }: AgentEditPageProps) => {
 
         <TabsContent value="chains">
           <Card>
-            <CardBody>
+            <CardContent>
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-gray-900">
                   Цепочки сообщений
@@ -279,13 +283,13 @@ const AgentEditPage = ({ params }: AgentEditPageProps) => {
                   Создать первую цепочку
                 </Button>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="integrations">
           <Card>
-            <CardBody className="space-y-6">
+            <CardContent className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-900">
                 Настройка интеграций
               </h3>
@@ -330,13 +334,13 @@ const AgentEditPage = ({ params }: AgentEditPageProps) => {
                   <Button variant="outline" size="sm">Подключить</Button>
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="advanced">
           <Card>
-            <CardBody className="space-y-6">
+            <CardContent className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-900">
                 Расширенные настройки
               </h3>
@@ -360,22 +364,30 @@ const AgentEditPage = ({ params }: AgentEditPageProps) => {
                   </div>
                 </div>
 
-                <Input
-                  label="Задержка ответа (сек)"
-                  type="number"
-                  defaultValue="2"
-                  min="0"
-                  max="10"
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Задержка ответа (сек)
+                  </label>
+                  <Input
+                    type="number"
+                    defaultValue="2"
+                    min="0"
+                    max="10"
+                  />
+                </div>
               </div>
 
-              <Input
-                label="Максимальная длина ответа (токены)"
-                type="number"
-                defaultValue="500"
-                min="100"
-                max="4000"
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Максимальная длина ответа (токены)
+                </label>
+                <Input
+                  type="number"
+                  defaultValue="500"
+                  min="100"
+                  max="4000"
+                />
+              </div>
 
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div>
@@ -400,7 +412,7 @@ const AgentEditPage = ({ params }: AgentEditPageProps) => {
                   className="w-5 h-5 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
                 />
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>

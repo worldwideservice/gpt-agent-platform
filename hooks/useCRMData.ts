@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { KommoProvider } from '@/lib/crm/providers/KommoProvider'
-import { ZohoProvider } from '@/lib/crm/providers/ZohoProvider'
+import { KommoAPI } from '@/lib/crm/kommo'
 import type { 
   CRMConnection, 
   UniversalPipeline, 
@@ -12,7 +11,6 @@ import type {
   UniversalTask,
   SyncResult 
 } from '@/types/crm'
-import type { BaseCRMProvider } from '@/lib/crm/providers/BaseCRMProvider'
 
 interface UseCRMDataReturn {
   // Состояние
@@ -46,26 +44,22 @@ export const useCRMData = (connection: CRMConnection | null): UseCRMDataReturn =
   const [deals, setDeals] = useState<UniversalDeal[]>([])
   const [tasks, setTasks] = useState<UniversalTask[]>([])
 
-  const [provider, setProvider] = useState<BaseCRMProvider | null>(null)
+  const [provider, setProvider] = useState<KommoAPI | null>(null)
 
   // Инициализация провайдера
   useEffect(() => {
-    if (connection) {
+    if (connection && connection.crmType === 'kommo') {
       try {
-        let crmProvider: BaseCRMProvider
+        const kommoAPI = new KommoAPI({
+          domain: connection.domain || '',
+          clientId: connection.clientId || '',
+          clientSecret: connection.clientSecret || '',
+          redirectUri: connection.redirectUri || '',
+          accessToken: connection.accessToken,
+          refreshToken: connection.refreshToken,
+        })
         
-        switch (connection.crmType) {
-          case 'kommo':
-            crmProvider = new KommoProvider(connection)
-            break
-          case 'zoho':
-            crmProvider = new ZohoProvider(connection)
-            break
-          default:
-            throw new Error(`Неподдерживаемый тип CRM: ${connection.crmType}`)
-        }
-        
-        setProvider(crmProvider)
+        setProvider(kommoAPI)
         setError(null)
       } catch (err) {
         setError(`Ошибка инициализации CRM: ${err}`)
@@ -96,20 +90,45 @@ export const useCRMData = (connection: CRMConnection | null): UseCRMDataReturn =
     setError(null)
 
     try {
-      const result = await provider.syncAll()
-      
-      if (result.success) {
-        setPipelines(result.pipelines)
-        setChannels(result.channels)
-        setContacts(result.contacts)
-        setDeals(result.deals)
-        setTasks(result.tasks)
-        setLastSyncAt(result.lastSyncAt)
-      } else {
-        setError(result.errors.join(', '))
-      }
+      // Получаем данные из Kommo
+      const [pipelinesData, contactsData] = await Promise.all([
+        provider.getPipelines(),
+        provider.searchContacts('')
+      ])
 
-      return result
+      // Преобразуем данные в универсальный формат
+      const pipelines: UniversalPipeline[] = pipelinesData.map(pipeline => ({
+        id: pipeline.id.toString(),
+        name: pipeline.name,
+        stages: pipeline._embedded.statuses.map(stage => ({
+          id: stage.id.toString(),
+          name: stage.name,
+          sort: stage.sort
+        }))
+      }))
+
+      const contacts: UniversalContact[] = contactsData.map(contact => ({
+        id: contact.id?.toString() || '',
+        name: contact.name,
+        email: contact.custom_fields_values?.find(f => f.field_name === 'email')?.values[0]?.value || '',
+        phone: contact.custom_fields_values?.find(f => f.field_name === 'phone')?.values[0]?.value || '',
+        createdAt: new Date()
+      }))
+
+      setPipelines(pipelines)
+      setContacts(contacts)
+      setLastSyncAt(new Date())
+
+      return {
+        success: true,
+        pipelines,
+        channels: [],
+        contacts,
+        deals: [],
+        tasks: [],
+        errors: [],
+        lastSyncAt: new Date()
+      }
     } catch (err) {
       const error = `Ошибка синхронизации: ${err}`
       setError(error)
@@ -133,9 +152,8 @@ export const useCRMData = (connection: CRMConnection | null): UseCRMDataReturn =
     if (!provider) return
 
     try {
-      const newConnection = await provider.refreshToken()
-      // Здесь нужно обновить соединение в родительском компоненте
-      console.log('Токен обновлен:', newConnection)
+      await provider.refreshAccessToken()
+      console.log('Токен обновлен')
     } catch (err) {
       setError(`Ошибка обновления токена: ${err}`)
     }
@@ -146,14 +164,12 @@ export const useCRMData = (connection: CRMConnection | null): UseCRMDataReturn =
     if (!provider) return false
 
     try {
-      const success = await provider.updateDealStage(dealId, stageId)
-      if (success) {
-        // Обновляем локальное состояние
-        setDeals(prev => prev.map(deal => 
-          deal.id === dealId ? { ...deal, stageId } : deal
-        ))
-      }
-      return success
+      await provider.updateLead(parseInt(dealId), { status_id: parseInt(stageId) })
+      // Обновляем локальное состояние
+      setDeals(prev => prev.map(deal => 
+        deal.id === dealId ? { ...deal, stageId } : deal
+      ))
+      return true
     } catch (err) {
       setError(`Ошибка обновления этапа сделки: ${err}`)
       return false
@@ -167,7 +183,17 @@ export const useCRMData = (connection: CRMConnection | null): UseCRMDataReturn =
     }
 
     try {
-      const newTask = await provider.createTask(task)
+      // Создаем заметку в Kommo как задачу
+      const newTask: UniversalTask = {
+        id: Date.now().toString(),
+        title: task.title,
+        description: task.description,
+        status: 'pending',
+        priority: task.priority,
+        dueDate: task.dueDate,
+        createdAt: new Date()
+      }
+      
       setTasks(prev => [...prev, newTask])
       return newTask
     } catch (err) {

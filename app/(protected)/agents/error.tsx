@@ -22,7 +22,7 @@ const AgentsError = ({ error, reset }: AgentsErrorBoundaryProps) => {
           Попробуйте обновить страницу или повторите попытку позже. Если ошибка повторяется, обратитесь к администратору.
         </p>
       </div>
-      <Button variant="danger" onClick={reset} className="w-fit">
+      <Button variant="destructive" onClick={reset} className="w-fit">
         Попробовать снова
       </Button>
     </div>

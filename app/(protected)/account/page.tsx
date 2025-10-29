@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Save, CreditCard } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
-import { Card, CardBody } from '@/components/ui/Card'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import type { PricingPlan } from '@/types'
@@ -91,35 +91,55 @@ const AccountPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <Card>
-            <CardBody>
+            <CardContent>
               <h3 className="text-lg font-semibold text-gray-900 mb-6">
                 Настройки аккаунта
               </h3>
               <div className="space-y-4">
-                <Input
-                  label="Название компании"
-                  defaultValue="World Wide Services"
-                />
-                <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Название компании
+                  </label>
                   <Input
-                    label="Имя"
-                    defaultValue="Администратор"
-                  />
-                  <Input
-                    label="Фамилия"
-                    defaultValue="Системы"
+                    defaultValue="World Wide Services"
                   />
                 </div>
-                <Input
-                  label="Email"
-                  type="email"
-                  defaultValue="admin@worldwideservices.com"
-                />
-                <Input
-                  label="Телефон"
-                  type="tel"
-                  defaultValue="+7 (999) 123-45-67"
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Имя
+                    </label>
+                    <Input
+                      defaultValue="Администратор"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Фамилия
+                    </label>
+                    <Input
+                      defaultValue="Системы"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email
+                  </label>
+                  <Input
+                    type="email"
+                    defaultValue="admin@worldwideservices.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Телефон
+                  </label>
+                  <Input
+                    type="tel"
+                    defaultValue="+7 (999) 123-45-67"
+                  />
+                </div>
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
                     <p className="font-medium text-gray-900">
@@ -140,11 +160,11 @@ const AccountPage = () => {
                   {isSaving ? 'Сохранение...' : 'Сохранить изменения'}
                 </Button>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
 
           <Card>
-            <CardBody>
+            <CardContent>
               <h3 className="text-lg font-semibold text-gray-900 mb-6">
                 Тарифные планы
               </h3>
@@ -179,7 +199,7 @@ const AccountPage = () => {
                         ))}
                       </ul>
                       <Button
-                        variant={isCurrent ? 'secondary' : 'primary'}
+                        variant={isCurrent ? 'secondary' : 'default'}
                         className="w-full"
                         disabled={isCurrent}
                       >
@@ -189,13 +209,13 @@ const AccountPage = () => {
                   )
                 })}
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
 
         <div className="space-y-6">
           <Card>
-            <CardBody>
+            <CardContent>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Текущий план
               </h3>
@@ -246,11 +266,11 @@ const AccountPage = () => {
                   Способ оплаты
                 </Button>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
 
           <Card>
-            <CardBody>
+            <CardContent>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Следующий платёж
               </h3>
@@ -269,7 +289,7 @@ const AccountPage = () => {
                   </p>
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
       </div>

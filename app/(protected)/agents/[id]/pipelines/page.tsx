@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, Save } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
-import { Card, CardBody, CardHeader } from '@/components/ui/Card'
+import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 
 interface AgentPipelinesPageProps {
   params: {
@@ -152,7 +152,7 @@ const AgentPipelinesPage = ({ params }: AgentPipelinesPageProps) => {
       </div>
 
       <Card className="bg-blue-50 border-blue-200">
-        <CardBody>
+        <CardContent>
           <div className="flex items-start space-x-3">
             <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
               <span className="text-white text-sm font-bold">!</span>
@@ -168,7 +168,7 @@ const AgentPipelinesPage = ({ params }: AgentPipelinesPageProps) => {
               </p>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       <div className="space-y-6">
@@ -213,7 +213,7 @@ const AgentPipelinesPage = ({ params }: AgentPipelinesPageProps) => {
               </CardHeader>
 
               {isPipelineSelected && (
-                <CardBody>
+                <CardContent>
                   <div className="space-y-2">
                     {pipeline.stages.map(stage => (
                       <label
@@ -264,7 +264,7 @@ const AgentPipelinesPage = ({ params }: AgentPipelinesPageProps) => {
                       из {pipeline.stages.length}
                     </p>
                   </div>
-                </CardBody>
+                </CardContent>
               )}
             </Card>
           )
@@ -273,12 +273,12 @@ const AgentPipelinesPage = ({ params }: AgentPipelinesPageProps) => {
 
       {selectedPipelines.length === 0 && (
         <Card className="bg-yellow-50 border-yellow-200">
-          <CardBody>
+          <CardContent>
             <p className="text-yellow-800">
               ⚠️ Не выбрано ни одной воронки. Агент не будет работать, пока вы не выберете
               хотя бы одну воронку и этап.
             </p>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
     </div>

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Send, Bot, User } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
-import { Card, CardBody } from '@/components/ui/Card'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Select } from '@/components/ui/Select'
 import type { ChatMessage } from '@/types'
 
@@ -67,7 +67,7 @@ const ChatPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1">
           <Card>
-            <CardBody>
+            <CardContent>
               <h3 className="font-semibold text-gray-900 mb-4">Настройки чата</h3>
               <Select
                 label="Выберите агента"
@@ -91,13 +91,13 @@ const ChatPage = () => {
               >
                 Очистить чат
               </Button>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
 
         <div className="lg:col-span-3">
           <Card className="h-[calc(100vh-280px)] flex flex-col">
-            <CardBody className="flex-1 flex flex-col">
+            <CardContent className="flex-1 flex flex-col">
               <div className="flex-1 overflow-y-auto space-y-4 mb-4">
                 {messages.map((message) => (
                   <div
@@ -179,7 +179,7 @@ const ChatPage = () => {
                   <Send className="w-5 h-5" />
                 </Button>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
       </div>

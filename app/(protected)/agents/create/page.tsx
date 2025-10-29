@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
-import { Card, CardBody, CardHeader } from '@/components/ui/Card'
+import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 
 const CreateAgentPage = () => {
@@ -63,15 +63,19 @@ const CreateAgentPage = () => {
             <h3 className="text-lg font-semibold text-gray-900">Профиль агента</h3>
           </div>
         </CardHeader>
-        <CardBody className="space-y-6">
-          <Input
-            label="Название"
-            placeholder=""
-            value={agentName}
-            onChange={(e) => setAgentName(e.target.value)}
-            required
-            autoFocus
-          />
+        <CardContent className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Название
+            </label>
+            <Input
+              placeholder=""
+              value={agentName}
+              onChange={(e) => setAgentName(e.target.value)}
+              required
+              autoFocus
+            />
+          </div>
 
           <div className="flex items-center space-x-3">
             <Button 
@@ -91,7 +95,7 @@ const CreateAgentPage = () => {
               Отмена
             </Button>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   )

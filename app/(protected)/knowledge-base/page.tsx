@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Plus, Search, FolderOpen, FileText } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
-import { Card, CardBody } from '@/components/ui/Card'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { Textarea } from '@/components/ui/Textarea'
@@ -112,7 +112,7 @@ const KnowledgeBasePage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1">
           <Card>
-            <CardBody>
+            <CardContent>
               <h3 className="font-semibold text-gray-900 mb-4">Категории</h3>
               <div className="space-y-2">
                 <button
@@ -147,7 +147,7 @@ const KnowledgeBasePage = () => {
                   </button>
                 ))}
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
 
@@ -155,7 +155,7 @@ const KnowledgeBasePage = () => {
           <div className="space-y-4">
             {filteredArticles.length === 0 ? (
               <Card>
-                <CardBody className="text-center py-12">
+                <CardContent className="text-center py-12">
                   <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-500 mb-4">
                     {searchQuery ? 'Статьи не найдены' : 'Нет статей в этой категории'}
@@ -163,14 +163,14 @@ const KnowledgeBasePage = () => {
                   <Button onClick={handleCreateArticle}>
                     Создать статью
                   </Button>
-                </CardBody>
+                </CardContent>
               </Card>
             ) : (
               filteredArticles.map((article) => {
                 const category = categories.find(c => c.id === article.categoryId)
                 return (
                   <Card key={article.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardBody>
+                    <CardContent>
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-2">
@@ -196,7 +196,7 @@ const KnowledgeBasePage = () => {
                           Редактировать
                         </Button>
                       </div>
-                    </CardBody>
+                    </CardContent>
                   </Card>
                 )
               })
@@ -214,10 +214,14 @@ const KnowledgeBasePage = () => {
         <div className="space-y-4">
           {modalType === 'category' ? (
             <>
-              <Input
-                label="Название категории"
-                placeholder="Например: Часто задаваемые вопросы"
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Название категории
+                </label>
+                <Input
+                  placeholder="Например: Часто задаваемые вопросы"
+                />
+              </div>
               <Textarea
                 label="Описание"
                 placeholder="Краткое описание категории"
@@ -226,10 +230,14 @@ const KnowledgeBasePage = () => {
             </>
           ) : (
             <>
-              <Input
-                label="Заголовок статьи"
-                placeholder="Например: Как оформить заказ?"
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Заголовок статьи
+                </label>
+                <Input
+                  placeholder="Например: Как оформить заказ?"
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Категория

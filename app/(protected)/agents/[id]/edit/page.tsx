@@ -121,7 +121,7 @@ export default function EditAgentPage({ params }: { params: { id: string } }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Редактирование АИ ассистент</h1>
-        <Button variant="danger">
+        <Button variant="destructive">
           <Trash2 className="w-4 h-4 mr-2" />
           Удалить
         </Button>

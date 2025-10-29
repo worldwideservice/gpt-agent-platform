@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Copy, RefreshCw, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Card, CardBody } from '@/components/ui/Card'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { Modal } from '@/components/ui/Modal'
@@ -156,7 +156,7 @@ export const CRMConfigModal = ({ isOpen, onClose, crmType, onSave }: CRMConfigMo
           {/* Вкладка: Описание */}
           <TabsContent value="description">
             <Card>
-              <CardBody className="space-y-4">
+              <CardContent className="space-y-4">
                 <div>
                   <h3 className="font-medium text-gray-900 mb-2">Описание интеграции</h3>
                   <p className="text-sm text-gray-600">
@@ -189,14 +189,14 @@ export const CRMConfigModal = ({ isOpen, onClose, crmType, onSave }: CRMConfigMo
                     )}
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           </TabsContent>
 
           {/* Вкладка: Подключение */}
           <TabsContent value="keys">
             <Card>
-              <CardBody className="space-y-6">
+              <CardContent className="space-y-6">
                 {/* Access Token */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -255,14 +255,14 @@ export const CRMConfigModal = ({ isOpen, onClose, crmType, onSave }: CRMConfigMo
                     Проверим токен и подключимся к CRM
                   </p>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           </TabsContent>
 
           {/* Вкладка: Выданные доступы */}
           <TabsContent value="access">
             <Card>
-              <CardBody className="space-y-4">
+              <CardContent className="space-y-4">
                 <div>
                   <h3 className="font-medium text-gray-900 mb-2">Текущие подключения</h3>
                   {config.isConnected ? (
@@ -301,13 +301,13 @@ export const CRMConfigModal = ({ isOpen, onClose, crmType, onSave }: CRMConfigMo
                       <Button variant="outline" size="sm" className="w-full">
                         Обновить токены
                       </Button>
-                      <Button variant="danger" size="sm" className="w-full">
+                      <Button variant="destructive" size="sm" className="w-full">
                         Отключить
                       </Button>
                     </div>
                   </div>
                 )}
-              </CardBody>
+              </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
