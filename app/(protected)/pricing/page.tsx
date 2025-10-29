@@ -272,7 +272,6 @@ const PricingPage = () => {
             description="30-дневная гарантия возврата денег"
           />
           </div>
-          </div>
         </section>
       )}
 
