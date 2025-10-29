@@ -36,7 +36,7 @@ export const createOrganizationWithOwner = async ({ name, ownerId }: CreateOrgan
 
   const { data: organization, error: organizationError } = await supabase
     .from('organizations')
-    .insert({ name, slug: slugCandidate })
+    .insert({ name, slug: slugCandidate } as never)
     .select('*')
     .single()
 
@@ -55,7 +55,7 @@ export const createOrganizationWithOwner = async ({ name, ownerId }: CreateOrgan
     user_id: ownerId,
     role: 'owner',
     status: 'active',
-  })
+  } as never)
 
   if (memberError) {
     throw memberError
@@ -63,7 +63,7 @@ export const createOrganizationWithOwner = async ({ name, ownerId }: CreateOrgan
 
   const { error: updateUserError } = await supabase
     .from('users')
-    .update({ default_org_id: organizationRow.id })
+    .update({ default_org_id: organizationRow.id } as never)
     .eq('id', ownerId)
 
   if (updateUserError) {
@@ -125,7 +125,7 @@ export const setDefaultOrganizationForUser = async (userId: string, orgId: strin
 
   const { error } = await supabase
     .from('users')
-    .update({ default_org_id: orgId })
+    .update({ default_org_id: orgId } as never)
     .eq('id', userId)
 
   if (error) {
