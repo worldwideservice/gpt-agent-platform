@@ -156,17 +156,6 @@ const PricingPage = () => {
     return `$${plan.priceYearly}`
   }
 
-  if (isLoading) {
-    return (
-      <div className="space-y-8">
-        <header className="space-y-2">
-          <h1 className="text-3xl font-semibold text-slate-900">Тарифные планы</h1>
-          <p className="text-sm text-slate-500">Загрузка...</p>
-        </header>
-      </div>
-    )
-  }
-
   const formatDate = (dateString: string | null): string => {
     if (!dateString) {
       return '—'
@@ -182,9 +171,21 @@ const PricingPage = () => {
     ? Math.min((subscription.tokenUsed / subscription.tokenQuota) * 100, 100)
     : 0
 
+  const defaultDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
   const nextResetDate = subscription?.renewsAt
     ? formatDate(subscription.renewsAt)
-    : formatDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString())
+    : formatDate(defaultDate)
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        <header className="space-y-2">
+          <h1 className="text-3xl font-semibold text-slate-900">Тарифные планы</h1>
+          <p className="text-sm text-slate-500">Загрузка...</p>
+        </header>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8">
@@ -271,8 +272,8 @@ const PricingPage = () => {
             description="30-дневная гарантия возврата денег"
           />
           </div>
-        </div>
-      </section>
+          </div>
+        </section>
       )}
 
       <section className="grid gap-6 lg:grid-cols-3">

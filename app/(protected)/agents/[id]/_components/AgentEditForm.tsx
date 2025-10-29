@@ -21,7 +21,6 @@ import {
   Settings2,
 } from 'lucide-react'
 
-import Link from 'next/link'
 import { TriggerManager } from '@/components/agents/TriggerManager'
 import { CalloutPipelines } from './CalloutPipelines'
 import { StageCard } from './StageCard'
