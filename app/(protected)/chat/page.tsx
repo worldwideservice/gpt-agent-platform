@@ -348,7 +348,7 @@ const ChatPage = () => {
               <Select
                 label="Выберите агента ИИ"
                 value={selectedAgentId}
-                onChange={(value) => setSelectedAgentId(value)}
+                onChange={(value: string) => setSelectedAgentId(value)}
                 options={agentOptions}
               />
             </div>
