@@ -306,7 +306,7 @@ export const upsertOnboardingAgent = async (
 
     const { data, error } = await supabase
       .from('agents')
-      .update(updatePayload as Database['public']['Tables']['agents']['Update'])
+      .update(updatePayload as never)
       .eq('id', existingAgent.id)
       .select('*')
       .single()
@@ -331,7 +331,7 @@ export const upsertOnboardingAgent = async (
 
   const { data, error } = await supabase
     .from('agents')
-    .insert(insertPayload as Database['public']['Tables']['agents']['Insert'])
+    .insert(insertPayload as never)
     .select('*')
     .single()
 
