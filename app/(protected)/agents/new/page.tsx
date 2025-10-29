@@ -1,7 +1,7 @@
 import AgentEditPage from '../[id]/page'
 
-const NewAgentPage = () => {
-  return <AgentEditPage params={{ id: 'new' }} />
+const NewAgentPage = async () => {
+  return <AgentEditPage params={Promise.resolve({ id: 'new' })} />
 }
 
 export default NewAgentPage
