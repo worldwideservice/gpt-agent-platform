@@ -61,16 +61,17 @@ const SummaryCard = ({ icon: Icon, title, description }: SummaryCardProps) => (
 type ChannelState = {
   id: string
   label: string
+  name: string
   type: string
   isActive: boolean
 }
 
 const DEFAULT_CHANNEL_OPTIONS: ChannelState[] = [
-  { id: 'email', label: 'Email', type: 'email', isActive: true },
-  { id: 'telegram', label: 'Telegram', type: 'chat', isActive: true },
-  { id: 'whatsapp', label: 'WhatsApp', type: 'chat', isActive: true },
-  { id: 'facebook', label: 'Facebook Messenger', type: 'social', isActive: true },
-  { id: 'website', label: 'Виджет на сайте', type: 'web', isActive: true },
+  { id: 'email', label: 'Email', name: 'Email', type: 'email', isActive: true },
+  { id: 'telegram', label: 'Telegram', name: 'Telegram', type: 'chat', isActive: true },
+  { id: 'whatsapp', label: 'WhatsApp', name: 'WhatsApp', type: 'chat', isActive: true },
+  { id: 'facebook', label: 'Facebook Messenger', name: 'Facebook Messenger', type: 'social', isActive: true },
+  { id: 'website', label: 'Виджет на сайте', name: 'Виджет на сайте', type: 'web', isActive: true },
 ]
 
 const DEFAULT_NOT_FOUND_MESSAGE =
@@ -113,6 +114,7 @@ const createChannelState = (channelId: string, isActive: boolean): ChannelState 
   return {
     id: channelId,
     label: meta.label,
+    name: meta.label,
     type: meta.type,
     isActive,
   }
