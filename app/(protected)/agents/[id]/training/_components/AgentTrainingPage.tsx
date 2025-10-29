@@ -334,7 +334,7 @@ export const AgentTrainingPage = ({ agentId, agentName }: AgentTrainingPageProps
                   <Select
                     label="Категория"
                     value={knowledgeForm.category}
-                    onChange={(value) => setKnowledgeForm({ ...knowledgeForm, category: value as typeof knowledgeForm.category })}
+                    onChange={(value: string) => setKnowledgeForm({ ...knowledgeForm, category: value as typeof knowledgeForm.category })}
                     options={categoryOptions}
                   />
                 </div>
