@@ -54,6 +54,19 @@
       "env": {
         "MAGIC_API_KEY": "${MAGIC_API_KEY}"
       }
+    },
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase",
+        "--project-ref",
+        "${SUPABASE_PROJECT_REF}"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}",
+        "SUPABASE_API_URL": "${SUPABASE_API_URL}"
+      }
     }
   }
 }

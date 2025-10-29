@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 
-import { Header } from '@/components/layout/Header'
-import { Sidebar } from '@/components/layout/Sidebar'
+import { AppProviders } from '@/components/AppProviders'
 
 import './globals.css'
 
@@ -21,23 +20,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   return (
     <html lang="ru">
       <body className={inter.className}>
-        <div className="min-h-screen flex">
-          {/* Sidebar - фиксированный слева */}
-          <Sidebar />
-          
-          {/* Main content area - с отступом для sidebar и header */}
-          <div className="flex-1 flex flex-col ml-64">
-            {/* Header - фиксированный сверху */}
-            <Header />
-            
-            {/* Main content */}
-            <main className="flex-1 bg-gray-50">
-              <div className="p-6">
-                {children}
-              </div>
-            </main>
-          </div>
-        </div>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   )

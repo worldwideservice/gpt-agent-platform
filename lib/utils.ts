@@ -1,16 +1,23 @@
-import { type ClassValue, clsx } from 'clsx'
+import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
-export const cn = (...inputs: ClassValue[]) => {
+export const cn = (...inputs: ClassValue[]): string => {
   return twMerge(clsx(inputs))
 }
 
-export const formatNumber = (num: number): string => {
-  return new Intl.NumberFormat('ru-RU').format(num)
+export const formatNumber = (value: number | string): string => {
+  if (typeof value === 'string') {
+    return value
+  }
+
+  return new Intl.NumberFormat('ru-RU').format(value)
 }
 
-export const formatPercent = (num: number): string => {
-  const sign = num > 0 ? '+' : ''
-  return `${sign}${num.toFixed(1)}%`
+export const slugify = (value: string): string => {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '')
 }
-

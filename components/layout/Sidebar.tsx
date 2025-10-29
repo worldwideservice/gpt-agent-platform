@@ -91,8 +91,9 @@ export const Sidebar = () => {
               <ul className="space-y-1">
                 {section.items.map((item) => {
                   const Icon = item.icon
-                  const isActive = pathname === item.href
                   const isExternal = item.href.startsWith('http')
+                  const isDashboard = item.href === '/'
+                  const isActive = isDashboard ? pathname === '/' : pathname.startsWith(item.href)
 
                   const content = (
                     <>

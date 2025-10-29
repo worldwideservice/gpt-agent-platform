@@ -3,162 +3,158 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Plus, Search } from 'lucide-react'
+
+import { AgentTable } from '@/components/agents/AgentTable'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Modal } from '@/components/ui/Modal'
+import type { Agent } from '@/types'
 
-// Mock data based on screenshot
-const mockAgents = [
+const mockAgents: Agent[] = [
   {
     id: '1',
-    name: 'АИ ассистент',
+    name: 'Консультант по продажам',
     status: 'active',
-    messages: 14897,
-    lastActivity: 'Сегодня',
-    employees: 'Maksym',
+    model: 'GPT-4',
+    createdAt: new Date('2024-01-15'),
+    updatedAt: new Date('2024-10-20'),
   },
   {
     id: '2',
-    name: 'Консультант по продажам',
+    name: 'Техническая поддержка',
     status: 'active',
-    messages: 4530,
-    lastActivity: '2 дня назад',
-    employees: 'Иван Петров',
+    model: 'GPT-4',
+    createdAt: new Date('2024-02-10'),
+    updatedAt: new Date('2024-10-25'),
+  },
+  {
+    id: '3',
+    name: 'Квалификация лидов',
+    status: 'active',
+    model: 'GPT-4 Turbo',
+    createdAt: new Date('2024-03-05'),
+    updatedAt: new Date('2024-10-22'),
+  },
+  {
+    id: '4',
+    name: 'FAQ-бот',
+    status: 'inactive',
+    model: 'GPT-3.5 Turbo',
+    createdAt: new Date('2024-01-20'),
+    updatedAt: new Date('2024-09-15'),
+  },
+  {
+    id: '5',
+    name: 'Новый агент',
+    status: 'draft',
+    model: 'GPT-4',
+    createdAt: new Date('2024-10-28'),
+    updatedAt: new Date('2024-10-28'),
   },
 ]
 
-export default function AgentsPage() {
-  const [searchTerm, setSearchTerm] = useState('')
+const AgentsPage = () => {
+  const [agents, setAgents] = useState<Agent[]>(mockAgents)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [agentToDelete, setAgentToDelete] = useState<string | null>(null)
 
-  const filteredAgents = mockAgents.filter(agent =>
-    agent.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredAgents = agents.filter(agent =>
+    agent.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  const handleDelete = (id: string) => {
+    setAgentToDelete(id)
+    setDeleteModalOpen(true)
+  }
+
+  const confirmDelete = () => {
+    if (agentToDelete) {
+      setAgents(prev => prev.filter(agent => agent.id !== agentToDelete))
+      setDeleteModalOpen(false)
+      setAgentToDelete(null)
+    }
+  }
+
+  const handleDuplicate = (id: string) => {
+    const agentToDuplicate = agents.find(agent => agent.id === id)
+    if (agentToDuplicate) {
+      const newAgent: Agent = {
+        ...agentToDuplicate,
+        id: Date.now().toString(),
+        name: `${agentToDuplicate.name} (копия)`,
+        status: 'draft',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+      setAgents(prev => [...prev, newAgent])
+    }
+  }
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Агенты ИИ</h1>
-          <p className="text-sm text-gray-600 mt-1">Управление агентами</p>
+          <h1 className="text-3xl font-bold text-gray-900">Агенты ИИ</h1>
+          <p className="text-gray-600 mt-1">
+            Управление AI-агентами для автоматизации общения
+          </p>
         </div>
         <Link href="/agents/new">
           <Button>
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-5 h-5 mr-2" />
             Создать агента
           </Button>
         </Link>
       </div>
 
-      {/* Search */}
-      <div className="max-w-md">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <Input
-            type="text"
-            placeholder="Поиск агентов..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+      <div className="flex items-center space-x-4">
+        <div className="flex-1 max-w-md">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Input
+              type="search"
+              placeholder="Поиск по агентам..."
+              value={searchQuery}
+              onChange={handleSearch}
+              className="pl-10"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <input
-                    type="checkbox"
-                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                  />
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Название
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Статус
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Сообщений
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Последняя активность
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Сотрудники
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Действия
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredAgents.map((agent) => (
-                <tr key={agent.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                    />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Link href={`/agents/${agent.id}`} className="text-blue-600 hover:text-blue-800 font-medium">
-                      {agent.name}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                      agent.status === 'active' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {agent.status === 'active' ? 'Активен' : 'Неактивен'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {agent.messages.toLocaleString('ru-RU')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {agent.lastActivity}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {agent.employees}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center space-x-2">
-                      <Link href={`/agents/${agent.id}/edit`} className="text-blue-600 hover:text-blue-800">
-                        Редактировать
-                      </Link>
-                      <span className="text-gray-300">|</span>
-                      <button className="text-red-600 hover:text-red-800">
-                        Удалить
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <AgentTable
+        agents={filteredAgents}
+        onDelete={handleDelete}
+        onDuplicate={handleDuplicate}
+      />
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-600">
-          Показано {filteredAgents.length} из {mockAgents.length} агентов
-        </p>
-        <div className="flex items-center space-x-2">
-          <button className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-            Назад
-          </button>
-          <button className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-            Вперед
-          </button>
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title="Подтверждение удаления"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">
+            Вы уверены, что хотите удалить этого агента? Это действие нельзя отменить.
+          </p>
+          <div className="flex items-center justify-end space-x-3">
+            <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>
+              Отмена
+            </Button>
+            <Button variant="danger" onClick={confirmDelete}>
+              Удалить
+            </Button>
+          </div>
         </div>
-      </div>
+      </Modal>
     </div>
   )
 }
+
+export default AgentsPage
+

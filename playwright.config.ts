@@ -6,7 +6,7 @@ import { defineConfig, devices } from '@playwright/test'
  */
 export default defineConfig({
   // Папка с тестами
-  testDir: './tests',
+  testDir: './tests/e2e',
   
   // Папка для скриншотов и артефактов
   outputDir: './test-results',
@@ -101,10 +101,14 @@ export default defineConfig({
 
   // Веб-сервер для тестов
   webServer: {
-    command: 'npm run start',
+    command: 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
+    env: {
+      ...process.env,
+      E2E_ONBOARDING_FAKE: '1',
+    },
   },
 })
 

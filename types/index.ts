@@ -2,9 +2,12 @@ export interface Agent {
   id: string
   name: string
   status: 'active' | 'inactive' | 'draft'
-  model: string
-  createdAt: Date
-  updatedAt: Date
+  model: string | null
+  messagesTotal: number
+  lastActivityAt: string | null
+  ownerName: string | null
+  createdAt: string
+  updatedAt: string
 }
 
 export interface DashboardStats {

@@ -1,234 +1,217 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Plus, Settings, Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
-import { CRMSelector } from '@/components/crm/CRMSelector'
-import { UniversalSync } from '@/components/crm/UniversalSync'
-import { CRMConfigModal } from '@/components/crm/CRMConfigModal'
-import { KommoAPIDebugger } from '@/components/crm/KommoAPIDebugger'
-import type { CRMConfig, CRMConnection, SyncResult } from '@/types/crm'
+import { useState } from 'react'
+import { Settings, CheckCircle, XCircle, Plus } from 'lucide-react'
 
-// Mock данные для демонстрации
-const mockConnections: CRMConnection[] = [
+import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import { Card, CardBody } from '@/components/ui/Card'
+import { Modal } from '@/components/ui/Modal'
+import { Input } from '@/components/ui/Input'
+import type { Integration } from '@/types'
+
+const mockIntegrations: Integration[] = [
   {
     id: '1',
-    crmType: 'kommo',
-    accessToken: 'mock_token',
-    domain: 'example.kommo.com',
-    isConnected: true,
-    lastSyncAt: new Date(Date.now() - 3600000), // 1 час назад
-    config: {
-      id: 'kommo',
-      name: 'Kommo CRM',
-      logo: '/logos/kommo.svg',
-      description: 'Kommo CRM подключена',
-      authType: 'oauth2',
-      baseUrl: 'https://kommo.com/api/v4',
-      scopes: ['crm:read', 'crm:write'],
-      fields: []
-    }
-  }
+    name: 'Kommo CRM',
+    type: 'kommo',
+    status: 'connected',
+    isActive: true,
+  },
+  {
+    id: '2',
+    name: 'Telegram Bot',
+    type: 'telegram',
+    status: 'disconnected',
+    isActive: false,
+  },
+  {
+    id: '3',
+    name: 'WhatsApp Business',
+    type: 'whatsapp',
+    status: 'disconnected',
+    isActive: false,
+  },
+  {
+    id: '4',
+    name: 'Facebook Messenger',
+    type: 'facebook',
+    status: 'connected',
+    isActive: true,
+  },
+  {
+    id: '5',
+    name: 'Email Integration',
+    type: 'email',
+    status: 'connected',
+    isActive: false,
+  },
 ]
 
-export default function IntegrationsPage() {
-  const [connections, setConnections] = useState<CRMConnection[]>(mockConnections)
-  const [showCRMSelector, setShowCRMSelector] = useState(false)
-  const [selectedCRM, setSelectedCRM] = useState<CRMConfig | null>(null)
-  const [showCRMConfig, setShowCRMConfig] = useState(false)
-  const [showDebugger, setShowDebugger] = useState(false)
+const IntegrationsPage = () => {
+  const [integrations, setIntegrations] = useState<Integration[]>(mockIntegrations)
+  const [configModalOpen, setConfigModalOpen] = useState(false)
+  const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null)
 
-  const handleSelectCRM = (crmConfig: CRMConfig) => {
-    setSelectedCRM(crmConfig)
-    setShowCRMSelector(false)
-    setShowCRMConfig(true)
+  const handleConfigure = (integration: Integration) => {
+    setSelectedIntegration(integration)
+    setConfigModalOpen(true)
   }
 
-  const handleCRMConnection = (connection: any) => {
-    const newConnection: CRMConnection = {
-      id: connection.id || Date.now().toString(),
-      crmType: connection.crmType,
-      accessToken: connection.accessToken,
-      domain: connection.domain || '',
-      isConnected: connection.isConnected,
-      lastSyncAt: new Date(),
-      config: {
-        id: connection.crmType,
-        name: connection.crmType === 'kommo' ? 'Kommo CRM' : 'CRM System',
-        logo: '/logos/kommo.svg',
-        description: `${connection.crmType} подключена`,
-        authType: 'oauth2',
-        baseUrl: connection.crmType === 'kommo' ? 'https://kommo.com/api/v4' : '',
-        scopes: ['crm:read', 'crm:write'],
-        fields: []
-      }
+  const handleToggleActive = (id: string) => {
+    setIntegrations(prev =>
+      prev.map(int =>
+        int.id === id ? { ...int, isActive: !int.isActive } : int
+      )
+    )
+  }
+
+  const getIntegrationIcon = (type: Integration['type']) => {
+    const icons = {
+      kommo: '📊',
+      telegram: '💬',
+      whatsapp: '📱',
+      facebook: '👥',
+      email: '📧',
     }
-    
-    setConnections(prev => [...prev, newConnection])
-    setShowCRMConfig(false)
-    setSelectedCRM(null)
-  }
-
-  const handleSync = async (crmType: string): Promise<SyncResult> => {
-    // Mock синхронизация
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    return {
-      success: true,
-      pipelines: [
-        {
-          id: '1',
-          name: 'GENERATION LEAD',
-          isActive: true,
-          stages: [
-            { id: '1', name: 'Сделка не распределена', pipelineId: '1', order: 1, isActive: true },
-            { id: '2', name: 'Сделка распределена', pipelineId: '1', order: 2, isActive: true },
-            { id: '3', name: 'Social media', pipelineId: '1', order: 3, isActive: true }
-          ]
-        }
-      ],
-      channels: [
-        { id: 'email', name: 'Email', type: 'email', isActive: true },
-        { id: 'phone', name: 'Телефон', type: 'phone', isActive: true },
-        { id: 'chat', name: 'Чат', type: 'chat', isActive: true }
-      ],
-      contacts: [],
-      deals: [],
-      tasks: [],
-      errors: [],
-      lastSyncAt: new Date()
-    }
-  }
-
-  const handleDisconnect = (connectionId: string) => {
-    setConnections(prev => prev.filter(conn => conn.id !== connectionId))
+    return icons[type]
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Интеграции</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            Подключите CRM системы для автоматической синхронизации данных
+          <h1 className="text-3xl font-bold text-gray-900">Интеграции</h1>
+          <p className="text-gray-600 mt-1">
+            Подключите внешние сервисы для расширения возможностей
           </p>
         </div>
-        <div className="flex items-center space-x-3">
-          <Button 
-            variant="outline"
-            onClick={() => setShowDebugger(!showDebugger)}
-          >
-            Отладка API
-          </Button>
-          <Button onClick={() => setShowCRMSelector(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Подключить CRM
-          </Button>
-        </div>
+        <Button>
+          <Plus className="w-5 h-5 mr-2" />
+          Добавить интеграцию
+        </Button>
       </div>
 
-      {/* CRM Selector */}
-      {showCRMSelector && (
-        <Card className="p-6">
-          <CRMSelector 
-            onSelect={handleSelectCRM}
-            connectedCRMs={connections.map(conn => conn.crmType)}
-          />
-        </Card>
-      )}
-
-      {/* API Debugger */}
-      {showDebugger && (
-        <KommoAPIDebugger />
-      )}
-
-      {/* CRM Config Modal */}
-      {showCRMConfig && selectedCRM && (
-        <CRMConfigModal
-          isOpen={showCRMConfig}
-          onClose={() => {
-            setShowCRMConfig(false)
-            setSelectedCRM(null)
-          }}
-          crmType={selectedCRM.id as 'kommo' | 'zoho' | 'bitrix24'}
-          onSave={handleCRMConnection}
-        />
-      )}
-
-      {/* Connected CRMs */}
-      {connections.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">Подключенные CRM системы</h2>
-          
-          {connections.map((connection) => (
-            <Card key={connection.id} className="p-6">
-              <div className="flex items-center justify-between mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {integrations.map((integration) => (
+          <Card key={integration.id}>
+            <CardBody>
+              <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-white rounded-lg border border-gray-200 flex items-center justify-center">
-                    <span className="text-lg font-bold text-gray-600">
-                      {connection.config.name.charAt(0)}
-                    </span>
+                  <div className="w-12 h-12 bg-primary-50 rounded-lg flex items-center justify-center text-2xl">
+                    {getIntegrationIcon(integration.type)}
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {connection.config.name}
+                    <h3 className="font-semibold text-gray-900">
+                      {integration.name}
                     </h3>
-                    <p className="text-sm text-gray-500">
-                      Подключено {connection.lastSyncAt?.toLocaleDateString('ru-RU')}
-                    </p>
+                    <div className="flex items-center space-x-2 mt-1">
+                      {integration.status === 'connected' ? (
+                        <>
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <Badge variant="success">Подключено</Badge>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="w-4 h-4 text-gray-400" />
+                          <Badge variant="default">Не подключено</Badge>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm">
-                    <Settings className="w-4 h-4 mr-2" />
-                    Настройки
-                  </Button>
-                  <Button 
-                    variant="danger" 
-                    size="sm"
-                    onClick={() => handleDisconnect(connection.id)}
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Отключить
-                  </Button>
                 </div>
               </div>
 
-              {/* Universal Sync Component */}
-              <UniversalSync
-                crmType={connection.config.name}
-                onSync={() => handleSync(connection.crmType)}
-                lastSyncAt={connection.lastSyncAt}
-                isConnected={connection.isConnected}
-                accessToken={connection.accessToken}
-                domain={connection.domain}
-              />
-            </Card>
-          ))}
-        </div>
-      )}
+              <div className="space-y-3">
+                {integration.status === 'connected' && (
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <span className="text-sm font-medium text-gray-700">
+                      Активна
+                    </span>
+                    <button
+                      onClick={() => handleToggleActive(integration.id)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                        integration.isActive ? 'bg-primary-600' : 'bg-gray-300'
+                      }`}
+                      aria-label="Переключить активность"
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          integration.isActive ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                )}
 
-      {/* Empty State */}
-      {connections.length === 0 && !showCRMSelector && (
-        <Card className="p-12 text-center">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Settings className="w-8 h-8 text-gray-400" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Нет подключенных CRM систем
-          </h3>
-          <p className="text-gray-600 mb-6">
-            Подключите CRM систему для автоматической синхронизации воронок, статусов и каналов
-          </p>
-          <Button onClick={() => setShowCRMSelector(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Подключить CRM
-          </Button>
-        </Card>
-      )}
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => handleConfigure(integration)}
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  {integration.status === 'connected' ? 'Настроить' : 'Подключить'}
+                </Button>
+              </div>
+            </CardBody>
+          </Card>
+        ))}
+      </div>
+
+      <Modal
+        isOpen={configModalOpen}
+        onClose={() => setConfigModalOpen(false)}
+        title={`Настройка ${selectedIntegration?.name}`}
+        size="lg"
+      >
+        <div className="space-y-4">
+          {selectedIntegration?.status === 'connected' ? (
+            <>
+              <Input
+                label="API Key"
+                defaultValue="sk-••••••••••••••••••"
+                type="password"
+              />
+              <Input
+                label="Webhook URL"
+                defaultValue="https://api.example.com/webhook"
+              />
+              <div className="flex items-center justify-end space-x-3 mt-6">
+                <Button variant="outline" onClick={() => setConfigModalOpen(false)}>
+                  Отмена
+                </Button>
+                <Button onClick={() => setConfigModalOpen(false)}>
+                  Сохранить
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-gray-700">
+                Для подключения {selectedIntegration?.name} выполните следующие шаги:
+              </p>
+              <ol className="list-decimal list-inside space-y-2 text-gray-700">
+                <li>Получите API ключ в настройках сервиса</li>
+                <li>Скопируйте webhook URL</li>
+                <li>Вставьте данные в форму ниже</li>
+              </ol>
+              <Input label="API Key" placeholder="Введите API ключ" />
+              <Input label="Webhook URL" placeholder="Введите webhook URL" />
+              <div className="flex items-center justify-end space-x-3 mt-6">
+                <Button variant="outline" onClick={() => setConfigModalOpen(false)}>
+                  Отмена
+                </Button>
+                <Button onClick={() => setConfigModalOpen(false)}>
+                  Подключить
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      </Modal>
     </div>
   )
 }
+
+export default IntegrationsPage
+
