@@ -7,7 +7,7 @@ import { createAgentSequence, getAgentSequences } from '@/lib/repositories/agent
 const stepSchema = z.object({
   id: z.string().uuid().optional(),
   stepType: z.string().min(1, 'Тип шага обязателен'),
-  payload: z.record(z.unknown()).optional(),
+  payload: z.record(z.string(), z.unknown()).optional(),
   delaySeconds: z.number().int().min(0).max(86400).optional(),
   sortOrder: z.number().int().min(0).optional(),
 })
@@ -17,7 +17,7 @@ const sequenceSchema = z.object({
   description: z.string().nullable().optional(),
   isActive: z.boolean().optional(),
   sortOrder: z.number().int().optional(),
-  settings: z.record(z.unknown()).optional(),
+  settings: z.record(z.string(), z.unknown()).optional(),
   steps: z.array(stepSchema).optional(),
 })
 

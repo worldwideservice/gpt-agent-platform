@@ -1063,6 +1063,26 @@ export type AuditLogRow = Database['public']['Tables']['audit_logs']['Row']
 
 export type AgentActivityMetricRow = Database['public']['Tables']['agent_activity_metrics']['Row']
 
+// Типы для таблиц, которые могут отсутствовать в Database, но используются в коде
+export type AgentAssetRow = {
+  id: string
+  agent_id: string
+  org_id: string
+  type: string
+  source_name: string | null
+  storage_path: string | null
+  status: 'pending' | 'processing' | 'completed' | 'failed'
+  error: string | null
+  file_size: number | null
+  mime_type: string | null
+  chunks_count: number | null
+  processing_error: string | null
+  created_at: string
+  processed_at: string | null
+}
+
+export type SubscriptionRow = Database['public']['Tables']['subscriptions']['Row']
+
 export type DashboardStatsViewRow = Database['public']['Views']['dashboard_kpis']['Row']
 
 export type DashboardStatsFunctionResult = Database['public']['Functions']['calculate_dashboard_stats']['Returns']

@@ -124,6 +124,6 @@ export const updateAssetStatus = async (
   }
 }
 
-export type { AgentAsset }
+// Экспорт типа AgentAsset уже объявлен выше через interface
 
 

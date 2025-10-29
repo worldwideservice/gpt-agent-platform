@@ -50,15 +50,18 @@ export const searchKnowledgeBase = async (
       const matches = (data as Array<{ id: string; article_id: string | null; content: string; similarity: number; metadata: Record<string, unknown> }> | null) ?? []
 
       if (matches.length > 0) {
-        return matches.map((match) => ({
-          id: match.id,
-          content: match.content,
-          metadata: {
-            articleId: match.article_id ?? (match.metadata?.articleId as string | undefined) ?? null,
-            ...((match.metadata as Record<string, unknown>) ?? {}),
-          },
-          similarity: match.similarity ?? 0,
-        }))
+        return matches.map((match) => {
+          const articleId = match.article_id ?? (match.metadata?.articleId as string | undefined) ?? undefined
+          return {
+            id: match.id,
+            content: match.content,
+            metadata: {
+              ...(articleId ? { articleId } : {}),
+              ...((match.metadata as Record<string, unknown>) ?? {}),
+            },
+            similarity: match.similarity ?? 0,
+          }
+        }) as KnowledgeChunk[]
       }
     }
   } catch (error) {

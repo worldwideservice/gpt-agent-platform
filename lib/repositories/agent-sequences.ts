@@ -1,5 +1,7 @@
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
+import type { Json } from '@/types/supabase'
+
 import type {
   AgentChannelRow,
   AgentSequenceRow,
@@ -103,7 +105,6 @@ export const getAgentSequences = async (
     .eq('agent_id', agentId)
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true })
-    .order('sort_order', { ascending: true, foreignTable: 'agent_sequence_steps' })
 
   if (error) {
     console.error('Failed to fetch agent sequences', error)
@@ -151,7 +152,7 @@ export const getAgentSequenceById = async (
 }
 
 interface SequenceInput {
-  name: string
+  name?: string
   description?: string | null
   isActive?: boolean
   sortOrder?: number
@@ -241,7 +242,7 @@ export const updateAgentSequence = async (
     updatePayload.sort_order = input.sortOrder
   }
   if (input.settings !== undefined) {
-    updatePayload.settings = input.settings
+    updatePayload.settings = input.settings as unknown as Json
   }
 
   if (Object.keys(updatePayload).length > 0) {

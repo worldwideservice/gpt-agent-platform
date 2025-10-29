@@ -49,14 +49,14 @@ const createTriggerSchema = z.object({
   conditions: z.array(
     z.object({
       conditionType: z.string().min(1),
-      payload: z.record(z.unknown()),
+      payload: z.record(z.string(), z.unknown()),
       ordering: z.number().int().min(0),
     }),
   ),
   actions: z.array(
     z.object({
       actionType: z.string().min(1),
-      payload: z.record(z.unknown()),
+      payload: z.record(z.string(), z.unknown()),
       ordering: z.number().int().min(0),
     }),
   ),

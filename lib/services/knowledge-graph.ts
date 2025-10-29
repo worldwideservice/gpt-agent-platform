@@ -279,7 +279,7 @@ export const getRelatedEntities = async (
     const source = entityMap.get(rel.source_entity_id)
     if (!source) continue
 
-    const targetEntity = rel.knowledge_graph_entities as { id: string; entity_name: string; entity_type: string } | null
+    const targetEntity = rel.knowledge_graph_entities as unknown as { id: string; entity_name: string; entity_type: string } | null
     if (!targetEntity) continue
 
     const sourceData = result.get(source.entity_name)

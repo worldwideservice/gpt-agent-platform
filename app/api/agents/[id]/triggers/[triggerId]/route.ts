@@ -60,7 +60,7 @@ const updateTriggerSchema = z.object({
       z.object({
         id: z.string().uuid().optional(),
         conditionType: z.string().min(1),
-        payload: z.record(z.unknown()),
+        payload: z.record(z.string(), z.unknown()),
         ordering: z.number().int().min(0),
       }),
     )
@@ -70,7 +70,7 @@ const updateTriggerSchema = z.object({
       z.object({
         id: z.string().uuid().optional(),
         actionType: z.string().min(1),
-        payload: z.record(z.unknown()),
+        payload: z.record(z.string(), z.unknown()),
         ordering: z.number().int().min(0),
       }),
     )
@@ -120,7 +120,10 @@ export const PATCH = async (
       )
     }
 
-    const trigger = await updateTrigger(triggerId, id, parsed.data)
+    const trigger = await updateTrigger(triggerId, id, {
+      ...parsed.data,
+      description: parsed.data.description ?? undefined,
+    })
 
     return NextResponse.json({
       success: true,

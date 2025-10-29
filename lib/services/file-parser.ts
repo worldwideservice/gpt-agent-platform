@@ -20,6 +20,7 @@ interface ParsedDocument {
 export const parsePDF = async (fileBuffer: Buffer): Promise<ParsedDocument> => {
   try {
     // Динамический импорт для поддержки ESM
+    // @ts-ignore - pdf-parse doesn't have type definitions
     const pdfParse = (await import('pdf-parse')).default
     const data = await pdfParse(fileBuffer)
     
@@ -29,7 +30,7 @@ export const parsePDF = async (fileBuffer: Buffer): Promise<ParsedDocument> => {
         title: data.info?.Title,
         author: data.info?.Author,
         pageCount: data.numpages,
-        wordCount: data.text.split(/\s+/).filter(word => word.length > 0).length,
+        wordCount: data.text.split(/\s+/).filter((word: string) => word.length > 0).length,
       },
     }
   } catch (error) {
@@ -47,13 +48,14 @@ export const parsePDF = async (fileBuffer: Buffer): Promise<ParsedDocument> => {
 export const parseDOCX = async (fileBuffer: Buffer): Promise<ParsedDocument> => {
   try {
     // Динамический импорт для поддержки ESM
+    // @ts-ignore - mammoth doesn't have type definitions
     const mammoth = (await import('mammoth')).default
     const result = await mammoth.extractRawText({ buffer: fileBuffer })
     
     return {
       text: result.value,
       metadata: {
-        wordCount: result.value.split(/\s+/).filter(word => word.length > 0).length,
+        wordCount: result.value.split(/\s+/).filter((word: string) => word.length > 0).length,
       },
     }
   } catch (error) {

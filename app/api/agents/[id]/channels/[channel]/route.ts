@@ -6,7 +6,7 @@ import { deleteAgentChannel, upsertAgentChannel } from '@/lib/repositories/agent
 
 const updateSchema = z.object({
   isEnabled: z.boolean(),
-  settings: z.record(z.unknown()).optional(),
+  settings: z.record(z.string(), z.unknown()).optional(),
 })
 
 export const PATCH = async (
