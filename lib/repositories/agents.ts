@@ -259,7 +259,7 @@ const loadDashboardStatsFromFunction = async (
   organizationId: string,
 ): Promise<import('@/types').DashboardStats | null> => {
   const { data, error } = await supabase
-    .rpc('calculate_dashboard_stats', { organization_uuid: organizationId })
+    .rpc('calculate_dashboard_stats', { organization_uuid: organizationId } as never)
     .single()
 
   if (error) {
