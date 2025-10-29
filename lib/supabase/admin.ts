@@ -4,9 +4,9 @@ import { loadSupabaseServerEnv } from '@/lib/env/supabase'
 
 import type { Database } from '@/types/supabase'
 
-let supabaseServiceRoleClient: SupabaseClient<Database> | undefined
+let supabaseServiceRoleClient: SupabaseClient | undefined
 
-export const getSupabaseServiceRoleClient = (): SupabaseClient<Database> => {
+export const getSupabaseServiceRoleClient = (): SupabaseClient => {
   if (supabaseServiceRoleClient) {
     return supabaseServiceRoleClient
   }
@@ -18,7 +18,7 @@ export const getSupabaseServiceRoleClient = (): SupabaseClient<Database> => {
       persistSession: false,
       autoRefreshToken: false,
     },
-  })
+  }) as unknown as SupabaseClient
 
   return supabaseServiceRoleClient
 }
