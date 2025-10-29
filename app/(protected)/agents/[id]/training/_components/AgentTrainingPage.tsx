@@ -604,7 +604,7 @@ export const AgentTrainingPage = ({ agentId, agentName }: AgentTrainingPageProps
                 <Select
                   label="Тип возражения"
                   value={objectionForm.objectionType}
-                  onChange={(value) => setObjectionForm({ ...objectionForm, objectionType: value as ObjectionResponse['objectionType'] })}
+                   onChange={(value: string) => setObjectionForm({ ...objectionForm, objectionType: value as ObjectionResponse['objectionType'] })}
                   options={[
                     { value: 'price', label: 'Цена' },
                     { value: 'timing', label: 'Время' },
