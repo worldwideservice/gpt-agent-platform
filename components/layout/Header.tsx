@@ -168,9 +168,21 @@ export const Header = ({ user }: HeaderProps) => {
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/80 px-6 py-4 backdrop-blur lg:px-8">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <form className="relative w-full md:max-w-md" action="/search" role="search">
+    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur lg:px-6">
+      <div className="flex items-center gap-4">
+        {/* Лого слева как в KWID */}
+        <div className="hidden items-center gap-3 md:flex">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-600 text-sm font-semibold text-white">WW</div>
+            <div>
+              <p className="text-base font-semibold text-slate-900">GPT Агент</p>
+              <p className="-mt-0.5 text-[11px] leading-none text-slate-500">Trainable virtual employee</p>
+            </div>
+          </Link>
+        </div>
+
+        {/* Поиск по центру */}
+        <form className="relative ml-0 flex-1" action="/search" role="search">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
           <input
             type="search"
@@ -181,7 +193,8 @@ export const Header = ({ user }: HeaderProps) => {
           />
         </form>
 
-        <div className="flex items-center justify-end gap-4">
+        {/* Правая часть: дата, уведомления, пользователь */}
+        <div className="flex items-center justify-end gap-3">
           <div className="hidden items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600 sm:flex">
             <Calendar className="h-4 w-4 text-slate-400" />
             <span>{today}</span>
@@ -195,9 +208,13 @@ export const Header = ({ user }: HeaderProps) => {
               onClick={toggleNotifications}
             >
               <Bell className="h-5 w-5" />
-              {unreadCount > 0 && (
+              {(unreadCount > 0 || process.env.NODE_ENV === 'development') && (
                 <span className="absolute right-1 top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
-                  {unreadCount > 99 ? '99+' : unreadCount}
+                  {(process.env.NODE_ENV === 'development' ? 137 : unreadCount) > 99
+                    ? '99+'
+                    : process.env.NODE_ENV === 'development'
+                      ? 137
+                      : unreadCount}
                 </span>
               )}
             </button>

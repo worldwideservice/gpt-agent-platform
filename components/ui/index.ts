@@ -1,23 +1,22 @@
 // UI Components Library
 // Главный экспорт всех компонентов проекта
 
-// Существующие компоненты
-export { Button } from './Button'
-export { Card } from './Card'
-export { Input } from './Input'
-export { Select } from './Select'
-export { Textarea } from './Textarea'
-export { Table } from './Table'
-export { Modal } from './Modal'
-export { Badge } from './Badge'
-export { Tabs } from './Tabs'
-export { Toggle } from './Toggle'
-
-// Shadcn компоненты
+// Shadcn UI компоненты (основная библиотека)
 export * from './shadcn'
 
-// Magic компоненты  
-export * from './magic'
+// Дополнительные компоненты
+export { Toggle } from './Toggle'
+
+// Legacy aliases for backward compatibility
+export { Button } from './shadcn'
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from './shadcn'
+export { Input } from './shadcn'
+export { Textarea } from './shadcn'
+export { Badge } from './shadcn'
+export { Select } from './shadcn'
+export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption } from './shadcn'
+export { Tabs, TabsList, TabsTrigger, TabsContent } from './shadcn'
+export { Modal, ModalTrigger, ModalContent, ModalHeader, ModalFooter, ModalTitle, ModalDescription } from './shadcn'
 
 // Layout компоненты
 export { Sidebar } from '../layout/Sidebar'

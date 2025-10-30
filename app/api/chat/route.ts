@@ -11,13 +11,14 @@ import {
 import { searchKnowledgeBase, formatKnowledgeContext } from '@/lib/repositories/knowledge-search'
 import { getAgentById } from '@/lib/repositories/agents'
 import { generateChatResponse } from '@/lib/services/llm'
-import { buildFullSystemPrompt } from '@/lib/services/agent-context-builder'
+import { buildFullSystemPrompt, processConversationMemory } from '@/lib/services/agent-context-builder'
 
 const sendMessageSchema = z.object({
   conversationId: z.string().uuid().optional(),
   agentId: z.string().uuid().optional(),
   message: z.string().min(1, 'Сообщение не может быть пустым'),
   useKnowledgeBase: z.boolean().optional().default(true),
+  clientIdentifier: z.string().optional(), // email, phone или другой идентификатор клиента
 })
 
 /**
@@ -46,7 +47,7 @@ export const POST = async (request: NextRequest) => {
       )
     }
 
-    const { conversationId, agentId, message, useKnowledgeBase } = parsed.data
+    const { conversationId, agentId, message, useKnowledgeBase, clientIdentifier } = parsed.data
     const organizationId = session.user.orgId
     const userId = session.user.id
 
@@ -119,6 +120,7 @@ export const POST = async (request: NextRequest) => {
           pipelineStageId,
           userMessage: message,
           conversationHistory,
+          clientIdentifier: clientIdentifier || undefined,
           agentInstructions,
         })
       } catch (error) {
@@ -175,6 +177,23 @@ export const POST = async (request: NextRequest) => {
         usedKnowledgeBase: useKnowledgeBase && (fullSystemPrompt?.includes('Контекст из базы знаний') ?? false),
       },
     })
+
+    // Обрабатываем память агента из разговора (асинхронно, не блокируем ответ)
+    if (clientIdentifier) {
+      const allMessages = await getConversationMessages(conversation.id)
+      const conversationMessages = allMessages.map(msg => ({
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content,
+      }))
+
+      // Запускаем обработку памяти в фоне
+      processConversationMemory({
+        organizationId,
+        agentId: agentId || conversation.agentId || null,
+        clientIdentifier,
+        conversationMessages,
+      }).catch(error => console.error('Memory processing failed', error))
+    }
 
     // Обновляем заголовок диалога на основе первого сообщения, если еще не установлен
     if (!conversation.title && message.length > 0) {

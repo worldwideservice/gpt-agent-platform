@@ -6,6 +6,7 @@
 import { getCompanyKnowledgeForContext, getSalesScriptForStage, getObjectionResponses } from '@/lib/repositories/company-knowledge'
 import { getRelatedEntities } from './knowledge-graph'
 import { searchKnowledgeBase } from '@/lib/repositories/knowledge-search'
+import { getMemoryContext, formatMemoryContext, extractAndSaveMemoryFromConversation } from './agent-memory'
 
 interface AgentContext {
   companyKnowledge: string
@@ -14,6 +15,7 @@ interface AgentContext {
   knowledgeGraph: string
   vectorSearch: string
   agentMemory: string
+  clientMemory: string
   instructions: string
 }
 
@@ -23,13 +25,14 @@ interface ContextOptions {
   pipelineStageId?: string | null
   userMessage?: string
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>
+  clientIdentifier?: string // email, phone или другой идентификатор клиента для памяти
 }
 
 /**
  * Строит полный контекст для агента как штатного сотрудника
  */
 export const buildAgentContext = async (options: ContextOptions): Promise<AgentContext> => {
-  const { organizationId, agentId, pipelineStageId, userMessage } = options
+  const { organizationId, agentId, pipelineStageId, userMessage, clientIdentifier } = options
 
   // Параллельно загружаем все источники знаний
   const [
@@ -37,18 +40,27 @@ export const buildAgentContext = async (options: ContextOptions): Promise<AgentC
     salesScripts,
     objectionResponses,
     vectorChunks,
+    clientMemory,
   ] = await Promise.all([
     // Знания компании (продукты, услуги, процессы)
     getCompanyKnowledgeForContext(organizationId, agentId, pipelineStageId),
-    
+
     // Скрипты продаж для этапа
     pipelineStageId ? getSalesScriptForStage(organizationId, pipelineStageId) : Promise.resolve([]),
-    
+
     // Ответы на возражения
     getObjectionResponses(organizationId),
-    
+
     // Векторный поиск по всем загруженным документам
     userMessage ? searchKnowledgeBase(organizationId, userMessage, agentId, 5) : Promise.resolve([]),
+
+    // Память о клиенте (если есть идентификатор)
+    clientIdentifier ? getMemoryContext(organizationId, clientIdentifier, agentId) : Promise.resolve({
+      facts: [],
+      preferences: [],
+      recentContext: [],
+      interactionHistory: [],
+    }),
   ])
 
   // Извлекаем сущности из сообщения для Knowledge Graph (если есть сообщение)
@@ -75,7 +87,8 @@ export const buildAgentContext = async (options: ContextOptions): Promise<AgentC
     objectionResponses: objectionResponsesText,
     knowledgeGraph: knowledgeGraphContext,
     vectorSearch: vectorSearchText,
-    agentMemory: '', // TODO: Добавить долгосрочную память
+    agentMemory: '', // TODO: Добавить долгосрочную память агента (не клиента)
+    clientMemory: formatMemoryContext(clientMemory),
     instructions: '', // Будет добавлено из настроек агента
   }
 }
@@ -266,6 +279,11 @@ export const buildFullSystemPrompt = async (
     parts.push(context.knowledgeGraph)
   }
 
+  // Память о клиенте
+  if (context.clientMemory) {
+    parts.push(context.clientMemory)
+  }
+
   // Важные правила
   parts.push('\n## Критические правила поведения:\n')
   parts.push('- Ты штатный сотрудник компании - действуй профессионально\n')
@@ -277,6 +295,32 @@ export const buildFullSystemPrompt = async (
   parts.push('- Персонализируй ответы на основе контекста и истории взаимодействия\n')
 
   return parts.join('\n')
+}
+
+/**
+ * Извлекает и сохраняет важную информацию из разговора в память агента
+ */
+export const processConversationMemory = async (
+  options: ContextOptions & {
+    conversationMessages: Array<{ role: 'user' | 'assistant'; content: string }>
+  },
+): Promise<void> => {
+  const { organizationId, agentId, clientIdentifier, conversationMessages } = options
+
+  if (!clientIdentifier || conversationMessages.length < 2) {
+    return
+  }
+
+  try {
+    await extractAndSaveMemoryFromConversation(
+      organizationId,
+      agentId,
+      clientIdentifier,
+      conversationMessages,
+    )
+  } catch (error) {
+    console.error('Error processing conversation memory', error)
+  }
 }
 
 export type { AgentContext, ContextOptions }

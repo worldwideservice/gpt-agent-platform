@@ -2,30 +2,41 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { z } from 'zod'
 
 import { auth } from '@/auth'
-import { createAgentSequence, getAgentSequences } from '@/lib/repositories/agent-sequences'
+import { createSequence, getSequences, startSequence, deleteSequence } from '@/lib/services/sequences'
 
-const stepSchema = z.object({
-  id: z.string().uuid().optional(),
-  stepType: z.string().min(1, 'Тип шага обязателен'),
-  payload: z.record(z.string(), z.unknown()).optional(),
-  delaySeconds: z.number().int().min(0).max(86400).optional(),
-  sortOrder: z.number().int().min(0).optional(),
+const createSequenceSchema = z.object({
+  name: z.string().min(1, 'Название последовательности обязательно'),
+  description: z.string().optional(),
+  trigger_type: z.enum(['manual', 'lead_created', 'stage_changed', 'subscription', 'event']),
+  trigger_conditions: z.record(z.string(), z.any()).optional(),
+  is_active: z.boolean().optional().default(true),
+  steps: z.array(z.object({
+    step_order: z.number().min(1),
+    delay_minutes: z.number().min(0).default(0),
+    action_type: z.enum(['send_message', 'create_task', 'send_email', 'webhook', 'ai_response', 'wait']),
+    template: z.string().optional(),
+    recipient: z.string().optional(),
+    webhook_url: z.string().optional(),
+    ai_prompt: z.string().optional(),
+    task_title: z.string().optional(),
+    task_description: z.string().optional(),
+    metadata: z.record(z.string(), z.any()).optional().default({}),
+  })).min(1, 'Последовательность должна содержать хотя бы один шаг'),
 })
 
-const sequenceSchema = z.object({
-  name: z.string().min(1, 'Название обязательно'),
-  description: z.string().nullable().optional(),
-  isActive: z.boolean().optional(),
-  sortOrder: z.number().int().optional(),
-  settings: z.record(z.string(), z.unknown()).optional(),
-  steps: z.array(stepSchema).optional(),
+const startSequenceSchema = z.object({
+  lead_id: z.string().min(1, 'ID лида обязателен'),
+  contact_id: z.string().optional(),
+  initial_data: z.record(z.string(), z.any()).optional().default({}),
 })
 
+/**
+ * GET /api/agents/[id]/sequences - Получение последовательностей агента
+ */
 export const GET = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: { id: string } },
 ) => {
-  const { id } = await params
   const session = await auth()
 
   if (!session?.user?.orgId) {
@@ -33,30 +44,35 @@ export const GET = async (
   }
 
   try {
-    const sequences = await getAgentSequences(session.user.orgId, id)
+    const { searchParams } = new URL(request.url)
+    const activeOnly = searchParams.get('active_only') === 'true'
+
+    const sequences = await getSequences(session.user.orgId, params.id, activeOnly)
 
     return NextResponse.json({
       success: true,
       data: sequences,
     })
   } catch (error) {
-    console.error('Agent sequences GET error', error)
+    console.error('Get sequences API error', error)
 
     return NextResponse.json(
       {
         success: false,
-        error: 'Не удалось загрузить цепочки',
+        error: 'Не удалось загрузить последовательности',
       },
       { status: 500 },
     )
   }
 }
 
+/**
+ * POST /api/agents/[id]/sequences - Создание новой последовательности
+ */
 export const POST = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: { id: string } },
 ) => {
-  const { id } = await params
   const session = await auth()
 
   if (!session?.user?.orgId) {
@@ -65,7 +81,7 @@ export const POST = async (
 
   try {
     const body = await request.json()
-    const parsed = sequenceSchema.safeParse(body)
+    const parsed = createSequenceSchema.safeParse(body)
 
     if (!parsed.success) {
       const issues = parsed.error.issues.map((issue) => issue.message)
@@ -79,37 +95,105 @@ export const POST = async (
       )
     }
 
-    const sequence = await createAgentSequence(session.user.orgId, id, {
-      name: parsed.data.name,
-      description: parsed.data.description ?? null,
-      isActive: parsed.data.isActive,
-      sortOrder: parsed.data.sortOrder,
-      settings: parsed.data.settings ?? {},
-      steps: parsed.data.steps?.map((step, index) => ({
-        id: step.id,
-        stepType: step.stepType,
-        payload: (step.payload as Record<string, unknown> | undefined) ?? {},
-        delaySeconds: step.delaySeconds ?? 0,
-        sortOrder: step.sortOrder ?? index,
-      })),
-    })
+    const sequenceData = {
+      ...parsed.data,
+      agent_id: params.id,
+      metadata: {},
+    }
+
+    const sequenceId = await createSequence(session.user.orgId, sequenceData)
+
+    if (!sequenceId) {
+      return NextResponse.json(
+        { success: false, error: 'Не удалось создать последовательность' },
+        { status: 500 },
+      )
+    }
 
     return NextResponse.json({
       success: true,
-      data: sequence,
+      data: { id: sequenceId },
     })
   } catch (error) {
-    console.error('Agent sequences POST error', error)
+    console.error('Create sequence API error', error)
 
     return NextResponse.json(
       {
         success: false,
-        error: 'Не удалось создать цепочку',
+        error: 'Не удалось создать последовательность',
       },
       { status: 500 },
     )
   }
 }
 
+/**
+ * PUT /api/agents/[id]/sequences/[sequenceId]/start - Запуск последовательности
+ */
+export const PUT = async (
+  request: NextRequest,
+  { params }: { params: { id: string } },
+) => {
+  const session = await auth()
 
+  if (!session?.user?.orgId) {
+    return NextResponse.json({ success: false, error: 'Не авторизовано' }, { status: 401 })
+  }
 
+  try {
+    const { searchParams } = new URL(request.url)
+    const sequenceId = searchParams.get('sequenceId')
+
+    if (!sequenceId) {
+      return NextResponse.json(
+        { success: false, error: 'ID последовательности обязателен' },
+        { status: 400 },
+      )
+    }
+
+    const body = await request.json()
+    const parsed = startSequenceSchema.safeParse(body)
+
+    if (!parsed.success) {
+      const issues = parsed.error.issues.map((issue) => issue.message)
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Некорректные данные',
+          details: issues,
+        },
+        { status: 400 },
+      )
+    }
+
+    const executionId = await startSequence(
+      sequenceId,
+      session.user.orgId,
+      parsed.data.lead_id,
+      parsed.data.contact_id,
+      parsed.data.initial_data,
+    )
+
+    if (!executionId) {
+      return NextResponse.json(
+        { success: false, error: 'Не удалось запустить последовательность' },
+        { status: 500 },
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: { execution_id: executionId },
+    })
+  } catch (error) {
+    console.error('Start sequence API error', error)
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Не удалось запустить последовательность',
+      },
+      { status: 500 },
+    )
+  }
+}

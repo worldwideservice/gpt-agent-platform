@@ -4,13 +4,13 @@
 export { Button } from './button'
 export type { ButtonProps } from './button'
 
-export { 
-  Card, 
-  CardHeader, 
-  CardFooter, 
-  CardTitle, 
-  CardDescription, 
-  CardContent 
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardDescription,
+  CardContent
 } from './card'
 export type { CardProps } from './card'
 
@@ -37,3 +37,22 @@ export {
   TableCaption,
 } from './table'
 export type { TableProps } from './table'
+
+export {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent
+} from './tabs'
+export type { TabsProps, TabsListProps, TabsTriggerProps, TabsContentProps } from './tabs'
+
+export {
+  Modal,
+  ModalTrigger,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalTitle,
+  ModalDescription
+} from './modal'
+export type { ModalProps } from './modal'
