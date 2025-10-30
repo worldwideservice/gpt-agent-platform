@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
+import { Toggle } from '@/components/ui/Toggle'
 
 import type { KnowledgeBaseArticle } from '@/types'
 
@@ -28,7 +29,8 @@ export const ArticleForm = ({ articleId, initialArticle, categories }: ArticleFo
     title: initialArticle?.title ?? '',
     content: initialArticle?.content ?? '',
     categoryId: initialArticle?.categoryId ?? '',
-    slug: '',
+    slug: initialArticle?.slug ?? '',
+    isPublished: initialArticle?.isPublished ?? true,
   })
 
   useEffect(() => {
@@ -36,8 +38,9 @@ export const ArticleForm = ({ articleId, initialArticle, categories }: ArticleFo
       setFormData({
         title: initialArticle.title,
         content: initialArticle.content,
-        categoryId: initialArticle.categoryId,
-        slug: '',
+        categoryId: initialArticle.categoryId ?? '',
+        slug: initialArticle.slug ?? '',
+        isPublished: initialArticle.isPublished,
       })
     }
   }, [initialArticle])
@@ -64,6 +67,7 @@ export const ArticleForm = ({ articleId, initialArticle, categories }: ArticleFo
         content: formData.content.trim(),
         categoryId: formData.categoryId || null,
         slug: formData.slug.trim() || undefined,
+        isPublished: formData.isPublished,
       }
 
       const response = await fetch(url, {
@@ -151,6 +155,13 @@ export const ArticleForm = ({ articleId, initialArticle, categories }: ArticleFo
                 required
               />
 
+              <Toggle
+                checked={formData.isPublished}
+                onChange={(value) => setFormData((prev) => ({ ...prev, isPublished: value }))}
+                label="Активно"
+                description="Когда выключено, статья не будет использоваться агентами."
+              />
+
               <Select
                 label="Категория"
                 options={categoryOptions}
@@ -191,6 +202,4 @@ export const ArticleForm = ({ articleId, initialArticle, categories }: ArticleFo
     </div>
   )
 }
-
-
 

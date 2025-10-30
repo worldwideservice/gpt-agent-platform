@@ -8,6 +8,7 @@ import { ArrowLeft, Save } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 
 import type { KnowledgeBaseCategory } from '@/types'
@@ -15,26 +16,39 @@ import type { KnowledgeBaseCategory } from '@/types'
 interface CategoryFormProps {
   categoryId: string
   initialCategory?: KnowledgeBaseCategory | null
+  categories: KnowledgeBaseCategory[]
 }
 
-export const CategoryForm = ({ categoryId, initialCategory }: CategoryFormProps) => {
+export const CategoryForm = ({ categoryId, initialCategory, categories }: CategoryFormProps) => {
   const router = useRouter()
   const isNew = categoryId === 'new'
 
   const [isSaving, setIsSaving] = useState(false)
   const [formData, setFormData] = useState({
     name: initialCategory?.name ?? '',
-    description: '',
+    description: initialCategory?.description ?? '',
+    parentId: initialCategory?.parentId ?? '',
   })
 
   useEffect(() => {
     if (initialCategory) {
       setFormData({
         name: initialCategory.name,
-        description: '',
+        description: initialCategory.description ?? '',
+        parentId: initialCategory.parentId ?? '',
       })
     }
   }, [initialCategory])
+
+  const parentOptions = [
+    { value: '', label: 'Без родительской категории' },
+    ...categories
+      .filter((category) => category.id !== categoryId)
+      .map((category) => ({
+        value: category.id,
+        label: category.name,
+      })),
+  ]
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
@@ -50,7 +64,8 @@ export const CategoryForm = ({ categoryId, initialCategory }: CategoryFormProps)
 
       const payload = {
         name: formData.name.trim(),
-        description: formData.description.trim() || undefined,
+        description: formData.description.trim(),
+        parentId: formData.parentId || null,
       }
 
       const response = await fetch(url, {
@@ -130,6 +145,13 @@ export const CategoryForm = ({ categoryId, initialCategory }: CategoryFormProps)
                 required
               />
 
+              <Select
+                label="Родительская категория"
+                value={formData.parentId ?? ''}
+                onChange={(value: string) => setFormData((prev) => ({ ...prev, parentId: value }))}
+                options={parentOptions}
+              />
+
               <Textarea
                 label="Описание"
                 placeholder="Описание категории (необязательно)"
@@ -152,6 +174,9 @@ export const CategoryForm = ({ categoryId, initialCategory }: CategoryFormProps)
     </div>
   )
 }
+
+
+
 
 
 

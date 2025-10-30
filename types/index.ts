@@ -43,15 +43,18 @@ export interface KnowledgeBaseCategory {
   name: string
   articlesCount: number
   createdAt: Date
-  description?: string | null
-  parentId?: string | null
+  description: string | null
+  parentId: string | null
 }
 
 export interface KnowledgeBaseArticle {
   id: string
   title: string
-  categoryId: string
+  categoryId: string | null
   content: string
+  slug: string | null
+  isPublished: boolean
+  viewsCount: number
   createdAt: Date
   updatedAt: Date
 }
@@ -97,4 +100,3 @@ export interface Notification {
   metadata: Record<string, unknown>
   createdAt: string
 }
-

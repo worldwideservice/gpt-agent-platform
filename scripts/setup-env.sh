@@ -121,3 +121,7 @@ echo "2. Примените миграции через Supabase Dashboard"
 echo "3. Проверьте: npm run check:env"
 
 
+
+
+
+

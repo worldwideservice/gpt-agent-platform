@@ -121,3 +121,7 @@ alter table knowledge_chunks add column if not exists company_knowledge_id uuid 
 create index if not exists idx_knowledge_chunks_company_knowledge on knowledge_chunks(company_knowledge_id);
 
 
+
+
+
+

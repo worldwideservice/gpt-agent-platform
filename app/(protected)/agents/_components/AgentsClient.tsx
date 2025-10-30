@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import Link from 'next/link'
-import { Loader2, Plus, Search } from 'lucide-react'
+import { Loader2, Plus, Search, Filter } from 'lucide-react'
 
 import { AgentTable } from '@/components/agents/AgentTable'
 import { Button } from '@/components/ui/Button'
@@ -33,6 +33,7 @@ export const AgentsClient = ({ initialAgents, total }: AgentsClientProps) => {
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const isInitialFetch = useRef(true)
+  const [selectedAgents, setSelectedAgents] = useState<string[]>([])
 
   const hasAgents = agents.length > 0
 
@@ -214,8 +215,24 @@ export const AgentsClient = ({ initialAgents, total }: AgentsClientProps) => {
       return 'Нет агентов, удовлетворяющих условиям'
     }
 
-    return `Показано ${agents.length} из ${totalCount} агентов`
+    return `Показано с ${agents.length > 0 ? 1 : 0} по ${agents.length} из ${totalCount}`
   }, [agents.length, hasAgents, totalCount])
+
+  const handleSelectAgent = useCallback((id: string) => {
+    setSelectedAgents(prev => 
+      prev.includes(id) 
+        ? prev.filter(agentId => agentId !== id)
+        : [...prev, id]
+    )
+  }, [])
+
+  const handleSelectAll = useCallback(() => {
+    if (selectedAgents.length === agents.length) {
+      setSelectedAgents([])
+    } else {
+      setSelectedAgents(agents.map(agent => agent.id))
+    }
+  }, [agents, selectedAgents.length])
 
   return (
     <div className="space-y-8">
@@ -225,20 +242,29 @@ export const AgentsClient = ({ initialAgents, total }: AgentsClientProps) => {
           <p className="mt-1 text-sm text-slate-500">Управляйте поведением и статусом виртуальных сотрудников</p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-          <div className="relative w-full sm:w-72">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-            <Input
-              type="search"
-              placeholder="Поиск по имени или модели"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              aria-label="Поиск агентов"
-              className="pl-10"
-            />
+          <div className="relative flex items-center gap-2 w-full sm:w-72">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <Input
+                type="search"
+                placeholder="Поиск"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                aria-label="Поиск агентов"
+                className="pl-10"
+              />
+            </div>
+            <button
+              type="button"
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-colors hover:border-primary-200 hover:text-primary-600"
+              aria-label="Фильтры"
+            >
+              <Filter className="h-5 w-5" />
+            </button>
           </div>
-          <Link href="/agents/new" className="w-full sm:w-auto">
+          <Link href="/agents/create" className="w-full sm:w-auto">
             <Button className="w-full sm:w-auto">
-              <Plus className="mr-2 h-4 w-4" />Создать агента
+              <Plus className="mr-2 h-4 w-4" />Создать
             </Button>
           </Link>
         </div>
@@ -260,18 +286,22 @@ export const AgentsClient = ({ initialAgents, total }: AgentsClientProps) => {
         onDuplicate={handleDuplicate}
         onStatusChange={handleStatusChange}
         isLoading={isPending}
+        selectedAgents={selectedAgents}
+        onSelectAgent={handleSelectAgent}
+        onSelectAll={handleSelectAll}
       />
 
       <div className="flex items-center justify-between text-sm text-slate-500">
         <p aria-live="polite">{resultLabel}</p>
-        <p className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-primary-600">
-          {isPending ? (
-            <>
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Обновление…
-            </>
-          ) : null}
-        </p>
+        <div className="flex items-center gap-4">
+          <p className="text-sm text-slate-500">на страницу</p>
+          <select className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
       </div>
     </div>
   )

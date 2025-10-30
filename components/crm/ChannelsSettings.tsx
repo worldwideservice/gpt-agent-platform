@@ -56,20 +56,31 @@ export const ChannelsSettings = ({
           className="gap-2"
         >
           <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-          Обновить из CRM
+          Синхронизировать настройки CRM
         </Button>
       </div>
 
-      <p className="mb-6 text-sm text-slate-500">Выберите каналы, где агент может отвечать клиентам.</p>
+      <p className="mb-6 text-sm text-gray-600">
+        Выберите каналы, в которых агент может отвечать
+      </p>
 
       <div className="mb-6">
-        <Toggle
-          checked={allChannelsEnabled}
-          onChange={onAllChannelsToggle}
-          label="Использовать все каналы"
-          description="Если отключить — выберите конкретные каналы ниже"
-          disabled={disabled}
-        />
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium text-gray-700">Все каналы</label>
+          <button
+            onClick={() => onAllChannelsToggle(!allChannelsEnabled)}
+            disabled={disabled}
+            className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+              allChannelsEnabled ? 'bg-primary-600' : 'bg-gray-200'
+            }`}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                allChannelsEnabled ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
       </div>
 
       {!allChannelsEnabled ? (

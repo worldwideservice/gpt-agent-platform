@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Loader2, Plus, Trash2, Edit2, Pause, Play, MessageSquare, Save } from 'lucide-react'
+import { Loader2, Plus, Trash2, Edit2, Pause, Play, MessageSquare, Save, X, Search, Filter } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -333,6 +333,13 @@ export const AgentSequencesManager = ({ agentId }: AgentSequencesManagerProps) =
     return hasValidSteps
   }, [formState.name, formState.steps])
 
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const filteredSequences = sequences.filter(seq => 
+    seq.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (seq.description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
+  )
+
   return (
     <div className="space-y-6">
       {isDraft ? (
@@ -343,15 +350,37 @@ export const AgentSequencesManager = ({ agentId }: AgentSequencesManagerProps) =
 
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Автоматические цепочки</h2>
-          <p className="text-sm text-slate-500">
-            Настройте последовательности действий: сообщения, паузы и внешние запросы.
+          <h2 className="text-3xl font-bold text-slate-900">Цепочки</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Автоматизируйте отправку последующих сообщений и выполнение действий по расписанию.
           </p>
         </div>
         <Button onClick={openCreateEditor} className="w-full gap-2 sm:w-auto" disabled={isDraft}>
-          <Plus className="h-4 w-4" /> Новая цепочка
+          <Plus className="h-4 w-4" /> Создать
         </Button>
       </div>
+
+      {!isDraft && (
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+            <input
+              type="search"
+              placeholder="Поиск"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+            />
+          </div>
+          <button
+            type="button"
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-colors hover:border-primary-200 hover:text-primary-600"
+            aria-label="Фильтры"
+          >
+            <Filter className="h-5 w-5" />
+          </button>
+        </div>
+      )}
 
       {isDraft ? null : isLoading ? (
         <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
@@ -359,89 +388,78 @@ export const AgentSequencesManager = ({ agentId }: AgentSequencesManagerProps) =
         </div>
       ) : error ? (
         <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</div>
-      ) : sequences.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
-          Цепочки еще не настроены. Создайте первую, чтобы автоматизировать шаги агента.
+      ) : filteredSequences.length === 0 ? (
+        <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
+            <X className="h-8 w-8 text-slate-400" />
+          </div>
+          <h3 className="mb-2 text-lg font-semibold text-slate-900">Не найдено Цепочки</h3>
+          <p className="mb-6 text-sm text-slate-500">Создать Цепочка для старта.</p>
+          <Button onClick={openCreateEditor} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Создать
+          </Button>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {sequences.map((sequence) => (
-            <Card key={sequence.id} className="shadow-sm">
-              <CardContent className="space-y-4 p-6">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-base font-semibold text-slate-900">{sequence.name}</h3>
-                      {sequence.isActive ? (
-                        <span className="text-xs font-medium text-green-600">Активна</span>
-                      ) : (
-                        <span className="text-xs font-medium text-slate-400">Выключена</span>
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-200 bg-slate-50">
+                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Название</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Активно</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Шаги</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Действия</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredSequences.map((sequence) => (
+                <tr key={sequence.id} className="border-b border-slate-100">
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-slate-900">{sequence.name}</span>
+                      {sequence.description && (
+                        <span className="mt-1 text-xs text-slate-500">{sequence.description}</span>
                       )}
                     </div>
-                    {sequence.description ? (
-                      <p className="mt-1 text-xs text-slate-500">{sequence.description}</p>
-                    ) : null}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-slate-500 hover:text-slate-900"
-                      onClick={() => openEditEditor(sequence)}
-                      aria-label="Изменить цепочку"
+                  </td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => toggleSequenceActive(sequence, !sequence.isActive)}
+                      className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                        sequence.isActive ? 'bg-primary-600' : 'bg-gray-200'
+                      }`}
+                      aria-label={sequence.isActive ? 'Деактивировать' : 'Активировать'}
                     >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-rose-500 hover:text-rose-700"
-                      onClick={() => deleteSequence(sequence.id)}
-                      aria-label="Удалить цепочку"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {sequence.steps.map((step) => (
-                    <div key={step.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm">
-                      <div className="flex items-center gap-2 text-slate-600">
-                        <MessageSquare className="h-4 w-4" />
-                        <span className="font-medium">
-                          {step.stepType === 'send_message'
-                            ? 'Сообщение'
-                            : step.stepType === 'wait'
-                            ? 'Ожидание'
-                            : 'Webhook'}
-                        </span>
-                      </div>
-                      <pre className="mt-2 whitespace-pre-wrap text-xs text-slate-500">
-                        {JSON.stringify(step.payload, null, 2)}
-                      </pre>
-                      {step.delaySeconds > 0 ? (
-                        <p className="mt-2 text-xs text-slate-400">Задержка: {step.delaySeconds} сек.</p>
-                      ) : null}
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          sequence.isActive ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="text-sm text-slate-600">{sequence.steps.length} шагов</span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-3">
+                      <button
+                        onClick={() => openEditEditor(sequence)}
+                        className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                      >
+                        Изменить
+                      </button>
+                      <button
+                        onClick={() => deleteSequence(sequence.id)}
+                        className="text-rose-500 hover:text-rose-600 text-sm font-medium"
+                      >
+                        Удалить
+                      </button>
                     </div>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-between gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => toggleSequenceActive(sequence, !sequence.isActive)}
-                    className="gap-2"
-                  >
-                    {sequence.isActive ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                    {sequence.isActive ? 'Приостановить' : 'Активировать'}
-                  </Button>
-                  <p className="text-xs text-slate-400">Шагов: {sequence.steps.length}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 

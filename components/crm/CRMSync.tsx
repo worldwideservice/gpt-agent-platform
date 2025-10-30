@@ -100,7 +100,9 @@ export const CRMSync = ({ connection, pipelineSettings, onPipelineUpdate }: CRMS
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
-            <RefreshCw className="w-5 h-5 text-gray-600" />
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            </svg>
             <h2 className="text-lg font-semibold text-gray-900">Настройки воронок</h2>
           </div>
           <Button 
@@ -124,11 +126,12 @@ export const CRMSync = ({ connection, pipelineSettings, onPipelineUpdate }: CRMS
             return (
               <div key={pipeline.id} className="border border-gray-200 rounded-lg">
                 {/* Pipeline Header */}
-                <div className="flex items-center justify-between p-4">
-                  <div className="flex items-center space-x-3">
+                <div className="flex items-center justify-between p-4 bg-gray-50">
+                  <div className="flex items-center space-x-3 flex-1">
                     <button
                       onClick={() => togglePipeline(pipeline.id)}
-                      className="text-gray-400 hover:text-gray-600"
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                      aria-label={expandedPipelines.has(pipeline.id) ? 'Свернуть' : 'Развернуть'}
                     >
                       {expandedPipelines.has(pipeline.id) ? (
                         <ChevronUp className="w-5 h-5" />
@@ -136,7 +139,7 @@ export const CRMSync = ({ connection, pipelineSettings, onPipelineUpdate }: CRMS
                         <ChevronDown className="w-5 h-5" />
                       )}
                     </button>
-                    <h3 className="font-medium text-gray-900">{pipeline.name}</h3>
+                    <h3 className="font-medium text-gray-900 uppercase">{pipeline.name}</h3>
                   </div>
                   
                   <Toggle
@@ -148,22 +151,32 @@ export const CRMSync = ({ connection, pipelineSettings, onPipelineUpdate }: CRMS
 
                 {/* Pipeline Content */}
                 {expandedPipelines.has(pipeline.id) && (
-                  <div className="px-4 pb-4 space-y-4">
+                  <div className="px-4 pb-4 space-y-4 border-t border-gray-100">
                     {/* All Stages Toggle */}
-                    <Toggle
-                      checked={settings.allStages}
-                      onChange={(checked) => onPipelineUpdate(pipeline.id, { 
-                        allStages: checked,
-                        selectedStages: checked ? pipeline.stages.map(s => s.id) : []
-                      })}
-                      label="Все этапы сделок"
-                    />
+                    <div className="flex items-center justify-between">
+                      <Toggle
+                        checked={settings.allStages}
+                        onChange={(checked) => onPipelineUpdate(pipeline.id, { 
+                          allStages: checked,
+                          selectedStages: checked ? pipeline.stages.map(s => s.id) : []
+                        })}
+                        label="Все этапы сделок"
+                      />
+                    </div>
 
                     {/* Selected Stages */}
                     {!settings.allStages && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-2">
                           Выберите этапы сделок
+                          <span className="text-red-500">*</span>
+                          <button
+                            type="button"
+                            className="w-4 h-4 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100"
+                            title="Информация о выборе этапов сделок"
+                          >
+                            <span className="text-xs">i</span>
+                          </button>
                         </label>
                         
                         {/* Selected Stages Tags */}

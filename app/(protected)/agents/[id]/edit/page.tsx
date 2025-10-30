@@ -11,12 +11,13 @@ import {
   Edit3,
   Trash2,
   Save,
-  X
+  X,
+  Link2
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/magic/tabs'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
 import { InteractionSettings } from '@/components/crm/InteractionSettings'
 import { CRMSync } from '@/components/crm/CRMSync'
 import { DealContactFieldsSelector } from '@/components/crm/DealContactFieldsSelector'
@@ -26,6 +27,13 @@ import { TriggerManager } from '@/components/agents/TriggerManager'
 import { AgentSequencesManager } from '@/app/(protected)/agents/[id]/_components/AgentSequencesManager'
 import { useCRMData } from '@/hooks/useCRMData'
 import type { CRMConnection, UniversalPipeline, UniversalChannel } from '@/types/crm'
+
+interface ChannelItem {
+  id: string
+  name: string
+  type: string
+  isActive: boolean
+}
 
 const tabs = [
   { value: 'general', label: 'Основные', icon: Settings },
@@ -63,6 +71,12 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
   const [allCategoriesEnabled, setAllCategoriesEnabled] = useState(true)
   const [createTaskOnNotFound, setCreateTaskOnNotFound] = useState(false)
   const [notFoundMessage, setNotFoundMessage] = useState('Ответ на этот вопрос предоставит ваш персональный immigration advisor, когда свяжется с вами напрямую.')
+
+  // Channels
+  const [channels, setChannels] = useState<ChannelItem[]>([])
+
+  // PRODUCT VENDORS (PARTNERSHIP)
+  const [productVendorsActive, setProductVendorsActive] = useState(true)
 
   // CRM Connection
   const [crmConnection, setCrmConnection] = useState<CRMConnection | null>(null)
@@ -170,7 +184,21 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
   }, [params])
 
   // CRM Data Hook
-  const { pipelines, channels, syncData } = useCRMData(crmConnection)
+  const { pipelines, channels: crmChannels, syncData } = useCRMData(crmConnection)
+
+  // Преобразуем каналы из CRM в нужный формат
+  useEffect(() => {
+    if (crmChannels && crmChannels.length > 0) {
+      setChannels(crmChannels.map(ch => ({
+        id: ch.id,
+        name: ch.name,
+        type: ch.type || 'unknown',
+        isActive: ch.isActive || false,
+      })))
+    } else {
+      setChannels([])
+    }
+  }, [crmChannels])
 
   // CRM Handlers
   const handlePipelineUpdate = (pipelineId: string, updates: Partial<typeof pipelineSettings[0]>) => {
@@ -251,12 +279,12 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
     <div className="space-y-6">
       {/* Breadcrumb */}
       <div className="text-sm text-gray-600">
-        <span>Aгенты ИИ</span> {'>'} <span className="text-gray-900 font-medium">АИ ассистент</span> {'>'} <span className="text-gray-900 font-medium">Основные</span>
+        <span>Агенты ИИ</span> {'>'} <span className="text-gray-900 font-medium">АИ ассистент</span> {'>'} <span className="text-gray-900 font-medium">{tabs.find(t => t.value === activeTab)?.label || 'Основные'}</span>
       </div>
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Редактирование АИ ассистент</h1>
+        <h1 className="text-3xl font-semibold text-slate-900">Редактирование АИ ассистент</h1>
         <Button 
           variant="destructive"
           onClick={async () => {
@@ -289,12 +317,16 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-6 w-full">
+        <TabsList className="w-full">
           {tabs.map((tab) => {
             const Icon = tab.icon
             return (
-              <TabsTrigger key={tab.value} value={tab.value}>
-                <Icon className="w-4 h-4 mr-2" />
+              <TabsTrigger 
+                key={tab.value} 
+                value={tab.value}
+                className="flex items-center gap-2 px-4 py-3"
+              >
+                <Icon className="w-4 h-4" />
                 {tab.label}
               </TabsTrigger>
             )
@@ -371,11 +403,9 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
 
           {/* Инструкции для агента */}
           <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Инструкции для агента</h2>
-            
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Инструкции
+                Инструкции для агента<span className="text-red-500 ml-1">*</span>
               </label>
               <Textarea
                 value={instructions}
@@ -460,6 +490,16 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
 
         {/* Сделки и контакты (Deals) */}
         <TabsContent value="deals" className="mt-6 space-y-6">
+          <div className="mb-4">
+            <h2 className="text-3xl font-bold text-slate-900">Сделки и контакты</h2>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-blue-800">
+              Выбирайте только необходимые поля. Большее количество полей добавляет дополнительный контекст и может снизить точность ответов.
+            </p>
+          </div>
+
           <InteractionSettings
             checkBeforeSending={checkBeforeSending}
             onCheckBeforeSendingToggle={setCheckBeforeSending}
@@ -473,10 +513,21 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
 
           {resolvedParams && <DealContactFieldsSelector agentId={resolvedParams.id} />}
 
-          {/* Кнопка сохранения настроек */}
-          <div className="flex justify-end">
+          {/* Кнопки сохранения */}
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+            <Button 
+              variant="outline"
+              onClick={() => {
+                // Отмена - перезагружаем данные
+                if (resolvedParams) {
+                  window.location.reload()
+                }
+              }}
+            >
+              Отмена
+            </Button>
             <Button onClick={handleSavePipelineSettings}>
-              Сохранить настройки
+              Сохранить
             </Button>
           </div>
         </TabsContent>
@@ -497,48 +548,156 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
 
         {/* Интеграции (Integrations) */}
         <TabsContent value="integrations" className="mt-6 space-y-6">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Интеграции</h2>
-              <Link href="/integrations">
-                <Button variant="outline" size="sm">
-                  Настроить интеграции
-                </Button>
-              </Link>
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-3xl font-bold text-slate-900">Интеграции</h2>
             </div>
-            {isLoadingCrm ? (
-              <p className="text-sm text-gray-500">Загрузка...</p>
-            ) : crmConnection ? (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Kommo CRM</p>
-                      <p className="text-xs text-gray-500">{crmConnection.domain}</p>
-                    </div>
-                  </div>
-                  <span className="text-xs font-medium text-green-700">Подключено</span>
-                </div>
-                {crmConnection.lastSyncAt && (
-                  <p className="text-xs text-gray-500">
-                    Последняя синхронизация: {new Date(crmConnection.lastSyncAt).toLocaleString('ru')}
-                  </p>
-                )}
+
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="search"
+                  placeholder="Поиск"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                />
               </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-sm text-gray-600 mb-4">CRM не подключена</p>
-                <Link href="/integrations">
-                  <Button>Подключить CRM</Button>
-                </Link>
-              </div>
-            )}
+            </div>
+
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50">
+                    <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Интеграция</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Установлено</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Активно</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-slate-600"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* Kommo Integration */}
+                  <tr className="border-b border-slate-100">
+                    <td className="px-4 py-3">
+                      <span className="text-sm font-semibold text-slate-900">Kommo</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {crmConnection ? (
+                        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500">
+                          <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      ) : (
+                        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500">
+                          <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {crmConnection ? (
+                        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500">
+                          <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      ) : (
+                        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500">
+                          <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href="/integrations">
+                          <Settings className="mr-2 h-4 w-4" />
+                          {crmConnection ? 'Настройки' : 'Установить'}
+                        </Link>
+                      </Button>
+                    </td>
+                  </tr>
+
+                  {/* Google Calendar Integration */}
+                  <tr className="border-b border-slate-100">
+                    <td className="px-4 py-3">
+                      <span className="text-sm font-semibold text-slate-900">Google Calendar</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500">
+                        <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500">
+                        <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href="/integrations">
+                          <Link2 className="mr-2 h-4 w-4" />
+                          Установить
+                        </Link>
+                      </Button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </TabsContent>
 
         {/* Дополнительно (Additional) */}
         <TabsContent value="additional" className="mt-6 space-y-6">
+          {/* PRODUCT VENDORS (PARTNERSHIP) */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">PRODUCT VENDORS (PARTNERSHIP)</h2>
+              <button
+                onClick={() => setProductVendorsActive(!productVendorsActive)}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                  productVendorsActive ? 'bg-primary-600' : 'bg-gray-200'
+                }`}
+                aria-label={productVendorsActive ? 'Деактивировать' : 'Активировать'}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    productVendorsActive ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* Каналы */}
+          <ChannelsSettings
+            channels={channels}
+            allChannelsEnabled={allChannelsEnabled}
+            onAllChannelsToggle={setAllChannelsEnabled}
+            onChannelToggle={handleChannelToggle}
+            onSync={handleCRMSync}
+            isSyncing={isLoadingCrm}
+            disabled={!crmConnection}
+          />
+
+          {/* База знаний */}
+          <KnowledgeBaseSettings
+            allCategoriesEnabled={allCategoriesEnabled}
+            createTaskOnNotFound={createTaskOnNotFound}
+            notFoundMessage={notFoundMessage}
+            onAllCategoriesToggle={setAllCategoriesEnabled}
+            onCreateTaskToggle={setCreateTaskOnNotFound}
+            onMessageChange={setNotFoundMessage}
+            onOpenKnowledgeBase={handleOpenKnowledgeBase}
+            disabled={!crmConnection}
+          />
+
           {/* Модель ИИ */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h3 className="text-sm font-semibold text-gray-900 mb-1">Модель ИИ</h3>

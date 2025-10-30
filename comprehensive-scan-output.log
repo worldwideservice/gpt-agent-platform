@@ -1,0 +1,202 @@
+
+> gpt-agent-platform@1.0.5 test
+> playwright test tests/comprehensive-scan.spec.ts --project=chromium --workers=1 --timeout=120000
+
+
+Running 11 tests using 1 worker
+
+(node:14542) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:14542) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+📱 Проверка Sidebar навигации...
+  ⚠️  Не найден: /
+  ⚠️  Не найден: /agents
+  ⚠️  Не найден: /chat
+  ⚠️  Не найден: /knowledge-base
+  ⚠️  Не найден: /integrations
+  ⚠️  Не найден: /pricing
+  ⚠️  Не найден: /account
+  ⚠️  Не найден: /support
+📊 Проверка карточек статистики...
+  Найдено карточек: 0
+📈 Проверка графиков...
+  Найдено графиков: 7
+🔘 Проверка всех кнопок Dashboard...
+  Найдено кнопок: 7
+    Кнопка 0: "
+        @keyframes ghost-move {
+          0% { transform: translateX(0) translateY(0) rotate(0deg); filter: blur(0px); }
+          8% { transform: translateX(-5px) translateY(-5px) rotate(-3deg); filter: blur(0px); }
+          16% { transform: translateX(-10px) translateY(-10px) rotate(-5deg); filter: blur(0px); }
+          25% { transform: translateX(-20px) translateY(-20px) rotate(0deg); filter: blur(0px); }
+          34% { transform: translateX(-30px) translateY(0px) rotate(5deg); filter: blur(0px); }
+          42% { transform: translateX(-20px) translateY(3px) rotate(0deg); filter: blur(0px); }
+          50% { transform: translateX(-10px) translateY(8px) rotate(0deg); filter: blur(0px); }
+          60% { transform: translateX(0px) translateY(10px) rotate(3deg); filter: blur(0px); }
+          68% { transform: translateX(5px) translateY(5px) rotate(0deg); filter: blur(0px); }
+          85% { transform: translateX(10px) translateY(-5px) rotate(3deg); filter: blur(0px); }
+          92% { transform: translateX(15px) translateY(-10px) rotate(0deg); filter: blur(0px); }
+          100% { transform: translateX(0) translateY(0px) rotate(0deg); filter: blur(0px); }
+        }
+        @keyframes ghost-eyes-move {
+          0% { transform: translateX(10px) translateY(20px) rotate(0deg); }
+          5% { transform: translateX(10px) translateY(20px) rotate(0deg); }
+          25% { transform: translateX(10px) translateY(20px) rotate(20deg); }
+          34% { transform: translateX(30px) translateY(20px) rotate(20deg); }
+          36% { transform: translateX(30px) translateY(20px) rotate(20deg); }
+          38% { transform: translateX(30px) translateY(20px) rotate(20deg); }
+          50% { transform: translateX(85px) translateY(15px) rotate(40deg); }
+          52% { transform: translateX(85px) translateY(15px) rotate(40deg); }
+          54% { transform: translateX(85px) translateY(15px) rotate(40deg); }
+          75% { transform: translateX(30px) translateY(20px) rotate(20deg); }
+          76% { transform: translateX(30px) translateY(20px) rotate(20deg); }
+          77% { transform: translateX(30px) translateY(20px) rotate(20deg); }
+          85% { transform: translateX(20px) translateY(20px) rotate(10deg); }
+          87% { transform: translateX(20px) translateY(20px) rotate(10deg); }
+          89% { transform: translateX(20px) translateY(20px) rotate(10deg); }
+          100% { transform: translateX(10px) translateY(20px) rotate(0deg); }
+        }
+
+        @keyframes shadow-fade-in-out {
+          0% { opacity: 0; }
+          10% { opacity: 0.3; }
+          90% { opacity: 0.3; }
+          100% { opacity: 0; }
+        }
+      " - Enabled: true
+    Кнопка 1: "Continue with Email" - Enabled: true
+    Кнопка 2: "
+  
+  
+  Continue with Google" - Enabled: true
+    Кнопка 3: "
+  
+  
+  
+  
+  
+  
+  Continue with GitHub" - Enabled: true
+    Кнопка 4: "Continue with SAML SSO" - Enabled: true
+    Кнопка 5: "Continue with Passkey" - Enabled: true
+    Кнопка 6: "Show other options" - Enabled: true
+🔝 Проверка Header...
+  ✓   1 [chromium] › tests/comprehensive-scan.spec.ts:12:7 › 🔍 ПОЛНОЕ СКАНИРОВАНИЕ ВСЕГО ПРИЛОЖЕНИЯ › 📊 1. DASHBOARD - Все элементы и кнопки (8.1s)
+➕ Проверка кнопки создания агента...
+🔍 Проверка поиска...
+📋 Проверка таблицы агентов...
+  ✓   2 [chromium] › tests/comprehensive-scan.spec.ts:93:7 › 🔍 ПОЛНОЕ СКАНИРОВАНИЕ ВСЕГО ПРИЛОЖЕНИЯ › 🤖 2. AGENTS PAGE - Полная проверка (7.5s)
+📑 Тестируем вкладку: Основные
+📑 Тестируем вкладку: Сделки и контакты
+📑 Тестируем вкладку: Триггеры
+📑 Тестируем вкладку: Цепочки
+📑 Тестируем вкладку: Интеграции
+📑 Тестируем вкладку: Дополнительно
+  ✓   3 [chromium] › tests/comprehensive-scan.spec.ts:157:7 › 🔍 ПОЛНОЕ СКАНИРОВАНИЕ ВСЕГО ПРИЛОЖЕНИЯ › ✏️  3. AGENT EDIT - Все вкладки и функции (11.6s)
+База знаний: найдено 7 кнопок
+  ✓   4 [chromium] › tests/comprehensive-scan.spec.ts:220:7 › 🔍 ПОЛНОЕ СКАНИРОВАНИЕ ВСЕГО ПРИЛОЖЕНИЯ › 📚 4. KNOWLEDGE BASE - Категории и статьи (12.6s)
+  ✓   5 [chromium] › tests/comprehensive-scan.spec.ts:243:7 › 🔍 ПОЛНОЕ СКАНИРОВАНИЕ ВСЕГО ПРИЛОЖЕНИЯ › 💬 5. CHAT - Все функции (4.0s)
+Интеграции: найдено 7 кнопок
+  Кнопка 0: "
+        @keyframes ghost-move {
+          0% { transform: translateX(0) translateY(0) rotate(0deg); filter: blur(0px); }
+          8% { transform: translateX(-5px) translateY(-5px) rotate(-3deg); filter: blur(0px); }
+          16% { transform: translateX(-10px) translateY(-10px) rotate(-5deg); filter: blur(0px); }
+          25% { transform: translateX(-20px) translateY(-20px) rotate(0deg); filter: blur(0px); }
+          34% { transform: translateX(-30px) translateY(0px) rotate(5deg); filter: blur(0px); }
+          42% { transform: translateX(-20px) translateY(3px) rotate(0deg); filter: blur(0px); }
+          50% { transform: translateX(-10px) translateY(8px) rotate(0deg); filter: blur(0px); }
+          60% { transform: translateX(0px) translateY(10px) rotate(3deg); filter: blur(0px); }
+          68% { transform: translateX(5px) translateY(5px) rotate(0deg); filter: blur(0px); }
+          85% { transform: translateX(10px) translateY(-5px) rotate(3deg); filter: blur(0px); }
+          92% { transform: translateX(15px) translateY(-10px) rotate(0deg); filter: blur(0px); }
+          100% { transform: translateX(0) translateY(0px) rotate(0deg); filter: blur(0px); }
+        }
+        @keyframes ghost-eyes-move {
+          0% { transform: translateX(10px) translateY(20px) rotate(0deg); }
+          5% { transform: translateX(10px) translateY(20px) rotate(0deg); }
+          25% { transform: translateX(10px) translateY(20px) rotate(20deg); }
+          34% { transform: translateX(30px) translateY(20px) rotate(20deg); }
+          36% { transform: translateX(30px) translateY(20px) rotate(20deg); }
+          38% { transform: translateX(30px) translateY(20px) rotate(20deg); }
+          50% { transform: translateX(85px) translateY(15px) rotate(40deg); }
+          52% { transform: translateX(85px) translateY(15px) rotate(40deg); }
+          54% { transform: translateX(85px) translateY(15px) rotate(40deg); }
+          75% { transform: translateX(30px) translateY(20px) rotate(20deg); }
+          76% { transform: translateX(30px) translateY(20px) rotate(20deg); }
+          77% { transform: translateX(30px) translateY(20px) rotate(20deg); }
+          85% { transform: translateX(20px) translateY(20px) rotate(10deg); }
+          87% { transform: translateX(20px) translateY(20px) rotate(10deg); }
+          89% { transform: translateX(20px) translateY(20px) rotate(10deg); }
+          100% { transform: translateX(10px) translateY(20px) rotate(0deg); }
+        }
+
+        @keyframes shadow-fade-in-out {
+          0% { opacity: 0; }
+          10% { opacity: 0.3; }
+          90% { opacity: 0.3; }
+          100% { opacity: 0; }
+        }
+      "
+  Кнопка 1: "Continue with Email"
+  Кнопка 2: "
+  
+  
+  Continue with Google"
+  Кнопка 3: "
+  
+  
+  
+  
+  
+  
+  Continue with GitHub"
+  Кнопка 4: "Continue with SAML SSO"
+  Кнопка 5: "Continue with Passkey"
+  Кнопка 6: "Show other options"
+  ✓   6 [chromium] › tests/comprehensive-scan.spec.ts:267:7 › 🔍 ПОЛНОЕ СКАНИРОВАНИЕ ВСЕГО ПРИЛОЖЕНИЯ › 🔌 6. INTEGRATIONS - Все настройки (4.9s)
+Найдено кнопок планов: 0
+  ✓   7 [chromium] › tests/comprehensive-scan.spec.ts:289:7 › 🔍 ПОЛНОЕ СКАНИРОВАНИЕ ВСЕГО ПРИЛОЖЕНИЯ › 💰 7. PRICING - Все планы (6.6s)
+  ✓   8 [chromium] › tests/comprehensive-scan.spec.ts:314:7 › 🔍 ПОЛНОЕ СКАНИРОВАНИЕ ВСЕГО ПРИЛОЖЕНИЯ › 👤 8. ACCOUNT - Все настройки (9.7s)
+  ✓   9 [chromium] › tests/comprehensive-scan.spec.ts:323:7 › 🔍 ПОЛНОЕ СКАНИРОВАНИЕ ВСЕГО ПРИЛОЖЕНИЯ › 📖 9. SUPPORT - Все разделы (7.7s)
+Tab 1: A - "Skip to content"
+Tab 2: A - "
+        @keyframes ghost-move {
+          0% { tr"
+Tab 3: A[submit] - "Sign Up"
+Tab 4: INPUT[email] - ""
+Tab 5: BUTTON[submit] - "Continue with Email"
+Tab 6: BUTTON[button] - "
+  
+  
+  Continue with Google"
+Tab 7: BUTTON[button] - "
+  
+  
+  
+  
+  
+  
+  Continue with GitHub"
+Tab 8: BUTTON[button] - "Continue with SAML SSO"
+Tab 9: BUTTON[button] - "Continue with Passkey"
+Tab 10: BUTTON[submit] - "Show other options"
+Tab 11: A - "Sign Up"
+Tab 12: A - "Terms"
+Tab 13: A - "Privacy Policy"
+Tab 14: BODY - "Skip to content{"predictive-prefetch":"disabled"}
+"
+Tab 15: A - "Skip to content"
+  ✓  10 [chromium] › tests/comprehensive-scan.spec.ts:332:7 › 🔍 ПОЛНОЕ СКАНИРОВАНИЕ ВСЕГО ПРИЛОЖЕНИЯ › 🎯 10. КЛАВИАТУРНАЯ НАВИГАЦИЯ (10.2s)
+✅ Скриншот mobile (375x667)
+✅ Скриншот tablet (768x1024)
+✅ Скриншот desktop (1920x1080)
+  ✓  11 [chromium] › tests/comprehensive-scan.spec.ts:356:7 › 🔍 ПОЛНОЕ СКАНИРОВАНИЕ ВСЕГО ПРИЛОЖЕНИЯ › 📱 11. RESPONSIVE - Разные разрешения (9.9s)
+
+  11 passed (3.6m)
+
+To open last HTML report run:
+
+  npx playwright show-report
+

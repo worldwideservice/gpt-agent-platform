@@ -28,12 +28,18 @@ interface ArticlesApiResponse {
   error?: string
 }
 
-const formatDate = (date: Date): string => {
+const formatDate = (date: Date | string): string => {
+  const value = date instanceof Date ? date : new Date(date)
+
+  if (Number.isNaN(value.getTime())) {
+    return '—'
+  }
+
   return new Intl.DateTimeFormat('ru-RU', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
-  }).format(date)
+  }).format(value)
 }
 
 export const ArticlesClient = ({ initialArticles, categories }: ArticlesClientProps) => {
@@ -112,7 +118,11 @@ export const ArticlesClient = ({ initialArticles, categories }: ArticlesClientPr
       article.content.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const getCategoryName = (categoryId: string): string => {
+  const getCategoryName = (categoryId: string | null): string => {
+    if (!categoryId) {
+      return 'Без категории'
+    }
+
     const category = categories.find((c) => c.id === categoryId)
     return category?.name ?? 'Без категории'
   }
@@ -188,6 +198,7 @@ export const ArticlesClient = ({ initialArticles, categories }: ArticlesClientPr
               <TableRow className="bg-slate-50">
                 <TableHead>Название</TableHead>
                 <TableHead>Категория</TableHead>
+                <TableHead>Статус</TableHead>
                 <TableHead>Создана</TableHead>
                 <TableHead>Обновлена</TableHead>
                 <TableHead className="text-right">Действия</TableHead>
@@ -207,8 +218,17 @@ export const ArticlesClient = ({ initialArticles, categories }: ArticlesClientPr
                       </Link>
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm text-slate-600">
-                    {article.categoryId ? getCategoryName(article.categoryId) : 'Без категории'}
+                  <TableCell className="text-sm text-slate-600">{getCategoryName(article.categoryId)}</TableCell>
+                  <TableCell>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                        article.isPublished
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      {article.isPublished ? 'Активна' : 'Черновик'}
+                    </span>
                   </TableCell>
                   <TableCell className="text-sm text-slate-600">{formatDate(article.createdAt)}</TableCell>
                   <TableCell className="text-sm text-slate-600">{formatDate(article.updatedAt)}</TableCell>
@@ -244,6 +264,7 @@ export const ArticlesClient = ({ initialArticles, categories }: ArticlesClientPr
     </div>
   )
 }
+
 
 
 

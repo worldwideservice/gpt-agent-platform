@@ -6,13 +6,13 @@ import { defineConfig, devices } from '@playwright/test'
  */
 export default defineConfig({
   // Папка с тестами
-  testDir: './tests/e2e',
+  testDir: './tests',
   
   // Папка для скриншотов и артефактов
   outputDir: './test-results',
   
   // Максимальное время выполнения одного теста
-  timeout: 30 * 1000,
+  timeout: 120 * 1000,
   
   // Настройки expect()
   expect: {
@@ -39,8 +39,8 @@ export default defineConfig({
     // Base URL для тестов
     baseURL: process.env.BASE_URL || 'http://localhost:3000',
     
-    // Скриншот при падении теста
-    screenshot: 'only-on-failure',
+    // Скриншот всегда для полного сканирования
+    screenshot: 'on',
     
     // Видео при падении теста
     video: 'retain-on-failure',

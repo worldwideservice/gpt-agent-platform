@@ -1,7 +1,8 @@
-import AgentEditPage from '../[id]/page'
+import { redirect } from 'next/navigation'
 
-const NewAgentPage = async () => {
-  return <AgentEditPage params={Promise.resolve({ id: 'new' })} />
+const NewAgentPage = () => {
+  redirect('/agents/create')
+  return null
 }
 
 export default NewAgentPage

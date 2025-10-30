@@ -27,21 +27,24 @@ interface ArticleRow {
   updated_at: string
 }
 
-const mapCategoryRowToDomain = (row: CategoryRow, articlesCount: number): KnowledgeBaseCategory => {
-  return {
-    id: row.id,
-    name: row.name,
-    articlesCount,
-    createdAt: new Date(row.created_at),
-  }
-}
+const mapCategoryRowToDomain = (row: CategoryRow, articlesCount: number): KnowledgeBaseCategory => ({
+  id: row.id,
+  name: row.name,
+  articlesCount,
+  createdAt: new Date(row.created_at),
+  description: row.description ?? null,
+  parentId: row.parent_id ?? null,
+})
 
 const mapArticleRowToDomain = (row: ArticleRow): KnowledgeBaseArticle => {
   return {
     id: row.id,
     title: row.title,
-    categoryId: row.category_id ?? '',
+    categoryId: row.category_id ?? null,
     content: row.content,
+    slug: row.slug ?? null,
+    isPublished: typeof row.is_published === 'boolean' ? row.is_published : true,
+    viewsCount: typeof row.views_count === 'number' ? row.views_count : 0,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   }
@@ -170,7 +173,7 @@ export const createKnowledgeBaseCategory = async (
     .insert({
       org_id: organizationId,
       name: data.name,
-      description: data.description ?? null,
+      description: data.description?.trim() ? data.description.trim() : null,
       parent_id: data.parentId ?? null,
     })
     .select('*')
@@ -198,7 +201,7 @@ export const updateKnowledgeBaseCategory = async (
   }
 
   if (data.description !== undefined) {
-    updatePayload.description = data.description
+    updatePayload.description = data.description?.trim() ? data.description.trim() : null
   }
 
   if (data.parentId !== undefined) {
@@ -299,7 +302,7 @@ export const getKnowledgeBaseArticleById = async (
 
 export const createKnowledgeBaseArticle = async (
   organizationId: string,
-  data: { title: string; content: string; categoryId?: string | null; slug?: string },
+  data: { title: string; content: string; categoryId?: string | null; slug?: string | null; isPublished?: boolean },
 ): Promise<KnowledgeBaseArticle> => {
   const supabase = getSupabaseServiceRoleClient()
 
@@ -310,7 +313,8 @@ export const createKnowledgeBaseArticle = async (
       title: data.title,
       content: data.content,
       category_id: data.categoryId ?? null,
-      slug: data.slug ?? null,
+      slug: data.slug?.trim() ? data.slug.trim() : null,
+      is_published: data.isPublished ?? true,
     })
     .select('*')
     .single()
@@ -334,7 +338,7 @@ export const createKnowledgeBaseArticle = async (
 export const updateKnowledgeBaseArticle = async (
   articleId: string,
   organizationId: string,
-  data: { title?: string; content?: string; categoryId?: string | null; slug?: string },
+  data: { title?: string; content?: string; categoryId?: string | null; slug?: string | null; isPublished?: boolean },
 ): Promise<KnowledgeBaseArticle> => {
   const supabase = getSupabaseServiceRoleClient()
 
@@ -353,7 +357,11 @@ export const updateKnowledgeBaseArticle = async (
   }
 
   if (data.slug !== undefined) {
-    updatePayload.slug = data.slug
+    updatePayload.slug = data.slug?.trim() ? data.slug.trim() : null
+  }
+
+  if (data.isPublished !== undefined) {
+    updatePayload.is_published = data.isPublished
   }
 
   const { data: articleData, error } = await supabase
@@ -400,4 +408,3 @@ export const deleteKnowledgeBaseArticle = async (articleId: string, organization
     throw new Error('Не удалось удалить статью')
   }
 }
-

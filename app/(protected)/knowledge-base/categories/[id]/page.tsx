@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { CategoryForm } from './_components/CategoryForm'
 
 import { auth } from '@/auth'
-import { getKnowledgeBaseCategoryById } from '@/lib/repositories/knowledge-base'
+import { getKnowledgeBaseCategories, getKnowledgeBaseCategoryById } from '@/lib/repositories/knowledge-base'
 
 interface CategoryPageProps {
   params: Promise<{
@@ -34,7 +34,15 @@ const CategoryPage = async ({ params }: CategoryPageProps) => {
     }
   }
 
-  return <CategoryForm categoryId={id} initialCategory={category} />
+  const categories = await getKnowledgeBaseCategories(session.user.orgId)
+
+  return (
+    <CategoryForm
+      categoryId={id}
+      initialCategory={category}
+      categories={categories}
+    />
+  )
 }
 
 export default CategoryPage

@@ -36,3 +36,7 @@ const TrainingPage = async ({ params }: TrainingPageProps) => {
 export default TrainingPage
 
 
+
+
+
+

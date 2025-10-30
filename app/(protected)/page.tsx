@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { Bot, CalendarCheck2, MessageSquare, Sparkles } from 'lucide-react'
 
 import { BarChartCard } from '@/components/dashboard/BarChartCard'
+import { LineChartCard } from '@/components/dashboard/LineChartCard'
 import { RecentUpdates } from '@/components/dashboard/RecentUpdates'
 import { StatCard } from '@/components/dashboard/StatCard'
 
@@ -10,6 +11,8 @@ import { getOnboardingState } from '@/lib/onboarding/server'
 import {
   getDashboardStats,
   getWeeklyBarChartData,
+  getMonthlyResponsesSeries,
+  getDailyResponsesSeries,
 } from '@/lib/repositories/agents'
 
 const DashboardPage = async () => {
@@ -27,37 +30,21 @@ const DashboardPage = async () => {
     redirect('/onboarding')
   }
 
-  const [stats, weeklyBarData] = await Promise.all([
+  const [stats, weeklyBarData, monthlyData, dailyData] = await Promise.all([
     getDashboardStats(orgId),
     getWeeklyBarChartData(orgId),
+    getMonthlyResponsesSeries(orgId, 6),
+    getDailyResponsesSeries(orgId, 14),
   ])
 
-  const recentUpdates = [
-    {
-      id: '1',
-      message: 'Агент "Консультант" активирован',
-      timestamp: '2 часа назад',
-      color: 'green' as const,
-    },
-    {
-      id: '2',
-      message: 'Добавлена новая интеграция с Kommo CRM',
-      timestamp: '5 часов назад',
-      color: 'blue' as const,
-    },
-    {
-      id: '3',
-      message: 'База знаний обновлена: +15 статей',
-      timestamp: '1 день назад',
-      color: 'purple' as const,
-    },
-    {
-      id: '4',
-      message: 'Создан новый агент "Поддержка"',
-      timestamp: '2 дня назад',
-      color: 'yellow' as const,
-    },
-  ]
+  // Пока нет реальных обновлений - используем пустой массив
+  // TODO: Реализовать получение реальных обновлений из БД/уведомлений
+  const recentUpdates: Array<{
+    id: string
+    message: string
+    timestamp: string
+    color: 'green' | 'blue' | 'purple' | 'yellow'
+  }> = []
 
   return (
     <div className="space-y-8">
@@ -88,6 +75,17 @@ const DashboardPage = async () => {
           value={stats.totalAgents}
           subtitle="Всего агентов"
           icon={Bot}
+        />
+      </section>
+
+      <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <LineChartCard
+          title="Ответы ИИ за этот месяц"
+          data={monthlyData}
+        />
+        <LineChartCard
+          title="Ответы ИИ за день"
+          data={dailyData}
         />
       </section>
 

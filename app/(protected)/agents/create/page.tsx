@@ -1,41 +1,77 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
+import { useToast } from '@/components/ui/toast-context'
+
+import type { Agent } from '@/types'
 
 const CreateAgentPage = () => {
   const router = useRouter()
+  const { push: pushToast } = useToast()
   const [agentName, setAgentName] = useState('')
-  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
 
   const handleBack = () => {
     router.push('/agents')
   }
 
-  const handleCreate = async () => {
-    if (!agentName.trim()) return
+  const handleSubmit = (mode: 'create' | 'createAndNew') => {
+    if (!agentName.trim()) {
+      setError('Название агента обязательно')
+      return
+    }
 
-    setIsSaving(true)
-    // Здесь будет логика сохранения
-    setTimeout(() => {
-      setIsSaving(false)
-      router.push('/agents/553/edit')
-    }, 800)
-  }
+    startTransition(async () => {
+      setError(null)
 
-  const handleCreateAndNew = async () => {
-    if (!agentName.trim()) return
+      try {
+        const response = await fetch('/api/agents', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: agentName.trim(),
+            status: 'draft',
+          }),
+        })
 
-    setIsSaving(true)
-    setTimeout(() => {
-      setIsSaving(false)
-      setAgentName('')
-    }, 800)
+        const payload = (await response.json()) as { success: boolean; data?: Agent; error?: string }
+
+        if (!response.ok || !payload.success || !payload.data) {
+          throw new Error(payload.error ?? 'Не удалось создать агента')
+        }
+
+        pushToast({
+          title: 'Агент создан',
+          description: `«${payload.data.name}» добавлен в список агентов`,
+          variant: 'success',
+        })
+
+        if (mode === 'create') {
+          router.push(`/agents/${payload.data.id}`)
+          return
+        }
+
+        setAgentName('')
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Не удалось создать агента'
+        console.error('Failed to create agent', err)
+        setError(message)
+        pushToast({
+          title: 'Ошибка создания агента',
+          description: message,
+          variant: 'error',
+        })
+      }
+    })
   }
 
   return (
@@ -66,7 +102,7 @@ const CreateAgentPage = () => {
         <CardContent className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Название
+              Название<span className="text-red-500 ml-1">*</span>
             </label>
             <Input
               placeholder=""
@@ -74,24 +110,32 @@ const CreateAgentPage = () => {
               onChange={(e) => setAgentName(e.target.value)}
               required
               autoFocus
+              disabled={isPending}
             />
+            {error && <p className="mt-2 text-sm text-rose-600">{error}</p>}
           </div>
 
           <div className="flex items-center space-x-3">
             <Button 
-              onClick={handleCreate} 
-              disabled={!agentName.trim() || isSaving}
+              onClick={() => handleSubmit('create')} 
+              disabled={!agentName.trim() || isPending}
             >
-              {isSaving ? 'Создание...' : 'Создать'}
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Создание...
+                </>
+              ) : (
+                'Создать'
+              )}
             </Button>
             <Button 
               variant="outline" 
-              onClick={handleCreateAndNew}
-              disabled={!agentName.trim() || isSaving}
+              onClick={() => handleSubmit('createAndNew')}
+              disabled={!agentName.trim() || isPending}
             >
-              Создать и Создать еще
+              Создать и создать ещё
             </Button>
-            <Button variant="outline" onClick={handleBack}>
+            <Button variant="outline" onClick={handleBack} disabled={isPending}>
               Отмена
             </Button>
           </div>
@@ -102,4 +146,3 @@ const CreateAgentPage = () => {
 }
 
 export default CreateAgentPage
-

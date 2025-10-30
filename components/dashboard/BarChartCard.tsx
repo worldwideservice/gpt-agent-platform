@@ -56,3 +56,7 @@ export const BarChartCard = ({ title, subtitle, data, emptyMessage }: BarChartCa
 
 
 
+
+
+
+

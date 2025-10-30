@@ -48,6 +48,7 @@ const updateArticleSchema = z.object({
   content: z.string().min(1).optional(),
   categoryId: z.string().uuid().nullable().optional(),
   slug: z.string().optional(),
+  isPublished: z.boolean().optional(),
 })
 
 export const PATCH = async (
@@ -125,6 +126,9 @@ export const DELETE = async (
     )
   }
 }
+
+
+
 
 
 

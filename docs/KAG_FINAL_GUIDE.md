@@ -341,3 +341,7 @@ GET /api/agents/[id]/knowledge?stageId=[stageId]
 Полная документация: `docs/AGENT_TRAINING_SYSTEM.md`
 
 
+
+
+
+

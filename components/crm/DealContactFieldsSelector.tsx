@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Briefcase, Users, Eye } from 'lucide-react'
+import { X, Briefcase, Users, Eye, RefreshCw, Edit } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/Textarea'
 
@@ -127,9 +127,22 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
     <div className="space-y-6">
       {/* Настройки доступа к данным */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex items-center space-x-2 mb-4">
-          <Eye className="w-5 h-5 text-gray-600" />
-          <h2 className="text-lg font-semibold text-gray-900">Настройки доступа к данным</h2>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2">
+            <Eye className="w-5 h-5 text-gray-600" />
+            <h2 className="text-lg font-semibold text-gray-900">Настройки доступа к данным</h2>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={async () => {
+              // TODO: Добавить логику синхронизации
+              console.log('Синхронизация настроек CRM')
+            }}
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Синхронизировать настройки CRM
+          </Button>
         </div>
         <p className="text-sm text-gray-600 mb-6">
           Выберите, какие данные агент может читать и использовать в диалогах
@@ -145,6 +158,9 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
             Выберите поля сделки, которые агент может читать
           </p>
 
+          {/* Заголовок секции */}
+          <h4 className="text-sm font-medium text-gray-700 mb-3">Выберите поля сделки</h4>
+
           {/* Выбранные поля */}
           {dealFields.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-3">
@@ -153,13 +169,14 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
                 return field ? (
                   <span
                     key={fieldId}
-                    className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700"
+                    className="inline-flex items-center gap-1 rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-700"
                   >
                     {field.name}
                     <button
                       onClick={() => removeDealField(fieldId)}
                       className="ml-1 hover:text-red-600"
                       type="button"
+                      aria-label={`Удалить ${field.name}`}
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -180,7 +197,7 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
                 }
               }}
             >
-              <option value="">Выберите поля сделки</option>
+              <option value="">Выберите поля, к которым агент сможет получить доступ...</option>
               {availableDealFields
                 .filter(field => !dealFields.includes(field.id))
                 .map((field) => (
@@ -206,6 +223,9 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
             Выберите, какие поля контакта агент сможет читать
           </p>
 
+          {/* Заголовок секции */}
+          <h4 className="text-sm font-medium text-gray-700 mb-3">Выберите поля контакта</h4>
+
           {/* Выбранные поля */}
           {contactFields.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-3">
@@ -214,13 +234,14 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
                 return field ? (
                   <span
                     key={fieldId}
-                    className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700"
+                    className="inline-flex items-center gap-1 rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-700"
                   >
                     {field.name}
                     <button
                       onClick={() => removeContactField(fieldId)}
                       className="ml-1 hover:text-red-600"
                       type="button"
+                      aria-label={`Удалить ${field.name}`}
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -241,7 +262,7 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
                 }
               }}
             >
-              <option value="">Выберите поля контакта</option>
+              <option value="">Выберите поля, к которым агент сможет получить доступ...</option>
               {availableContactFields
                 .filter(field => !contactFields.includes(field.id))
                 .map((field) => (
@@ -260,73 +281,118 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
 
       {/* Настройки ввода данных */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-sm font-semibold text-gray-900 mb-1">
+        <div className="flex items-center space-x-2 mb-4">
+          <Edit className="w-5 h-5 text-gray-600" />
+          <h2 className="text-lg font-semibold text-gray-900">Настройки ввода данных</h2>
+        </div>
+        <p className="text-sm text-gray-600 mb-6">
           Настройте, как агент может изменять данные сделок и контактов в зависимости от контекста разговора.
-        </h3>
+        </p>
 
         {/* Данные сделки - правила обновления */}
-        <div className="mt-4">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <Briefcase className="w-5 h-5 text-gray-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Данные сделки</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <button className="text-sm text-primary-600 hover:text-primary-700">Свернуть все</button>
+              <span className="text-gray-300">|</span>
+              <button className="text-sm text-primary-600 hover:text-primary-700">Развернуть все</button>
+            </div>
+          </div>
+          <p className="text-sm text-gray-600 mb-4">
             Задайте правила автоматического обновления полей сделки во время разговора.
-          </h4>
+          </p>
           <div className="space-y-2">
-            {dealFields.slice(0, 2).map((fieldId) => {
+            {dealFields.slice(0, 2).map((fieldId, index) => {
               const field = availableDealFields.find(f => f.id === fieldId)
               return field ? (
-                <div key={fieldId} className="flex items-center gap-2 p-2 border border-gray-200 rounded">
-                  <span className="flex-1 text-sm text-gray-700">{field.name}</span>
-                  <div className="flex items-center gap-1">
-                    <button className="text-gray-400 hover:text-gray-600" type="button">
-                      ↑
-                    </button>
-                    <button className="text-gray-400 hover:text-gray-600" type="button">
-                      ↓
-                    </button>
-                    <button className="text-gray-400 hover:text-red-600" type="button">
-                      <X className="h-4 w-4" />
-                    </button>
-                    <select className="text-xs border border-gray-300 rounded px-2 py-1">
-                      <option>Значение</option>
-                    </select>
-                  </div>
+                <div key={fieldId} className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg">
+                  <button className="text-gray-400 hover:text-gray-600" type="button" aria-label="Переместить вверх">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                    </svg>
+                  </button>
+                  <button className="text-gray-400 hover:text-gray-600" type="button" aria-label="Переместить вниз">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  <span className="flex-1 text-sm font-medium text-gray-700">{field.name}</span>
+                  <button 
+                    className="text-gray-400 hover:text-red-600 p-1" 
+                    type="button"
+                    onClick={() => removeDealField(fieldId)}
+                    aria-label={`Удалить ${field.name}`}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                  <button 
+                    className="text-gray-400 hover:text-gray-600 p-1" 
+                    type="button"
+                    aria-label="Развернуть"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
                 </div>
               ) : null
             })}
-            <Button variant="outline" size="sm" type="button">
+            <Button variant="outline" size="sm" type="button" className="mt-3">
               Добавить поле
             </Button>
           </div>
         </div>
 
         {/* Данные контакта - правила обновления */}
-        <div className="mt-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">
+        <div>
+          <div className="flex items-center space-x-2 mb-4">
+            <Users className="w-5 h-5 text-gray-600" />
+            <h3 className="text-lg font-semibold text-gray-900">Данные контакта</h3>
+          </div>
+          <p className="text-sm text-gray-600 mb-4">
             Определите правила автоматического обновления полей контакта во время разговора.
-          </h4>
+          </p>
           <div className="space-y-2">
             {contactFields.slice(0, 1).map((fieldId) => {
               const field = availableContactFields.find(f => f.id === fieldId)
               return field ? (
-                <div key={fieldId} className="flex items-center gap-2 p-2 border border-gray-200 rounded">
-                  <span className="flex-1 text-sm text-gray-700">{field.name}</span>
-                  <div className="flex items-center gap-1">
-                    <button className="text-gray-400 hover:text-gray-600" type="button">
-                      ↑
-                    </button>
-                    <button className="text-gray-400 hover:text-gray-600" type="button">
-                      ↓
-                    </button>
-                    <button className="text-gray-400 hover:text-red-600" type="button">
-                      <X className="h-4 w-4" />
-                    </button>
-                    <select className="text-xs border border-gray-300 rounded px-2 py-1">
-                      <option>Значение</option>
-                    </select>
-                  </div>
+                <div key={fieldId} className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg">
+                  <button className="text-gray-400 hover:text-gray-600" type="button" aria-label="Переместить вверх">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                    </svg>
+                  </button>
+                  <button className="text-gray-400 hover:text-gray-600" type="button" aria-label="Переместить вниз">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  <span className="flex-1 text-sm font-medium text-gray-700">{field.name}</span>
+                  <button 
+                    className="text-gray-400 hover:text-red-600 p-1" 
+                    type="button"
+                    onClick={() => removeContactField(fieldId)}
+                    aria-label={`Удалить ${field.name}`}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                  <button 
+                    className="text-gray-400 hover:text-gray-600 p-1" 
+                    type="button"
+                    aria-label="Развернуть"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
                 </div>
               ) : null
             })}
-            <Button variant="outline" size="sm" type="button">
+            <Button variant="outline" size="sm" type="button" className="mt-3">
               Добавить поле
             </Button>
           </div>

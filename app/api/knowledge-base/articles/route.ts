@@ -55,6 +55,7 @@ const createArticleSchema = z.object({
   content: z.string().min(1, 'Содержание обязательно'),
   categoryId: z.string().uuid().nullable().optional(),
   slug: z.string().optional(),
+  isPublished: z.boolean().optional(),
 })
 
 export const POST = async (request: NextRequest) => {
@@ -98,6 +99,9 @@ export const POST = async (request: NextRequest) => {
     )
   }
 }
+
+
+
 
 
 

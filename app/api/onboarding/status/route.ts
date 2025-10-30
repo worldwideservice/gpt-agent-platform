@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { getOnboardingState } from '@/lib/onboarding/server'
 
+export const dynamic = 'force-dynamic'
+
 export const GET = async () => {
   try {
     const session = await auth()

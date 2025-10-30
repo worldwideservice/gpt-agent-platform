@@ -1,11 +1,10 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { Plus, Edit, Trash2, CheckCircle, Loader2 } from 'lucide-react'
+import { Plus, Edit, Trash2, CheckCircle, Loader2, Zap, Search, Filter, ArrowDown, X, ChevronUp, ChevronDown, Link2, Settings } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
-import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
@@ -94,6 +93,8 @@ export const TriggerManager = ({ agentId }: TriggerManagerProps) => {
     actions: [{ actionType: 'create_deal', value: '', ordering: 0 }],
   })
   const [isSaving, setIsSaving] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedTriggers, setSelectedTriggers] = useState<string[]>([])
 
   const fetchTriggers = useCallback(async () => {
     try {
@@ -301,6 +302,27 @@ export const TriggerManager = ({ agentId }: TriggerManagerProps) => {
     }))
   }
 
+  const filteredTriggers = triggers.filter(trigger => 
+    trigger.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    formatConditionValue(trigger.conditions[0] || { payload: {}, conditionType: '' } as TriggerCondition).toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const handleSelectTrigger = (id: string) => {
+    setSelectedTriggers(prev => 
+      prev.includes(id) 
+        ? prev.filter(triggerId => triggerId !== id)
+        : [...prev, id]
+    )
+  }
+
+  const handleSelectAll = () => {
+    if (selectedTriggers.length === filteredTriggers.length) {
+      setSelectedTriggers([])
+    } else {
+      setSelectedTriggers(filteredTriggers.map(t => t.id))
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -310,201 +332,258 @@ export const TriggerManager = ({ agentId }: TriggerManagerProps) => {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-slate-900">Триггеры и автоматизация</h3>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-3xl font-bold text-slate-900">Триггеры</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Выполняйте мгновенные действия при соблюдении определённых условий в ходе разговора.
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2 flex-1">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+            <input
+              type="search"
+              placeholder="Поиск"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+            />
+          </div>
+          <button
+            type="button"
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-colors hover:border-primary-200 hover:text-primary-600"
+            aria-label="Фильтры"
+          >
+            <Filter className="h-5 w-5" />
+          </button>
+        </div>
         <Button onClick={handleCreate} className="gap-2">
           <Plus className="h-4 w-4" />
-          Создать триггер
+          Создать
         </Button>
       </div>
 
       {triggers.length === 0 ? (
-        <Card className="border-slate-200 shadow-sm">
-          <CardContent className="py-12 text-center">
-            <p className="mb-4 text-slate-500">
-              Триггеры позволяют автоматизировать действия агента на основе условий
-            </p>
-            <Button onClick={handleCreate}>Создать первый триггер</Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {triggers.map((trigger) => (
-            <Card key={trigger.id} className={`border-slate-200 shadow-sm ${!trigger.isActive ? 'opacity-60' : ''}`}>
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="mb-3 flex items-center gap-3">
-                      <h4 className="text-base font-semibold text-slate-900">{trigger.name}</h4>
-                      {trigger.isActive && <CheckCircle className="h-5 w-5 text-green-600" />}
-                    </div>
-
-                    {trigger.description && (
-                      <p className="mb-3 text-sm text-slate-500">{trigger.description}</p>
-                    )}
-
-                    <div className="mb-4 space-y-2">
-                      {trigger.conditions.length > 0 && (
-                        <div className="text-sm">
-                          <span className="font-medium text-slate-600">Условие: </span>
-                          {trigger.conditions.map((condition, index) => (
-                            <span key={condition.id} className="text-slate-900">
-                              {index > 0 && ', '}
-                              {getConditionLabel(condition.conditionType)} &quot;{formatConditionValue(condition)}&quot;
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      {trigger.actions.length > 0 && (
-                        <div className="text-sm">
-                          <span className="font-medium text-slate-600">Действия: </span>
-                          <ul className="ml-4 mt-1 space-y-1">
-                            {trigger.actions.map((action) => (
-                              <li key={action.id} className="text-slate-900">
-                                • {getActionLabel(action.actionType)} → {formatActionValue(action)}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <Toggle
-                        checked={trigger.isActive}
-                        onChange={() => handleToggleActive(trigger.id, trigger.isActive)}
-                        label="Активен"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="ml-4 flex items-center gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(trigger)} className="p-2">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(trigger.id)}
-                      className="p-2 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
+            <Zap className="h-8 w-8 text-slate-400" />
+          </div>
+          <h3 className="mb-2 text-lg font-semibold text-slate-900">Не найдено Триггеры</h3>
+          <p className="mb-6 text-sm text-slate-500">Создать Триггер для старта.</p>
+          <Button onClick={handleCreate} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Создать
+          </Button>
         </div>
+      ) : (
+        <>
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50">
+                  <th className="w-12 px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedTriggers.length === filteredTriggers.length && filteredTriggers.length > 0}
+                      ref={(input) => {
+                        if (input) input.indeterminate = selectedTriggers.length > 0 && selectedTriggers.length < filteredTriggers.length
+                      }}
+                      onChange={handleSelectAll}
+                      className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                      aria-label="Выбрать все триггеры"
+                    />
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Название</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">
+                    <button className="flex items-center gap-1 hover:text-slate-900">
+                      Активно
+                      <ArrowDown className="h-4 w-4" />
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Условие</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTriggers.map((trigger) => {
+                  const conditionText = trigger.conditions.length > 0 
+                    ? `Когда ты понял, что это клиент по продукту ${formatConditionValue(trigger.conditions[0]).substring(0, 50)}...`
+                    : 'Нет условия'
+                  return (
+                    <tr key={trigger.id} className="border-b border-slate-100">
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedTriggers.includes(trigger.id)}
+                          onChange={() => handleSelectTrigger(trigger.id)}
+                          className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                          aria-label={`Выбрать триггер ${trigger.name}`}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm font-semibold text-slate-900">{trigger.name}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => handleToggleActive(trigger.id, trigger.isActive)}
+                          className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                            trigger.isActive ? 'bg-primary-600' : 'bg-gray-200'
+                          }`}
+                          aria-label={trigger.isActive ? 'Деактивировать' : 'Активировать'}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                              trigger.isActive ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-slate-600">{conditionText}</span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-3">
+                          <button
+                            onClick={() => handleEdit(trigger)}
+                            className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center gap-1"
+                          >
+                            <Edit className="h-4 w-4" />
+                            Изменить
+                          </button>
+                          <button
+                            onClick={() => handleDelete(trigger.id)}
+                            className="text-rose-500 hover:text-rose-600 text-sm font-medium flex items-center gap-1"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Удалить
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex items-center justify-between text-sm text-slate-500">
+            <p>Показано с {filteredTriggers.length > 0 ? 1 : 0} по {filteredTriggers.length} из {triggers.length}</p>
+            <div className="flex items-center gap-4">
+              <p>на страницу</p>
+              <select className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </div>
+          </div>
+        </>
       )}
 
-      <Modal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title={editingTrigger ? 'Редактировать триггер' : 'Создать триггер'}
-        size="lg"
-      >
-        <div className="space-y-6">
-          <Input
-            label="Название триггера*"
-            placeholder="Например: Создание сделки при готовности"
-            value={formData.name}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-          />
-
-          <Textarea
-            label="Описание (опционально)"
-            placeholder="Краткое описание триггера"
-            rows={3}
-            value={formData.description}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-          />
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-end bg-slate-900/40 p-4 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && setModalOpen(false)}>
+          <div className="w-full max-w-lg h-full bg-white shadow-xl overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
+              <h3 className="text-xl font-semibold text-slate-900">{editingTrigger ? 'Редактировать триггер' : 'Создать триггер'}</h3>
+              <button
+                onClick={() => setModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+                aria-label="Закрыть"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="px-6 py-6 space-y-6">
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Условия срабатывания</label>
-            <div className="space-y-3">
-              {formData.conditions.map((condition, index) => (
-                <div key={index} className="grid grid-cols-[1fr,2fr,auto] gap-3">
-                  <Select
-                    options={CONDITION_TYPES}
-                    value={condition.conditionType}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        conditions: prev.conditions.map((c, i) =>
-                          i === index ? { ...c, conditionType: e.target.value } : c,
-                        ),
-                      }))
-                    }
-                  />
-                  <Input
-                    placeholder="Значение условия"
-                    value={condition.value}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        conditions: prev.conditions.map((c, i) => (i === index ? { ...c, value: e.target.value } : c)),
-                      }))
-                    }
-                  />
-                  {formData.conditions.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeCondition(index)}
-                      className="p-2 text-rose-600"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-              <Button variant="outline" size="sm" onClick={addCondition} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Добавить условие
-              </Button>
-            </div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Название<span className="text-red-500 ml-1">*</span>
+            </label>
+            <Input
+              placeholder="Например, запрос оплаты"
+              value={formData.name}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-gray-700">Активно</label>
+            <button
+              onClick={() => setFormData(prev => ({ ...prev, isActive: !prev.isActive }))}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                formData.isActive ? 'bg-primary-600' : 'bg-gray-200'
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  formData.isActive ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Действия</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Условие<span className="text-red-500 ml-1">*</span>
+            </label>
+            <Input
+              placeholder="Например, если клиент просит оплатить"
+              value={formData.conditions[0]?.value || ''}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  conditions: [{ conditionType: 'message_contains', value: e.target.value, ordering: 0 }],
+                }))
+              }
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Укажите, когда этот триггер должен срабатывать
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Действия<span className="text-red-500 ml-1">*</span>
+            </label>
             <div className="space-y-3">
               {formData.actions.map((action, index) => (
-                <div key={index} className="grid grid-cols-[1fr,2fr,auto] gap-3">
-                  <Select
-                    options={ACTION_TYPES}
+                <div key={index} className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="text-gray-400 hover:text-gray-600"
+                    aria-label="Переместить вверх"
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    className="text-gray-400 hover:text-gray-600"
+                    aria-label="Переместить вниз"
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                  <select
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
                     value={action.actionType}
-                    onChange={(value: string) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        actions: prev.actions.map((a, i) =>
-                          i === index ? { ...a, actionType: value } : a,
-                        ),
-                      }))
-                    }
-                  />
-                  <Input
-                    placeholder="Значение действия"
-                    value={action.value}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        actions: prev.actions.map((a, i) => (i === index ? { ...a, value: e.target.value } : a)),
+                        actions: prev.actions.map((a, i) =>
+                          i === index ? { ...a, actionType: e.target.value } : a,
+                        ),
                       }))
                     }
-                  />
-                  {formData.actions.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeAction(index)}
-                      className="p-2 text-rose-600"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
+                  >
+                    <option value="">Выбрать действие</option>
+                    {ACTION_TYPES.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               ))}
               <Button variant="outline" size="sm" onClick={addAction} className="gap-2">
@@ -514,17 +593,57 @@ export const TriggerManager = ({ agentId }: TriggerManagerProps) => {
             </div>
           </div>
 
-          <Toggle
-            checked={formData.isActive}
-            onChange={(checked) => setFormData((prev) => ({ ...prev, isActive: checked }))}
-            label="Активен"
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Ответное сообщение
+            </label>
+            <Input
+              placeholder="Например, я обработал ваш запрос и создал задачу для нашей финансовой команды."
+              value={formData.description}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Сообщение, возвращаемое при выполнении триггера
+            </p>
+          </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Лимит запусков в чате
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min="0"
+                className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                value="0"
+              />
+              <span className="text-sm text-gray-600">раз</span>
+            </div>
+            <p className="mt-1 text-xs text-gray-500">
+              Максимальное количество запусков этого триггера в одном чате. Установите 0 для неограниченного количества.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
             <Button variant="outline" onClick={() => setModalOpen(false)} disabled={isSaving}>
-              Отмена
+              Отменить
             </Button>
-            <Button onClick={handleSave} disabled={isSaving}>
+            {!editingTrigger && (
+              <Button 
+                variant="outline" 
+                onClick={async () => {
+                  await handleSave()
+                  if (!isSaving) {
+                    handleCreate()
+                  }
+                }} 
+                disabled={isSaving}
+              >
+                Создать и создать еще один
+              </Button>
+            )}
+            <Button onClick={handleSave} disabled={isSaving || !formData.name.trim() || !formData.conditions[0]?.value}>
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -537,8 +656,10 @@ export const TriggerManager = ({ agentId }: TriggerManagerProps) => {
               )}
             </Button>
           </div>
+            </div>
+          </div>
         </div>
-      </Modal>
+      )}
     </div>
   )
 }
