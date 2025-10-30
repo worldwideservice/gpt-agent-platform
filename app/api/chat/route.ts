@@ -12,6 +12,7 @@ import { searchKnowledgeBase, formatKnowledgeContext } from '@/lib/repositories/
 import { getAgentById } from '@/lib/repositories/agents'
 import { generateChatResponse } from '@/lib/services/llm'
 import { buildFullSystemPrompt, processConversationMemory } from '@/lib/services/agent-context-builder'
+import { AgentActionsService } from '@/lib/services/agent-actions'
 
 const sendMessageSchema = z.object({
   conversationId: z.string().uuid().optional(),
@@ -20,6 +21,48 @@ const sendMessageSchema = z.object({
   useKnowledgeBase: z.boolean().optional().default(true),
   clientIdentifier: z.string().optional(), // email, phone или другой идентификатор клиента
 })
+
+/**
+ * Анализирует разговор и автоматически выполняет действия агента
+ */
+async function analyzeAndExecuteActions(context: {
+  organizationId: string
+  agentId: string | null
+  leadId: number
+  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }>
+  userMessage: string
+}): Promise<void> {
+  try {
+    const actionsService = new AgentActionsService(context.organizationId)
+
+    // Анализируем ситуацию и получаем предложения действий
+    const suggestions = await actionsService.analyzeAndSuggestActions({
+      organizationId: context.organizationId,
+      agentId: context.agentId || '',
+      leadId: context.leadId,
+      conversationHistory: context.conversationHistory,
+      userMessage: context.userMessage,
+    })
+
+    // Выполняем наиболее уверенное действие (если уверенность > 0.7)
+    if (suggestions.length > 0 && suggestions[0].confidence > 0.7) {
+      const action = suggestions[0]
+      console.log(`🤖 Агент автоматически выполняет действие: ${action.reason} (уверенность: ${action.confidence})`)
+
+      await actionsService.executeSuggestedAction(action, {
+        organizationId: context.organizationId,
+        agentId: context.agentId || '',
+        leadId: context.leadId,
+        conversationHistory: context.conversationHistory,
+        userMessage: context.userMessage,
+      })
+
+      console.log(`✅ Действие выполнено: ${action.type}`)
+    }
+  } catch (error) {
+    console.error('Failed to analyze and execute actions:', error)
+  }
+}
 
 /**
  * @swagger
@@ -324,6 +367,24 @@ export const POST = async (request: NextRequest) => {
         clientIdentifier,
         conversationMessages,
       }).catch(error => console.error('Memory processing failed', error))
+    }
+
+    // Анализируем и предлагаем действия агента (асинхронно, не блокируем ответ)
+    if (conversation.leadId && typeof conversation.leadId === 'number') {
+      const allMessages = await getConversationMessages(conversation.id)
+      const conversationHistory = allMessages.map(msg => ({
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content,
+      }))
+
+      // Запускаем анализ действий в фоне
+      analyzeAndExecuteActions({
+        organizationId,
+        agentId: agentId || conversation.agentId || null,
+        leadId: conversation.leadId!,
+        conversationHistory,
+        userMessage: message,
+      }).catch((error: any) => console.error('Action analysis failed', error))
     }
 
     // Обновляем заголовок диалога на основе первого сообщения, если еще не установлен

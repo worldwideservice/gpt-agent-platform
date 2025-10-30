@@ -595,3 +595,82 @@ WHERE id = 'agent-assets';
 SELECT name, stripe_price_id, price_cents, limits
 FROM billing_plans
 ORDER BY sort_order;
+
+-- ============================================
+-- ЧАСТЬ 9: Шаблоны email
+-- ============================================
+
+-- Создание таблицы шаблонов email
+CREATE TABLE IF NOT EXISTS email_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  subject TEXT NOT NULL,
+  html TEXT NOT NULL,
+  text TEXT,
+  variables JSONB DEFAULT '[]', -- массив названий переменных
+  is_active BOOLEAN DEFAULT true,
+  created_by UUID REFERENCES auth.users(id),
+  updated_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- RLS политика
+ALTER TABLE email_templates ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view email templates from their organization" ON email_templates;
+CREATE POLICY "Users can view email templates from their organization" ON email_templates
+  FOR SELECT USING (auth.uid() IN (
+    SELECT user_id FROM members
+    WHERE org_id = email_templates.org_id
+    AND status = 'active'
+  ));
+
+DROP POLICY IF EXISTS "Users can create email templates in their organization" ON email_templates;
+CREATE POLICY "Users can create email templates in their organization" ON email_templates
+  FOR INSERT WITH CHECK (auth.uid() IN (
+    SELECT user_id FROM members
+    WHERE org_id = email_templates.org_id
+    AND status = 'active'
+  ));
+
+DROP POLICY IF EXISTS "Users can update email templates in their organization" ON email_templates;
+CREATE POLICY "Users can update email templates in their organization" ON email_templates
+  FOR UPDATE USING (auth.uid() IN (
+    SELECT user_id FROM members
+    WHERE org_id = email_templates.org_id
+    AND status = 'active'
+  ));
+
+DROP POLICY IF EXISTS "Users can delete email templates in their organization" ON email_templates;
+CREATE POLICY "Users can delete email templates in their organization" ON email_templates
+  FOR DELETE USING (auth.uid() IN (
+    SELECT user_id FROM members
+    WHERE org_id = email_templates.org_id
+    AND status = 'active'
+  ));
+
+-- Индексы
+CREATE INDEX IF NOT EXISTS idx_email_templates_org_id ON email_templates(org_id);
+CREATE INDEX IF NOT EXISTS idx_email_templates_active ON email_templates(org_id, is_active);
+
+-- Триггер для updated_at
+DROP TRIGGER IF EXISTS update_email_templates_updated_at ON email_templates;
+CREATE TRIGGER update_email_templates_updated_at
+  BEFORE UPDATE ON email_templates
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================
+-- ЧАСТЬ 10: Поле lead_id в agent_conversations
+-- ============================================
+
+-- Добавление поля lead_id в таблицу agent_conversations
+ALTER TABLE agent_conversations
+ADD COLUMN IF NOT EXISTS lead_id INTEGER;
+
+-- Индекс для быстрого поиска по lead_id
+CREATE INDEX IF NOT EXISTS idx_agent_conversations_lead_id ON agent_conversations(lead_id);
+
+-- Комментарий к полю
+COMMENT ON COLUMN agent_conversations.lead_id IS 'ID сделки в Kommo CRM';

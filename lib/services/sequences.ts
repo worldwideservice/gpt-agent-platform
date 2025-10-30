@@ -10,13 +10,19 @@ export interface SequenceStep {
   sequence_id: string
   step_order: number
   delay_minutes: number // задержка после предыдущего шага
-  action_type: 'send_message' | 'create_task' | 'send_email' | 'webhook' | 'ai_response' | 'wait'
+  action_type: 'send_message' | 'create_task' | 'send_email' | 'webhook' | 'ai_response' | 'wait' | 'kommo_action'
   template?: string // шаблон сообщения/email
   recipient?: string
   webhook_url?: string
   ai_prompt?: string
   task_title?: string
   task_description?: string
+  kommo_action?: {
+    type: 'create_lead' | 'update_lead' | 'create_contact' | 'update_contact' | 'create_task' | 'send_email' | 'create_call_note' | 'create_meeting_note' | 'add_note'
+    data: Record<string, any>
+    entity_id?: number
+    entity_type?: 'leads' | 'contacts' | 'companies'
+  }
   metadata: Record<string, any>
 }
 
@@ -363,6 +369,9 @@ const executeStepAction = async (
         // Wait - просто ничего не делаем, шаг считается выполненным
         return true
 
+      case 'kommo_action':
+        return await executeKommoActionStep(step, execution)
+
       default:
         console.error('Unknown step action type:', step.action_type)
         return false
@@ -561,6 +570,35 @@ export const deleteSequence = async (
     return !error
   } catch (error) {
     console.error('Error deleting sequence', error)
+    return false
+  }
+}
+
+/**
+ * Выполняет действие с Kommo
+ */
+const executeKommoActionStep = async (
+  step: SequenceStep,
+  execution: any,
+): Promise<boolean> => {
+  if (!step.kommo_action) return false
+
+  try {
+    const { KommoActionsService } = await import('@/lib/services/kommo-actions')
+
+    const kommoService = new KommoActionsService(execution.org_id)
+
+    const action = {
+      type: step.kommo_action.type,
+      data: step.kommo_action.data,
+      entityId: step.kommo_action.entity_id || execution.lead_id,
+      entityType: step.kommo_action.entity_type || 'leads',
+    }
+
+    await kommoService.executeAction(action)
+    return true
+  } catch (error) {
+    console.error('Kommo action execution failed', error)
     return false
   }
 }

@@ -18,6 +18,7 @@ export interface Conversation {
   organizationId: string
   agentId: string | null
   userId: string | null
+  leadId?: number | null // ID сделки в Kommo CRM
   title: string | null
   metadata?: Record<string, unknown>
   createdAt: string
@@ -32,6 +33,7 @@ export const createConversation = async (
   data: {
     agentId?: string | null
     userId?: string | null
+    leadId?: number | null
     title?: string | null
   },
 ): Promise<Conversation> => {
@@ -43,6 +45,7 @@ export const createConversation = async (
       org_id: organizationId,
       agent_id: data.agentId ?? null,
       user_id: data.userId ?? null,
+      lead_id: data.leadId ?? null,
       title: data.title ?? null,
     })
     .select('*')
@@ -58,6 +61,7 @@ export const createConversation = async (
     organizationId: conversation.org_id,
     agentId: conversation.agent_id,
     userId: conversation.user_id,
+    leadId: conversation.lead_id,
     title: conversation.title,
     metadata: (conversation.metadata as Record<string, unknown>) ?? {},
     createdAt: conversation.created_at,

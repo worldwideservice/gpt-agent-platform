@@ -45,6 +45,80 @@ export interface KommoContact {
   }>
 }
 
+export interface KommoTask {
+  id?: number
+  text: string
+  complete_till: number // timestamp
+  task_type_id: number
+  responsible_user_id: number
+  entity_id: number
+  entity_type: 'leads' | 'contacts' | 'companies'
+  created_by?: number
+  updated_by?: number
+  created_at?: number
+  updated_at?: number
+  is_completed?: boolean
+}
+
+export interface KommoEmailMessage {
+  from?: string
+  to: string
+  subject: string
+  html: string
+  text?: string
+  reply_to?: string
+  cc?: string[]
+  bcc?: string[]
+  attachments?: Array<{
+    file_name: string
+    content: string // base64
+    content_type: string
+  }>
+}
+
+export interface KommoNote {
+  id?: number
+  entity_id: number
+  entity_type: 'leads' | 'contacts' | 'companies'
+  note_type: 'common' | 'call_in' | 'call_out' | 'meeting' | 'mail_message' | 'sms_in' | 'sms_out' | 'whatsapp_message'
+  params: {
+    text?: string
+    html?: string
+    subject?: string
+    from?: string
+    to?: string
+    status?: number
+    duration?: number
+    source?: string
+    link?: string
+    phone?: string
+    uniq?: string
+  }
+  created_by?: number
+  updated_by?: number
+  created_at?: number
+  updated_at?: number
+}
+
+export interface KommoCustomField {
+  id?: number
+  name: string
+  type: 'text' | 'numeric' | 'checkbox' | 'select' | 'multiselect' | 'date' | 'url' | 'textarea' | 'radiobutton' | 'streetaddress' | 'smart_address' | 'birthday' | 'legal_entity' | 'items' | 'org_legal_name' | 'linked_entity'
+  element_type: 'contact' | 'lead' | 'company' | 'task'
+  sort?: number
+  code?: string
+  is_required?: boolean
+  is_deletable?: boolean
+  is_visible?: boolean
+  is_api_only?: boolean
+  enums?: Record<string, string>
+  nested?: Array<{
+    id: number
+    name: string
+    sort: number
+  }>
+}
+
 export class KommoAPI {
   private config: KommoConfig
   private baseUrl: string
@@ -297,6 +371,223 @@ export class KommoAPI {
     }>('/users')
 
     return response._embedded.users
+  }
+
+  /**
+   * Создание задачи
+   */
+  async createTask(task: Omit<KommoTask, 'id' | 'created_at' | 'updated_at'>): Promise<KommoTask> {
+    const response = await this.request<{ _embedded: { tasks: KommoTask[] } }>('/tasks', {
+      method: 'POST',
+      body: JSON.stringify([task]),
+    })
+
+    return response._embedded.tasks[0]
+  }
+
+  /**
+   * Обновление задачи
+   */
+  async updateTask(taskId: number, task: Partial<KommoTask>): Promise<KommoTask> {
+    const response = await this.request<{ _embedded: { tasks: KommoTask[] } }>('/tasks', {
+      method: 'PATCH',
+      body: JSON.stringify([{ id: taskId, ...task }]),
+    })
+
+    return response._embedded.tasks[0]
+  }
+
+  /**
+   * Получение задач по сущности
+   */
+  async getTasksByEntity(entityId: number, entityType: 'leads' | 'contacts' | 'companies'): Promise<KommoTask[]> {
+    const response = await this.request<{ _embedded: { tasks: KommoTask[] } }>(
+      `/tasks?filter[entity_id]=${entityId}&filter[entity_type]=${entityType}`
+    )
+
+    return response._embedded?.tasks || []
+  }
+
+  /**
+   * Создание заметки
+   */
+  async createNote(note: Omit<KommoNote, 'id' | 'created_at' | 'updated_at'>): Promise<KommoNote> {
+    const response = await this.request<{ _embedded: { notes: KommoNote[] } }>(
+      `/${note.entity_type}/${note.entity_id}/notes`,
+      {
+        method: 'POST',
+        body: JSON.stringify([note]),
+      }
+    )
+
+    return response._embedded.notes[0]
+  }
+
+  /**
+   * Получение заметок по сущности
+   */
+  async getNotesByEntity(entityId: number, entityType: 'leads' | 'contacts' | 'companies'): Promise<KommoNote[]> {
+    const response = await this.request<{ _embedded: { notes: KommoNote[] } }>(
+      `/${entityType}/${entityId}/notes`
+    )
+
+    return response._embedded?.notes || []
+  }
+
+  /**
+   * Отправка email через сделку
+   */
+  async sendEmailFromLead(leadId: number, emailData: {
+    to: string[]
+    subject: string
+    html: string
+    text?: string
+    from?: string
+    cc?: string[]
+    bcc?: string[]
+  }): Promise<unknown> {
+    const note: Omit<KommoNote, 'id' | 'created_at' | 'updated_at'> = {
+      entity_id: leadId,
+      entity_type: 'leads',
+      note_type: 'mail_message',
+      params: {
+        html: emailData.html,
+        text: emailData.text || '',
+        subject: emailData.subject,
+        from: emailData.from || 'noreply@domain.com',
+        to: emailData.to.join(', '),
+        status: 1, // отправлено
+      }
+    }
+
+    return this.createNote(note)
+  }
+
+  /**
+   * Создание звонка/встречи
+   */
+  async createCallNote(
+    entityId: number,
+    entityType: 'leads' | 'contacts' | 'companies',
+    callData: {
+      phone: string
+      duration?: number
+      direction: 'in' | 'out'
+      status: 'success' | 'failed' | 'busy' | 'no_answer'
+      text?: string
+    }
+  ): Promise<KommoNote> {
+    const noteType = callData.direction === 'in' ? 'call_in' : 'call_out'
+
+    const note: Omit<KommoNote, 'id' | 'created_at' | 'updated_at'> = {
+      entity_id: entityId,
+      entity_type: entityType,
+      note_type: noteType,
+      params: {
+        text: callData.text || `Звонок ${callData.direction === 'in' ? 'входящий' : 'исходящий'}`,
+        phone: callData.phone,
+        duration: callData.duration || 0,
+        uniq: `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      }
+    }
+
+    return this.createNote(note)
+  }
+
+  /**
+   * Создание встречи
+   */
+  async createMeetingNote(
+    entityId: number,
+    entityType: 'leads' | 'contacts' | 'companies',
+    meetingData: {
+      text: string
+      date: string // ISO date string
+      duration?: number
+    }
+  ): Promise<KommoNote> {
+    const note: Omit<KommoNote, 'id' | 'created_at' | 'updated_at'> = {
+      entity_id: entityId,
+      entity_type: entityType,
+      note_type: 'meeting',
+      params: {
+        text: meetingData.text,
+        uniq: `meeting_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      }
+    }
+
+    return this.createNote(note)
+  }
+
+  /**
+   * Получение кастомных полей
+   */
+  async getCustomFields(): Promise<KommoCustomField[]> {
+    const response = await this.request<{ _embedded: { custom_fields: KommoCustomField[] } }>(
+      '/custom_fields'
+    )
+
+    return response._embedded?.custom_fields || []
+  }
+
+  /**
+   * Создание кастомного поля
+   */
+  async createCustomField(field: Omit<KommoCustomField, 'id'>): Promise<KommoCustomField> {
+    const response = await this.request<{ _embedded: { custom_fields: KommoCustomField[] } }>(
+      '/custom_fields',
+      {
+        method: 'POST',
+        body: JSON.stringify([field]),
+      }
+    )
+
+    return response._embedded.custom_fields[0]
+  }
+
+  /**
+   * Получение шаблонов писем (если поддерживается)
+   */
+  async getEmailTemplates(): Promise<Array<{
+    id: number
+    name: string
+    subject: string
+    html: string
+    text?: string
+  }>> {
+    // В Kommo могут быть шаблоны через настройки
+    // Пока возвращаем пустой массив, можно расширить позже
+    return []
+  }
+
+  /**
+   * Получение статистики по сделкам
+   */
+  async getLeadsStats(): Promise<{
+    total: number
+    by_status: Record<number, number>
+    by_pipeline: Record<number, number>
+  }> {
+    const leads = await this.request<{ _embedded: { leads: KommoLead[] } }>(
+      '/leads?limit=500'
+    )
+
+    const stats = {
+      total: leads._embedded?.leads?.length || 0,
+      by_status: {} as Record<number, number>,
+      by_pipeline: {} as Record<number, number>,
+    }
+
+    leads._embedded?.leads?.forEach(lead => {
+      if (lead.status_id) {
+        stats.by_status[lead.status_id] = (stats.by_status[lead.status_id] || 0) + 1
+      }
+      if (lead.pipeline_id) {
+        stats.by_pipeline[lead.pipeline_id] = (stats.by_pipeline[lead.pipeline_id] || 0) + 1
+      }
+    })
+
+    return stats
   }
 
   /**

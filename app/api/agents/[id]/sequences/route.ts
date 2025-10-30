@@ -13,13 +13,19 @@ const createSequenceSchema = z.object({
   steps: z.array(z.object({
     step_order: z.number().min(1),
     delay_minutes: z.number().min(0).default(0),
-    action_type: z.enum(['send_message', 'create_task', 'send_email', 'webhook', 'ai_response', 'wait']),
+    action_type: z.enum(['send_message', 'create_task', 'send_email', 'webhook', 'ai_response', 'wait', 'kommo_action']),
     template: z.string().optional(),
     recipient: z.string().optional(),
     webhook_url: z.string().optional(),
     ai_prompt: z.string().optional(),
     task_title: z.string().optional(),
     task_description: z.string().optional(),
+    kommo_action: z.object({
+      type: z.enum(['create_lead', 'update_lead', 'create_contact', 'update_contact', 'create_task', 'send_email', 'create_call_note', 'create_meeting_note', 'add_note']),
+      data: z.record(z.string(), z.any()),
+      entity_id: z.number().optional(),
+      entity_type: z.enum(['leads', 'contacts', 'companies']).optional(),
+    }).optional(),
     metadata: z.record(z.string(), z.any()).optional().default({}),
   })).min(1, 'Последовательность должна содержать хотя бы один шаг'),
 })
