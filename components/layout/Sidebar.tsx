@@ -63,7 +63,10 @@ const navigation: NavSection[] = [
   },
   {
     title: 'Разработчикам',
-    items: [{ label: 'API Документация', href: '/api-docs', icon: Code }],
+    items: [
+      { label: 'API Документация', href: '/api-docs', icon: Code },
+      { label: 'Тест Kommo API', href: '/test-kommo', icon: Settings },
+    ],
   },
   {
     title: 'Поддержка',

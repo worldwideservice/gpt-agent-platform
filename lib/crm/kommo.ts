@@ -125,7 +125,9 @@ export class KommoAPI {
 
   constructor(config: KommoConfig) {
     this.config = config
-    this.baseUrl = `https://${config.domain}.amocrm.ru/api/v4`
+    // Используем API domain из токена или стандартный формат
+    const apiDomain = config.domain.includes('api-') ? config.domain : `${config.domain}.amocrm.ru`
+    this.baseUrl = `https://${apiDomain}/api/v4`
   }
 
   /**
@@ -204,9 +206,13 @@ export class KommoAPI {
     })
 
     if (response.status === 401) {
-      // Token expired, try to refresh
-      await this.refreshAccessToken()
-      return this.request<T>(endpoint, options)
+      // Token expired, try to refresh if refresh token is available
+      if (this.config.refreshToken) {
+        await this.refreshAccessToken()
+        return this.request<T>(endpoint, options)
+      } else {
+        throw new Error('Access token expired and no refresh token available')
+      }
     }
 
     if (!response.ok) {
