@@ -1,11 +1,12 @@
 {
+  "name": "gpt-agent-kwid",
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "framework": "nextjs",
   "regions": ["iad1"],
   "env": {
-    "NEXT_PUBLIC_APP_NAME": "GPT Agent - Trainable virtual employee",
-    "NEXT_PUBLIC_API_URL": "https://gpt-agent-platform.vercel.app"
+    "NEXT_PUBLIC_APP_NAME": "KWID AI Agent Platform",
+    "NEXT_PUBLIC_API_URL": "https://gpt-agent-kwid.vercel.app"
   },
   "headers": [
     {

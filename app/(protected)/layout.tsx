@@ -10,15 +10,41 @@ interface ProtectedLayoutProps {
 }
 
 const ProtectedLayout = async ({ children }: ProtectedLayoutProps) => {
-  const session = await auth()
+  // Демо режим для локального тестирования
+  const isDemoMode = process.env.NODE_ENV === 'development' ||
+    process.env.DEMO_MODE === 'true'
 
-  if (!session?.user?.orgId) {
-    redirect('/login')
+  let session: any
+  let organizations: any[] = []
+  let activeOrganization: any = null
+
+  if (isDemoMode) {
+    // В демо режиме создаем фиктивные данные
+    session = {
+      user: {
+        id: 'demo-user-123',
+        name: 'Demo Founder',
+        email: 'founder@example.com',
+        orgId: 'demo-org-123'
+      }
+    }
+    organizations = [{
+      id: 'demo-org-123',
+      name: 'World Wide Services',
+      createdAt: new Date().toISOString()
+    }]
+    activeOrganization = organizations[0]
+  } else {
+    session = await auth()
+
+    if (!session?.user?.orgId) {
+      redirect('/login')
+    }
+
+    organizations = await getOrganizationsForUser(session.user.id)
+    activeOrganization =
+      organizations.find((organization) => organization.id === session.user.orgId) ?? organizations[0] ?? null
   }
-
-  const organizations = await getOrganizationsForUser(session.user.id)
-  const activeOrganization =
-    organizations.find((organization) => organization.id === session.user.orgId) ?? organizations[0] ?? null
 
   return (
     <div className="min-h-screen bg-slate-50">

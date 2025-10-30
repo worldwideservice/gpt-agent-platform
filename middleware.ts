@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 
 import { auth } from '@/auth'
 
-const PUBLIC_PATHS = ['/login', '/reset-password', '/support']
+const PUBLIC_PATHS = ['/login', '/reset-password', '/support', '/demo']
 const PUBLIC_API_PREFIXES = ['/api/auth', '/api/integrations/kommo/oauth/callback']
 
 const PUBLIC_API_PATHS = new Set([
@@ -39,6 +39,11 @@ export const config = {
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // Демо режим для локального тестирования
+  const isDemoMode = process.env.NODE_ENV === 'development' ||
+    request.headers.get('host')?.includes('localhost') ||
+    process.env.DEMO_MODE === 'true'
+
   // Проверяем API routes
   if (pathname.startsWith('/api/')) {
     if (request.method === 'OPTIONS') {
@@ -49,10 +54,12 @@ export default async function middleware(request: NextRequest) {
       return NextResponse.next()
     }
 
-    const session = await auth()
-
-    if (!session?.user?.orgId) {
-      return NextResponse.json({ success: false, error: 'Не авторизовано' }, { status: 401 })
+    // В демо режиме пропускаем аутентификацию для API
+    if (!isDemoMode) {
+      const session = await auth()
+      if (!session?.user?.orgId) {
+        return NextResponse.json({ success: false, error: 'Не авторизовано' }, { status: 401 })
+      }
     }
 
     return NextResponse.next()
@@ -60,13 +67,15 @@ export default async function middleware(request: NextRequest) {
 
   // Проверяем UI routes (кроме публичных)
   if (!isPublicPath(pathname)) {
-    const session = await auth()
-
-    if (!session?.user?.orgId) {
-      // Редиректим на логин для неавторизованных пользователей
-      const loginUrl = new URL('/login', request.url)
-      loginUrl.searchParams.set('callbackUrl', pathname)
-      return NextResponse.redirect(loginUrl)
+    // В демо режиме пропускаем аутентификацию для UI
+    if (!isDemoMode) {
+      const session = await auth()
+      if (!session?.user?.orgId) {
+        // Редиректим на логин для неавторизованных пользователей
+        const loginUrl = new URL('/login', request.url)
+        loginUrl.searchParams.set('callbackUrl', pathname)
+        return NextResponse.redirect(loginUrl)
+      }
     }
   }
 

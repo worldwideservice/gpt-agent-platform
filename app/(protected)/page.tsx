@@ -16,18 +16,29 @@ import {
 } from '@/lib/repositories/agents'
 
 const DashboardPage = async () => {
-  const session = await auth()
+  // Демо режим для локального тестирования
+  const isDemoMode = process.env.NODE_ENV === 'development' ||
+    process.env.DEMO_MODE === 'true'
 
-  if (!session?.user?.orgId) {
-    redirect('/login')
+  let orgId: string
+
+  if (isDemoMode) {
+    // В демо режиме используем фиктивный orgId
+    orgId = 'demo-org-123'
+  } else {
+    const session = await auth()
+    if (!session?.user?.orgId) {
+      redirect('/login')
+    }
+    orgId = session.user.orgId
   }
 
-  const orgId = session.user.orgId
-
-  const onboardingState = await getOnboardingState(orgId)
-
-  if (!onboardingState.isCompleted) {
-    redirect('/onboarding')
+  // В демо режиме пропускаем проверку onboarding
+  if (!isDemoMode) {
+    const onboardingState = await getOnboardingState(orgId)
+    if (!onboardingState.isCompleted) {
+      redirect('/onboarding')
+    }
   }
 
   const [stats, weeklyBarData, monthlyData, dailyData] = await Promise.all([

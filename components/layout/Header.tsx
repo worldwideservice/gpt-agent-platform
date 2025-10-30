@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { Bell, Calendar, LogOut, Menu, Moon, Search, Sun, X } from 'lucide-react'
+import { Bell, Calendar, LogOut, Menu, Search, X } from 'lucide-react'
 import Link from 'next/link'
 
 import { SignOutButton } from '@/components/auth/SignOutButton'
@@ -49,7 +49,6 @@ export const Header = ({ user }: HeaderProps) => {
   const [unreadCount, setUnreadCount] = useState(0)
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(true)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
-  const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [userMenuOpen, setUserMenuOpen] = useState(false)
 
   const fetchNotifications = useCallback(async () => {
@@ -85,10 +84,6 @@ export const Header = ({ user }: HeaderProps) => {
 
     return () => clearInterval(interval)
   }, [fetchNotifications])
-
-  const handleThemeToggle = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))
-  }
 
   const toggleNotifications = () => {
     setNotificationsOpen((prev) => !prev)
@@ -191,15 +186,6 @@ export const Header = ({ user }: HeaderProps) => {
             <Calendar className="h-4 w-4 text-slate-400" />
             <span>{today}</span>
           </div>
-
-          <button
-            type="button"
-            onClick={handleThemeToggle}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:border-primary-200 hover:text-primary-600"
-            aria-label="Сменить тему"
-          >
-            {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-          </button>
 
           <div className="relative">
             <button
@@ -316,21 +302,6 @@ export const Header = ({ user }: HeaderProps) => {
               </button>
               {userMenuOpen && (
                 <div className="absolute right-0 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-slate-100"
-                    onClick={() => undefined}
-                  >
-                    <Sun className="h-4 w-4" /> Светлая тема
-                  </button>
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-slate-100"
-                    onClick={() => undefined}
-                  >
-                    <Moon className="h-4 w-4" /> Тёмная тема
-                  </button>
-                  <div className="border-t border-slate-100" />
                   <button
                     type="button"
                     className="flex w-full items-center gap-3 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50"
