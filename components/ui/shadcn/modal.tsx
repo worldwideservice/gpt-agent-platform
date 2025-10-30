@@ -104,7 +104,12 @@ const DialogDescription = React.forwardRef<
 DialogDescription.displayName = DialogPrimitive.Description.displayName
 
 // Legacy Modal alias for backward compatibility
-const Modal = Dialog
+const Modal = ({ isOpen, onClose, children, title, size, ...props }: any) => (
+  <Dialog open={isOpen} onOpenChange={onClose} {...props}>
+    {children}
+  </Dialog>
+)
+
 const ModalTrigger = DialogTrigger
 const ModalContent = DialogContent
 const ModalHeader = DialogHeader

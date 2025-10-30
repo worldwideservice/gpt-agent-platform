@@ -6,6 +6,7 @@ import {
   Bot,
   BookOpen,
   ChevronDown,
+  Code,
   CreditCard,
   Folder,
   LayoutDashboard,
@@ -59,6 +60,10 @@ const navigation: NavSection[] = [
       { label: 'Категории', href: '/knowledge-base/categories', icon: Folder },
       { label: 'Статьи', href: '/knowledge-base/articles', icon: FileText },
     ],
+  },
+  {
+    title: 'Разработчикам',
+    items: [{ label: 'API Документация', href: '/api-docs', icon: Code }],
   },
   {
     title: 'Поддержка',

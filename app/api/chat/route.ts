@@ -22,7 +22,138 @@ const sendMessageSchema = z.object({
 })
 
 /**
- * POST /api/chat - Отправка сообщения в чат
+ * @swagger
+ * /api/chat:
+ *   post:
+ *     summary: Отправка сообщения в чат с ИИ-агентом
+ *     description: Отправляет сообщение пользователю и получает ответ от ИИ-агента с учетом контекста, знаний и памяти
+ *     tags:
+ *       - Chat
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - message
+ *             properties:
+ *               conversationId:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID существующей беседы (опционально)
+ *               agentId:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID ИИ-агента (опционально, будет использован агент из беседы)
+ *               message:
+ *                 type: string
+ *                 minLength: 1
+ *                 description: Текст сообщения пользователя
+ *               useKnowledgeBase:
+ *                 type: boolean
+ *                 default: true
+ *                 description: Использовать базу знаний для ответа
+ *               clientIdentifier:
+ *                 type: string
+ *                 description: Идентификатор клиента (email, phone) для персонализации ответов
+ *           example:
+ *             message: "Здравствуйте, мне нужна консультация по вашему продукту"
+ *             useKnowledgeBase: true
+ *             clientIdentifier: "user@example.com"
+ *     responses:
+ *       200:
+ *         description: Успешный ответ от ИИ-агента
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 conversationId:
+ *                   type: string
+ *                   format: uuid
+ *                   description: ID беседы
+ *                 message:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                     role:
+ *                       type: string
+ *                       enum: [assistant]
+ *                     content:
+ *                       type: string
+ *                       description: Ответ ИИ-агента
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                     metadata:
+ *                       type: object
+ *                       properties:
+ *                         model:
+ *                           type: string
+ *                           description: Модель ИИ
+ *                         usage:
+ *                           type: object
+ *                           properties:
+ *                             promptTokens:
+ *                               type: integer
+ *                             completionTokens:
+ *                               type: integer
+ *                             totalTokens:
+ *                               type: integer
+ *                         usedKnowledgeBase:
+ *                           type: boolean
+ *                           description: Была ли использована база знаний
+ *       400:
+ *         description: Неверные входные данные
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Некорректные данные"
+ *                 details:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *       401:
+ *         description: Не авторизован
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Не авторизовано"
+ *       500:
+ *         description: Внутренняя ошибка сервера
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Внутренняя ошибка сервера"
  */
 export const POST = async (request: NextRequest) => {
   const session = await auth()
