@@ -49,7 +49,7 @@ while IFS='=' read -r key value; do
 
     # Убираем пробелы и кавычки
     key=$(echo "$key" | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
-    value=$(echo "$value" | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' | sed 's/^["\']//' | sed 's/["\']$//')
+    value=$(echo "$value" | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' | sed "s/^['\"]//" | sed "s/['\"]$//")
 
     # Пропускаем переменные со значениями по умолчанию
     if [[ $value == *"your-"* ]] || [[ $value == *"change-me"* ]] || [[ -z "$value" ]]; then
