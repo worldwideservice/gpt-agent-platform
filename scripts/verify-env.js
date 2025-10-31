@@ -5,6 +5,31 @@
  * Запускайте перед деплоем: node scripts/verify-env.js
  */
 
+// Читаем переменные из env.production файла
+const fs = require('fs');
+const path = require('path');
+
+let envVars = {};
+
+try {
+  const envFile = path.join(process.cwd(), 'env.production');
+  if (fs.existsSync(envFile)) {
+    const envContent = fs.readFileSync(envFile, 'utf8');
+    const lines = envContent.split('\n');
+
+    lines.forEach(line => {
+      line = line.trim();
+      if (line && !line.startsWith('#') && line.includes('=')) {
+        const [key, ...valueParts] = line.split('=');
+        const value = valueParts.join('=').replace(/^["']|["']$/g, ''); // Убираем кавычки
+        envVars[key.trim()] = value.trim();
+      }
+    });
+  }
+} catch (error) {
+  console.log('⚠️  Не удалось прочитать env.production файл');
+}
+
 const requiredVars = [
   'NEXTAUTH_SECRET',
   'NEXTAUTH_URL',
@@ -26,7 +51,7 @@ const optionalVars = [
   'SMTP_PASS'
 ];
 
-console.log('🔍 Проверка переменных окружения...\n');
+console.log('🔍 Проверка переменных окружения из env.production...\n');
 
 let allGood = true;
 let missingRequired = [];
@@ -35,9 +60,9 @@ let missingOptional = [];
 // Проверяем обязательные переменные
 console.log('📋 ОБЯЗАТЕЛЬНЫЕ ПЕРЕМЕННЫЕ:');
 requiredVars.forEach(varName => {
-  const value = process.env[varName];
-  if (!value || value.trim() === '') {
-    console.log(`❌ ${varName}: НЕ НАЙДЕНА`);
+  const value = envVars[varName] || process.env[varName];
+  if (!value || value.trim() === '' || value.includes('your-') || value.includes('change-me')) {
+    console.log(`❌ ${varName}: НЕ НАСТРОЕНА`);
     missingRequired.push(varName);
     allGood = false;
   } else {
@@ -47,7 +72,7 @@ requiredVars.forEach(varName => {
 
 console.log('\n📋 ОПЦИОНАЛЬНЫЕ ПЕРЕМЕННЫЕ:');
 optionalVars.forEach(varName => {
-  const value = process.env[varName];
+  const value = envVars[varName] || process.env[varName];
   if (!value || value.trim() === '') {
     console.log(`⚠️  ${varName}: НЕ НАСТРОЕНА`);
     missingOptional.push(varName);

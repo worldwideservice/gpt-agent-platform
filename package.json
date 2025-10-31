@@ -29,6 +29,7 @@
     "setup:supabase": "bash scripts/setup-supabase.sh",
     "setup:redis": "bash scripts/setup-redis.sh",
     "setup:openrouter": "bash scripts/setup-openrouter.sh",
+    "deploy:vercel": "bash scripts/deploy-to-vercel.sh",
     "check:redis": "node scripts/check-redis.js",
     "check:worker": "node scripts/check-worker.js",
     "check:all": "bash scripts/check-all-errors.sh",
