@@ -2,7 +2,7 @@
 
 ## 🚀 **PRODUCTION STATUS: FULLY DEPLOYED** ✅
 
-**🌐 Production URL:** https://gpt-agent-kwid-lvcc4ssl7-world-wide-services-62780b79.vercel.app
+**🌐 Production URL:** https://gpt-agent-kwid-p5c03guvk-world-wide-services-62780b79.vercel.app
 
 **✅ All Systems Operational:**
 - 🔐 Authentication & Security
