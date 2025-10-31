@@ -5,6 +5,7 @@ import { kommoApiRequest, refreshKommoToken } from '../providers/kommo'
 import type { Database, Json } from '../lib/types'
 import { processAsset } from './process-asset'
 import { extractKnowledgeGraph } from './extract-knowledge-graph'
+import { processLargeFile, generateReport, processBulkData, fineTuneModel } from './heavy-processing'
 
 const supabase = getSupabaseClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY)
 
@@ -558,6 +559,45 @@ export const getTaskHandlers = () => {
       chunkIds?: string[]
     }) => {
       await extractKnowledgeGraph(payload)
+    },
+    'process-large-file': async (payload: {
+      fileId: string
+      organizationId: string
+      userId: string
+      operation: 'analyze' | 'extract' | 'convert' | 'compress'
+    }) => {
+      await processLargeFile(payload)
+    },
+    'generate-report': async (payload: {
+      reportType: 'usage' | 'analytics' | 'performance' | 'financial'
+      organizationId: string
+      userId: string
+      dateRange: { start: string; end: string }
+      format: 'pdf' | 'excel' | 'json'
+    }) => {
+      await generateReport(payload)
+    },
+    'process-bulk-data': async (payload: {
+      operation: 'import' | 'export' | 'migrate' | 'cleanup'
+      organizationId: string
+      userId: string
+      data: any[]
+      options?: Record<string, any>
+    }) => {
+      await processBulkData(payload)
+    },
+    'fine-tune-model': async (payload: {
+      modelId: string
+      organizationId: string
+      userId: string
+      trainingData: any[]
+      parameters: {
+        epochs: number
+        learningRate: number
+        batchSize: number
+      }
+    }) => {
+      await fineTuneModel(payload)
     },
   }
 }

@@ -5,6 +5,11 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { auth } from '@/auth'
 import { getOrganizationsForUser } from '@/lib/repositories/organizations'
 
+// Отключаем prerendering в демо-режиме
+export const dynamic = process.env.NODE_ENV === 'development' || process.env.DEMO_MODE === 'true'
+  ? 'force-dynamic'
+  : 'auto'
+
 interface ProtectedLayoutProps {
   children: React.ReactNode
 }

@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/
+Disallow: /private/
+
+# Allow access to sitemap
+Sitemap: https://gpt-agent-kwid.vercel.app/sitemap.xml
+
+# Crawl delay for respectful crawling
+Crawl-delay: 1

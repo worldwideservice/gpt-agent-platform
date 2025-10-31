@@ -11,20 +11,20 @@ export default defineConfig({
   // Папка для скриншотов и артефактов
   outputDir: './test-results',
   
-  // Максимальное время выполнения одного теста
-  timeout: 120 * 1000,
-  
+  // Максимальное время выполнения одного теста (оптимизировано)
+  timeout: 60 * 1000,
+
   // Настройки expect()
   expect: {
-    // Максимальное время ожидания для проверок
+    // Максимальное время ожидания для проверок (оптимизировано)
     timeout: 5000,
   },
-  
+
   // Настройки запуска тестов
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env.CI ? 1 : 4, // Увеличено количество воркеров
   
   // Репортеры
   reporter: [
@@ -39,11 +39,11 @@ export default defineConfig({
     // Base URL для тестов
     baseURL: process.env.BASE_URL || 'http://localhost:3000',
     
-    // Скриншот всегда для полного сканирования
-    screenshot: 'on',
-    
-    // Видео при падении теста
-    video: 'retain-on-failure',
+    // Скриншот только при падении для скорости
+    screenshot: 'only-on-failure',
+
+    // Видео отключено для скорости
+    video: 'off',
     
     // Трейс для отладки
     trace: 'on-first-retry',
@@ -62,11 +62,10 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { 
+      use: {
         ...devices['Desktop Chrome'],
-        // Accessibility тесты в Chromium
+        // Accessibility тесты в Chromium с strict selectors
         contextOptions: {
-          // Включаем accessibility tree
           strictSelectors: true,
         },
       },
@@ -74,32 +73,57 @@ export default defineConfig({
 
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      use: {
+        ...devices['Desktop Firefox'],
+        contextOptions: {
+          strictSelectors: false,
+        },
+      },
     },
 
     {
       name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
+      use: {
+        ...devices['Desktop Safari'],
+        contextOptions: {
+          strictSelectors: false,
+        },
+      },
     },
 
     // Мобильные устройства
     {
       name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
+      use: {
+        ...devices['Pixel 5'],
+        contextOptions: {
+          strictSelectors: false,
+        },
+      },
     },
     {
       name: 'Mobile Safari',
-      use: { ...devices['iPhone 12'] },
+      use: {
+        ...devices['iPhone 12'],
+        contextOptions: {
+          strictSelectors: false,
+        },
+      },
     },
 
     // Планшеты
     {
       name: 'iPad',
-      use: { ...devices['iPad Pro'] },
+      use: {
+        ...devices['iPad Pro'],
+        contextOptions: {
+          strictSelectors: false,
+        },
+      },
     },
   ],
 
-  // Веб-сервер для тестов
+  // Веб-сервер для автоматического управления тестами
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:3000',
@@ -108,6 +132,20 @@ export default defineConfig({
     env: {
       ...process.env,
       E2E_ONBOARDING_FAKE: '1',
+      NODE_ENV: 'development',
+      DEMO_MODE: 'true',
+      NEXT_PUBLIC_SUPABASE_URL: 'https://demo.supabase.co',
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'demo-anon-key',
+      SUPABASE_URL: 'https://demo.supabase.co',
+      SUPABASE_ANON_KEY: 'demo-anon-key',
+      SUPABASE_SERVICE_ROLE_KEY: 'demo-service-role-key',
+      SUPABASE_DEFAULT_ORGANIZATION_ID: '550e8400-e29b-41d4-a716-446655440000',
+      NEXTAUTH_SECRET: 'demo-nextauth-secret',
+      NEXTAUTH_URL: 'http://localhost:3000',
+      BACKEND_API_URL: 'http://localhost:4000',
+      OPENROUTER_API_KEY: 'demo-openrouter-key',
+      REDIS_URL: 'redis://localhost:6379',
+      NEXT_PUBLIC_APP_URL: 'http://localhost:3000',
     },
   },
 })

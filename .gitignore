@@ -48,3 +48,6 @@ next-env.d.ts
 # services build artifacts
 /services/api/dist
 /services/worker/dist
+
+*storybook.log
+storybook-static

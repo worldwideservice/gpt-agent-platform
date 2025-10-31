@@ -9,7 +9,7 @@ export interface KommoConfig {
   clientSecret: string
   redirectUri: string
   accessToken?: string
-  refreshToken?: string
+  refreshToken?: string | null
 }
 
 export interface KommoLead {
@@ -128,6 +128,20 @@ export class KommoAPI {
     // Используем API domain из токена или стандартный формат
     const apiDomain = config.domain.includes('api-') ? config.domain : `${config.domain}.amocrm.ru`
     this.baseUrl = `https://${apiDomain}/api/v4`
+  }
+
+  /**
+   * Получить базовый URL API (для отладки и тестирования)
+   */
+  public getBaseUrl(): string {
+    return this.baseUrl
+  }
+
+  /**
+   * Получить конфигурацию API (копия для безопасности)
+   */
+  public getConfig(): KommoConfig {
+    return { ...this.config }
   }
 
   /**

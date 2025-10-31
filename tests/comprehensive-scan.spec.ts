@@ -120,7 +120,7 @@ test.describe('🔍 ПОЛНОЕ СКАНИРОВАНИЕ ВСЕГО ПРИЛО�
     const searchInput = page.locator('input[type="search"], input[placeholder*="Поиск"]')
     if (await searchInput.isVisible({ timeout: 2000 }).catch(() => false)) {
       await searchInput.fill('тест')
-      await page.waitForTimeout(500)
+      await page.waitForTimeout(200)
       await searchInput.clear()
     }
 
@@ -300,7 +300,7 @@ test.describe('🔍 ПОЛНОЕ СКАНИРОВАНИЕ ВСЕГО ПРИЛО�
     }).first()
     if (await billingToggle.isVisible({ timeout: 5000 }).catch(() => false)) {
       await billingToggle.click()
-      await page.waitForTimeout(500)
+      await page.waitForTimeout(200)
     }
 
     // Кнопки планов
@@ -373,6 +373,8 @@ test.describe('🔍 ПОЛНОЕ СКАНИРОВАНИЕ ВСЕГО ПРИЛО�
     }
   })
 })
+
+
 
 
 

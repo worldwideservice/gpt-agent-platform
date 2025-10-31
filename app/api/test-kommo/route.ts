@@ -15,8 +15,8 @@ export const GET = async () => {
       refreshToken: null,
     })
 
-    console.log('🔧 API URL:', kommoApi.baseUrl)
-    console.log('🔑 Токен есть:', !!kommoApi.config.accessToken)
+    console.log('🔧 API URL:', kommoApi.getBaseUrl())
+    console.log('🔑 Токен есть:', !!kommoApi.getConfig().accessToken)
 
     // Тест 1: Получение пользователей
     console.log('1️⃣ Получение пользователей...')
@@ -43,13 +43,14 @@ export const GET = async () => {
       },
     })
 
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
     console.error('❌ Ошибка тестирования Kommo API:', error)
 
     return NextResponse.json({
       success: false,
-      error: error.message,
-      details: error.toString(),
+      error: errorMessage,
+      details: String(error),
     }, { status: 500 })
   }
 }

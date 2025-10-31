@@ -15,6 +15,11 @@ import {
   getDailyResponsesSeries,
 } from '@/lib/repositories/agents'
 
+// Отключаем prerendering в демо-режиме для предотвращения ошибок
+export const dynamic = process.env.NODE_ENV === 'development' || process.env.DEMO_MODE === 'true'
+  ? 'force-dynamic'
+  : 'auto'
+
 const DashboardPage = async () => {
   // Демо режим для локального тестирования
   const isDemoMode = process.env.NODE_ENV === 'development' ||
@@ -41,12 +46,42 @@ const DashboardPage = async () => {
     }
   }
 
-  const [stats, weeklyBarData, monthlyData, dailyData] = await Promise.all([
-    getDashboardStats(orgId),
-    getWeeklyBarChartData(orgId),
-    getMonthlyResponsesSeries(orgId, 6),
-    getDailyResponsesSeries(orgId, 14),
-  ])
+  // В демо режиме используем mock-данные
+  let stats, weeklyBarData, monthlyData, dailyData
+
+  if (isDemoMode) {
+    stats = {
+      monthlyResponses: 1250,
+      monthlyChange: 15.3,
+      weeklyResponses: 320,
+      todayResponses: 45,
+      totalAgents: 3,
+    }
+    weeklyBarData = [
+      { label: 'Пн', value: 45 },
+      { label: 'Вт', value: 52 },
+      { label: 'Ср', value: 38 },
+      { label: 'Чт', value: 61 },
+      { label: 'Пт', value: 49 },
+      { label: 'Сб', value: 28 },
+      { label: 'Вс', value: 22 },
+    ]
+    monthlyData = Array.from({ length: 6 }, (_, i) => ({
+      label: new Date(Date.now() - (5 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      value: Math.floor(Math.random() * 200) + 100,
+    }))
+    dailyData = Array.from({ length: 14 }, (_, i) => ({
+      label: new Date(Date.now() - (13 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      value: Math.floor(Math.random() * 50) + 10,
+    }))
+  } else {
+    [stats, weeklyBarData, monthlyData, dailyData] = await Promise.all([
+      getDashboardStats(orgId),
+      getWeeklyBarChartData(orgId),
+      getMonthlyResponsesSeries(orgId, 6),
+      getDailyResponsesSeries(orgId, 14),
+    ])
+  }
 
   // Пока нет реальных обновлений - используем пустой массив
   // TODO: Реализовать получение реальных обновлений из БД/уведомлений

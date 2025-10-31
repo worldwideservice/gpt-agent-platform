@@ -5,6 +5,8 @@ import { Bell, Calendar, LogOut, Menu, Search, X } from 'lucide-react'
 import Link from 'next/link'
 
 import { SignOutButton } from '@/components/auth/SignOutButton'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
 import { formatTimestamp } from '@/lib/repositories/notifications'
 
 import type { Notification } from '@/lib/repositories/notifications'
@@ -308,6 +310,8 @@ export const Header = ({ user }: HeaderProps) => {
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold uppercase text-primary-700">
               {formatInitials(userName)}
             </div>
+            <LanguageSwitcher />
+            <ThemeToggle />
             <div className="relative">
               <button
                 type="button"

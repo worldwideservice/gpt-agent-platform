@@ -38,6 +38,18 @@ export const {
         const email = rawEmail?.toLowerCase().trim()
         const password = rawPassword?.trim()
 
+        // Специальная обработка для E2E тестирования
+        if (process.env.E2E_ONBOARDING_FAKE === '1') {
+          const fallbackOrgId = process.env.SUPABASE_DEFAULT_ORGANIZATION_ID || '550e8400-e29b-41d4-a716-446655440000'
+
+          return {
+            id: '00000000-0000-4000-8000-0000000000ff',
+            email: email || 'test@example.com',
+            name: 'Demo Test User',
+            orgId: fallbackOrgId,
+          }
+        }
+
         if (!email || !password) {
           return null
         }

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import {
   Bot,
   BookOpen,
@@ -43,53 +44,54 @@ interface NavSection {
   items: NavItem[]
 }
 
-const navigation: NavSection[] = [
+const getNavigation = (tNav: any): NavSection[] => [
   {
-    items: [{ label: 'Инфопанель', href: '/', icon: LayoutDashboard }],
+    items: [{ label: tNav('dashboard'), href: '/', icon: LayoutDashboard }],
   },
   {
-    title: 'Агенты ИИ',
+    title: tNav('agents'),
     items: [
-      { label: 'Агенты ИИ', href: '/agents', icon: Bot },
-      { label: 'Тестовый чат', href: '/chat', icon: MessageSquare },
+      { label: tNav('agents'), href: '/agents', icon: Bot },
+      { label: tNav('chat'), href: '/chat', icon: MessageSquare },
     ],
   },
   {
-    title: 'База знаний',
+    title: tNav('knowledge'),
     items: [
-      { label: 'Категории', href: '/knowledge-base/categories', icon: Folder },
-      { label: 'Статьи', href: '/knowledge-base/articles', icon: FileText },
+      { label: tNav('categories'), href: '/knowledge-base/categories', icon: Folder },
+      { label: tNav('articles'), href: '/knowledge-base/articles', icon: FileText },
     ],
   },
   {
-    title: 'Разработчикам',
+    title: tNav('developers'),
     items: [
-      { label: 'API Документация', href: '/api-docs', icon: Code },
-      { label: 'Тест Kommo API', href: '/test-kommo', icon: Settings },
+      { label: tNav('apiDocs'), href: '/api-docs', icon: Code },
+      { label: 'GraphQL Playground', href: '/graphql-playground', icon: Code },
+      { label: tNav('testKommo'), href: '/test-kommo', icon: Settings },
     ],
   },
   {
-    title: 'Поддержка',
-    items: [{ label: 'Начало работы', href: '/support', icon: HelpCircle }],
+    title: tNav('support'),
+    items: [{ label: tNav('gettingStarted'), href: '/support', icon: HelpCircle }],
   },
   {
-    title: 'Аккаунт',
+    title: tNav('accountSection'),
     items: [
-      { label: 'Настройки аккаунта', href: '/account', icon: Settings },
-      { label: 'Тарифные планы', href: '/pricing', icon: CreditCard },
+      { label: tNav('account'), href: '/account', icon: Settings },
+      { label: tNav('pricing'), href: '/pricing', icon: CreditCard },
     ],
   },
   {
-    title: 'Что нового',
+    title: tNav('whatsNew'),
     items: [
       {
-        label: 'Смотреть на Facebook',
+        label: tNav('facebook'),
         href: 'https://facebook.com',
         icon: Sparkles,
         external: true,
       },
       {
-        label: 'Смотреть в Instagram',
+        label: tNav('instagram'),
         href: 'https://instagram.com',
         icon: Sparkles,
         external: true,
@@ -119,8 +121,11 @@ const getInitials = (value: string): string => {
 
 export const Sidebar = ({ organizations, activeOrganizationId }: SidebarProps) => {
   const pathname = usePathname()
+  const t = useTranslations()
+  const tNav = useTranslations('nav')
   const activeOrganization =
     organizations.find((organization) => organization.id === activeOrganizationId) ?? organizations.at(0)
+  const navigation = getNavigation(tNav)
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 flex-col border-r border-slate-200 bg-white/95 shadow-sm backdrop-blur lg:flex xl:w-80">
@@ -140,10 +145,10 @@ export const Sidebar = ({ organizations, activeOrganizationId }: SidebarProps) =
             <button
               type="button"
               className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm font-medium text-slate-700 transition-colors hover:border-primary-200 hover:bg-primary-50 hover:text-primary-700"
-              aria-label="Выбор организации"
+              aria-label={t('common.selectOrganization') || 'Select organization'}
             >
               <div className="flex flex-col">
-                <span className="text-xs uppercase tracking-wide text-slate-400">Организация</span>
+                <span className="text-xs uppercase tracking-wide text-slate-400">{tNav('organization')}</span>
                 <span className="mt-1 text-sm font-semibold text-slate-900">{activeOrganization.name}</span>
               </div>
               <ChevronDown className="h-4 w-4 text-slate-400" />

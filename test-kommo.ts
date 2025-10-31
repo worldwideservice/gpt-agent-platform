@@ -16,13 +16,13 @@ async function testKommoIntegration() {
     refreshToken: null,
   })
 
-  console.log('🔧 API URL будет:', kommoApi.baseUrl)
+  console.log('🔧 API URL будет:', kommoApi.getBaseUrl())
 
   try {
     // Тест 1: Проверка токена
     console.log('🔑 Проверка токена...')
-    console.log('Access token есть:', !!kommoApi.config.accessToken)
-    console.log('Access token длина:', kommoApi.config.accessToken?.length)
+    console.log('Access token есть:', !!kommoApi.getConfig().accessToken)
+    console.log('Access token длина:', kommoApi.getConfig().accessToken?.length)
 
     // Тест 1: Получение информации о пользователе
     console.log('1️⃣ Получение пользователей...')
@@ -50,13 +50,14 @@ async function testKommoIntegration() {
     console.log('🎉 Все тесты пройдены успешно!')
 
   } catch (error) {
-    console.error('❌ Ошибка при тестировании:', error.message)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error('❌ Ошибка при тестировании:', errorMessage)
     console.error('❌ Полная ошибка:', error)
 
-    if (error.message.includes('401')) {
+    if (errorMessage.includes('401')) {
       console.log('🔑 Возможно, токен истек или недействителен')
     }
-    if (error.message.includes('Refresh token not provided')) {
+    if (errorMessage.includes('Refresh token not provided')) {
       console.log('🔄 Требуется refresh token для обновления access token')
     }
   }

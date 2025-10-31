@@ -1,3 +1,8 @@
+// Injected content via Sentry wizard below
+
+const { withSentryConfig } = require('@sentry/nextjs')
+const createNextIntlPlugin = require('next-intl/plugin')
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -9,6 +14,12 @@ const nextConfig = {
   images: {
     domains: ['localhost', 'vercel.app', 'supabase.co'],
     formats: ['image/webp', 'image/avif'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    minimumCacheTTL: 86400, // 24 hours
   },
 
   // Экспериментальные функции
@@ -72,5 +83,17 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+const withNextIntl = createNextIntlPlugin()
+
+module.exports = withNextIntl(withSentryConfig(nextConfig, {
+  silent: true,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+}, {
+  widenClientFileUpload: true,
+  transpileClientSDK: true,
+  tunnelRoute: '/monitoring',
+  hideSourceMaps: true,
+  disableLogger: true,
+}))
 
