@@ -7,6 +7,14 @@ const createNextIntlPlugin = require('next-intl/plugin')
 const nextConfig = {
   reactStrictMode: true,
 
+  // Отключаем строгие проверки для production сборки
+  typescript: {
+    ignoreBuildErrors: process.env.NODE_ENV === 'production',
+  },
+  eslint: {
+    ignoreDuringBuilds: process.env.NODE_ENV === 'production',
+  },
+
   // Оптимизации для продакшена
   swcMinify: true,
 

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { onCLS, onFID, onFCP, onLCP, onTTFB } from 'web-vitals'
+import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals'
 import { analytics } from '@/lib/analytics'
 
 interface WebVitalsMetrics {
@@ -23,35 +23,35 @@ export const useWebVitals = () => {
     }
 
     // Cumulative Layout Shift
-    onCLS((metric: any) => {
+    getCLS((metric: any) => {
       metrics.CLS = metric.value
       console.log('CLS:', metric.value)
       analytics.trackPerformance('CLS', metric.value)
     })
 
     // First Input Delay
-    onFID((metric: any) => {
+    getFID((metric: any) => {
       metrics.FID = metric.value
       console.log('FID:', metric.value)
       analytics.trackPerformance('FID', metric.value)
     })
 
     // First Contentful Paint
-    onFCP((metric: any) => {
+    getFCP((metric: any) => {
       metrics.FCP = metric.value
       console.log('FCP:', metric.value)
       analytics.trackPerformance('FCP', metric.value)
     })
 
     // Largest Contentful Paint
-    onLCP((metric: any) => {
+    getLCP((metric: any) => {
       metrics.LCP = metric.value
       console.log('LCP:', metric.value)
       analytics.trackPerformance('LCP', metric.value)
     })
 
     // Time to First Byte
-    onTTFB((metric: any) => {
+    getTTFB((metric: any) => {
       metrics.TTFB = metric.value
       console.log('TTFB:', metric.value)
       analytics.trackPerformance('TTFB', metric.value)

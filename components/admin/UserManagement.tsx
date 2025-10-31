@@ -6,7 +6,13 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/shadcn/select'
 import {
   Table,
   TableBody,
@@ -175,7 +181,7 @@ export const UserManagement = () => {
             <div className="w-48">
               <Label htmlFor="tier-filter">Тариф</Label>
               <Select value={tierFilter} onValueChange={setTierFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Все тарифы" />
                 </SelectTrigger>
                 <SelectContent>
@@ -310,7 +316,7 @@ export const UserManagement = () => {
                   value={selectedUser.tier}
                   onValueChange={(value) => setSelectedUser({...selectedUser, tier: value as any})}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
