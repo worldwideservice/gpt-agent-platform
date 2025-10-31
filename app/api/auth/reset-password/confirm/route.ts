@@ -3,7 +3,7 @@ import { hash } from 'bcryptjs'
 import { z } from 'zod'
 
 import { findValidPasswordResetByToken, markPasswordResetAsUsed } from '@/lib/repositories/passwordResets'
-import { updateUserPasswordHash } from '@/lib/repositories/users'
+import { UserRepository } from '@/lib/repositories/users'
 
 const confirmSchema = z.object({
   token: z
@@ -31,7 +31,7 @@ export const POST = async (request: Request) => {
 
     const passwordHash = await hash(parsed.password, PASSWORD_SALT_ROUNDS)
 
-    await updateUserPasswordHash(resetEntry.user_id, passwordHash)
+    await UserRepository.updateUserPasswordHash(resetEntry.user_id, passwordHash)
     await markPasswordResetAsUsed(resetEntry.id, resetEntry.user_id)
 
     return NextResponse.json({ success: true })

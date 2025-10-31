@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { onCLS, onFID, onFCP, onLCP, onTTFB } from 'web-vitals'
+import { onCLS, onFCP, onLCP, onTTFB } from 'web-vitals'
 import { analytics } from '@/lib/analytics'
 
 interface WebVitalsMetrics {
@@ -29,12 +29,9 @@ export const useWebVitals = () => {
       analytics.trackPerformance('CLS', metric.value)
     })
 
-    // First Input Delay
-    onFID((metric) => {
-      metrics.FID = metric.value
-      console.log('FID:', metric.value)
-      analytics.trackPerformance('FID', metric.value)
-    })
+    // First Input Delay (deprecated, but keeping for compatibility)
+    // onFID is not available in newer web-vitals versions
+    // console.log('FID: Deprecated metric')
 
     // First Contentful Paint
     onFCP((metric) => {

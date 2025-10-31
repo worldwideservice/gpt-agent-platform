@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { z } from 'zod'
 
 import { auth } from '@/auth'
-import { findUserById, updateUser } from '@/lib/repositories/users'
+import { UserRepository } from '@/lib/repositories/users'
 
 export const GET = async () => {
   const session = await auth()
@@ -12,7 +12,7 @@ export const GET = async () => {
   }
 
   try {
-    const user = await findUserById(session.user.id)
+    const user = await UserRepository.findUserById(session.user.id)
 
     if (!user) {
       return NextResponse.json({ success: false, error: 'Пользователь не найден' }, { status: 404 })
@@ -71,7 +71,7 @@ export const PATCH = async (request: NextRequest) => {
       )
     }
 
-    const user = await updateUser(session.user.id, parsed.data)
+    const user = await UserRepository.updateUser(session.user.id, parsed.data)
 
     if (!user) {
       return NextResponse.json(
