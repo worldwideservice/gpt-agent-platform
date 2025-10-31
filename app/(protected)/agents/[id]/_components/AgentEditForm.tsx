@@ -654,8 +654,8 @@ const handleChannelSync = useCallback(async () => {
                     <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                       Модель ИИ
                     </label>
-                    <Select
-                      value={formData.model}
+                  <Select
+                    value={formData.model}
                       onValueChange={(value: string) => setFormData((prev) => ({ ...prev, model: value }))}
                     >
                       <SelectTrigger>
@@ -678,8 +678,8 @@ const handleChannelSync = useCallback(async () => {
                     <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                       Рабочий язык
                     </label>
-                    <Select
-                      value={formData.language}
+                  <Select
+                    value={formData.language}
                       onValueChange={(value: string) => setFormData((prev) => ({ ...prev, language: value }))}
                     >
                       <SelectTrigger>
@@ -731,8 +731,8 @@ const handleChannelSync = useCallback(async () => {
                 <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   Методология диалога
                 </label>
-                <Select
-                  defaultValue="spin"
+              <Select
+                defaultValue="spin"
                   onValueChange={(value: string) => setFormData((prev) => ({ ...prev, methodology: value }))}
                 >
                   <SelectTrigger>

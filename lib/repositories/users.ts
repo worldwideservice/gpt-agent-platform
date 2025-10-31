@@ -297,6 +297,36 @@ export class UserRepository {
     }
   }
 
+  // Find user by email
+  static async findUserByEmail(email: string): Promise<User | null> {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .single()
+
+      if (error || !data) {
+        return null
+      }
+
+      return {
+        id: data.id,
+        email: data.email,
+        name: data.name,
+        image: data.image,
+        orgId: data.org_id,
+        tier: data.tier || UserTier.FREE,
+        subscription: undefined, // Would need to fetch separately
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
+      }
+    } catch (error) {
+      console.error('Error finding user by email:', error)
+      return null
+    }
+  }
+
   // Update user
   static async updateUser(id: string, updates: Partial<User>): Promise<boolean> {
     try {
@@ -349,6 +379,29 @@ export class UserRepository {
       return !error
     } catch (error) {
       console.error('Error updating user last sign in:', error)
+      return false
+    }
+  }
+
+  // Update user password hash
+  static async updateUserPasswordHash(id: string, passwordHash: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          password_hash: passwordHash,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+
+      if (error) {
+        console.error('Error updating user password hash:', error)
+        return false
+      }
+
+      return true
+    } catch (error) {
+      console.error('Error updating user password hash:', error)
       return false
     }
   }
