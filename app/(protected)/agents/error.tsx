@@ -11,7 +11,7 @@ interface AgentsErrorBoundaryProps {
 
 const AgentsError = ({ error, reset }: AgentsErrorBoundaryProps) => {
   useEffect(() => {
-    console.error("Agents page error", error);
+    // Silent error logging
   }, [error]);
 
   return (

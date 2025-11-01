@@ -6,11 +6,9 @@ import { AgentsClient } from "./_components/AgentsClient";
 import { auth } from "@/auth";
 import { getAgents } from "@/lib/repositories/agents";
 
-// Отключаем prerendering в демо-режиме
-export const dynamic =
-  process.env.NODE_ENV === "development" || process.env.DEMO_MODE === "true"
-    ? "force-dynamic"
-    : "auto";
+// Отключаем prerendering - всегда динамический
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export const metadata: Metadata = {
   title: "Агенты ИИ",
