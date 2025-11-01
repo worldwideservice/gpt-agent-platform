@@ -215,8 +215,8 @@ const AgentPipelinesPage = ({ params }: AgentPipelinesPageProps) => {
                     </div>
                   )}
                 </div>
-              {isPipelineSelected && (
-                <div>
+                {isPipelineSelected && (
+                  <div>
                   <div className="space-y-2">
                     {pipeline.stages.map(stage => (
                       <label
@@ -268,7 +268,8 @@ const AgentPipelinesPage = ({ params }: AgentPipelinesPageProps) => {
                     </p>
                   </div>
                 </div>
-              )}
+                )}
+              </div>
             </KwidSection>
           )
         })}
