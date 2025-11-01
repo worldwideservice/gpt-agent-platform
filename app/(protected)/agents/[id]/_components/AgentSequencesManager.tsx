@@ -1,235 +1,279 @@
-'use client'
+"use client";
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Loader2, Plus, Trash2, Edit2, Pause, Play, MessageSquare, Save, X, Search, Filter } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Loader2,
+  Plus,
+  Trash2,
+  Edit2,
+  Pause,
+  Play,
+  MessageSquare,
+  Save,
+  X,
+  Search,
+  Filter,
+} from "lucide-react";
 
-import { KwidButton, KwidInput, KwidTextarea, KwidSwitch, KwidSelect, KwidSection } from '@/components/kwid'
+import {
+  KwidButton,
+  KwidInput,
+  KwidTextarea,
+  KwidSwitch,
+  KwidSelect,
+  KwidSection,
+} from "@/components/kwid";
 
-import type { AgentSequence } from '@/lib/repositories/agent-sequences'
+import type { AgentSequence } from "@/lib/repositories/agent-sequences";
 
 type SequenceStepInput = {
-  id?: string
-  stepType: 'send_message' | 'wait' | 'webhook'
-  payload: Record<string, unknown>
-  delaySeconds: number
-  sortOrder: number
-}
+  id?: string;
+  stepType: "send_message" | "wait" | "webhook";
+  payload: Record<string, unknown>;
+  delaySeconds: number;
+  sortOrder: number;
+};
 
 interface AgentSequencesManagerProps {
-  agentId: string
+  agentId: string;
 }
 
 const STEP_TYPE_OPTIONS = [
-  { value: 'send_message', label: 'Отправить сообщение' },
-  { value: 'wait', label: 'Ожидание' },
-  { value: 'webhook', label: 'Вызвать Webhook' },
-]
+  { value: "send_message", label: "Отправить сообщение" },
+  { value: "wait", label: "Ожидание" },
+  { value: "webhook", label: "Вызвать Webhook" },
+];
 
 const createEmptyStep = (sortOrder: number): SequenceStepInput => ({
-  stepType: 'send_message',
-  payload: { text: '' },
+  stepType: "send_message",
+  payload: { text: "" },
   delaySeconds: 0,
   sortOrder,
-})
+});
 
-export const AgentSequencesManager = ({ agentId }: AgentSequencesManagerProps) => {
-  const isDraft = agentId === 'new'
+export const AgentSequencesManager = ({
+  agentId,
+}: AgentSequencesManagerProps) => {
+  const isDraft = agentId === "new";
 
-  const [sequences, setSequences] = useState<AgentSequence[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [sequences, setSequences] = useState<AgentSequence[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [isEditorOpen, setIsEditorOpen] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [editingSequenceId, setEditingSequenceId] = useState<string | null>(null)
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editingSequenceId, setEditingSequenceId] = useState<string | null>(
+    null,
+  );
 
   const [formState, setFormState] = useState({
-    name: '',
-    description: '',
+    name: "",
+    description: "",
     isActive: true,
     steps: [createEmptyStep(0)],
-  })
+  });
 
   const fetchSequences = useCallback(async () => {
-    if (!agentId || agentId === 'new') {
-      setIsLoading(false)
-      return
+    if (!agentId || agentId === "new") {
+      setIsLoading(false);
+      return;
     }
 
-    setIsLoading(true)
-    setError(null)
+    setIsLoading(true);
+    setError(null);
 
     try {
-      const response = await fetch(`/api/agents/${agentId}/sequences`, { cache: 'no-store' })
+      const response = await fetch(`/api/agents/${agentId}/sequences`, {
+        cache: "no-store",
+      });
 
       if (!response.ok) {
-        throw new Error('Request failed')
+        throw new Error("Request failed");
       }
 
       const payload = (await response.json()) as {
-        success: boolean
-        data: AgentSequence[]
-        error?: string
-      }
+        success: boolean;
+        data: AgentSequence[];
+        error?: string;
+      };
 
       if (!payload.success) {
-        throw new Error(payload.error ?? 'Unknown error')
+        throw new Error(payload.error ?? "Unknown error");
       }
 
-      setSequences(payload.data)
+      setSequences(payload.data);
     } catch (err) {
-      console.error('Failed to load sequences', err)
-      setError('Не удалось загрузить цепочки. Попробуйте позже.')
+      console.error("Failed to load sequences", err);
+      setError("Не удалось загрузить цепочки. Попробуйте позже.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [agentId])
+  }, [agentId]);
 
   useEffect(() => {
     if (isDraft) {
-      setIsLoading(false)
-      return
+      setIsLoading(false);
+      return;
     }
 
-    void fetchSequences()
-  }, [fetchSequences, isDraft])
+    void fetchSequences();
+  }, [fetchSequences, isDraft]);
 
   const resetForm = useCallback(() => {
     setFormState({
-      name: '',
-      description: '',
+      name: "",
+      description: "",
       isActive: true,
       steps: [createEmptyStep(0)],
-    })
-    setEditingSequenceId(null)
-  }, [])
+    });
+    setEditingSequenceId(null);
+  }, []);
 
   const openCreateEditor = () => {
-    resetForm()
-    setIsEditorOpen(true)
-  }
+    resetForm();
+    setIsEditorOpen(true);
+  };
 
   const openEditEditor = (sequence: AgentSequence) => {
-    setEditingSequenceId(sequence.id)
+    setEditingSequenceId(sequence.id);
     setFormState({
       name: sequence.name,
-      description: sequence.description ?? '',
+      description: sequence.description ?? "",
       isActive: sequence.isActive,
       steps: sequence.steps.map((step, index) => ({
         id: step.id,
-        stepType: (step.stepType as SequenceStepInput['stepType']) ?? 'send_message',
+        stepType:
+          (step.stepType as SequenceStepInput["stepType"]) ?? "send_message",
         payload: step.payload,
         delaySeconds: step.delaySeconds,
         sortOrder: step.sortOrder ?? index,
       })),
-    })
-    setIsEditorOpen(true)
-  }
+    });
+    setIsEditorOpen(true);
+  };
 
   const closeEditor = () => {
-    setIsEditorOpen(false)
-    resetForm()
-  }
+    setIsEditorOpen(false);
+    resetForm();
+  };
 
-  const handleStepChange = <K extends keyof SequenceStepInput>(index: number, key: K, value: SequenceStepInput[K]) => {
+  const handleStepChange = <K extends keyof SequenceStepInput>(
+    index: number,
+    key: K,
+    value: SequenceStepInput[K],
+  ) => {
     setFormState((prev) => {
       const steps = prev.steps.map((step, stepIndex) => {
         if (stepIndex !== index) {
-          return step
+          return step;
         }
 
         const nextStep: SequenceStepInput = {
           ...step,
           [key]: value,
+        };
+
+        if (key === "stepType") {
+          if (value === "send_message") {
+            nextStep.payload = { text: "" };
+            nextStep.delaySeconds = 0;
+          }
+
+          if (value === "wait") {
+            nextStep.payload = { message: "Ожидание" };
+            nextStep.delaySeconds = step.delaySeconds ?? 60;
+          }
+
+          if (value === "webhook") {
+            nextStep.payload = { url: "" };
+            nextStep.delaySeconds = 0;
+          }
         }
 
-        if (key === 'stepType') {
-          if (value === 'send_message') {
-            nextStep.payload = { text: '' }
-            nextStep.delaySeconds = 0
-          }
+        return nextStep;
+      });
 
-          if (value === 'wait') {
-            nextStep.payload = { message: 'Ожидание' }
-            nextStep.delaySeconds = step.delaySeconds ?? 60
-          }
+      return { ...prev, steps };
+    });
+  };
 
-          if (value === 'webhook') {
-            nextStep.payload = { url: '' }
-            nextStep.delaySeconds = 0
-          }
-        }
-
-        return nextStep
-      })
-
-      return { ...prev, steps }
-    })
-  }
-
-  const handleStepPayloadChange = (index: number, payload: Record<string, unknown>) => {
+  const handleStepPayloadChange = (
+    index: number,
+    payload: Record<string, unknown>,
+  ) => {
     setFormState((prev) => {
-      const steps = prev.steps.map((step, stepIndex) => (stepIndex === index ? { ...step, payload } : step))
-      return { ...prev, steps }
-    })
-  }
+      const steps = prev.steps.map((step, stepIndex) =>
+        stepIndex === index ? { ...step, payload } : step,
+      );
+      return { ...prev, steps };
+    });
+  };
 
   const addStep = () => {
     setFormState((prev) => {
-      const nextOrder = prev.steps.length
+      const nextOrder = prev.steps.length;
       return {
         ...prev,
         steps: [...prev.steps, createEmptyStep(nextOrder)],
-      }
-    })
-  }
+      };
+    });
+  };
 
   const removeStep = (index: number) => {
     setFormState((prev) => {
-      const steps = prev.steps.filter((_, stepIndex) => stepIndex !== index).map((step, idx) => ({
-        ...step,
-        sortOrder: idx,
-      }))
-      return { ...prev, steps: steps.length > 0 ? steps : [createEmptyStep(0)] }
-    })
-  }
+      const steps = prev.steps
+        .filter((_, stepIndex) => stepIndex !== index)
+        .map((step, idx) => ({
+          ...step,
+          sortOrder: idx,
+        }));
+      return {
+        ...prev,
+        steps: steps.length > 0 ? steps : [createEmptyStep(0)],
+      };
+    });
+  };
 
-  const convertStepPayload = (step: SequenceStepInput): Record<string, unknown> => {
-    if (step.stepType === 'send_message') {
-      return { text: String((step.payload as { text?: unknown })?.text ?? '') }
+  const convertStepPayload = (
+    step: SequenceStepInput,
+  ): Record<string, unknown> => {
+    if (step.stepType === "send_message") {
+      return { text: String((step.payload as { text?: unknown })?.text ?? "") };
     }
 
-    if (step.stepType === 'wait') {
+    if (step.stepType === "wait") {
       return {
-        message: String((step.payload as { message?: unknown })?.message ?? 'Ожидание'),
+        message: String(
+          (step.payload as { message?: unknown })?.message ?? "Ожидание",
+        ),
         seconds: Number.isFinite(step.delaySeconds) ? step.delaySeconds : 0,
-      }
+      };
     }
 
-    if (step.stepType === 'webhook') {
+    if (step.stepType === "webhook") {
       return {
-        url: String((step.payload as { url?: unknown })?.url ?? ''),
-        method: 'POST',
-      }
+        url: String((step.payload as { url?: unknown })?.url ?? ""),
+        method: "POST",
+      };
     }
 
-    return step.payload
-  }
+    return step.payload;
+  };
 
   const handleSubmit = async () => {
-    setIsSaving(true)
+    setIsSaving(true);
 
     try {
       const endpoint = editingSequenceId
         ? `/api/agents/${agentId}/sequences/${editingSequenceId}`
-        : `/api/agents/${agentId}/sequences`
+        : `/api/agents/${agentId}/sequences`;
 
-      const method = editingSequenceId ? 'PATCH' : 'POST'
+      const method = editingSequenceId ? "PATCH" : "POST";
 
       const response = await fetch(endpoint, {
         method,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           name: formState.name.trim(),
@@ -243,98 +287,113 @@ export const AgentSequencesManager = ({ agentId }: AgentSequencesManagerProps) =
             sortOrder: index,
           })),
         }),
-      })
+      });
 
       if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as { error?: string } | null
-        throw new Error(payload?.error ?? 'Request failed')
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        throw new Error(payload?.error ?? "Request failed");
       }
 
-      await fetchSequences()
-      closeEditor()
+      await fetchSequences();
+      closeEditor();
     } catch (err) {
-      console.error('Failed to save sequence', err)
-      alert('Не удалось сохранить цепочку. Попробуйте еще раз.')
+      console.error("Failed to save sequence", err);
+      alert("Не удалось сохранить цепочку. Попробуйте еще раз.");
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
-  const toggleSequenceActive = async (sequence: AgentSequence, nextValue: boolean) => {
+  const toggleSequenceActive = async (
+    sequence: AgentSequence,
+    nextValue: boolean,
+  ) => {
     try {
-      const response = await fetch(`/api/agents/${agentId}/sequences/${sequence.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `/api/agents/${agentId}/sequences/${sequence.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ isActive: nextValue }),
         },
-        body: JSON.stringify({ isActive: nextValue }),
-      })
+      );
 
       if (!response.ok) {
-        throw new Error('Failed to toggle')
+        throw new Error("Failed to toggle");
       }
 
-      await fetchSequences()
+      await fetchSequences();
     } catch (err) {
-      console.error('Failed to toggle sequence', err)
-      alert('Не удалось обновить статус цепочки.')
+      console.error("Failed to toggle sequence", err);
+      alert("Не удалось обновить статус цепочки.");
     }
-  }
+  };
 
   const deleteSequence = async (sequenceId: string) => {
-    if (!confirm('Удалить цепочку? Действие нельзя отменить.')) {
-      return
+    if (!confirm("Удалить цепочку? Действие нельзя отменить.")) {
+      return;
     }
 
     try {
-      const response = await fetch(`/api/agents/${agentId}/sequences/${sequenceId}`, {
-        method: 'DELETE',
-      })
+      const response = await fetch(
+        `/api/agents/${agentId}/sequences/${sequenceId}`,
+        {
+          method: "DELETE",
+        },
+      );
 
       if (!response.ok) {
-        throw new Error('Failed to delete')
+        throw new Error("Failed to delete");
       }
 
-      await fetchSequences()
+      await fetchSequences();
     } catch (err) {
-      console.error('Failed to delete sequence', err)
-      alert('Не удалось удалить цепочку.')
+      console.error("Failed to delete sequence", err);
+      alert("Не удалось удалить цепочку.");
     }
-  }
+  };
 
-  const editorTitle = editingSequenceId ? 'Редактирование цепочки' : 'Новая цепочка'
+  const editorTitle = editingSequenceId
+    ? "Редактирование цепочки"
+    : "Новая цепочка";
 
   const canSubmit = useMemo(() => {
     if (!formState.name.trim()) {
-      return false
+      return false;
     }
 
     const hasValidSteps = formState.steps.every((step) => {
-      if (step.stepType === 'send_message') {
-        return Boolean((step.payload as { text?: unknown })?.text)
+      if (step.stepType === "send_message") {
+        return Boolean((step.payload as { text?: unknown })?.text);
       }
 
-      if (step.stepType === 'wait') {
-        return Number.isFinite(step.delaySeconds) && step.delaySeconds >= 0
+      if (step.stepType === "wait") {
+        return Number.isFinite(step.delaySeconds) && step.delaySeconds >= 0;
       }
 
-      if (step.stepType === 'webhook') {
-        const url = (step.payload as { url?: unknown })?.url
-        return typeof url === 'string' && url.trim().length > 0
+      if (step.stepType === "webhook") {
+        const url = (step.payload as { url?: unknown })?.url;
+        return typeof url === "string" && url.trim().length > 0;
       }
 
-      return true
-    })
+      return true;
+    });
 
-    return hasValidSteps
-  }, [formState.name, formState.steps])
+    return hasValidSteps;
+  }, [formState.name, formState.steps]);
 
-  const [searchTerm, setSearchTerm] = useState('')
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredSequences = sequences.filter(seq => 
-    seq.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (seq.description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
-  )
+  const filteredSequences = sequences.filter(
+    (seq) =>
+      seq.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (seq.description?.toLowerCase().includes(searchTerm.toLowerCase()) ??
+        false),
+  );
 
   return (
     <div className="space-y-6">
@@ -346,12 +405,21 @@ export const AgentSequencesManager = ({ agentId }: AgentSequencesManagerProps) =
 
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Цепочки</h2>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Цепочки
+          </h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Автоматизируйте отправку последующих сообщений и выполнение действий по расписанию.
+            Автоматизируйте отправку последующих сообщений и выполнение действий
+            по расписанию.
           </p>
         </div>
-        <KwidButton onClick={openCreateEditor} className="w-full gap-2 sm:w-auto" disabled={isDraft} variant="primary" size="md">
+        <KwidButton
+          onClick={openCreateEditor}
+          className="w-full gap-2 sm:w-auto"
+          disabled={isDraft}
+          variant="primary"
+          size="md"
+        >
           <Plus className="h-4 w-4" /> Создать
         </KwidButton>
       </div>
@@ -383,15 +451,26 @@ export const AgentSequencesManager = ({ agentId }: AgentSequencesManagerProps) =
           <Loader2 className="h-4 w-4 animate-spin" /> Загрузка цепочек…
         </div>
       ) : error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">{error}</div>
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+          {error}
+        </div>
       ) : filteredSequences.length === 0 ? (
         <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900">
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
             <X className="h-8 w-8 text-gray-400 dark:text-gray-500" />
           </div>
-          <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Не найдено Цепочки</h3>
-          <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">Создать Цепочка для старта.</p>
-          <KwidButton onClick={openCreateEditor} className="gap-2" variant="primary" size="md">
+          <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
+            Не найдено Цепочки
+          </h3>
+          <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">
+            Создать Цепочка для старта.
+          </p>
+          <KwidButton
+            onClick={openCreateEditor}
+            className="gap-2"
+            variant="primary"
+            size="md"
+          >
             <Plus className="h-4 w-4" />
             Создать
           </KwidButton>
@@ -401,32 +480,53 @@ export const AgentSequencesManager = ({ agentId }: AgentSequencesManagerProps) =
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Название</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Активно</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Шаги</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 dark:text-gray-400">Действия</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Название
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Активно
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Шаги
+                </th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Действия
+                </th>
               </tr>
             </thead>
             <tbody>
               {filteredSequences.map((sequence) => (
-                <tr key={sequence.id} className="border-b border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800">
+                <tr
+                  key={sequence.id}
+                  className="border-b border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
+                >
                   <td className="px-4 py-3">
                     <div className="flex flex-col">
-                      <span className="text-sm font-semibold text-gray-900 dark:text-white">{sequence.name}</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {sequence.name}
+                      </span>
                       {sequence.description && (
-                        <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">{sequence.description}</span>
+                        <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          {sequence.description}
+                        </span>
                       )}
                     </div>
                   </td>
                   <td className="px-4 py-3">
                     <KwidSwitch
                       checked={sequence.isActive}
-                      onCheckedChange={(checked) => toggleSequenceActive(sequence, checked)}
-                      aria-label={sequence.isActive ? 'Деактивировать' : 'Активировать'}
+                      onCheckedChange={(checked) =>
+                        toggleSequenceActive(sequence, checked)
+                      }
+                      aria-label={
+                        sequence.isActive ? "Деактивировать" : "Активировать"
+                      }
                     />
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">{sequence.steps.length} шагов</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {sequence.steps.length} шагов
+                    </span>
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-3">
@@ -468,21 +568,30 @@ export const AgentSequencesManager = ({ agentId }: AgentSequencesManagerProps) =
                 label="Название"
                 placeholder="Например, Приветствие нового лида"
                 value={formState.name}
-                onChange={(event) => setFormState((prev) => ({ ...prev, name: event.target.value }))}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    name: event.target.value,
+                  }))
+                }
                 required
               />
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Цепочка активна</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Цепочка активна
+                  </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     {formState.isActive
-                      ? 'Будет выполняться автоматически'
-                      : 'Цепочка отключена до повторного включения'}
+                      ? "Будет выполняться автоматически"
+                      : "Цепочка отключена до повторного включения"}
                   </p>
                 </div>
                 <KwidSwitch
                   checked={formState.isActive}
-                  onCheckedChange={(value) => setFormState((prev) => ({ ...prev, isActive: value }))}
+                  onCheckedChange={(value) =>
+                    setFormState((prev) => ({ ...prev, isActive: value }))
+                  }
                 />
               </div>
             </div>
@@ -492,12 +601,19 @@ export const AgentSequencesManager = ({ agentId }: AgentSequencesManagerProps) =
               placeholder="Кратко опишите назначение цепочки"
               rows={3}
               value={formState.description}
-              onChange={(event) => setFormState((prev) => ({ ...prev, description: event.target.value }))}
+              onChange={(event) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  description: event.target.value,
+                }))
+              }
             />
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Шаги</h4>
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Шаги
+                </h4>
                 <KwidButton variant="outline" size="sm" onClick={addStep}>
                   <Plus className="mr-2 h-4 w-4" /> Добавить шаг
                 </KwidButton>
@@ -505,44 +621,66 @@ export const AgentSequencesManager = ({ agentId }: AgentSequencesManagerProps) =
 
               <div className="space-y-4">
                 {formState.steps.map((step, index) => (
-                  <div key={index} className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800">
+                  <div
+                    key={index}
+                    className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800"
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 space-y-3">
-                        <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Тип шага</label>
+                        <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                          Тип шага
+                        </label>
                         <div className="grid gap-3 md:grid-cols-2">
                           <KwidSelect
                             options={STEP_TYPE_OPTIONS}
                             value={step.stepType}
                             onChange={(value: string) =>
-                              handleStepChange(index, 'stepType', value as SequenceStepInput['stepType'])
+                              handleStepChange(
+                                index,
+                                "stepType",
+                                value as SequenceStepInput["stepType"],
+                              )
                             }
                           />
 
-                          {step.stepType === 'wait' ? (
+                          {step.stepType === "wait" ? (
                             <KwidInput
                               type="number"
                               min={0}
                               label="Задержка, сек"
                               value={step.delaySeconds}
                               onChange={(event) =>
-                                handleStepChange(index, 'delaySeconds', Number.parseInt(event.target.value, 10) || 0)
+                                handleStepChange(
+                                  index,
+                                  "delaySeconds",
+                                  Number.parseInt(event.target.value, 10) || 0,
+                                )
                               }
                             />
-                          ) : step.stepType === 'send_message' ? (
+                          ) : step.stepType === "send_message" ? (
                             <KwidTextarea
                               label="Сообщение"
                               rows={3}
-                              value={String((step.payload as { text?: unknown })?.text ?? '')}
+                              value={String(
+                                (step.payload as { text?: unknown })?.text ??
+                                  "",
+                              )}
                               onChange={(event) =>
-                                handleStepPayloadChange(index, { text: event.target.value })
+                                handleStepPayloadChange(index, {
+                                  text: event.target.value,
+                                })
                               }
                             />
                           ) : (
                             <KwidInput
                               label="URL Webhook"
-                              value={String((step.payload as { url?: unknown })?.url ?? '')}
+                              value={String(
+                                (step.payload as { url?: unknown })?.url ?? "",
+                              )}
                               onChange={(event) =>
-                                handleStepPayloadChange(index, { url: event.target.value })
+                                handleStepPayloadChange(index, {
+                                  url: event.target.value,
+                                })
                               }
                             />
                           )}
@@ -568,15 +706,24 @@ export const AgentSequencesManager = ({ agentId }: AgentSequencesManagerProps) =
               <KwidButton variant="outline" size="md" onClick={closeEditor}>
                 Отмена
               </KwidButton>
-              <KwidButton onClick={handleSubmit} disabled={!canSubmit || isSaving} className="gap-2" variant="primary" size="md">
-                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                {editingSequenceId ? 'Сохранить изменения' : 'Создать цепочку'}
+              <KwidButton
+                onClick={handleSubmit}
+                disabled={!canSubmit || isSaving}
+                className="gap-2"
+                variant="primary"
+                size="md"
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                {editingSequenceId ? "Сохранить изменения" : "Создать цепочку"}
               </KwidButton>
             </div>
           </div>
         </KwidSection>
       ) : null}
     </div>
-  )
-}
-
+  );
+};

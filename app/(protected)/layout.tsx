@@ -1,55 +1,62 @@
-import { redirect } from 'next/navigation'
+import { redirect } from "next/navigation";
 
-import { Header } from '@/components/layout/Header'
-import { Sidebar } from '@/components/layout/Sidebar'
-import { auth } from '@/auth'
-import { getOrganizationsForUser } from '@/lib/repositories/organizations'
+import { Header } from "@/components/layout/Header";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { auth } from "@/auth";
+import { getOrganizationsForUser } from "@/lib/repositories/organizations";
 
 // Отключаем prerendering в демо-режиме
-export const dynamic = process.env.NODE_ENV === 'development' || process.env.DEMO_MODE === 'true'
-  ? 'force-dynamic'
-  : 'auto'
+export const dynamic =
+  process.env.NODE_ENV === "development" || process.env.DEMO_MODE === "true"
+    ? "force-dynamic"
+    : "auto";
 
 interface ProtectedLayoutProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 const ProtectedLayout = async ({ children }: ProtectedLayoutProps) => {
   // Демо режим для локального тестирования
-  const isDemoMode = process.env.NODE_ENV === 'development' ||
-    process.env.DEMO_MODE === 'true'
+  const isDemoMode =
+    process.env.NODE_ENV === "development" || process.env.DEMO_MODE === "true";
 
-  let session: any
-  let organizations: any[] = []
-  let activeOrganization: any = null
+  let session: any;
+  let organizations: any[] = [];
+  let activeOrganization: any = null;
 
   if (isDemoMode) {
     // В демо режиме создаем фиктивные данные
     session = {
       user: {
-        id: 'demo-user-123',
-        name: 'Demo Founder',
-        email: 'founder@example.com',
-        orgId: 'demo-org-123'
-      }
-    }
-    organizations = [{
-      id: 'demo-org-123',
-      name: 'World Wide Services',
-      slug: 'worldwideservices',
-      createdAt: new Date().toISOString()
-    }]
-    activeOrganization = organizations[0]
+        id: "demo-user-123",
+        name: "Demo Founder",
+        email: "founder@example.com",
+        orgId: "demo-org-123",
+      },
+    };
+    organizations = [
+      {
+        id: "demo-org-123",
+        name: "World Wide Services",
+        slug: "worldwideservices",
+        createdAt: new Date().toISOString(),
+      },
+    ];
+    activeOrganization = organizations[0];
   } else {
-    session = await auth()
+    session = await auth();
 
     if (!session?.user?.orgId) {
-      redirect('/login')
+      redirect("/login");
     }
 
-    organizations = await getOrganizationsForUser(session.user.id)
+    organizations = await getOrganizationsForUser(session.user.id);
     activeOrganization =
-      organizations.find((organization) => organization.id === session.user.orgId) ?? organizations[0] ?? null
+      organizations.find(
+        (organization) => organization.id === session.user.orgId,
+      ) ??
+      organizations[0] ??
+      null;
   }
 
   // Редиректим на новый формат URL с tenant-id
@@ -70,13 +77,7 @@ const ProtectedLayout = async ({ children }: ProtectedLayoutProps) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ProtectedLayout
-
-
-
-
-
-
+export default ProtectedLayout;

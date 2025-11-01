@@ -1,177 +1,178 @@
-'use client'
+"use client";
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Bot, Loader2, MessageSquarePlus, Send, User } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Bot, Loader2, MessageSquarePlus, Send, User } from "lucide-react";
 
-import { KwidButton, KwidSelect, KwidTextarea } from '@/components/kwid'
+import { KwidButton, KwidSelect, KwidTextarea } from "@/components/kwid";
 
 interface Conversation {
-  id: string
-  title: string | null
-  agentId: string | null
-  createdAt: string
-  updatedAt: string
+  id: string;
+  title: string | null;
+  agentId: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface ChatMessage {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  createdAt: string
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAt: string;
 }
 
 interface Agent {
-  id: string
-  name: string
+  id: string;
+  name: string;
 }
 
 const ChatPage = () => {
-  const [conversations, setConversations] = useState<Conversation[]>([])
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [agents, setAgents] = useState<Agent[]>([])
-  const [selectedAgentId, setSelectedAgentId] = useState<string>('')
-  const [messageValue, setMessageValue] = useState('')
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSending, setIsSending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedConversationId, setSelectedConversationId] = useState<
+    string | null
+  >(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [selectedAgentId, setSelectedAgentId] = useState<string>("");
+  const [messageValue, setMessageValue] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Загружаем список агентов
   useEffect(() => {
     const fetchAgents = async () => {
       try {
-        const response = await fetch('/api/agents')
+        const response = await fetch("/api/agents");
         if (response.ok) {
           const payload = (await response.json()) as {
-            success: boolean
-            data: Agent[]
-          }
+            success: boolean;
+            data: Agent[];
+          };
 
           if (payload.success) {
-            setAgents(payload.data)
+            setAgents(payload.data);
             if (payload.data.length > 0) {
-              setSelectedAgentId(payload.data[0].id)
+              setSelectedAgentId(payload.data[0].id);
             }
           }
         }
       } catch (err) {
-        console.error('Failed to fetch agents', err)
+        console.error("Failed to fetch agents", err);
       }
-    }
+    };
 
-    fetchAgents()
-  }, [])
+    fetchAgents();
+  }, []);
 
   // Загружаем список диалогов
   const fetchConversations = useCallback(async () => {
     try {
-      setIsLoading(true)
-      setError(null)
+      setIsLoading(true);
+      setError(null);
 
-      const response = await fetch('/api/chat')
+      const response = await fetch("/api/chat");
       if (!response.ok) {
-        throw new Error('Не удалось загрузить диалоги')
+        throw new Error("Не удалось загрузить диалоги");
       }
 
       const payload = (await response.json()) as {
-        success: boolean
-        data: Conversation[]
-      }
+        success: boolean;
+        data: Conversation[];
+      };
 
       if (payload.success) {
-        setConversations(payload.data)
+        setConversations(payload.data);
       }
     } catch (err) {
-      console.error('Failed to fetch conversations', err)
-      setError('Не удалось загрузить диалоги')
+      console.error("Failed to fetch conversations", err);
+      setError("Не удалось загрузить диалоги");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    fetchConversations()
-  }, [fetchConversations])
+    fetchConversations();
+  }, [fetchConversations]);
 
   // Загружаем сообщения выбранного диалога
-  const fetchMessages = useCallback(
-    async (conversationId: string) => {
-      try {
-        setIsLoading(true)
-        setError(null)
+  const fetchMessages = useCallback(async (conversationId: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
 
-        const response = await fetch(`/api/chat?conversationId=${conversationId}`)
-        if (!response.ok) {
-          throw new Error('Не удалось загрузить сообщения')
-        }
-
-        const payload = (await response.json()) as {
-          success: boolean
-          data: ChatMessage[]
-        }
-
-        if (payload.success) {
-          const formattedMessages = payload.data.map((msg) => ({
-            id: msg.id,
-            role: msg.role,
-            content: msg.content,
-            createdAt: msg.createdAt,
-          }))
-
-          setMessages(formattedMessages)
-        }
-      } catch (err) {
-        console.error('Failed to fetch messages', err)
-        setError('Не удалось загрузить сообщения')
-      } finally {
-        setIsLoading(false)
+      const response = await fetch(
+        `/api/chat?conversationId=${conversationId}`,
+      );
+      if (!response.ok) {
+        throw new Error("Не удалось загрузить сообщения");
       }
-    },
-    [],
-  )
+
+      const payload = (await response.json()) as {
+        success: boolean;
+        data: ChatMessage[];
+      };
+
+      if (payload.success) {
+        const formattedMessages = payload.data.map((msg) => ({
+          id: msg.id,
+          role: msg.role,
+          content: msg.content,
+          createdAt: msg.createdAt,
+        }));
+
+        setMessages(formattedMessages);
+      }
+    } catch (err) {
+      console.error("Failed to fetch messages", err);
+      setError("Не удалось загрузить сообщения");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   // Обработчик открытия диалога
   const handleOpenConversation = useCallback(
     (conversationId: string) => {
-      setSelectedConversationId(conversationId)
-      fetchMessages(conversationId)
+      setSelectedConversationId(conversationId);
+      fetchMessages(conversationId);
     },
     [fetchMessages],
-  )
+  );
 
   // Обработчик создания нового чата
   const handleNewChat = useCallback(() => {
-    setSelectedConversationId(null)
-    setMessages([])
-    setMessageValue('')
-  }, [])
+    setSelectedConversationId(null);
+    setMessages([]);
+    setMessageValue("");
+  }, []);
 
   // Обработчик отправки сообщения
   const handleSend = useCallback(async () => {
     if (!messageValue.trim() || isSending) {
-      return
+      return;
     }
 
-    const messageToSend = messageValue.trim()
-    setMessageValue('')
-    setIsSending(true)
-    setError(null)
+    const messageToSend = messageValue.trim();
+    setMessageValue("");
+    setIsSending(true);
+    setError(null);
 
     // Добавляем сообщение пользователя в UI сразу
     const userMessage: ChatMessage = {
       id: `temp-${Date.now()}`,
-      role: 'user',
+      role: "user",
       content: messageToSend,
       createdAt: new Date().toISOString(),
-    }
+    };
 
-    setMessages((prev) => [...prev, userMessage])
+    setMessages((prev) => [...prev, userMessage]);
 
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
+      const response = await fetch("/api/chat", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           conversationId: selectedConversationId,
@@ -179,111 +180,131 @@ const ChatPage = () => {
           message: messageToSend,
           useKnowledgeBase: true,
         }),
-      })
+      });
 
       if (!response.ok) {
-        const errorData = (await response.json()) as { success: boolean; error?: string }
-        throw new Error(errorData.error || 'Не удалось отправить сообщение')
+        const errorData = (await response.json()) as {
+          success: boolean;
+          error?: string;
+        };
+        throw new Error(errorData.error || "Не удалось отправить сообщение");
       }
 
       const payload = (await response.json()) as {
-        success: boolean
+        success: boolean;
         data: {
-          conversationId: string
-          message: string
-        }
-      }
+          conversationId: string;
+          message: string;
+        };
+      };
 
       if (payload.success) {
         // Обновляем conversationId, если это был новый диалог
         if (!selectedConversationId && payload.data.conversationId) {
-          setSelectedConversationId(payload.data.conversationId)
-          await fetchConversations()
+          setSelectedConversationId(payload.data.conversationId);
+          await fetchConversations();
         }
 
         // Добавляем ответ агента
         const assistantMessage: ChatMessage = {
           id: `temp-assistant-${Date.now()}`,
-          role: 'assistant',
+          role: "assistant",
           content: payload.data.message,
           createdAt: new Date().toISOString(),
-        }
+        };
 
-        setMessages((prev) => [...prev, assistantMessage])
+        setMessages((prev) => [...prev, assistantMessage]);
 
         // Обновляем список диалогов
-        await fetchConversations()
+        await fetchConversations();
       }
     } catch (err) {
-      console.error('Failed to send message', err)
-      setError(err instanceof Error ? err.message : 'Не удалось отправить сообщение')
+      console.error("Failed to send message", err);
+      setError(
+        err instanceof Error ? err.message : "Не удалось отправить сообщение",
+      );
 
       // Удаляем временное сообщение пользователя при ошибке
-      setMessages((prev) => prev.filter((msg) => msg.id !== userMessage.id))
+      setMessages((prev) => prev.filter((msg) => msg.id !== userMessage.id));
     } finally {
-      setIsSending(false)
+      setIsSending(false);
     }
-  }, [messageValue, selectedConversationId, selectedAgentId, fetchConversations, isSending])
+  }, [
+    messageValue,
+    selectedConversationId,
+    selectedAgentId,
+    fetchConversations,
+    isSending,
+  ]);
 
   const agentOptions = useMemo(() => {
     return agents.map((agent) => ({
       value: agent.id,
       label: agent.name,
-    }))
-  }, [agents])
+    }));
+  }, [agents]);
 
   const formatTime = (timestamp: string): string => {
-    const date = new Date(timestamp)
+    const date = new Date(timestamp);
 
     if (Number.isNaN(date.getTime())) {
-      return '—'
+      return "—";
     }
 
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
-    const diffDays = Math.floor(diffMs / 86400000)
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
 
     if (diffMins < 1) {
-      return 'Только что'
+      return "Только что";
     }
 
     if (diffMins < 60) {
-      return `${diffMins} мин. назад`
+      return `${diffMins} мин. назад`;
     }
 
     if (diffHours < 24) {
-      return `${diffHours} ч. назад`
+      return `${diffHours} ч. назад`;
     }
 
     if (diffDays < 7) {
-      return `${diffDays} дн. назад`
+      return `${diffDays} дн. назад`;
     }
 
-    return date.toLocaleDateString('ru-RU', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    })
-  }
+    return date.toLocaleDateString("ru-RU", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
 
   const selectedConversationTitle = useMemo(() => {
     if (!selectedConversationId) {
-      return null
+      return null;
     }
 
-    const conversation = conversations.find((c) => c.id === selectedConversationId)
-    return conversation?.title ?? 'Без названия'
-  }, [selectedConversationId, conversations])
+    const conversation = conversations.find(
+      (c) => c.id === selectedConversationId,
+    );
+    return conversation?.title ?? "Без названия";
+  }, [selectedConversationId, conversations]);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[360px_1fr] xl:grid-cols-[400px_1fr]">
       {/* Боковая панель с диалогами */}
       <aside className="rounded-xl border border-gray-200 bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-800">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Чаты</h2>
-          <KwidButton variant="outline" size="sm" className="gap-2" onClick={handleNewChat}>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Чаты
+          </h2>
+          <KwidButton
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={handleNewChat}
+          >
             <MessageSquarePlus className="h-4 w-4" /> Новый чат
           </KwidButton>
         </div>
@@ -297,11 +318,13 @@ const ChatPage = () => {
               {error}
             </div>
           ) : conversations.length === 0 ? (
-            <div className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">Нет диалогов</div>
+            <div className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+              Нет диалогов
+            </div>
           ) : (
             <div className="space-y-2">
               {conversations.map((conversation) => {
-                const isActive = selectedConversationId === conversation.id
+                const isActive = selectedConversationId === conversation.id;
 
                 return (
                   <button
@@ -310,16 +333,18 @@ const ChatPage = () => {
                     onClick={() => handleOpenConversation(conversation.id)}
                     className={`w-full rounded-xl border px-4 py-3 text-left text-sm transition-colors ${
                       isActive
-                        ? 'border-custom-200 bg-custom-50 text-custom-700 dark:border-custom-800 dark:bg-custom-900/20 dark:text-custom-400'
-                        : 'border-transparent bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700'
+                        ? "border-custom-200 bg-custom-50 text-custom-700 dark:border-custom-800 dark:bg-custom-900/20 dark:text-custom-400"
+                        : "border-transparent bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
                     }`}
                   >
-                    <p className="font-medium">{conversation.title ?? 'Без названия'}</p>
+                    <p className="font-medium">
+                      {conversation.title ?? "Без названия"}
+                    </p>
                     <p className="mt-2 text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">
                       {formatTime(conversation.updatedAt)}
                     </p>
                   </button>
-                )
+                );
               })}
             </div>
           )}
@@ -335,7 +360,7 @@ const ChatPage = () => {
             </div>
             <div className="space-y-1">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                {selectedConversationTitle ?? 'Новый чат'}
+                {selectedConversationTitle ?? "Новый чат"}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 Выберите агента и протестируйте поведение в реальном времени
@@ -380,17 +405,19 @@ const ChatPage = () => {
                   <div
                     key={message.id}
                     className={`flex items-start gap-3 ${
-                      message.role === 'user' ? 'flex-row-reverse text-right' : ''
+                      message.role === "user"
+                        ? "flex-row-reverse text-right"
+                        : ""
                     }`}
                   >
                     <div
                       className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                        message.role === 'assistant'
-                          ? 'bg-custom-100 text-custom-600 dark:bg-custom-900/20 dark:text-custom-400'
-                          : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+                        message.role === "assistant"
+                          ? "bg-custom-100 text-custom-600 dark:bg-custom-900/20 dark:text-custom-400"
+                          : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
                       }`}
                     >
-                      {message.role === 'assistant' ? (
+                      {message.role === "assistant" ? (
                         <Bot className="h-5 w-5" />
                       ) : (
                         <User className="h-5 w-5" />
@@ -398,13 +425,15 @@ const ChatPage = () => {
                     </div>
                     <div
                       className={`max-w-xl rounded-xl border px-4 py-3 text-sm ${
-                        message.role === 'user'
-                          ? 'bg-custom-50 border-custom-200 text-custom-700 dark:bg-custom-900/20 dark:border-custom-800 dark:text-custom-400'
-                          : 'border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-300'
+                        message.role === "user"
+                          ? "bg-custom-50 border-custom-200 text-custom-700 dark:bg-custom-900/20 dark:border-custom-800 dark:text-custom-400"
+                          : "border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-300"
                       }`}
                     >
                       <p className="whitespace-pre-wrap">{message.content}</p>
-                      <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">{formatTime(message.createdAt)}</p>
+                      <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
+                        {formatTime(message.createdAt)}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -438,9 +467,9 @@ const ChatPage = () => {
                 value={messageValue}
                 onChange={(event) => setMessageValue(event.target.value)}
                 onKeyDown={(event) => {
-                  if (event.key === 'Enter' && !event.shiftKey) {
-                    event.preventDefault()
-                    handleSend()
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    handleSend();
                   }
                 }}
                 placeholder="Введите сообщение здесь..."
@@ -459,7 +488,7 @@ const ChatPage = () => {
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Send className="h-4 w-4" />
-                )}{' '}
+                )}{" "}
                 Отправить
               </KwidButton>
             </div>
@@ -467,7 +496,7 @@ const ChatPage = () => {
         </div>
       </section>
     </div>
-  )
-}
+  );
+};
 
-export default ChatPage
+export default ChatPage;

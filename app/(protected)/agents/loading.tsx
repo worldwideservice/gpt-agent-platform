@@ -23,7 +23,7 @@ const AgentsLoading = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default AgentsLoading
+export default AgentsLoading;

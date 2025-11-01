@@ -1,44 +1,45 @@
-import { redirect } from 'next/navigation'
-import type { Metadata } from 'next'
+import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 
-import { CategoriesClient } from './_components/CategoriesClient'
+import { CategoriesClient } from "./_components/CategoriesClient";
 
-import { auth } from '@/auth'
-import { getKnowledgeBaseCategories } from '@/lib/repositories/knowledge-base'
+import { auth } from "@/auth";
+import { getKnowledgeBaseCategories } from "@/lib/repositories/knowledge-base";
 
-export const dynamic = process.env.NODE_ENV === 'development' || process.env.DEMO_MODE === 'true'
-  ? 'force-dynamic'
-  : 'auto'
+export const dynamic =
+  process.env.NODE_ENV === "development" || process.env.DEMO_MODE === "true"
+    ? "force-dynamic"
+    : "auto";
 
 export const metadata: Metadata = {
-  title: 'Категории базы знаний',
-  description: 'Управление категориями базы знаний',
-}
+  title: "Категории базы знаний",
+  description: "Управление категориями базы знаний",
+};
 
 interface CategoriesPageProps {
-  params: Promise<{ tenantId: string }>
+  params: Promise<{ tenantId: string }>;
 }
 
 const CategoriesPage = async ({ params }: CategoriesPageProps) => {
-  const resolvedParams = await params
-  
-  const isDemoMode = process.env.NODE_ENV === 'development' || process.env.DEMO_MODE === 'true'
+  const resolvedParams = await params;
 
-  let categories: Awaited<ReturnType<typeof getKnowledgeBaseCategories>> = []
+  const isDemoMode =
+    process.env.NODE_ENV === "development" || process.env.DEMO_MODE === "true";
+
+  let categories: Awaited<ReturnType<typeof getKnowledgeBaseCategories>> = [];
 
   if (isDemoMode) {
-    categories = []
+    categories = [];
   } else {
-    const session = await auth()
+    const session = await auth();
     if (!session?.user?.orgId) {
-      redirect('/login')
+      redirect("/login");
     }
 
-    categories = await getKnowledgeBaseCategories(session.user.orgId)
+    categories = await getKnowledgeBaseCategories(session.user.orgId);
   }
 
-  return <CategoriesClient initialCategories={categories} />
-}
+  return <CategoriesClient initialCategories={categories} />;
+};
 
-export default CategoriesPage
-
+export default CategoriesPage;

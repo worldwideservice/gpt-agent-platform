@@ -1,115 +1,125 @@
-'use client'
+"use client";
 
-import { useCallback, useEffect, useState, useTransition } from 'react'
-import Link from 'next/link'
-import { Edit, FileText, Plus, Search, Trash2 } from 'lucide-react'
+import { useCallback, useEffect, useState, useTransition } from "react";
+import Link from "next/link";
+import { Edit, FileText, Plus, Search, Trash2 } from "lucide-react";
 
-import { KwidButton, KwidInput, KwidTable } from '@/components/kwid'
-import { useTenantId } from '@/hooks/useTenantId'
+import { KwidButton, KwidInput, KwidTable } from "@/components/kwid";
+import { useTenantId } from "@/hooks/useTenantId";
 
-import type { KnowledgeBaseArticle } from '@/types'
+import type { KnowledgeBaseArticle } from "@/types";
 
 interface ArticlesClientProps {
-  initialArticles: KnowledgeBaseArticle[]
-  categories: Array<{ id: string; name: string }>
+  initialArticles: KnowledgeBaseArticle[];
+  categories: Array<{ id: string; name: string }>;
 }
 
 interface ArticlesApiResponse {
-  success: boolean
-  data: KnowledgeBaseArticle[]
-  error?: string
+  success: boolean;
+  data: KnowledgeBaseArticle[];
+  error?: string;
 }
 
 const formatDate = (date: Date | string): string => {
-  const d = typeof date === 'string' ? new Date(date) : date
-  return new Intl.DateTimeFormat('ru-RU', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(d)
-}
+  const d = typeof date === "string" ? new Date(date) : date;
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(d);
+};
 
-export const ArticlesClient = ({ initialArticles, categories }: ArticlesClientProps) => {
-  const tenantId = useTenantId()
-  const [articles, setArticles] = useState<KnowledgeBaseArticle[]>(initialArticles)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
+export const ArticlesClient = ({
+  initialArticles,
+  categories,
+}: ArticlesClientProps) => {
+  const tenantId = useTenantId();
+  const [articles, setArticles] =
+    useState<KnowledgeBaseArticle[]>(initialArticles);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const fetchArticles = useCallback(async () => {
     try {
-      const params = new URLSearchParams()
+      const params = new URLSearchParams();
       if (searchTerm) {
-        params.set('search', searchTerm)
+        params.set("search", searchTerm);
       }
-      
-      const response = await fetch(`/api/knowledge-base/articles?${params.toString()}`)
+
+      const response = await fetch(
+        `/api/knowledge-base/articles?${params.toString()}`,
+      );
       if (response.ok) {
-        const payload = (await response.json()) as ArticlesApiResponse
+        const payload = (await response.json()) as ArticlesApiResponse;
         if (payload.success) {
-          setArticles(payload.data)
+          setArticles(payload.data);
         } else {
-          setError(payload.error || 'Ошибка загрузки статей')
+          setError(payload.error || "Ошибка загрузки статей");
         }
       } else {
-        setError('Не удалось загрузить статьи')
+        setError("Не удалось загрузить статьи");
       }
     } catch (err) {
-      console.error('Failed to fetch articles', err)
-      setError('Не удалось загрузить статьи')
+      console.error("Failed to fetch articles", err);
+      setError("Не удалось загрузить статьи");
     }
-  }, [searchTerm])
+  }, [searchTerm]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       startTransition(async () => {
-        await fetchArticles()
-      })
-    }, 350)
+        await fetchArticles();
+      });
+    }, 350);
 
     return () => {
-      window.clearTimeout(timeoutId)
-    }
-  }, [fetchArticles, searchTerm])
+      window.clearTimeout(timeoutId);
+    };
+  }, [fetchArticles, searchTerm]);
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!confirm('Вы уверены, что хотите удалить эту статью?')) {
-        return
+      if (!confirm("Вы уверены, что хотите удалить эту статью?")) {
+        return;
       }
 
       startTransition(async () => {
         try {
           const response = await fetch(`/api/knowledge-base/articles/${id}`, {
-            method: 'DELETE',
-          })
+            method: "DELETE",
+          });
 
           if (!response.ok) {
-            throw new Error('Не удалось удалить статью')
+            throw new Error("Не удалось удалить статью");
           }
 
-          await fetchArticles()
+          await fetchArticles();
         } catch (err) {
-          console.error('Failed to delete article', err)
-          setError('Не удалось удалить статью')
+          console.error("Failed to delete article", err);
+          setError("Не удалось удалить статью");
         }
-      })
+      });
     },
     [fetchArticles],
-  )
+  );
 
   const getCategoryName = (categoryId: string | null): string => {
-    if (!categoryId) return 'Без категории'
-    const category = categories.find((cat) => cat.id === categoryId)
-    return category?.name || 'Неизвестная категория'
-  }
+    if (!categoryId) return "Без категории";
+    const category = categories.find((cat) => cat.id === categoryId);
+    return category?.name || "Неизвестная категория";
+  };
 
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">Статьи базы знаний</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Управляйте статьями базы знаний</p>
+          <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
+            Статьи базы знаний
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Управляйте статьями базы знаний
+          </p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
           <div className="relative flex items-center gap-2 w-full sm:w-72">
@@ -125,16 +135,31 @@ export const ArticlesClient = ({ initialArticles, categories }: ArticlesClientPr
               />
             </div>
           </div>
-          <Link href={tenantId ? `/manage/${tenantId}/knowledge-items/new` : '/knowledge-base/articles/new'} className="w-full sm:w-auto">
-            <KwidButton variant="primary" size="md" className="w-full sm:w-auto">
-              <Plus className="mr-2 h-4 w-4" />Создать статью
+          <Link
+            href={
+              tenantId
+                ? `/manage/${tenantId}/knowledge-items/new`
+                : "/knowledge-base/articles/new"
+            }
+            className="w-full sm:w-auto"
+          >
+            <KwidButton
+              variant="primary"
+              size="md"
+              className="w-full sm:w-auto"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Создать статью
             </KwidButton>
           </Link>
         </div>
       </div>
 
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400" role="alert">
+        <div
+          className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
+          role="alert"
+        >
           {error}
         </div>
       )}
@@ -149,36 +174,48 @@ export const ArticlesClient = ({ initialArticles, categories }: ArticlesClientPr
             data={articles}
             columns={[
               {
-                key: 'title',
-                header: 'Название',
+                key: "title",
+                header: "Название",
                 accessor: (article) => (
                   <div className="flex items-center gap-2">
                     <FileText className="h-5 w-5 text-gray-400" />
-                    <span className="font-medium text-gray-900 dark:text-white">{article.title}</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {article.title}
+                    </span>
                   </div>
                 ),
               },
               {
-                key: 'category',
-                header: 'Категория',
+                key: "category",
+                header: "Категория",
                 accessor: (article) => (
-                  <span className="text-gray-500 dark:text-gray-400">{getCategoryName(article.categoryId)}</span>
+                  <span className="text-gray-500 dark:text-gray-400">
+                    {getCategoryName(article.categoryId)}
+                  </span>
                 ),
               },
               {
-                key: 'createdAt',
-                header: 'Дата создания',
+                key: "createdAt",
+                header: "Дата создания",
                 accessor: (article) => (
-                  <span className="text-gray-500 dark:text-gray-400">{formatDate(article.createdAt)}</span>
+                  <span className="text-gray-500 dark:text-gray-400">
+                    {formatDate(article.createdAt)}
+                  </span>
                 ),
               },
               {
-                key: 'actions',
-                header: 'Действия',
-                className: 'text-right',
+                key: "actions",
+                header: "Действия",
+                className: "text-right",
                 accessor: (article) => (
                   <div className="flex items-center justify-end gap-2">
-                    <Link href={tenantId ? `/manage/${tenantId}/knowledge-items/${article.id}` : `/knowledge-base/articles/${article.id}`}>
+                    <Link
+                      href={
+                        tenantId
+                          ? `/manage/${tenantId}/knowledge-items/${article.id}`
+                          : `/knowledge-base/articles/${article.id}`
+                      }
+                    >
                       <KwidButton variant="outline" size="sm">
                         <Edit className="h-4 w-4" />
                       </KwidButton>
@@ -199,6 +236,5 @@ export const ArticlesClient = ({ initialArticles, categories }: ArticlesClientPr
         )}
       </div>
     </div>
-  )
-}
-
+  );
+};

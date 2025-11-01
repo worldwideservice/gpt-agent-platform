@@ -1,56 +1,76 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import type { LucideIcon } from 'lucide-react'
-import { 
-  Settings, 
-  Users, 
-  Zap, 
-  Clock, 
-  Puzzle, 
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
+import {
+  Settings,
+  Users,
+  Zap,
+  Clock,
+  Puzzle,
   Edit3,
   Trash2,
   Save,
   X,
-  Link2
-} from 'lucide-react'
-import { KwidButton, KwidInput, KwidTextarea, KwidTabs, KwidTabsContent, KwidSwitch, KwidSection, KwidSelect } from '@/components/kwid'
-import { InteractionSettings } from '@/components/crm/InteractionSettings'
-import { CRMSync } from '@/components/crm/CRMSync'
-import { DealContactFieldsSelector } from '@/components/crm/DealContactFieldsSelector'
-import { ChannelsSettings } from '@/components/crm/ChannelsSettings'
-import { KnowledgeBaseSettings } from '@/components/crm/KnowledgeBaseSettings'
-import { TriggerManager } from '@/components/agents/TriggerManager'
-import { AgentSequencesManager } from '@/app/(protected)/agents/[id]/_components/AgentSequencesManager'
-import { useCRMData } from '@/hooks/useCRMData'
-import type { CRMConnection, UniversalPipeline, UniversalChannel } from '@/types/crm'
+  Link2,
+} from "lucide-react";
+import {
+  KwidButton,
+  KwidInput,
+  KwidTextarea,
+  KwidTabs,
+  KwidTabsContent,
+  KwidSwitch,
+  KwidSection,
+  KwidSelect,
+} from "@/components/kwid";
+import { InteractionSettings } from "@/components/crm/InteractionSettings";
+import { CRMSync } from "@/components/crm/CRMSync";
+import { DealContactFieldsSelector } from "@/components/crm/DealContactFieldsSelector";
+import { ChannelsSettings } from "@/components/crm/ChannelsSettings";
+import { KnowledgeBaseSettings } from "@/components/crm/KnowledgeBaseSettings";
+import { TriggerManager } from "@/components/agents/TriggerManager";
+import { AgentSequencesManager } from "@/app/(protected)/agents/[id]/_components/AgentSequencesManager";
+import { useCRMData } from "@/hooks/useCRMData";
+import type {
+  CRMConnection,
+  UniversalPipeline,
+  UniversalChannel,
+} from "@/types/crm";
 
 interface ChannelItem {
-  id: string
-  name: string
-  type: string
-  isActive: boolean
+  id: string;
+  name: string;
+  type: string;
+  isActive: boolean;
 }
 
 const tabs: Array<{ value: string; label: string; icon: LucideIcon }> = [
-  { value: 'general', label: 'Основные', icon: Settings },
-  { value: 'deals', label: 'Сделки и контакты', icon: Users },
-  { value: 'triggers', label: 'Триггеры', icon: Zap },
-  { value: 'chains', label: 'Цепочки', icon: Clock },
-  { value: 'integrations', label: 'Интеграции', icon: Puzzle },
-  { value: 'additional', label: 'Дополнительно', icon: Edit3 },
-]
+  { value: "general", label: "Основные", icon: Settings },
+  { value: "deals", label: "Сделки и контакты", icon: Users },
+  { value: "triggers", label: "Триггеры", icon: Zap },
+  { value: "chains", label: "Цепочки", icon: Clock },
+  { value: "integrations", label: "Интеграции", icon: Puzzle },
+  { value: "additional", label: "Дополнительно", icon: Edit3 },
+];
 
-export default function EditAgentPage({ params }: { params: Promise<{ id: string }> }) {
-  const [resolvedParams, setResolvedParams] = useState<{ id: string } | null>(null)
-  const [activeTab, setActiveTab] = useState('general')
-  const [agentName, setAgentName] = useState('АИ ассистент')
-  const [isActive, setIsActive] = useState(true)
-  const [aiModel, setAiModel] = useState('gpt-5')
-  const [autoDetectLanguage, setAutoDetectLanguage] = useState(true)
-  const [responseDelay, setResponseDelay] = useState(45)
-  const [instructions, setInstructions] = useState(`ОТВЕЧАЙ ТОЛЬКО НА АНГЛИЙСКОМ ЯЗЫКЕ - ВСЕГДА !!
+export default function EditAgentPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const [resolvedParams, setResolvedParams] = useState<{ id: string } | null>(
+    null,
+  );
+  const [activeTab, setActiveTab] = useState("general");
+  const [agentName, setAgentName] = useState("АИ ассистент");
+  const [isActive, setIsActive] = useState(true);
+  const [aiModel, setAiModel] = useState("gpt-5");
+  const [autoDetectLanguage, setAutoDetectLanguage] = useState(true);
+  const [responseDelay, setResponseDelay] = useState(45);
+  const [instructions, setInstructions] =
+    useState(`ОТВЕЧАЙ ТОЛЬКО НА АНГЛИЙСКОМ ЯЗЫКЕ - ВСЕГДА !!
 
 Когда тебе скидывают емейл одного из наших сотрудников, не заполняй его в поле емейл, а укажи что это емейл сотрудника я понял, а мне нужен ваш емейл
 
@@ -61,184 +81,217 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
 Ты — AI-помощник компании World Wide Services. Твоё имя — Maksym.
 Ты - не просто бот, а как реальный сотрудник.
 Ты работаешь в паре с иммиграционным консультантом и помогаешь клиенту быстрее попасть на консультацию.
-Эмодзи использовать запрещено.`)
+Эмодзи использовать запрещено.`);
 
   // CRM State
-  const [checkBeforeSending, setCheckBeforeSending] = useState(false)
-  const [allChannelsEnabled, setAllChannelsEnabled] = useState(true)
-  const [allCategoriesEnabled, setAllCategoriesEnabled] = useState(true)
-  const [createTaskOnNotFound, setCreateTaskOnNotFound] = useState(false)
-  const [notFoundMessage, setNotFoundMessage] = useState('Ответ на этот вопрос предоставит ваш персональный immigration advisor, когда свяжется с вами напрямую.')
+  const [checkBeforeSending, setCheckBeforeSending] = useState(false);
+  const [allChannelsEnabled, setAllChannelsEnabled] = useState(true);
+  const [allCategoriesEnabled, setAllCategoriesEnabled] = useState(true);
+  const [createTaskOnNotFound, setCreateTaskOnNotFound] = useState(false);
+  const [notFoundMessage, setNotFoundMessage] = useState(
+    "Ответ на этот вопрос предоставит ваш персональный immigration advisor, когда свяжется с вами напрямую.",
+  );
 
   // Channels
-  const [channels, setChannels] = useState<ChannelItem[]>([])
+  const [channels, setChannels] = useState<ChannelItem[]>([]);
 
   // PRODUCT VENDORS (PARTNERSHIP)
-  const [productVendorsActive, setProductVendorsActive] = useState(true)
+  const [productVendorsActive, setProductVendorsActive] = useState(true);
 
   // CRM Connection
-  const [crmConnection, setCrmConnection] = useState<CRMConnection | null>(null)
-  const [isLoadingCrm, setIsLoadingCrm] = useState(true)
+  const [crmConnection, setCrmConnection] = useState<CRMConnection | null>(
+    null,
+  );
+  const [isLoadingCrm, setIsLoadingCrm] = useState(true);
 
   // Pipeline Settings
-  const [pipelineSettings, setPipelineSettings] = useState<Array<{
-    id: string
-    name: string
-    isActive: boolean
-    allStages: boolean
-    selectedStages: string[]
-    stageInstructions?: Record<string, string>
-  }>>([])
+  const [pipelineSettings, setPipelineSettings] = useState<
+    Array<{
+      id: string;
+      name: string;
+      isActive: boolean;
+      allStages: boolean;
+      selectedStages: string[];
+      stageInstructions?: Record<string, string>;
+    }>
+  >([]);
 
   // Загрузка CRM подключения
   useEffect(() => {
     const loadParams = async () => {
-      const resolved = await params
-      setResolvedParams(resolved)
+      const resolved = await params;
+      setResolvedParams(resolved);
 
       // Загружаем CRM подключение
       try {
-        const response = await fetch(`/api/agents/${resolved.id}/crm-connection`)
+        const response = await fetch(
+          `/api/agents/${resolved.id}/crm-connection`,
+        );
         if (response.ok) {
-          const data = await response.json()
+          const data = await response.json();
           if (data.success && data.data) {
-            setCrmConnection(data.data)
+            setCrmConnection(data.data);
           }
         }
       } catch (error) {
-        console.error('Failed to load CRM connection', error)
+        console.error("Failed to load CRM connection", error);
       } finally {
-        setIsLoadingCrm(false)
+        setIsLoadingCrm(false);
       }
 
       // Загружаем данные агента
       try {
-        const agentResponse = await fetch(`/api/agents/${resolved.id}`)
+        const agentResponse = await fetch(`/api/agents/${resolved.id}`);
         if (agentResponse.ok) {
-          const agentData = await agentResponse.json()
+          const agentData = await agentResponse.json();
           if (agentData.success && agentData.data) {
-            const agent = agentData.data
-            setAgentName(agent.name || 'АИ ассистент')
-            setIsActive(agent.status === 'active')
+            const agent = agentData.data;
+            setAgentName(agent.name || "АИ ассистент");
+            setIsActive(agent.status === "active");
             if (agent.instructions) {
-              setInstructions(agent.instructions)
+              setInstructions(agent.instructions);
             }
             if (agent.model) {
-              setAiModel(agent.model)
+              setAiModel(agent.model);
             }
             if (agent.responseDelaySeconds !== undefined) {
-              setResponseDelay(agent.responseDelaySeconds)
+              setResponseDelay(agent.responseDelaySeconds);
             }
-            
+
             // Загружаем настройки из settings
-            const settings = agent.settings as Record<string, unknown> | undefined
+            const settings = agent.settings as
+              | Record<string, unknown>
+              | undefined;
             if (settings) {
-              if (typeof settings.checkBeforeSending === 'boolean') {
-                setCheckBeforeSending(settings.checkBeforeSending)
+              if (typeof settings.checkBeforeSending === "boolean") {
+                setCheckBeforeSending(settings.checkBeforeSending);
               }
-              if (typeof settings.knowledgeBaseAllCategories === 'boolean') {
-                setAllCategoriesEnabled(settings.knowledgeBaseAllCategories)
+              if (typeof settings.knowledgeBaseAllCategories === "boolean") {
+                setAllCategoriesEnabled(settings.knowledgeBaseAllCategories);
               }
-              if (typeof settings.createTaskOnNotFound === 'boolean') {
-                setCreateTaskOnNotFound(settings.createTaskOnNotFound)
+              if (typeof settings.createTaskOnNotFound === "boolean") {
+                setCreateTaskOnNotFound(settings.createTaskOnNotFound);
               }
-              if (typeof settings.notFoundMessage === 'string') {
-                setNotFoundMessage(settings.notFoundMessage)
+              if (typeof settings.notFoundMessage === "string") {
+                setNotFoundMessage(settings.notFoundMessage);
               }
             }
           }
         }
       } catch (error) {
-        console.error('Failed to load agent', error)
+        console.error("Failed to load agent", error);
       }
 
       // Загружаем сохраненные настройки воронок
       try {
-        const settingsResponse = await fetch(`/api/agents/${resolved.id}/pipeline-settings`)
+        const settingsResponse = await fetch(
+          `/api/agents/${resolved.id}/pipeline-settings`,
+        );
         if (settingsResponse.ok) {
-          const settingsData = await settingsResponse.json()
+          const settingsData = await settingsResponse.json();
           if (settingsData.success && settingsData.data) {
-            setPipelineSettings(settingsData.data.map((s: {
-              pipeline_id: string
-              is_active: boolean
-              all_stages: boolean
-              selected_stages: string[]
-              stage_instructions?: Record<string, string>
-            }) => ({
-              id: s.pipeline_id,
-              isActive: s.is_active,
-              allStages: s.all_stages,
-              selectedStages: s.selected_stages || [],
-              stageInstructions: s.stage_instructions || {},
-            })))
+            setPipelineSettings(
+              settingsData.data.map(
+                (s: {
+                  pipeline_id: string;
+                  is_active: boolean;
+                  all_stages: boolean;
+                  selected_stages: string[];
+                  stage_instructions?: Record<string, string>;
+                }) => ({
+                  id: s.pipeline_id,
+                  isActive: s.is_active,
+                  allStages: s.all_stages,
+                  selectedStages: s.selected_stages || [],
+                  stageInstructions: s.stage_instructions || {},
+                }),
+              ),
+            );
           }
         }
       } catch (error) {
-        console.error('Failed to load pipeline settings', error)
+        console.error("Failed to load pipeline settings", error);
       }
-    }
+    };
 
-    void loadParams()
-  }, [params])
+    void loadParams();
+  }, [params]);
 
   // CRM Data Hook
-  const { pipelines, channels: crmChannels, syncData } = useCRMData(crmConnection)
+  const {
+    pipelines,
+    channels: crmChannels,
+    syncData,
+  } = useCRMData(crmConnection);
 
   // Преобразуем каналы из CRM в нужный формат
   useEffect(() => {
     if (crmChannels && crmChannels.length > 0) {
-      setChannels(crmChannels.map(ch => ({
-        id: ch.id,
-        name: ch.name,
-        type: ch.type || 'unknown',
-        isActive: ch.isActive || false,
-      })))
+      setChannels(
+        crmChannels.map((ch) => ({
+          id: ch.id,
+          name: ch.name,
+          type: ch.type || "unknown",
+          isActive: ch.isActive || false,
+        })),
+      );
     } else {
-      setChannels([])
+      setChannels([]);
     }
-  }, [crmChannels])
+  }, [crmChannels]);
 
   // CRM Handlers
-  const handlePipelineUpdate = (pipelineId: string, updates: Partial<typeof pipelineSettings[0]>) => {
-    setPipelineSettings(prev => {
-      const existing = prev.find(p => p.id === pipelineId)
+  const handlePipelineUpdate = (
+    pipelineId: string,
+    updates: Partial<(typeof pipelineSettings)[0]>,
+  ) => {
+    setPipelineSettings((prev) => {
+      const existing = prev.find((p) => p.id === pipelineId);
       if (existing) {
-        return prev.map(p => p.id === pipelineId ? { ...p, ...updates } : p)
+        return prev.map((p) =>
+          p.id === pipelineId ? { ...p, ...updates } : p,
+        );
       } else {
         // Создаем новую настройку если её нет
-        const pipeline = pipelines.find(p => p.id === pipelineId)
-        return [...prev, {
-          id: pipelineId,
-          name: pipeline?.name || 'Неизвестная воронка',
-          isActive: updates.isActive ?? false,
-          allStages: updates.allStages ?? false,
-          selectedStages: updates.selectedStages ?? [],
-          stageInstructions: updates.stageInstructions ?? {},
-        }]
+        const pipeline = pipelines.find((p) => p.id === pipelineId);
+        return [
+          ...prev,
+          {
+            id: pipelineId,
+            name: pipeline?.name || "Неизвестная воронка",
+            isActive: updates.isActive ?? false,
+            allStages: updates.allStages ?? false,
+            selectedStages: updates.selectedStages ?? [],
+            stageInstructions: updates.stageInstructions ?? {},
+          },
+        ];
       }
-    })
-  }
+    });
+  };
 
   // Сохранение настроек воронок
   const handleSavePipelineSettings = async () => {
-    if (!resolvedParams) return
+    if (!resolvedParams) return;
 
     try {
       // Сохраняем настройки воронок
-      const pipelineResponse = await fetch(`/api/agents/${resolvedParams.id}/pipeline-settings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(pipelineSettings),
-      })
+      const pipelineResponse = await fetch(
+        `/api/agents/${resolvedParams.id}/pipeline-settings`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(pipelineSettings),
+        },
+      );
 
       if (!pipelineResponse.ok) {
-        throw new Error('Не удалось сохранить настройки воронок')
+        throw new Error("Не удалось сохранить настройки воронок");
       }
 
       // Сохраняем настройки взаимодействия и базы знаний
       const settingsResponse = await fetch(`/api/agents/${resolvedParams.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           settings: {
             checkBeforeSending,
@@ -247,65 +300,78 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
             notFoundMessage,
           },
         }),
-      })
+      });
 
       if (!settingsResponse.ok) {
-        throw new Error('Не удалось сохранить настройки')
+        throw new Error("Не удалось сохранить настройки");
       }
 
-      alert('Все настройки сохранены')
+      alert("Все настройки сохранены");
     } catch (error) {
-      console.error('Failed to save settings', error)
-      alert('Ошибка сохранения настроек')
+      console.error("Failed to save settings", error);
+      alert("Ошибка сохранения настроек");
     }
-  }
+  };
 
   const handleChannelToggle = (channelId: string, enabled: boolean) => {
     // В реальном приложении здесь будет обновление настроек каналов
-    console.log(`Channel ${channelId} toggled to ${enabled}`)
-  }
+    console.log(`Channel ${channelId} toggled to ${enabled}`);
+  };
 
   const handleCRMSync = async () => {
-    await syncData()
-  }
+    await syncData();
+  };
 
   const handleOpenKnowledgeBase = () => {
-    window.open('/knowledge-base', '_blank')
-  }
+    window.open("/knowledge-base", "_blank");
+  };
 
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
       <div className="text-sm text-gray-600 dark:text-gray-400">
-        <span>Агенты ИИ</span> {'>'} <span className="text-gray-900 dark:text-white font-medium">АИ ассистент</span> {'>'} <span className="text-gray-900 dark:text-white font-medium">{tabs.find(t => t.value === activeTab)?.label || 'Основные'}</span>
+        <span>Агенты ИИ</span> {">"}{" "}
+        <span className="text-gray-900 dark:text-white font-medium">
+          АИ ассистент
+        </span>{" "}
+        {">"}{" "}
+        <span className="text-gray-900 dark:text-white font-medium">
+          {tabs.find((t) => t.value === activeTab)?.label || "Основные"}
+        </span>
       </div>
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">Редактирование АИ ассистент</h1>
-        <KwidButton 
+        <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
+          Редактирование АИ ассистент
+        </h1>
+        <KwidButton
           variant="danger"
           size="md"
           onClick={async () => {
-            if (!resolvedParams) return
-            
-            if (!confirm('Вы уверены, что хотите удалить этого агента? Это действие нельзя отменить.')) {
-              return
+            if (!resolvedParams) return;
+
+            if (
+              !confirm(
+                "Вы уверены, что хотите удалить этого агента? Это действие нельзя отменить.",
+              )
+            ) {
+              return;
             }
 
             try {
               const response = await fetch(`/api/agents/${resolvedParams.id}`, {
-                method: 'DELETE',
-              })
+                method: "DELETE",
+              });
 
               if (!response.ok) {
-                throw new Error('Не удалось удалить агента')
+                throw new Error("Не удалось удалить агента");
               }
 
-              window.location.href = '/agents'
+              window.location.href = "/agents";
             } catch (error) {
-              console.error('Failed to delete agent', error)
-              alert('Ошибка удаления агента')
+              console.error("Failed to delete agent", error);
+              alert("Ошибка удаления агента");
             }
           }}
         >
@@ -315,7 +381,12 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
       </div>
 
       {/* Tabs */}
-      <KwidTabs value={activeTab} onValueChange={setActiveTab} tabs={tabs} listClassName="w-full">
+      <KwidTabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        tabs={tabs}
+        listClassName="w-full"
+      >
         {/* Основные (General) */}
         <KwidTabsContent value="general" className="mt-6 space-y-6">
           {/* Профиль агента */}
@@ -335,7 +406,9 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
 
               <div className="flex items-center space-x-3">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Активно</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Активно
+                  </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     Агент будет получать и обрабатывать входящие сообщения
                   </p>
@@ -343,26 +416,31 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
                 <KwidSwitch
                   checked={isActive}
                   onCheckedChange={async (checked) => {
-                    setIsActive(checked)
-                    
+                    setIsActive(checked);
+
                     // Сохраняем статус
                     if (resolvedParams) {
                       try {
-                        const response = await fetch(`/api/agents/${resolvedParams.id}/status`, {
-                          method: 'PATCH',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ status: checked ? 'active' : 'inactive' }),
-                        })
+                        const response = await fetch(
+                          `/api/agents/${resolvedParams.id}/status`,
+                          {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              status: checked ? "active" : "inactive",
+                            }),
+                          },
+                        );
 
                         if (!response.ok) {
                           // Откатываем изменение при ошибке
-                          setIsActive(!checked)
-                          alert('Не удалось изменить статус агента')
+                          setIsActive(!checked);
+                          alert("Не удалось изменить статус агента");
                         }
                       } catch (error) {
-                        console.error('Failed to update agent status', error)
-                        setIsActive(!checked)
-                        alert('Ошибка обновления статуса')
+                        console.error("Failed to update agent status", error);
+                        setIsActive(!checked);
+                        alert("Ошибка обновления статуса");
                       }
                     }
                   }}
@@ -395,14 +473,24 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
           >
             <div className="space-y-3">
               {[
-                { id: '1', text: 'Я помогу вам быстро и бесплатно получить консультацию по иммиграции в Польшу. Для этого мне нужен ваш email.' },
-                { id: '2', text: 'Я отвечу в течение 24 часов, как только получу ваш email.' },
+                {
+                  id: "1",
+                  text: "Я помогу вам быстро и бесплатно получить консультацию по иммиграции в Польшу. Для этого мне нужен ваш email.",
+                },
+                {
+                  id: "2",
+                  text: "Я отвечу в течение 24 часов, как только получу ваш email.",
+                },
               ].map((goal) => (
                 <div key={goal.id} className="flex items-start space-x-3">
                   <div className="w-6 h-6 bg-custom-100 dark:bg-custom-900/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-xs font-bold text-custom-700 dark:text-custom-400">{goal.id}</span>
+                    <span className="text-xs font-bold text-custom-700 dark:text-custom-400">
+                      {goal.id}
+                    </span>
                   </div>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{goal.text}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    {goal.text}
+                  </p>
                 </div>
               ))}
             </div>
@@ -410,13 +498,13 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
 
           {/* Action Buttons */}
           <div className="fi-form-actions">
-            <KwidButton 
+            <KwidButton
               variant="outline"
               size="md"
               onClick={() => {
                 // Отмена - перезагружаем данные
                 if (resolvedParams) {
-                  window.location.reload()
+                  window.location.reload();
                 }
               }}
             >
@@ -427,30 +515,33 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
               variant="primary"
               size="md"
               onClick={async () => {
-                if (!resolvedParams) return
+                if (!resolvedParams) return;
 
                 try {
-                  const response = await fetch(`/api/agents/${resolvedParams.id}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      name: agentName,
-                      instructions: instructions,
-                      status: isActive ? 'active' : 'inactive',
-                      settings: {
-                        checkBeforeSending,
-                      },
-                    }),
-                  })
+                  const response = await fetch(
+                    `/api/agents/${resolvedParams.id}`,
+                    {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        name: agentName,
+                        instructions: instructions,
+                        status: isActive ? "active" : "inactive",
+                        settings: {
+                          checkBeforeSending,
+                        },
+                      }),
+                    },
+                  );
 
                   if (!response.ok) {
-                    throw new Error('Не удалось сохранить агента')
+                    throw new Error("Не удалось сохранить агента");
                   }
 
-                  alert('Настройки сохранены')
+                  alert("Настройки сохранены");
                 } catch (error) {
-                  console.error('Failed to save agent', error)
-                  alert('Ошибка сохранения настроек')
+                  console.error("Failed to save agent", error);
+                  alert("Ошибка сохранения настроек");
                 }
               }}
             >
@@ -463,12 +554,16 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
         {/* Сделки и контакты (Deals) */}
         <KwidTabsContent value="deals" className="mt-6 space-y-6">
           <div className="mb-4">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Сделки и контакты</h2>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+              Сделки и контакты
+            </h2>
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 dark:bg-blue-900/20 dark:border-blue-800">
             <p className="text-sm text-blue-800 dark:text-blue-200">
-              Выбирайте только необходимые поля. Большее количество полей добавляет дополнительный контекст и может снизить точность ответов.
+              Выбирайте только необходимые поля. Большее количество полей
+              добавляет дополнительный контекст и может снизить точность
+              ответов.
             </p>
           </div>
 
@@ -476,30 +571,36 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
             checkBeforeSending={checkBeforeSending}
             onCheckBeforeSendingToggle={setCheckBeforeSending}
           />
-          
+
           <CRMSync
             connection={crmConnection}
             pipelineSettings={pipelineSettings}
             onPipelineUpdate={handlePipelineUpdate}
           />
 
-          {resolvedParams && <DealContactFieldsSelector agentId={resolvedParams.id} />}
+          {resolvedParams && (
+            <DealContactFieldsSelector agentId={resolvedParams.id} />
+          )}
 
           {/* Кнопки сохранения */}
           <div className="fi-form-actions">
-            <KwidButton 
+            <KwidButton
               variant="outline"
               size="md"
               onClick={() => {
                 // Отмена - перезагружаем данные
                 if (resolvedParams) {
-                  window.location.reload()
+                  window.location.reload();
                 }
               }}
             >
               Отмена
             </KwidButton>
-            <KwidButton onClick={handleSavePipelineSettings} variant="primary" size="md">
+            <KwidButton
+              onClick={handleSavePipelineSettings}
+              variant="primary"
+              size="md"
+            >
               Сохранить
             </KwidButton>
           </div>
@@ -507,9 +608,7 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
 
         {/* Триггеры (Triggers) */}
         <KwidTabsContent value="triggers" className="mt-6 space-y-6">
-          {resolvedParams && (
-            <TriggerManager agentId={resolvedParams.id} />
-          )}
+          {resolvedParams && <TriggerManager agentId={resolvedParams.id} />}
         </KwidTabsContent>
 
         {/* Цепочки (Chains) */}
@@ -523,7 +622,9 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
         <KwidTabsContent value="integrations" className="mt-6 space-y-6">
           <div className="space-y-6">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Интеграции</h2>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Интеграции
+              </h2>
             </div>
 
             <div className="flex items-center gap-2">
@@ -540,9 +641,15 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Интеграция</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Установлено</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Активно</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Интеграция
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Установлено
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Активно
+                    </th>
                     <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 dark:text-gray-400"></th>
                   </tr>
                 </thead>
@@ -550,19 +657,41 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
                   {/* Kommo Integration */}
                   <tr className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800">
                     <td className="px-4 py-3">
-                      <span className="text-sm font-semibold text-gray-900 dark:text-white">Kommo</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        Kommo
+                      </span>
                     </td>
                     <td className="px-4 py-3">
                       {crmConnection ? (
                         <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500">
-                          <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          <svg
+                            className="h-3 w-3 text-white"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 13l4 4L19 7"
+                            />
                           </svg>
                         </div>
                       ) : (
                         <div className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500">
-                          <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          <svg
+                            className="h-3 w-3 text-white"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
                           </svg>
                         </div>
                       )}
@@ -570,14 +699,34 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
                     <td className="px-4 py-3">
                       {crmConnection ? (
                         <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500">
-                          <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          <svg
+                            className="h-3 w-3 text-white"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 13l4 4L19 7"
+                            />
                           </svg>
                         </div>
                       ) : (
                         <div className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500">
-                          <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          <svg
+                            className="h-3 w-3 text-white"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
                           </svg>
                         </div>
                       )}
@@ -586,7 +735,7 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
                       <KwidButton variant="outline" size="sm" asChild>
                         <Link href="/integrations">
                           <Settings className="mr-2 h-4 w-4" />
-                          {crmConnection ? 'Настройки' : 'Установить'}
+                          {crmConnection ? "Настройки" : "Установить"}
                         </Link>
                       </KwidButton>
                     </td>
@@ -595,19 +744,41 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
                   {/* Google Calendar Integration */}
                   <tr className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800">
                     <td className="px-4 py-3">
-                      <span className="text-sm font-semibold text-gray-900 dark:text-white">Google Calendar</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        Google Calendar
+                      </span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500">
-                        <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        <svg
+                          className="h-3 w-3 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
                         </svg>
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500">
-                        <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        <svg
+                          className="h-3 w-3 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
                         </svg>
                       </div>
                     </td>
@@ -679,22 +850,25 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
               value={aiModel}
               onChange={(value) => setAiModel(value)}
               options={[
-                { value: 'gpt-5', label: 'OpenAI GPT-5 - Новейшая модель OpenAI с надёжными и естественными ответами' },
-                { value: 'gpt-4.1', label: 'OpenAI GPT-4.1' },
-                { value: 'gpt-4', label: 'OpenAI GPT-4' },
+                {
+                  value: "gpt-5",
+                  label:
+                    "OpenAI GPT-5 - Новейшая модель OpenAI с надёжными и естественными ответами",
+                },
+                { value: "gpt-4.1", label: "OpenAI GPT-4.1" },
+                { value: "gpt-4", label: "OpenAI GPT-4" },
               ]}
               hint="Выберите, насколько умным вы хотите сделать ИИ. Более продвинутые модели стоят дороже."
             />
           </KwidSection>
 
           {/* Язык */}
-          <KwidSection
-            title="Язык"
-            description="Настройки определения языка"
-          >
+          <KwidSection title="Язык" description="Настройки определения языка">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Автоматически определять язык пользователя</p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Автоматически определять язык пользователя
+                </p>
               </div>
               <KwidSwitch
                 checked={autoDetectLanguage}
@@ -714,14 +888,16 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
               min="0"
               max="86400"
               value={responseDelay.toString()}
-              onChange={(e) => setResponseDelay(parseInt(e.target.value, 10) || 0)}
+              onChange={(e) =>
+                setResponseDelay(parseInt(e.target.value, 10) || 0)
+              }
               hint="Сколько секунд ждать перед ответом. Рекомендуем установить задержку не менее 30 секунд, чтобы избежать дублирования ответов, если клиент отправит другое сообщение, пока агент отвечает."
             />
           </KwidSection>
 
           {/* Кнопки действий */}
           <div className="fi-form-actions">
-            <KwidButton 
+            <KwidButton
               variant="outline"
               size="md"
               onClick={() => {
@@ -735,29 +911,32 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
               variant="primary"
               size="md"
               onClick={async () => {
-                if (!resolvedParams) return
+                if (!resolvedParams) return;
 
                 try {
-                  const response = await fetch(`/api/agents/${resolvedParams.id}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      model: aiModel,
-                      responseDelaySeconds: responseDelay,
-                      settings: {
-                        language: autoDetectLanguage ? 'auto' : undefined,
-                      },
-                    }),
-                  })
+                  const response = await fetch(
+                    `/api/agents/${resolvedParams.id}`,
+                    {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        model: aiModel,
+                        responseDelaySeconds: responseDelay,
+                        settings: {
+                          language: autoDetectLanguage ? "auto" : undefined,
+                        },
+                      }),
+                    },
+                  );
 
                   if (!response.ok) {
-                    throw new Error('Не удалось сохранить настройки')
+                    throw new Error("Не удалось сохранить настройки");
                   }
 
-                  alert('Настройки сохранены')
+                  alert("Настройки сохранены");
                 } catch (error) {
-                  console.error('Failed to save settings', error)
-                  alert('Ошибка сохранения настроек')
+                  console.error("Failed to save settings", error);
+                  alert("Ошибка сохранения настроек");
                 }
               }}
             >
@@ -768,5 +947,5 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
         </KwidTabsContent>
       </KwidTabs>
     </div>
-  )
+  );
 }

@@ -1,213 +1,228 @@
-'use client'
+"use client";
 
-import { useCallback, useEffect, useState } from 'react'
-import { Upload, X, FileText, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
+import { useCallback, useEffect, useState } from "react";
+import {
+  Upload,
+  X,
+  FileText,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 
-import { KwidButton } from '@/components/kwid'
+import { KwidButton } from "@/components/kwid";
 
 interface FileUploadProps {
-  agentId: string
-  onUploadComplete?: () => void
+  agentId: string;
+  onUploadComplete?: () => void;
 }
 
 interface UploadedFile {
-  id: string
-  name: string
-  size: number
-  type: string
-  status: 'pending' | 'processing' | 'completed' | 'failed'
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  status: "pending" | "processing" | "completed" | "failed";
 }
 
 export const FileUpload = ({ agentId, onUploadComplete }: FileUploadProps) => {
-  const [files, setFiles] = useState<UploadedFile[]>([])
-  const [isUploading, setIsUploading] = useState(false)
-  const [dragActive, setDragActive] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [files, setFiles] = useState<UploadedFile[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Загружаем список существующих файлов
   const fetchFiles = useCallback(async () => {
     try {
-      const response = await fetch(`/api/agents/${agentId}/assets`)
+      const response = await fetch(`/api/agents/${agentId}/assets`);
       if (!response.ok) {
-        throw new Error('Не удалось загрузить файлы')
+        throw new Error("Не удалось загрузить файлы");
       }
 
       const payload = (await response.json()) as {
-        success: boolean
-        data: UploadedFile[]
-      }
+        success: boolean;
+        data: UploadedFile[];
+      };
 
       if (payload.success) {
-        setFiles(payload.data)
+        setFiles(payload.data);
       }
     } catch (err) {
-      console.error('Failed to fetch files', err)
+      console.error("Failed to fetch files", err);
     }
-  }, [agentId])
+  }, [agentId]);
 
   // Обработка загрузки файлов
   const handleUpload = useCallback(
     async (fileList: FileList | null) => {
       if (!fileList || fileList.length === 0) {
-        return
+        return;
       }
 
-      setIsUploading(true)
-      setError(null)
+      setIsUploading(true);
+      setError(null);
 
       try {
-        const uploadedFiles: UploadedFile[] = []
+        const uploadedFiles: UploadedFile[] = [];
 
         for (const file of Array.from(fileList)) {
           // Проверка размера
           if (file.size > 50 * 1024 * 1024) {
-            setError(`Файл ${file.name} слишком большой (максимум 50 MB)`)
-            continue
+            setError(`Файл ${file.name} слишком большой (максимум 50 MB)`);
+            continue;
           }
 
           // Проверка типа
           const allowedTypes = [
-            'application/pdf',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'text/plain',
-            'text/html',
-            'text/markdown',
-          ]
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "text/plain",
+            "text/html",
+            "text/markdown",
+          ];
 
           const isValidType =
             allowedTypes.includes(file.type) ||
-            file.name.match(/\.(pdf|docx|txt|html|md)$/i)
+            file.name.match(/\.(pdf|docx|txt|html|md)$/i);
 
           if (!isValidType) {
-            setError(`Неподдерживаемый тип файла: ${file.name}`)
-            continue
+            setError(`Неподдерживаемый тип файла: ${file.name}`);
+            continue;
           }
 
           // Загрузка файла
-          const formData = new FormData()
-          formData.append('file', file)
+          const formData = new FormData();
+          formData.append("file", file);
 
           const response = await fetch(`/api/agents/${agentId}/assets`, {
-            method: 'POST',
+            method: "POST",
             body: formData,
-          })
+          });
 
           if (!response.ok) {
-            const errorData = (await response.json()) as { success: boolean; error?: string }
-            throw new Error(errorData.error || `Не удалось загрузить ${file.name}`)
+            const errorData = (await response.json()) as {
+              success: boolean;
+              error?: string;
+            };
+            throw new Error(
+              errorData.error || `Не удалось загрузить ${file.name}`,
+            );
           }
 
           const payload = (await response.json()) as {
-            success: boolean
-            data: UploadedFile
-          }
+            success: boolean;
+            data: UploadedFile;
+          };
 
           if (payload.success) {
-            uploadedFiles.push(payload.data)
+            uploadedFiles.push(payload.data);
           }
         }
 
         // Обновляем список файлов
-        await fetchFiles()
-        onUploadComplete?.()
+        await fetchFiles();
+        onUploadComplete?.();
       } catch (err) {
-        console.error('Failed to upload files', err)
-        setError(err instanceof Error ? err.message : 'Ошибка загрузки файлов')
+        console.error("Failed to upload files", err);
+        setError(err instanceof Error ? err.message : "Ошибка загрузки файлов");
       } finally {
-        setIsUploading(false)
+        setIsUploading(false);
       }
     },
     [agentId, fetchFiles, onUploadComplete],
-  )
+  );
 
   // Обработка drag & drop
   const handleDrag = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+    e.preventDefault();
+    e.stopPropagation();
 
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true)
-    } else if (e.type === 'dragleave') {
-      setDragActive(false)
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
     }
-  }, [])
+  }, []);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
-      e.preventDefault()
-      e.stopPropagation()
-      setDragActive(false)
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
 
       if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        handleUpload(e.dataTransfer.files)
+        handleUpload(e.dataTransfer.files);
       }
     },
     [handleUpload],
-  )
+  );
 
   // Удаление файла
   const handleDelete = useCallback(
     async (fileId: string) => {
       try {
-        const response = await fetch(`/api/agents/${agentId}/assets/${fileId}`, {
-          method: 'DELETE',
-        })
+        const response = await fetch(
+          `/api/agents/${agentId}/assets/${fileId}`,
+          {
+            method: "DELETE",
+          },
+        );
 
         if (!response.ok) {
-          throw new Error('Не удалось удалить файл')
+          throw new Error("Не удалось удалить файл");
         }
 
-        await fetchFiles()
+        await fetchFiles();
       } catch (err) {
-        console.error('Failed to delete file', err)
-        setError(err instanceof Error ? err.message : 'Ошибка удаления файла')
+        console.error("Failed to delete file", err);
+        setError(err instanceof Error ? err.message : "Ошибка удаления файла");
       }
     },
     [agentId, fetchFiles],
-  )
+  );
 
   // Загружаем файлы при монтировании
   useEffect(() => {
-    fetchFiles()
-  }, [fetchFiles])
+    fetchFiles();
+  }, [fetchFiles]);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) {
-      return `${bytes} B`
+      return `${bytes} B`;
     }
 
     if (bytes < 1024 * 1024) {
-      return `${(bytes / 1024).toFixed(1)} KB`
+      return `${(bytes / 1024).toFixed(1)} KB`;
     }
 
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  }
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
-  const getStatusIcon = (status: UploadedFile['status']) => {
+  const getStatusIcon = (status: UploadedFile["status"]) => {
     switch (status) {
-      case 'completed':
-        return <CheckCircle2 className="h-4 w-4 text-green-600" />
-      case 'failed':
-        return <AlertCircle className="h-4 w-4 text-rose-600" />
-      case 'processing':
-        return <Loader2 className="h-4 w-4 animate-spin text-primary-600" />
+      case "completed":
+        return <CheckCircle2 className="h-4 w-4 text-green-600" />;
+      case "failed":
+        return <AlertCircle className="h-4 w-4 text-rose-600" />;
+      case "processing":
+        return <Loader2 className="h-4 w-4 animate-spin text-primary-600" />;
       default:
-        return <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+        return <Loader2 className="h-4 w-4 animate-spin text-slate-400" />;
     }
-  }
+  };
 
-  const getStatusText = (status: UploadedFile['status']) => {
+  const getStatusText = (status: UploadedFile["status"]) => {
     switch (status) {
-      case 'completed':
-        return 'Обработан'
-      case 'failed':
-        return 'Ошибка'
-      case 'processing':
-        return 'Обработка...'
+      case "completed":
+        return "Обработан";
+      case "failed":
+        return "Ошибка";
+      case "processing":
+        return "Обработка...";
       default:
-        return 'Ожидание...'
+        return "Ожидание...";
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -215,17 +230,21 @@ export const FileUpload = ({ agentId, onUploadComplete }: FileUploadProps) => {
       <div
         className={`rounded-xl border-2 border-dashed p-12 text-center transition-colors dark:bg-gray-900 ${
           dragActive
-            ? 'border-custom-500 bg-custom-50 dark:border-custom-400 dark:bg-custom-900/20'
-            : 'border-slate-300 bg-slate-50 hover:border-custom-400 dark:border-gray-700 dark:hover:border-custom-500'
+            ? "border-custom-500 bg-custom-50 dark:border-custom-400 dark:bg-custom-900/20"
+            : "border-slate-300 bg-slate-50 hover:border-custom-400 dark:border-gray-700 dark:hover:border-custom-500"
         }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
       >
-        <Upload className={`mx-auto h-16 w-16 ${dragActive ? 'text-custom-600 dark:text-custom-400' : 'text-slate-400 dark:text-gray-500'}`} />
+        <Upload
+          className={`mx-auto h-16 w-16 ${dragActive ? "text-custom-600 dark:text-custom-400" : "text-slate-400 dark:text-gray-500"}`}
+        />
         <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-white">
-          {dragActive ? 'Отпустите для загрузки' : 'Перетащите файлы сюда или нажмите для выбора'}
+          {dragActive
+            ? "Отпустите для загрузки"
+            : "Перетащите файлы сюда или нажмите для выбора"}
         </h3>
         <p className="mt-2 text-sm text-slate-500 dark:text-gray-400">
           Поддерживаются: PDF, DOCX, TXT, HTML, Markdown (до 50 MB каждый)
@@ -240,7 +259,13 @@ export const FileUpload = ({ agentId, onUploadComplete }: FileUploadProps) => {
           disabled={isUploading}
         />
         <label htmlFor="file-upload" className="cursor-pointer">
-          <KwidButton type="button" variant="primary" className="mt-6 gap-2" disabled={isUploading} asChild>
+          <KwidButton
+            type="button"
+            variant="primary"
+            className="mt-6 gap-2"
+            disabled={isUploading}
+            asChild
+          >
             <span>
               {isUploading ? (
                 <>
@@ -259,7 +284,10 @@ export const FileUpload = ({ agentId, onUploadComplete }: FileUploadProps) => {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-900/20 dark:text-rose-400" role="alert">
+        <div
+          className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-900/20 dark:text-rose-400"
+          role="alert"
+        >
           {error}
         </div>
       )}
@@ -267,7 +295,9 @@ export const FileUpload = ({ agentId, onUploadComplete }: FileUploadProps) => {
       {/* Список загруженных файлов */}
       {files.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Загруженные файлы ({files.length})</h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+            Загруженные файлы ({files.length})
+          </h3>
           <div className="space-y-2">
             {files.map((file) => (
               <div
@@ -277,9 +307,12 @@ export const FileUpload = ({ agentId, onUploadComplete }: FileUploadProps) => {
                 <div className="flex items-center gap-3">
                   <FileText className="h-5 w-5 text-slate-400 dark:text-gray-500" />
                   <div>
-                    <p className="font-medium text-slate-900 dark:text-white">{file.name}</p>
+                    <p className="font-medium text-slate-900 dark:text-white">
+                      {file.name}
+                    </p>
                     <p className="text-xs text-slate-500 dark:text-gray-400">
-                      {formatFileSize(file.size ?? 0)} • {getStatusText(file.status)}
+                      {formatFileSize(file.size ?? 0)} •{" "}
+                      {getStatusText(file.status)}
                     </p>
                   </div>
                 </div>
@@ -300,6 +333,5 @@ export const FileUpload = ({ agentId, onUploadComplete }: FileUploadProps) => {
         </div>
       )}
     </div>
-  )
-}
-
+  );
+};

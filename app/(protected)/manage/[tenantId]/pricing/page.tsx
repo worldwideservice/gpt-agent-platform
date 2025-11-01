@@ -1,18 +1,20 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { PricingClient } from './_components/PricingClient'
+import { useEffect, useState } from "react";
+import { PricingClient } from "./_components/PricingClient";
 
 interface PricingPageProps {
-  params: Promise<{ tenantId: string }>
+  params: Promise<{ tenantId: string }>;
 }
 
 const PricingPage = ({ params }: PricingPageProps) => {
-  const [resolvedParams, setResolvedParams] = useState<{ tenantId: string } | null>(null)
+  const [resolvedParams, setResolvedParams] = useState<{
+    tenantId: string;
+  } | null>(null);
 
   useEffect(() => {
-    params.then(setResolvedParams)
-  }, [params])
+    params.then(setResolvedParams);
+  }, [params]);
 
   if (!resolvedParams) {
     return (
@@ -21,11 +23,10 @@ const PricingPage = ({ params }: PricingPageProps) => {
           <p className="text-gray-500 dark:text-gray-400">Загрузка...</p>
         </div>
       </div>
-    )
+    );
   }
 
-  return <PricingClient tenantId={resolvedParams.tenantId} />
-}
+  return <PricingClient tenantId={resolvedParams.tenantId} />;
+};
 
-export default PricingPage
-
+export default PricingPage;
