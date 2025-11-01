@@ -70,24 +70,41 @@ export const viewport: Viewport = {
 
 interface RootLayoutProps {
   children: React.ReactNode
-  params: Promise<{ locale: string }>
+  params?: Promise<{ locale?: string }>
 }
 
 const RootLayout = async ({ children, params }: RootLayoutProps) => {
-  // Await params (Next.js 15 pattern)
-  const { locale } = await params
+  // Get locale from params or use default
+  let locale = 'ru' // Default locale
+  if (params) {
+    try {
+      const resolvedParams = await params
+      locale = resolvedParams?.locale || 'ru'
+    } catch (error) {
+      console.error('Failed to resolve params:', error)
+    }
+  }
   
   // Enable static rendering by setting request locale
-  setRequestLocale(locale || 'ru')
+  try {
+    setRequestLocale(locale)
+  } catch (error) {
+    // Ignore if locale already set
+  }
   
   // Safe getMessages with error handling
   let messages = {}
   try {
-    messages = await getMessages({ locale: locale || 'ru' })
+    messages = await getMessages({ locale })
   } catch (error) {
     console.error('Failed to load messages:', error)
-    // Use empty messages as fallback
-    messages = {}
+    // Use empty messages as fallback - try to load default locale
+    try {
+      messages = (await import(`@/messages/${locale}.json`)).default || {}
+    } catch (importError) {
+      console.error('Failed to import messages file:', importError)
+      messages = {}
+    }
   }
   const structuredData = {
     '@context': 'https://schema.org',
