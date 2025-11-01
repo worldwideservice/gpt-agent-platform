@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:demo": "DEMO_MODE=true next dev",
+    "test:build": "bash scripts/quick-test.sh",
+    "test:platform": "bash scripts/test-platform.sh",
     "prebuild": "node scripts/prebuild.js",
     "build": "next build && node scripts/postbuild.js",
     "start": "next start",

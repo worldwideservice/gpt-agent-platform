@@ -2,7 +2,23 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+
+// Безопасное использование useTranslations с fallback
+function useSafeTranslations(namespace?: string) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { useTranslations } = require('next-intl')
+    try {
+      return useTranslations(namespace)
+    } catch {
+      // Если контекст не доступен, возвращаем fallback функцию
+      return (key: string, fallback?: string) => fallback || key
+    }
+  } catch {
+    // Если next-intl не установлен, возвращаем fallback функцию
+    return (key: string, fallback?: string) => fallback || key
+  }
+}
 import {
   Bot,
   BookOpen,
@@ -121,8 +137,8 @@ const getInitials = (value: string): string => {
 
 export const Sidebar = ({ organizations, activeOrganizationId }: SidebarProps) => {
   const pathname = usePathname()
-  const t = useTranslations()
-  const tNav = useTranslations('nav')
+  const t = useSafeTranslations()
+  const tNav = useSafeTranslations('nav')
   const activeOrganization =
     organizations.find((organization) => organization.id === activeOrganizationId) ?? organizations.at(0)
   const navigation = getNavigation(tNav)

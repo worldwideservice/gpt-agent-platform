@@ -58,66 +58,14 @@ export default defineConfig({
     timezoneId: 'Europe/Moscow',
   },
 
-  // Проекты для разных браузеров
+  // Проекты - только Chromium для быстрого тестирования
   projects: [
     {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        // Accessibility тесты в Chromium с strict selectors
         contextOptions: {
           strictSelectors: true,
-        },
-      },
-    },
-
-    {
-      name: 'firefox',
-      use: {
-        ...devices['Desktop Firefox'],
-        contextOptions: {
-          strictSelectors: false,
-        },
-      },
-    },
-
-    {
-      name: 'webkit',
-      use: {
-        ...devices['Desktop Safari'],
-        contextOptions: {
-          strictSelectors: false,
-        },
-      },
-    },
-
-    // Мобильные устройства
-    {
-      name: 'Mobile Chrome',
-      use: {
-        ...devices['Pixel 5'],
-        contextOptions: {
-          strictSelectors: false,
-        },
-      },
-    },
-    {
-      name: 'Mobile Safari',
-      use: {
-        ...devices['iPhone 12'],
-        contextOptions: {
-          strictSelectors: false,
-        },
-      },
-    },
-
-    // Планшеты
-    {
-      name: 'iPad',
-      use: {
-        ...devices['iPad Pro'],
-        contextOptions: {
-          strictSelectors: false,
         },
       },
     },

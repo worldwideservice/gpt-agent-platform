@@ -31,10 +31,29 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const body: AnalyticsEvent = await request.json()
+    // Безопасный парсинг JSON
+    let body: AnalyticsEvent
+    try {
+      const text = await request.text()
+      if (!text || text.trim().length === 0) {
+        return NextResponse.json(
+          { error: 'Request body is empty' },
+          { status: 400 }
+        )
+      }
+      body = JSON.parse(text)
+    } catch (parseError) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Analytics API: Failed to parse JSON:', parseError)
+      }
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      )
+    }
 
     // Validate required fields
-    if (!body.event) {
+    if (!body || !body.event) {
       return NextResponse.json(
         { error: 'Event name is required' },
         { status: 400 }
@@ -60,7 +79,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Analytics API error:', error)
+    // Логируем ошибку только в development режиме
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Analytics API error:', error)
+    }
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
