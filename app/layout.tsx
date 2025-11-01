@@ -77,29 +77,25 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
   // Since we don't use [locale] segment, always use default locale 'ru'
   const locale = 'ru'
   
-  // Enable static rendering by setting request locale
-  try {
-    setRequestLocale(locale)
-  } catch (error) {
-    // Ignore if locale already set or if setRequestLocale is not available
-  }
-  
-  // Safe getMessages with error handling
+  // Load messages directly without next-intl API to avoid dynamic rendering issues
   let messages = {}
   try {
-    // Try to get messages through next-intl API first
-    messages = await getMessages({ locale })
-  } catch (error) {
-    console.error('Failed to load messages via getMessages:', error)
-    // Fallback: direct import of messages file
-    try {
-      const messagesModule = await import(`@/messages/${locale}.json`)
-      messages = messagesModule.default || {}
-    } catch (importError) {
-      console.error('Failed to import messages file directly:', importError)
-      // Last resort: return empty object
-      messages = {}
+    // Direct import of messages file (works in both static and dynamic contexts)
+    const messagesModule = await import(`@/messages/${locale}.json`)
+    messages = messagesModule.default || {}
+  } catch (importError) {
+    console.error('Failed to import messages file:', importError)
+    // Last resort: return empty object
+    messages = {}
+  }
+  
+  // Enable static rendering by setting request locale (only if available)
+  try {
+    if (typeof setRequestLocale === 'function') {
+      setRequestLocale(locale)
     }
+  } catch (error) {
+    // Ignore if locale already set or if setRequestLocale is not available
   }
   const structuredData = {
     '@context': 'https://schema.org',
