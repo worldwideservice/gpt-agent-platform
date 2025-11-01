@@ -756,6 +756,10 @@ export const OnboardingClient = ({ initialState }: OnboardingClientProps) => {
       <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
         <KwidSection title={`Прогресс: ${currentStep + 1} / ${steps.length}`}>
           <div className="space-y-6">
+            <div className="flex items-center space-x-3 mb-4">
+              <CurrentStepIcon className="h-5 w-5 text-custom-600 dark:text-custom-400" />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{currentStepConfig.title}</h2>
+            </div>
             <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-gray-800">
               <div
                 className="h-full rounded-full bg-custom-500 transition-all"
@@ -813,7 +817,6 @@ export const OnboardingClient = ({ initialState }: OnboardingClientProps) => {
         <KwidSection
           title={currentStepConfig.title}
           description={currentStepConfig.description}
-          icon={CurrentStepIcon}
         >
           {renderStepContent(currentStepConfig.id)}
         </KwidSection>
