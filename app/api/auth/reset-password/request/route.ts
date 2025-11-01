@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { z } from 'zod'
 
 import { createPasswordReset } from '@/lib/repositories/passwordResets'
-import { UserRepository } from '@/lib/repositories/users'
+import { findUserByEmail } from '@/lib/repositories/users'
 
 const requestSchema = z.object({
   email: z
@@ -22,7 +22,7 @@ export const POST = async (request: NextRequest) => {
     const parsed = requestSchema.parse(body)
 
     const normalizedEmail = parsed.email.toLowerCase()
-    const user = await UserRepository.findUserByEmail(normalizedEmail)
+    const user = await findUserByEmail(normalizedEmail)
 
     if (!user) {
       return NextResponse.json({ success: true })

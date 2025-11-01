@@ -31,13 +31,7 @@ import { AgentSequencesManager } from './AgentSequencesManager'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/shadcn/select'
+import { Select } from '@/components/ui/Select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { Textarea } from '@/components/ui/Textarea'
 import { Toggle } from '@/components/ui/Toggle'
@@ -650,48 +644,26 @@ const handleChannelSync = useCallback(async () => {
                 </div>
 
                 <div className="space-y-4 rounded-2xl bg-slate-50 p-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                      Модель ИИ
-                    </label>
                   <Select
+                    label="Модель ИИ"
+                    options={[
+                      { value: 'gpt-5', label: 'OpenAI GPT-5' },
+                      { value: 'gpt-4.1', label: 'OpenAI GPT-4.1' },
+                      { value: 'gpt-4', label: 'OpenAI GPT-4' },
+                    ]}
                     value={formData.model}
-                      onValueChange={(value: string) => setFormData((prev) => ({ ...prev, model: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Выберите модель ИИ" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="gpt-5">OpenAI GPT-5</SelectItem>
-                        <SelectItem value="gpt-4.1">OpenAI GPT-4.1</SelectItem>
-                        <SelectItem value="gpt-4">OpenAI GPT-4</SelectItem>
-                        <SelectItem value="gpt-3.5-turbo">OpenAI GPT-3.5 Turbo</SelectItem>
-                        <SelectItem value="claude-3-opus">Anthropic Claude 3 Opus</SelectItem>
-                        <SelectItem value="claude-3-sonnet">Anthropic Claude 3 Sonnet</SelectItem>
-                        <SelectItem value="claude-3-haiku">Anthropic Claude 3 Haiku</SelectItem>
-                        <SelectItem value="gemini-pro">Google Gemini Pro</SelectItem>
-                        <SelectItem value="gemini-ultra">Google Gemini Ultra</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                      Рабочий язык
-                    </label>
+                    onChange={(value: string) => setFormData((prev) => ({ ...prev, model: value }))}
+                  />
                   <Select
+                    label="Рабочий язык"
+                    options={[
+                      { value: 'auto', label: 'Автоматически определять' },
+                      { value: 'en', label: 'English' },
+                      { value: 'ru', label: 'Русский' },
+                    ]}
                     value={formData.language}
-                      onValueChange={(value: string) => setFormData((prev) => ({ ...prev, language: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Выберите язык" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="auto">Автоматически определять</SelectItem>
-                        <SelectItem value="en">English</SelectItem>
-                        <SelectItem value="ru">Русский</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    onChange={(value: string) => setFormData((prev) => ({ ...prev, language: value }))}
+                  />
                   <Textarea
                     label="Описание"
                     placeholder="Опишите назначение агента"
@@ -727,24 +699,15 @@ const handleChannelSync = useCallback(async () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Методология диалога
-                </label>
               <Select
+                label="Методология диалога"
+                options={[
+                  { value: 'spin', label: 'SPIN (ситуация, проблема, импликация, решение)' },
+                  { value: 'bant', label: 'BANT (Budget, Authority, Need, Timeline)' },
+                  { value: 'custom', label: 'Собственный сценарий' },
+                ]}
                 defaultValue="spin"
-                  onValueChange={(value: string) => setFormData((prev) => ({ ...prev, methodology: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Выберите методологию" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="spin">SPIN (ситуация, проблема, импликация, решение)</SelectItem>
-                    <SelectItem value="bant">BANT (Budget, Authority, Need, Timeline)</SelectItem>
-                    <SelectItem value="custom">Собственный сценарий</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              />
 
               <Textarea
                 label="Завершение диалога"

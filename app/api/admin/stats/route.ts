@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-export const dynamic = 'force-dynamic'
 import { auth } from '@/auth'
 import { getAdminStats, checkAdminAccess } from '@/lib/admin'
 

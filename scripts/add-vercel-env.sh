@@ -1,94 +1,54 @@
 #!/bin/bash
 
-# СКРИПТ ДЛЯ ДОБАВЛЕНИЯ ПЕРЕМЕННЫХ ОКРУЖЕНИЯ В VERCEL
-# Запуск: bash scripts/add-vercel-env.sh
+# Скрипт для добавления переменных окружения в Vercel
+# Использует значения из .env.local
 
 set -e
 
-echo "🚀 ДОБАВЛЕНИЕ ПЕРЕМЕННЫХ ОКРУЖЕНИЯ В VERCEL"
-echo "=========================================="
+ENV_FILE=".env.local"
 
-# Проверяем наличие Vercel CLI
-if ! command -v vercel &> /dev/null; then
-    echo "❌ Vercel CLI не установлен!"
-    echo "📦 Установите: npm install -g vercel"
-    exit 1
+if [ ! -f "$ENV_FILE" ]; then
+  echo "❌ Файл $ENV_FILE не найден!"
+  exit 1
 fi
 
-# Проверяем авторизацию
-if ! vercel whoami &> /dev/null; then
-    echo "❌ Вы не авторизованы в Vercel CLI!"
-    echo "🔑 Авторизуйтесь: vercel login"
-    exit 1
-fi
-
-# Проверяем наличие env.production файла
-if [ ! -f "env.production" ]; then
-    echo "❌ Файл env.production не найден!"
-    echo "Запустите скрипт настройки сначала"
-    exit 1
-fi
-
-echo "📋 ЧИТАЕМ ПЕРЕМЕННЫЕ ИЗ env.production..."
-
-# Читаем переменные из файла
-declare -A env_vars
-
-while IFS='=' read -r key value; do
-    # Пропускаем комментарии и пустые строки
-    [[ $key =~ ^[[:space:]]*# ]] && continue
-    [[ -z "$key" ]] && continue
-
-    # Убираем пробелы и кавычки
-    key=$(echo "$key" | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
-    value=$(echo "$value" | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' | sed 's/^["\']//' | sed 's/["\']$//')
-
-    # Пропускаем переменные со значениями по умолчанию
-    if [[ $value == *"your-"* ]] || [[ $value == *"change-me"* ]] || [[ -z "$value" ]]; then
-        echo "⚠️  Пропускаем $key (не настроена)"
-        continue
-    fi
-
-    env_vars["$key"]="$value"
-    echo "✅ Найдена переменная: $key"
-done < env.production
-
-echo ""
-echo "🔧 ДОБАВЛЯЕМ ПЕРЕМЕННЫЕ В VERCEL..."
+echo "🚀 Добавляю переменные окружения в Vercel..."
 echo ""
 
-# Добавляем каждую переменную
-for key in "${!env_vars[@]}"; do
-    value="${env_vars[$key]}"
+# Функция для получения значения из .env.local
+get_env_value() {
+  grep "^$1=" "$ENV_FILE" | sed "s/^$1=//" | sed 's/^"//' | sed 's/"$//' | head -1
+}
 
-    echo "📝 Добавляем $key..."
-    if vercel env add "$key" production 2>/dev/null << EOF
-$value
-EOF
-    then
-        echo "✅ $key добавлена успешно"
-    else
-        echo "⚠️  Не удалось добавить $key автоматически"
-        echo "   Добавьте вручную в Vercel Dashboard:"
-        echo "   Key: $key"
-        echo "   Value: $value"
-    fi
-done
+# Функция для добавления переменной в Vercel (Production)
+add_vercel_env() {
+  local var_name=$1
+  local var_value=$2
+  
+  if [ -z "$var_value" ]; then
+    echo "⚠️  Пропускаю $var_name (пустое значение)"
+    return
+  fi
+  
+  echo "➕ Добавляю $var_name..."
+  echo "$var_value" | vercel env add "$var_name" production
+  echo "✅ $var_name добавлена"
+  echo ""
+}
 
+# Добавляем переменные
+add_vercel_env "NEXT_PUBLIC_SUPABASE_URL" "$(get_env_value NEXT_PUBLIC_SUPABASE_URL)"
+add_vercel_env "NEXT_PUBLIC_SUPABASE_ANON_KEY" "$(get_env_value NEXT_PUBLIC_SUPABASE_ANON_KEY)"
+add_vercel_env "SUPABASE_SERVICE_ROLE_KEY" "$(get_env_value SUPABASE_SERVICE_ROLE_KEY)"
+add_vercel_env "SUPABASE_DEFAULT_ORGANIZATION_ID" "$(get_env_value SUPABASE_DEFAULT_ORGANIZATION_ID)"
+add_vercel_env "OPENROUTER_API_KEY" "$(get_env_value OPENROUTER_API_KEY)"
+add_vercel_env "AUTH_SECRET" "$(get_env_value AUTH_SECRET)"
+add_vercel_env "NEXTAUTH_SECRET" "$(get_env_value AUTH_SECRET)"  # Используем AUTH_SECRET для NEXTAUTH_SECRET
+
+# NEXT_PUBLIC_APP_URL для продакшена
+add_vercel_env "NEXT_PUBLIC_APP_URL" "https://gpt-agent-platform.vercel.app"
+
+echo "✅ Все переменные добавлены!"
 echo ""
-echo "🎉 НАСТРОЙКА VERCEL ЗАВЕРШЕНА!"
-echo "==============================="
-echo ""
-echo "📋 СЛЕДУЮЩИЕ ШАГИ:"
-echo "=================="
-echo "1️⃣  Проверьте переменные в Vercel Dashboard:"
-echo "   👉 https://vercel.com/dashboard"
-echo ""
-echo "2️⃣  Запустите деплой:"
-echo "   vercel --prod"
-echo ""
-echo "3️⃣  Или используйте npm скрипт:"
-echo "   npm run vercel:deploy"
-echo ""
-echo "4️⃣  Проверьте работу приложения:"
-echo "   🌐 https://gpt-agent-kwid-1i1j7zlgl-world-wide-services-62780b79.vercel.app"
+echo "📋 Проверьте: vercel env ls"
+

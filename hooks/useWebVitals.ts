@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { onCLS, onFCP, onLCP, onTTFB } from 'web-vitals'
+import { onCLS, onFID, onFCP, onLCP, onTTFB } from 'web-vitals'
 import { analytics } from '@/lib/analytics'
 
 interface WebVitalsMetrics {
@@ -23,32 +23,35 @@ export const useWebVitals = () => {
     }
 
     // Cumulative Layout Shift
-    onCLS((metric) => {
+    onCLS((metric: any) => {
       metrics.CLS = metric.value
       console.log('CLS:', metric.value)
       analytics.trackPerformance('CLS', metric.value)
     })
 
-    // First Input Delay (deprecated, but keeping for compatibility)
-    // onFID is not available in newer web-vitals versions
-    // console.log('FID: Deprecated metric')
+    // First Input Delay
+    onFID((metric: any) => {
+      metrics.FID = metric.value
+      console.log('FID:', metric.value)
+      analytics.trackPerformance('FID', metric.value)
+    })
 
     // First Contentful Paint
-    onFCP((metric) => {
+    onFCP((metric: any) => {
       metrics.FCP = metric.value
       console.log('FCP:', metric.value)
       analytics.trackPerformance('FCP', metric.value)
     })
 
     // Largest Contentful Paint
-    onLCP((metric) => {
+    onLCP((metric: any) => {
       metrics.LCP = metric.value
       console.log('LCP:', metric.value)
       analytics.trackPerformance('LCP', metric.value)
     })
 
     // Time to First Byte
-    onTTFB((metric) => {
+    onTTFB((metric: any) => {
       metrics.TTFB = metric.value
       console.log('TTFB:', metric.value)
       analytics.trackPerformance('TTFB', metric.value)

@@ -24,8 +24,8 @@ export const getSupabaseBrowserClient = (): SupabaseClient<Database> => {
   return supabaseBrowserClient
 }
 
-// Export supabase for backward compatibility
-export const supabase = getSupabaseBrowserClient()
+
+
 
 
 

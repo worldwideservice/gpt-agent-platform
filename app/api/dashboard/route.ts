@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
 
-export const dynamic = 'force-dynamic'
-
 import { auth } from '@/auth'
 import { getDashboardStats } from '@/lib/repositories/agents'
 

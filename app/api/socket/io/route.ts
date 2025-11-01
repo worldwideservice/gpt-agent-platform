@@ -1,6 +1,4 @@
 import { NextRequest } from 'next/server'
-
-export const dynamic = 'force-dynamic'
 import { Server as Server } from 'socket.io'
 
 // This is a placeholder for Socket.IO integration

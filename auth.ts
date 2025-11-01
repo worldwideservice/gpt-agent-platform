@@ -3,7 +3,7 @@ import Credentials from 'next-auth/providers/credentials'
 import { compare } from 'bcryptjs'
 
 import { createOrganizationWithOwner, getOrganizationsForUser, setDefaultOrganizationForUser } from '@/lib/repositories/organizations'
-import { UserRepository } from '@/lib/repositories/users'
+import { findUserByEmail, updateUserLastSignIn } from '@/lib/repositories/users'
 
 interface AuthenticatedUser {
   id: string
@@ -71,10 +71,10 @@ export const {
           return demoUser
         }
 
-        let user: Awaited<ReturnType<typeof UserRepository.findUserByEmail>> | null = null
+        let user: Awaited<ReturnType<typeof findUserByEmail>> | null = null
 
         try {
-          user = await UserRepository.findUserByEmail(email)
+          user = await findUserByEmail(email)
         } catch (error) {
           if (process.env.NODE_ENV !== 'production' && email === 'founder@example.com' && password === 'Demo1234!') {
             return createDemoUser()
@@ -101,7 +101,7 @@ export const {
           return null
         }
 
-        await UserRepository.updateUserLastSignIn(user.id)
+        await updateUserLastSignIn(user.id)
 
         let defaultOrgId = user.default_org_id ?? undefined
 
