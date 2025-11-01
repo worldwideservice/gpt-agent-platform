@@ -1,10 +1,7 @@
+'use client'
+
 import { KwidSection } from '@/components/kwid'
 import { Book, Video, FileText, HelpCircle } from 'lucide-react'
-
-export const metadata = {
-  title: 'Поддержка',
-  description: 'Руководства и обучающие материалы для работы с платформой',
-}
 
 const SupportPage = () => {
   return (
