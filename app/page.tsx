@@ -1,12 +1,13 @@
-import Link from 'next/link'
-import { ArrowRight, Bot, MessageSquare, Shield, Zap } from 'lucide-react'
-
-import { Button } from '@/components/ui/Button'
-
-// Force dynamic rendering for landing page
+// Temporarily simplified page for debugging
 export const dynamic = 'force-dynamic'
 
 export default function LandingPage() {
+  return (
+    <div style={{ padding: '40px', textAlign: 'center' }}>
+      <h1>GPT Agent Platform</h1>
+      <p>Test page - if you see this, layout works!</p>
+    </div>
+    /* Original page temporarily disabled
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
