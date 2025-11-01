@@ -1,7 +1,5 @@
 'use client'
 
-import { useLocale, useTranslations } from 'next-intl'
-import { useRouter, usePathname } from '@/i18n/routing'
 import { KwidButton } from '@/components/kwid'
 import {
   DropdownMenu,
@@ -10,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Languages } from 'lucide-react'
+import { usePathname } from 'next/navigation'
 
 const languages = [
   { code: 'ru', name: 'Русский', flag: '🇷🇺' },
@@ -17,28 +16,16 @@ const languages = [
 ]
 
 export const LanguageSwitcher = () => {
-  // Safe hooks usage with fallback
-  let locale = 'ru'
-  let router: any = null
-  let pathname = '/'
-  
-  try {
-    locale = useLocale()
-    router = useRouter()
-    pathname = usePathname()
-  } catch (error) {
-    // If next-intl context is not available, use defaults
-    console.warn('LanguageSwitcher: next-intl context not available, using defaults')
-  }
+  // Use default locale since next-intl is temporarily disabled
+  const locale = 'ru'
+  const pathname = usePathname()
 
   const handleLanguageChange = (newLocale: string) => {
-    if (router) {
-      try {
-        router.replace(pathname, { locale: newLocale })
-      } catch (error) {
-        console.warn('LanguageSwitcher: Failed to change language', error)
-      }
-    }
+    // Language switching temporarily disabled
+    // Will be re-enabled when next-intl is fully configured
+    console.log('Language change requested:', newLocale)
+    // TODO: Re-enable when next-intl is configured
+    // router.replace(pathname, { locale: newLocale })
   }
 
   const currentLanguage = languages.find(lang => lang.code === locale) || languages[0]
