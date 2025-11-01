@@ -16,7 +16,7 @@ interface TokenResponse {
   account_id?: number
 }
 
-export default function KommoOAuthCallback() {
+function KommoOAuthCallbackContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
@@ -245,5 +245,23 @@ npx tsx test-kommo.ts
         </div>
       </div>
     </div>
+  )
+}
+
+export default function KommoOAuthCallback() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
+        <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
+          <h1 className="mb-4 text-2xl font-bold text-gray-800">🔑 Kommo OAuth Callback</h1>
+          <p className="mb-6 text-gray-600">Загрузка...</p>
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        </div>
+      </div>
+    }>
+      <KommoOAuthCallbackContent />
+    </Suspense>
   )
 }
