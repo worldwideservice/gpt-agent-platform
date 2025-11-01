@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
         client_secret: '6FhlKjCZehELKIShuUQcPHdrF9uUHKLQosf0tDsSvdTuUoahVz3EO44xzVinlbh7',
         grant_type: 'authorization_code',
         code: query.code,
-            redirect_uri: 'https://gpt-agent-kwid-43ii46hai-world-wide-services-62780b79.vercel.app/integrations/kommo/oauth/callback',
+            redirect_uri: 'http://localhost:3000/integrations/kommo/oauth/callback',
       }),
     })
 

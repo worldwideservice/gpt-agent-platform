@@ -122,9 +122,11 @@ export interface KommoCustomField {
 export class KommoAPI {
   private config: KommoConfig
   private baseUrl: string
+  private isDemoMode: boolean
 
   constructor(config: KommoConfig) {
     this.config = config
+    this.isDemoMode = config.accessToken?.startsWith('demo_') || false
     // Используем API domain из токена или стандартный формат
     const apiDomain = config.domain.includes('api-') ? config.domain : `${config.domain}.amocrm.ru`
     this.baseUrl = `https://${apiDomain}/api/v4`
@@ -351,6 +353,20 @@ export class KommoAPI {
       }>
     }
   }>> {
+    if (this.isDemoMode) {
+      return [{
+        id: 1,
+        name: 'Основная воронка',
+        _embedded: {
+          statuses: [
+            { id: 142, name: 'Первичный контакт', sort: 1 },
+            { id: 143, name: 'Переговоры', sort: 2 },
+            { id: 144, name: 'Сделка заключена', sort: 3 }
+          ]
+        }
+      }];
+    }
+
     const response = await this.request<{
       _embedded: {
         pipelines: Array<{
@@ -379,6 +395,15 @@ export class KommoAPI {
     email: string
     lang: string
   }>> {
+    if (this.isDemoMode) {
+      return [{
+        id: 12760383,
+        name: 'Admin',
+        email: 'admin@worldwideservice.eu',
+        lang: 'en'
+      }];
+    }
+
     const response = await this.request<{
       _embedded: {
         users: Array<{
@@ -588,6 +613,14 @@ export class KommoAPI {
     by_status: Record<number, number>
     by_pipeline: Record<number, number>
   }> {
+    if (this.isDemoMode) {
+      return {
+        total: 15,
+        by_status: { 142: 5, 143: 7, 144: 3 },
+        by_pipeline: { 1: 15 }
+      };
+    }
+
     const leads = await this.request<{ _embedded: { leads: KommoLead[] } }>(
       '/leads?limit=500'
     )

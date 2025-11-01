@@ -1,0 +1,302 @@
+#!/usr/bin/env node
+
+const fs = require('fs');
+const path = require('path');
+const https = require('https');
+
+// Настройки
+const CONFIG = {
+  clientId: '2a5c1463-43dd-4ccc-abd0-79516f785e57',
+  clientSecret: '6FhlKjCZehELKIShuUQcPHdrF9uUHKLQosf0tDsSvdTuUoahVz3EO44xzVinlbh7',
+  redirectUri: 'http://localhost:3000/integrations/kommo/oauth/callback',
+  domain: 'kwid'
+};
+
+console.log('🚀 ПОЛНАЯ НАСТРОЙКА KOMMO OAUTH\n');
+console.log('='.repeat(50));
+
+// Функция для HTTP запросов
+function makeRequest(url, options = {}) {
+  return new Promise((resolve, reject) => {
+    const req = https.request(url, options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => data += chunk);
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          resolve({ status: res.statusCode, data: json });
+        } catch (e) {
+          resolve({ status: res.statusCode, data, raw: true });
+        }
+      });
+    });
+    req.on('error', reject);
+    if (options.body) req.write(options.body);
+    req.end();
+  });
+}
+
+// Шаг 1: Проверка существующих токенов
+async function checkExistingTokens() {
+  console.log('📋 ШАГ 1: Проверка существующих токенов...');
+
+  const envPath = path.join(__dirname, '.env.local');
+  if (!fs.existsSync(envPath)) {
+    console.log('❌ Файл .env.local не найден');
+    return false;
+  }
+
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  const accessToken = envContent.match(/KOMMO_TEST_ACCESS_TOKEN=(.+)/)?.[1];
+
+  if (!accessToken) {
+    console.log('❌ Токены не найдены в .env.local');
+    return false;
+  }
+
+  console.log('✅ Найден существующий токен, проверяем...');
+
+  try {
+    const response = await makeRequest(`https://${CONFIG.domain}.amocrm.ru/api/v4/users`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.status === 200) {
+      console.log('✅ Существующие токены работают!');
+      return true;
+    } else {
+      console.log('❌ Токены не работают, нужно получить новые');
+      return false;
+    }
+  } catch (error) {
+    console.log('❌ Ошибка проверки токенов:', error.message);
+    return false;
+  }
+}
+
+// Шаг 2: Создание OAuth URL
+function generateOAuthUrl() {
+  console.log('\n📋 ШАГ 2: Генерация OAuth URL...');
+
+  const params = new URLSearchParams({
+    client_id: CONFIG.clientId,
+    redirect_uri: CONFIG.redirectUri,
+    scope: 'crm:read crm:write leads:read leads:write contacts:read contacts:write tasks:read tasks:write',
+    state: `auto_setup_${Date.now()}`,
+    response_type: 'code'
+  });
+
+  const oauthUrl = `https://kommo.com/oauth?${params.toString()}`;
+  console.log('✅ OAuth URL создан');
+  console.log('🔗', oauthUrl);
+
+  return oauthUrl;
+}
+
+// Шаг 3: Получение authorization code
+async function getAuthorizationCode(oauthUrl) {
+  console.log('\n📋 ШАГ 3: Получение authorization code');
+
+  // Открываем браузер автоматически
+  console.log('\n🔗 Открываю браузер с OAuth URL...');
+  try {
+    const { exec } = require('child_process');
+    if (process.platform === 'darwin') {
+      exec(`open "${oauthUrl}"`);
+    } else if (process.platform === 'linux') {
+      exec(`xdg-open "${oauthUrl}"`);
+    } else {
+      exec(`start "${oauthUrl}"`);
+    }
+    console.log('✅ Браузер открыт');
+  } catch (error) {
+    console.log('⚠️ Не удалось открыть браузер автоматически');
+    console.log('🔗 Откройте вручную:', oauthUrl);
+  }
+
+  console.log('\n🎯 ДЕЙСТВИЯ:');
+  console.log('1. Авторизуйтесь в Kommo (если не открылось - используйте ссылку выше)');
+  console.log('2. Разрешите доступ приложению');
+  console.log('3. Скопируйте ПОЛНЫЙ URL после перенаправления');
+  console.log('4. Вставьте его сюда');
+
+  return new Promise((resolve) => {
+    console.log('\n📝 Вставьте URL после авторизации:');
+
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', (data) => {
+      const url = data.toString().trim();
+      if (url.includes('code=')) {
+        const code = url.match(/code=([^&]+)/)?.[1];
+        if (code) {
+          console.log('✅ Код извлечен:', code.substring(0, 20) + '...');
+          resolve(code);
+        } else {
+          console.log('❌ Код не найден в URL, попробуйте еще раз:');
+        }
+      } else {
+        console.log('❌ URL не содержит code, попробуйте еще раз:');
+      }
+    });
+  });
+}
+
+// Шаг 4: Обмен кода на токены
+async function exchangeCodeForTokens(code) {
+  console.log('\n📋 ШАГ 4: Обмен кода на токены...');
+
+  try {
+    const response = await makeRequest('https://kommo.com/oauth/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        client_id: CONFIG.clientId,
+        client_secret: CONFIG.clientSecret,
+        grant_type: 'authorization_code',
+        code: code,
+        redirect_uri: CONFIG.redirectUri,
+      }).toString()
+    });
+
+    if (response.status === 200 && response.data.access_token) {
+      console.log('✅ Токены получены успешно!');
+      console.log('🔑 Access Token:', response.data.access_token.substring(0, 20) + '...');
+      if (response.data.refresh_token) {
+        console.log('🔄 Refresh Token:', response.data.refresh_token.substring(0, 20) + '...');
+      }
+      return response.data;
+    } else {
+      console.log('❌ Ошибка получения токенов:', response.data);
+      return null;
+    }
+  } catch (error) {
+    console.log('❌ Ошибка сети при получении токенов:', error.message);
+    return null;
+  }
+}
+
+// Шаг 5: Обновление .env.local
+function updateEnvFile(tokens) {
+  console.log('\n📋 ШАГ 5: Обновление .env.local...');
+
+  const envPath = path.join(__dirname, '.env.local');
+  let envContent = '';
+
+  if (fs.existsSync(envPath)) {
+    envContent = fs.readFileSync(envPath, 'utf8');
+  }
+
+  // Обновляем или добавляем переменные
+  const lines = envContent.split('\n');
+  const updatedLines = [];
+  let accessTokenUpdated = false;
+  let refreshTokenUpdated = false;
+
+  for (const line of lines) {
+    if (line.startsWith('KOMMO_TEST_ACCESS_TOKEN=')) {
+      updatedLines.push(`KOMMO_TEST_ACCESS_TOKEN=${tokens.access_token}`);
+      accessTokenUpdated = true;
+    } else if (line.startsWith('KOMMO_TEST_REFRESH_TOKEN=')) {
+      updatedLines.push(`KOMMO_TEST_REFRESH_TOKEN=${tokens.refresh_token || ''}`);
+      refreshTokenUpdated = true;
+    } else {
+      updatedLines.push(line);
+    }
+  }
+
+  if (!accessTokenUpdated) {
+    updatedLines.push(`KOMMO_TEST_ACCESS_TOKEN=${tokens.access_token}`);
+  }
+  if (!refreshTokenUpdated) {
+    updatedLines.push(`KOMMO_TEST_REFRESH_TOKEN=${tokens.refresh_token || ''}`);
+  }
+
+  fs.writeFileSync(envPath, updatedLines.join('\n'), 'utf8');
+  console.log('✅ Файл .env.local обновлен!');
+}
+
+// Шаг 6: Тестирование токенов
+async function testTokens() {
+  console.log('\n📋 ШАГ 6: Тестирование токенов...');
+
+  const envPath = path.join(__dirname, '.env.local');
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  const accessToken = envContent.match(/KOMMO_TEST_ACCESS_TOKEN=(.+)/)?.[1];
+
+  if (!accessToken) {
+    console.log('❌ Токен не найден в .env.local');
+    return false;
+  }
+
+  try {
+    const response = await makeRequest(`https://${CONFIG.domain}.amocrm.ru/api/v4/users`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.status === 200) {
+      console.log('✅ Токены работают! API доступен');
+      return true;
+    } else {
+      console.log('❌ Токены не работают, статус:', response.status);
+      return false;
+    }
+  } catch (error) {
+    console.log('❌ Ошибка тестирования:', error.message);
+    return false;
+  }
+}
+
+// Основная функция
+async function main() {
+  try {
+    // Шаг 1: Проверка существующих токенов
+    const tokensWorking = await checkExistingTokens();
+    if (tokensWorking) {
+      console.log('\n🎉 Токены уже работают! Настройка завершена.');
+      return;
+    }
+
+    // Шаг 2: Генерация OAuth URL
+    const oauthUrl = generateOAuthUrl();
+
+    // Шаг 3: Получение кода
+    const code = await getAuthorizationCode(oauthUrl);
+
+    // Шаг 4: Обмен на токены
+    const tokens = await exchangeCodeForTokens(code);
+    if (!tokens) {
+      console.log('\n❌ Не удалось получить токены. Попробуйте еще раз.');
+      return;
+    }
+
+    // Шаг 5: Обновление .env
+    updateEnvFile(tokens);
+
+    // Шаг 6: Тестирование
+    const testResult = await testTokens();
+
+    if (testResult) {
+      console.log('\n🎉 УСПЕХ! Kommo интеграция полностью настроена!');
+      console.log('\n🚀 Теперь можно запускать:');
+      console.log('npx tsx test-kommo.ts');
+    } else {
+      console.log('\n❌ Тестирование провалилось, но токены сохранены.');
+    }
+
+  } catch (error) {
+    console.log('\n💥 Критическая ошибка:', error.message);
+  }
+}
+
+// Запуск
+if (require.main === module) {
+  main();
+}
