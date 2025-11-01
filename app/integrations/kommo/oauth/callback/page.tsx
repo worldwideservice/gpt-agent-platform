@@ -3,7 +3,7 @@
 // Force dynamic rendering (client component, but prevent static generation)
 // Note: export const dynamic only works in server components, but we'll handle this differently
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 
 interface TokenResponse {
