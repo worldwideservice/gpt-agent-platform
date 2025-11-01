@@ -1,21 +1,12 @@
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowRight, Bot, MessageSquare, Shield, Zap } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
-import { auth } from '@/auth'
 
 // Force dynamic rendering for landing page
 export const dynamic = 'force-dynamic'
 
-export default async function LandingPage() {
-  const session = await auth()
-
-  // If user is authenticated, redirect to platform
-  if (session?.user) {
-    redirect('/agents')
-  }
-
+export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
