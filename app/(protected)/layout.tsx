@@ -14,9 +14,9 @@ interface ProtectedLayoutProps {
 }
 
 const ProtectedLayout = async ({ children }: ProtectedLayoutProps) => {
-  // Демо режим для локального тестирования
-  const isDemoMode =
-    process.env.NODE_ENV === "development" || process.env.DEMO_MODE === "true";
+  // Демо режим для локального тестирования и продакшена
+  // Временное решение - всегда используем демо-режим
+  const isDemoMode = true; // Временно всегда true для продакшена
 
   let session: any;
   let organizations: any[] = [];
