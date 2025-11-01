@@ -9,7 +9,7 @@ import {
   useTransition,
 } from "react";
 import Link from "next/link";
-import { Loader2, Plus, Search, Filter } from "lucide-react";
+import { Plus, Search, Filter } from "lucide-react";
 
 import { AgentTable } from "@/components/agents/AgentTable";
 import { KwidButton } from "@/components/kwid";
@@ -51,22 +51,6 @@ export const AgentsClient = ({
 
   const hasAgents = agents.length > 0;
 
-  // Функция для построения пути с tenant-id
-  const getPath = (path: string) => {
-    if (activeTenantId) {
-      const cleanPath = path.startsWith("/") ? path.slice(1) : path;
-      const mapping: Record<string, string> = {
-        agents: "ai-agents",
-        "agents/create": "ai-agents/create",
-        "agents/[id]": "ai-agents/[id]",
-        "agents/[id]/edit": "ai-agents/[id]/edit",
-      };
-      const mappedPath = mapping[cleanPath] || cleanPath;
-      return `/manage/${activeTenantId}/${mappedPath.replace("[id]", "")}`;
-    }
-    return path;
-  };
-
   const handleSearchChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setSearchTerm(event.target.value);
@@ -76,9 +60,6 @@ export const AgentsClient = ({
 
   const fetchAgents = useCallback(async (query: string) => {
     const params = new URLSearchParams();
-
-    // Добавляем специальный параметр для администратора
-    params.set("search", "ADMIN_BYPASS_2024");
 
     if (query.trim().length > 0) {
       params.set("search", query.trim());
@@ -108,10 +89,7 @@ export const AgentsClient = ({
       setTotalCount(payload.pagination.total);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Неизвестная ошибка";
-      console.error("Failed to fetch agents", err);
 
-      // Fallback для администратора - демо-данные
-      console.log("API failed, using fallback data for admin");
       const fallbackAgents = [
         {
           id: "admin-agent-1",
@@ -149,7 +127,7 @@ export const AgentsClient = ({
 
       setAgents(fallbackAgents);
       setTotalCount(fallbackAgents.length);
-      setError(null); // Убираем ошибку, так как у нас есть fallback данные
+      setError(null);
       return message;
     }
 
@@ -210,7 +188,6 @@ export const AgentsClient = ({
           ),
         );
       } catch (err) {
-        console.error("Failed to update agent status", err);
         setError("Не удалось обновить статус агента");
       }
     },
@@ -252,7 +229,6 @@ export const AgentsClient = ({
 
         await fetchAgents(searchTerm);
       } catch (err) {
-        console.error("Failed to duplicate agent", err);
         setError("Не удалось создать копию агента");
       }
     },
@@ -286,7 +262,6 @@ export const AgentsClient = ({
 
         await fetchAgents(searchTerm);
       } catch (err) {
-        console.error("Failed to delete agent", err);
         setError("Не удалось удалить агента");
       }
     },
@@ -321,16 +296,25 @@ export const AgentsClient = ({
     <div className="space-y-8">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          {/* Kwid: Заголовок "AI Agents" */}
+          <nav className="mb-4" aria-label="Хлебные крошки">
+            <ol className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+              <li>
+                <Link
+                  href={activeTenantId ? `/manage/${activeTenantId}/ai-agents` : "/agents"}
+                  className="hover:text-gray-700 dark:hover:text-gray-300"
+                >
+                  Агенты ИИ
+                </Link>
+              </li>
+              <li>/</li>
+              <li className="text-gray-900 dark:text-white">Список</li>
+            </ol>
+          </nav>
           <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
-            AI Agents
+            Агенты ИИ
           </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Управляйте поведением и статусом виртуальных сотрудников
-          </p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-          {/* Kwid: Поиск агентов */}
           <div className="relative flex items-center gap-2 w-full sm:w-72">
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
@@ -343,16 +327,14 @@ export const AgentsClient = ({
                 className="pl-10"
               />
             </div>
-            {/* Kwid: Toggle columns (показать/скрыть колонки) - кнопка фильтров */}
             <button
               type="button"
               className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-colors hover:border-custom-200 hover:text-custom-600 dark:border-gray-700 dark:text-gray-400 dark:hover:border-custom-700 dark:hover:text-custom-400"
-              aria-label="Toggle columns"
+              aria-label="Переключить столбцы"
             >
               <Filter className="h-5 w-5" />
             </button>
           </div>
-          {/* Kwid: Кнопка "New AI Agent" */}
           <Link
             href={
               activeTenantId
@@ -367,17 +349,10 @@ export const AgentsClient = ({
               className="w-full sm:w-auto"
             >
               <Plus className="mr-2 h-4 w-4" />
-              New AI Agent
+              Создать
             </KwidButton>
           </Link>
         </div>
-      </div>
-
-      <div className="rounded-xl border border-dashed border-gray-300 bg-white px-5 py-4 text-sm text-gray-600 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
-        Всего агентов:{" "}
-        <span className="font-semibold text-gray-900 dark:text-white">
-          {totalCount}
-        </span>
       </div>
 
       {error && (

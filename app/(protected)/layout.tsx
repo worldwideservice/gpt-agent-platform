@@ -58,12 +58,10 @@ const ProtectedLayout = async ({ children }: ProtectedLayoutProps) => {
           organizations[0] ??
           null;
       } catch (orgError) {
-        console.error("Error fetching organizations:", orgError);
         organizations = [];
         activeOrganization = null;
       }
     } catch (authError) {
-      console.error("Error in auth:", authError);
       redirect("/login");
     }
   }

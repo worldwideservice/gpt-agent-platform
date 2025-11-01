@@ -1,13 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { Bell, Calendar, LogOut, Menu, Search, X } from 'lucide-react'
-import { signOut } from 'next-auth/react'
+import { Bell, Calendar, Search, X } from 'lucide-react'
 import Link from 'next/link'
 
-import { SignOutButton } from '@/components/auth/SignOutButton'
-import { ThemeToggle } from '@/components/ui/ThemeToggle'
-import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
 import { KwidButton, KwidInput } from '@/components/kwid'
 import { formatTimestamp } from '@/lib/repositories/notifications'
 
@@ -50,12 +46,10 @@ export const Header = ({ user, subscriptionRenewsAt, tenantId }: HeaderProps) =>
   }).format(new Date())
 
   const userName = user.name ?? 'Пользователь'
-  const userEmail = user.email ?? '—'
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(true)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
-  const [userMenuOpen, setUserMenuOpen] = useState(false)
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -75,7 +69,7 @@ export const Header = ({ user, subscriptionRenewsAt, tenantId }: HeaderProps) =>
         }
       }
     } catch (error) {
-      console.error('Failed to fetch notifications', error)
+      // Silent error handling
     } finally {
       setIsLoadingNotifications(false)
     }
@@ -93,12 +87,6 @@ export const Header = ({ user, subscriptionRenewsAt, tenantId }: HeaderProps) =>
 
   const toggleNotifications = () => {
     setNotificationsOpen((prev) => !prev)
-    setUserMenuOpen(false)
-  }
-
-  const toggleUserMenu = () => {
-    setUserMenuOpen((prev) => !prev)
-    setNotificationsOpen(false)
   }
 
   const handleMarkAllRead = async () => {
@@ -115,7 +103,7 @@ export const Header = ({ user, subscriptionRenewsAt, tenantId }: HeaderProps) =>
         await fetchNotifications()
       }
     } catch (error) {
-      console.error('Failed to mark all as read', error)
+      // Silent error handling
     }
   }
 
@@ -137,7 +125,7 @@ export const Header = ({ user, subscriptionRenewsAt, tenantId }: HeaderProps) =>
         await fetchNotifications()
       }
     } catch (error) {
-      console.error('Failed to delete all notifications', error)
+      // Silent error handling
     }
   }
 
@@ -151,7 +139,7 @@ export const Header = ({ user, subscriptionRenewsAt, tenantId }: HeaderProps) =>
         await fetchNotifications()
       }
     } catch (error) {
-      console.error('Failed to delete notification', error)
+      // Silent error handling
     }
   }
 
@@ -169,14 +157,13 @@ export const Header = ({ user, subscriptionRenewsAt, tenantId }: HeaderProps) =>
         await fetchNotifications()
       }
     } catch (error) {
-      console.error('Failed to mark as read', error)
+      // Silent error handling
     }
   }
 
   return (
     <header className="fi-topbar sticky top-0 z-20 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur dark:border-gray-800 dark:bg-gray-900/90 lg:px-6">
       <div className="flex items-center gap-4">
-        {/* Kwid: Global Search (слева) */}
         <form className="fi-global-search relative ml-0 flex-1" action="/search" role="search">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-slate-400 dark:text-gray-500" />
@@ -190,9 +177,7 @@ export const Header = ({ user, subscriptionRenewsAt, tenantId }: HeaderProps) =>
           </div>
         </form>
 
-        {/* Правая часть: дата подписки, уведомления, пользователь */}
         <div className="flex items-center justify-end gap-3">
-          {/* Kwid: Дата подписки с ссылкой на Pricing */}
           {subscriptionRenewsAt && (
             <Link 
               href={tenantId ? `/manage/${tenantId}/pricing` : '/pricing'}
@@ -219,13 +204,9 @@ export const Header = ({ user, subscriptionRenewsAt, tenantId }: HeaderProps) =>
               onClick={toggleNotifications}
             >
               <Bell className="h-5 w-5" />
-              {(unreadCount > 0 || process.env.NODE_ENV === 'development') && (
+              {unreadCount > 0 && (
                 <span className="absolute right-1 top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
-                  {(process.env.NODE_ENV === 'development' ? 137 : unreadCount) > 99
-                    ? '99+'
-                    : process.env.NODE_ENV === 'development'
-                      ? 137
-                      : unreadCount}
+                  {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
             </KwidButton>
@@ -321,43 +302,15 @@ export const Header = ({ user, subscriptionRenewsAt, tenantId }: HeaderProps) =>
             )}
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden text-right md:block">
-              <p className="text-sm font-semibold text-slate-900">{userName}</p>
-              <p className="text-xs text-slate-500">{userEmail}</p>
-            </div>
+          <button
+            type="button"
+            className="h-10 w-10 rounded-full"
+            aria-label="Меню пользователя"
+          >
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold uppercase text-primary-700">
               {formatInitials(userName)}
             </div>
-            <LanguageSwitcher />
-            <ThemeToggle />
-            <div className="relative">
-              <KwidButton
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-10 w-10 rounded-full"
-                aria-label="Меню пользователя"
-                onClick={toggleUserMenu}
-              >
-                <Menu className="h-5 w-5" />
-              </KwidButton>
-              {userMenuOpen && (
-                <div className="absolute right-0 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:border-gray-800 dark:bg-gray-900">
-                  <KwidButton
-                    type="button"
-                    variant="danger"
-                    className="w-full justify-start gap-3 px-4 py-2 text-sm"
-                    onClick={() => {
-                      void signOut({ callbackUrl: '/login' })
-                    }}
-                  >
-                    <LogOut className="h-4 w-4" /> Выйти
-                  </KwidButton>
-                </div>
-              )}
-            </div>
-          </div>
+          </button>
         </div>
       </div>
     </header>

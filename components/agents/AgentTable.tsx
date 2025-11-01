@@ -66,7 +66,7 @@ export const AgentTable = ({
             <TableHead>Название</TableHead>
             <TableHead className="w-32">Активно</TableHead>
             <TableHead>Модель ИИ</TableHead>
-            <TableHead className="text-right">Действия</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -141,18 +141,4 @@ export const AgentTable = ({
       </Table>
     </div>
   )
-}
-
-const formatDate = (value: string): string => {
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return '—'
-  }
-
-  return date.toLocaleDateString('ru-RU', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  })
 }

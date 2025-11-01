@@ -12,10 +12,6 @@ const getTranslation = (key: string, fallback?: string): string => {
     'knowledge': 'База знаний',
     'categories': 'Категории',
     'articles': 'Статьи',
-    'developers': 'Разработчикам',
-    'apiDocs': 'API Документация',
-    'testKommo': 'Тест Kommo API',
-    'integrations': 'Интеграции',
     'pricing': 'Тарифы',
     'account': 'Аккаунт',
     'support': 'Поддержка',
@@ -36,9 +32,7 @@ const getTranslation = (key: string, fallback?: string): string => {
 }
 import {
   Bot,
-  BookOpen,
   ChevronDown,
-  Code,
   CreditCard,
   Folder,
   LayoutDashboard,
@@ -98,36 +92,28 @@ const getNavigation = (tNav: any, tenantId?: string): NavSection[] => {
       ],
     },
     {
-      title: tNav('developers'),
-      items: [
-        { label: tNav('apiDocs'), href: '/api-docs', icon: Code },
-        { label: 'GraphQL Playground', href: '/graphql-playground', icon: Code },
-        { label: tNav('testKommo'), href: '/test-kommo', icon: Settings },
-      ],
-    },
-    {
       title: tNav('support'),
-      items: [{ label: tNav('gettingStarted'), href: '/support', icon: HelpCircle }],
+      items: [{ label: tNav('gettingStarted'), href: '/docs/ru/start-here/getting-started/', icon: HelpCircle }],
     },
     {
       title: tNav('accountSection'),
       items: [
-        { label: tNav('account'), href: `${basePath}/account-settings`, icon: Settings },
-        { label: tNav('pricing'), href: `${basePath}/pricing`, icon: CreditCard },
+        { label: 'Настройки аккаунта', href: `${basePath}/account-settings`, icon: Settings },
+        { label: 'Тарифные планы', href: `${basePath}/pricing`, icon: CreditCard },
       ],
     },
     {
       title: tNav('whatsNew'),
       items: [
         {
-          label: tNav('facebook'),
-          href: 'https://facebook.com',
+          label: 'Смотреть на Facebook',
+          href: 'https://www.facebook.com/gpt.agent',
           icon: Sparkles,
           external: true,
         },
         {
-          label: tNav('instagram'),
-          href: 'https://instagram.com',
+          label: 'Смотреть в Instagram',
+          href: 'https://www.instagram.com/gpt.agent/',
           icon: Sparkles,
           external: true,
         },
