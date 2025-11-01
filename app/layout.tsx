@@ -13,11 +13,11 @@ export const metadata: Metadata = {
   description: 'Обучаемый виртуальный сотрудник для автоматизации общения с клиентами',
   manifest: '/manifest.json',
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL || 
-    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` :
-    process.env.NODE_ENV === 'production'
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ||
+    (process.env.NODE_ENV === 'production'
       ? 'https://gpt-agent-kwid.vercel.app'
-      : 'http://localhost:3000'
+      : 'http://localhost:3000')
   ),
   appleWebApp: {
     capable: false,
