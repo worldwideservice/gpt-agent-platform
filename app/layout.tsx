@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 
-import { AppProviders } from '@/components/AppProviders'
+// Temporarily removed AppProviders to isolate the issue
+// import { AppProviders } from '@/components/AppProviders'
 
 import './globals.css'
 
@@ -114,7 +115,7 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
         />
       </head>
       <body className={inter.className}>
-        <AppProviders>{children}</AppProviders>
+        {children}
       </body>
     </html>
   )
