@@ -1,11 +1,14 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
-import { getMessages, setRequestLocale } from 'next-intl/server'
+import { setRequestLocale } from 'next-intl/server'
 
 import { AppProviders } from '@/components/AppProviders'
 
 import './globals.css'
+
+// Static import of messages for better reliability
+import ruMessages from '@/messages/ru.json'
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] })
 
@@ -77,17 +80,8 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
   // Since we don't use [locale] segment, always use default locale 'ru'
   const locale = 'ru'
   
-  // Load messages directly without next-intl API to avoid dynamic rendering issues
-  let messages = {}
-  try {
-    // Direct import of messages file (works in both static and dynamic contexts)
-    const messagesModule = await import(`@/messages/${locale}.json`)
-    messages = messagesModule.default || {}
-  } catch (importError) {
-    console.error('Failed to import messages file:', importError)
-    // Last resort: return empty object
-    messages = {}
-  }
+  // Use statically imported messages (most reliable approach)
+  const messages = ruMessages || {}
   
   // Enable static rendering by setting request locale (only if available)
   try {
@@ -95,7 +89,7 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
       setRequestLocale(locale)
     }
   } catch (error) {
-    // Ignore if locale already set or if setRequestLocale is not available
+    // Ignore - this is optional
   }
   const structuredData = {
     '@context': 'https://schema.org',
