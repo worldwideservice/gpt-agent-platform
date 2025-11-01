@@ -345,9 +345,8 @@ const createAgentSchema = z.object({
 
 export const POST = async (request: NextRequest) => {
   // Демо-режим: создаем mock-агента
-  const isDemoMode = process.env.NODE_ENV === 'development' ||
-    process.env.DEMO_MODE === 'true' ||
-    process.env.E2E_ONBOARDING_FAKE === '1'
+  // Временно всегда используем демо-режим для продакшена
+  const isDemoMode = true; // Временно всегда true
 
   if (isDemoMode) {
     try {
