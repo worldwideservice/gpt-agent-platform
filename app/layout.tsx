@@ -8,7 +8,8 @@ import { AppProviders } from '@/components/AppProviders'
 import './globals.css'
 
 // Static import of messages for better reliability
-import ruMessages from '@/messages/ru.json'
+// Using relative path to avoid path alias issues in production
+import ruMessages from '../messages/ru.json'
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] })
 
@@ -81,15 +82,26 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
   const locale = 'ru'
   
   // Use statically imported messages (most reliable approach)
-  const messages = ruMessages || {}
-  
-  // Enable static rendering by setting request locale (only if available)
+  // Fallback to empty object if import fails
+  let messages = {}
   try {
-    if (typeof setRequestLocale === 'function') {
-      setRequestLocale(locale)
-    }
+    messages = ruMessages || {}
   } catch (error) {
-    // Ignore - this is optional
+    // If static import fails, use empty messages (app will work without translations)
+    console.error('Failed to load messages:', error)
+    messages = {}
+  }
+  
+  // Don't use setRequestLocale in production - it can cause issues
+  // Enable static rendering by setting request locale (only in development or if explicitly needed)
+  if (process.env.NODE_ENV === 'development') {
+    try {
+      if (typeof setRequestLocale === 'function') {
+        setRequestLocale(locale)
+      }
+    } catch (error) {
+      // Ignore - this is optional
+    }
   }
   const structuredData = {
     '@context': 'https://schema.org',
