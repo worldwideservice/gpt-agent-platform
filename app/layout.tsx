@@ -1,130 +1,23 @@
-import type { Metadata, Viewport } from 'next'
+import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-
-import { NextIntlClientProvider } from 'next-intl'
-import { AppProviders } from '@/components/AppProviders'
 
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] })
 
 export const metadata: Metadata = {
-  title: 'GPT Agent - Trainable virtual employee',
-  description: 'Обучаемый виртуальный сотрудник для автоматизации общения с клиентами',
-  manifest: '/manifest.json',
-  // Simplified metadataBase to avoid runtime errors
-  metadataBase: process.env.NODE_ENV === 'production'
-    ? new URL('https://gpt-agent-kwid.vercel.app')
-    : new URL('http://localhost:3000'),
-  appleWebApp: {
-    capable: false,
-    statusBarStyle: 'default',
-    title: 'GPT Agent',
-  },
-  formatDetection: {
-    telephone: false,
-  },
-  openGraph: {
-    type: 'website',
-    siteName: 'GPT Agent Platform',
-    title: 'GPT Agent - Trainable virtual employee',
-    description: 'Обучаемый виртуальный сотрудник для автоматизации общения с клиентами',
-    images: [
-      {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'GPT Agent Platform',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'GPT Agent - Trainable virtual employee',
-    description: 'Обучаемый виртуальный сотрудник для автоматизации общения с клиентами',
-    images: ['/og-image.png'],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
-  },
-  verification: {
-    google: 'your-google-site-verification-code',
-  },
+  title: 'GPT Agent Platform',
+  description: 'AI Agent Platform',
 }
 
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 5,
-  themeColor: '#3b82f6',
-}
-
-interface RootLayoutProps {
+export default function RootLayout({
+  children,
+}: {
   children: React.ReactNode
-  params?: Promise<{ locale?: string }>
-}
-
-const RootLayout = async ({ children, params }: RootLayoutProps) => {
-  // Since we don't use [locale] segment, always use default locale 'ru'
-  const locale = 'ru'
-  
-  // Try to load messages, but don't fail if it doesn't work
-  let messages: Record<string, any> = {}
-  try {
-    const messagesModule = await import('../messages/ru.json')
-    messages = messagesModule.default || messagesModule || {}
-  } catch (error) {
-    // Silently fail - app will work without translations
-    messages = {}
-  }
-  const structuredData = {
-    '@context': 'https://schema.org',
-    '@type': 'SoftwareApplication',
-    name: 'GPT Agent Platform',
-    description: 'Обучаемый виртуальный сотрудник для автоматизации общения с клиентами',
-    applicationCategory: 'BusinessApplication',
-    operatingSystem: 'Web Browser',
-    offers: {
-      '@type': 'Offer',
-      price: '0',
-      priceCurrency: 'RUB',
-    },
-    creator: {
-      '@type': 'Organization',
-      name: 'KWID',
-    },
-    featureList: [
-      'AI-powered customer communication',
-      'CRM integration',
-      'Knowledge base management',
-      'Automated workflows',
-      'Multi-language support',
-    ],
-    screenshot: '/screenshot-desktop.png',
-    softwareVersion: '1.0.5',
-  }
-
+}) {
   return (
-    <html lang={locale}>
-      <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-        />
-      </head>
-      <body className={inter.className}>
-        <NextIntlClientProvider messages={messages}>
-          <AppProviders>{children}</AppProviders>
-        </NextIntlClientProvider>
-      </body>
+    <html lang="ru">
+      <body className={inter.className}>{children}</body>
     </html>
   )
 }
