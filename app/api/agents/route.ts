@@ -306,8 +306,16 @@ export const GET = async (request: NextRequest) => {
     })
   }
 
-  // Временно пропускаем auth для продакшена - используем демо-режим
-  // Реальная авторизация будет добавлена позже
+  // Fallback - никогда не должно сработать, так как isDemoMode всегда true
+  return NextResponse.json({
+    success: true,
+    data: [],
+    pagination: {
+      total: 0,
+      page: 1,
+      limit: 25,
+    },
+  })
 }
 
 const settingsSchema = z
