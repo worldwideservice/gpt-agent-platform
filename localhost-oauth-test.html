@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Localhost OAuth Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .code { background: #f0f0f0; padding: 10px; border-radius: 4px; font-family: monospace; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>🔗 Localhost OAuth Test for Kommo</h1>
+
+    <p>Если основной redirect URI не работает, попробуйте этот localhost вариант:</p>
+
+    <h2>Шаг 1: Авторизация</h2>
+    <p>Откройте эту ссылку в браузере:</p>
+    <div class="code">
+        https://kommo.com/oauth?client_id=2a5c1463-43dd-4ccc-abd0-79516f785e57&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fintegrations%2Fkommo%2Foauth%2Fcallback&scope=crm%3Aread%20crm%3Awrite%20leads%3Aread%20leads%3Awrite%20contacts%3Aread%20contacts%3Awrite%20tasks%3Aread%20tasks%3Awrite&state=localhost_test&response_type=code
+    </div>
+
+    <h2>Шаг 2: Обработка ответа</h2>
+    <p>После авторизации вы попадете сюда. Скопируйте URL из адресной строки:</p>
+    <input type="text" id="callbackUrl" placeholder="Вставьте URL сюда" style="width: 100%; padding: 8px; margin: 10px 0;">
+    <button onclick="processCallback()">🔄 Обработать</button>
+
+    <div id="result" style="margin-top: 20px;"></div>
+
+    <script>
+        // Проверяем, есть ли параметры в URL (после перенаправления)
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
+
+        if (code) {
+            document.getElementById('result').innerHTML = `
+                <h3 class="success">✅ Код получен!</h3>
+                <p><strong>Authorization Code:</strong></p>
+                <div class="code">${code}</div>
+                <p>Теперь обменяйте его на токены:</p>
+                <div class="code">node exchange-code.js "${code}"</div>
+            `;
+        } else if (error) {
+            document.getElementById('result').innerHTML = `
+                <h3 class="error">❌ Ошибка авторизации</h3>
+                <p>Error: ${error}</p>
+            `;
+        }
+
+        function processCallback() {
+            const url = document.getElementById('callbackUrl').value;
+            const resultDiv = document.getElementById('result');
+
+            try {
+                const urlObj = new URL(url);
+                const code = urlObj.searchParams.get('code');
+                const error = urlObj.searchParams.get('error');
+
+                if (code) {
+                    resultDiv.innerHTML = `
+                        <h3 class="success">✅ Код извлечен!</h3>
+                        <p><strong>Authorization Code:</strong></p>
+                        <div class="code">${code}</div>
+                        <p>Запустите в терминале:</p>
+                        <div class="code">node exchange-code.js "${code}"</div>
+                    `;
+                } else if (error) {
+                    resultDiv.innerHTML = `
+                        <h3 class="error">❌ Ошибка в URL</h3>
+                        <p>Error: ${error}</p>
+                    `;
+                } else {
+                    resultDiv.innerHTML = '<p class="error">❌ Код не найден в URL</p>';
+                }
+            } catch (e) {
+                resultDiv.innerHTML = `<p class="error">❌ Неверный формат URL: ${e.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
