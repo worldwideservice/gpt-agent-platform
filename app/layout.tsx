@@ -79,9 +79,15 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
   // Since we don't use [locale] segment, always use default locale 'ru'
   const locale = 'ru'
   
-  // Temporarily disable next-intl to isolate the issue
-  // Will re-enable once the base layout works
-  const messages: Record<string, any> = {}
+  // Try to load messages, but don't fail if it doesn't work
+  let messages: Record<string, any> = {}
+  try {
+    const messagesModule = await import('../messages/ru.json')
+    messages = messagesModule.default || messagesModule || {}
+  } catch (error) {
+    // Silently fail - app will work without translations
+    messages = {}
+  }
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
