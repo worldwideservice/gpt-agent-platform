@@ -3,6 +3,10 @@ import { auth } from '@/auth'
 import { checkTierRateLimit } from '@/lib/rate-limit'
 import { addJobToQueue } from '@/lib/queue'
 
+// API routes should always be dynamic
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth()

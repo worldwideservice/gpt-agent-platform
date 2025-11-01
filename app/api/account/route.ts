@@ -5,6 +5,10 @@ import { auth } from '@/auth'
 import { UserRepository } from '@/lib/repositories/users'
 import type { User } from '@/types/user'
 
+// API routes should always be dynamic
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export const GET = async () => {
   const session = await auth()
 

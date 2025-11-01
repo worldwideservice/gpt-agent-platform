@@ -8,6 +8,9 @@ import {
   KwidSection,
 } from "@/components/kwid";
 
+// Prevent static generation for client component
+export const dynamic = 'force-dynamic';
+
 interface AccountSettings {
   stopOnHumanReply?: boolean;
 }

@@ -3,6 +3,9 @@
 import { KwidSection } from "@/components/kwid";
 import { Book, Video, FileText, HelpCircle } from "lucide-react";
 
+// Prevent static generation for client component
+export const dynamic = 'force-dynamic';
+
 const SupportPage = () => {
   return (
     <div className="space-y-6">

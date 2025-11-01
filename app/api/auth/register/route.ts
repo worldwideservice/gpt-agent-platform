@@ -4,7 +4,8 @@ import { createNotification } from '@/lib/repositories/notifications'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { loadSupabaseServerEnv } from '@/lib/env/supabase'
 
-// Force Node.js runtime
+// API routes should always be dynamic
+export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {

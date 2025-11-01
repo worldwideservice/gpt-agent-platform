@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server'
 import { KommoAPI } from '@/lib/crm/kommo'
 import { evaluateKommoTestConfig } from '@/lib/env/kommo-test'
 
+// API routes should always be dynamic
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export const GET = async () => {
   const state = evaluateKommoTestConfig()
 
