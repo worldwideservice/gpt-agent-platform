@@ -181,8 +181,10 @@ const AgentPipelinesPage = ({ params }: AgentPipelinesPageProps) => {
           return (
             <KwidSection
               key={pipeline.id}
-              title={
-                <div className="flex items-center justify-between w-full">
+              title={pipeline.name}
+            >
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
                   <label className="flex items-center space-x-3 cursor-pointer">
                     <input
                       type="checkbox"
@@ -190,8 +192,8 @@ const AgentPipelinesPage = ({ params }: AgentPipelinesPageProps) => {
                       onChange={() => handlePipelineToggle(pipeline.id)}
                       className="w-5 h-5 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
                     />
-                    <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {pipeline.name}
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Воронка активна
                     </span>
                   </label>
                   {isPipelineSelected && (
@@ -213,8 +215,6 @@ const AgentPipelinesPage = ({ params }: AgentPipelinesPageProps) => {
                     </div>
                   )}
                 </div>
-              }
-            >
               {isPipelineSelected && (
                 <div>
                   <div className="space-y-2">
