@@ -26,9 +26,9 @@ async function testKommoIntegration() {
     console.log('🔍 Тестирование Kommo API интеграции...')
     console.log('🔧 API URL:', kommoApi.getBaseUrl())
 
-    console.log('1️⃣ Получение сделок (CRM scope)...')
-    const leads = await kommoApi.getLeads() // Тестируем доступ к leads через CRM scope
-    console.log('   Найдено сделок:', leads.length)
+    console.log('1️⃣ Получение пользователей...')
+    const users = await kommoApi.getUsers()
+    console.log('   Найдено пользователей:', users.length)
 
     console.log('2️⃣ Получение воронок продаж...')
     const pipelines = await kommoApi.getPipelines()

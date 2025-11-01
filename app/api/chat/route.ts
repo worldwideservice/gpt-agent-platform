@@ -252,6 +252,7 @@ export const POST = async (request: NextRequest) => {
     let agentInstructions: string | null = null
     let agentModel: string | undefined
     let pipelineStageId: string | null = null
+    let canUseAgent = true // По умолчанию разрешаем использовать агента
 
     if (agentId || conversation.agentId) {
       const effectiveAgentId = agentId || conversation.agentId
@@ -262,8 +263,21 @@ export const POST = async (request: NextRequest) => {
             agentInstructions = 'instructions' in agent ? agent.instructions ?? null : null
             agentModel = agent.model ?? undefined
             
-            // TODO: Определить pipeline_stage_id из CRM если есть активная сделка
+            // Определяем pipeline_stage_id из CRM если есть активная сделка
             // Можно получить из conversation.metadata или через CRM API
+            // TODO: Реализовать получение pipeline_id и stage_id из CRM для активной сделки
+            
+            // Если есть pipeline_stage_id, проверяем настройки агента для этого этапа
+            if (pipelineStageId) {
+              // Пока что pipeline_id нужно получать из CRM или metadata
+              // Для простоты проверяем только если есть настройки
+              const { isAgentConfiguredForStage } = await import('@/lib/repositories/agent-pipeline-settings')
+              // TODO: Получить pipeline_id из CRM или metadata
+              // const isConfigured = await isAgentConfiguredForStage(effectiveAgentId, organizationId, pipelineId, pipelineStageId)
+              // if (!isConfigured) {
+              //   canUseAgent = false
+              // }
+            }
           }
         } catch (error) {
           console.error('Failed to fetch agent', error)
@@ -281,6 +295,14 @@ export const POST = async (request: NextRequest) => {
         role: msg.role as 'user' | 'assistant',
         content: msg.content,
       }))
+
+    // Если агент не настроен для этого этапа - не используем его
+    if (!canUseAgent) {
+      return NextResponse.json({
+        success: false,
+        error: 'Агент не настроен для использования на данном этапе воронки. Настройте агента в разделе "Воронки"',
+      }, { status: 403 })
+    }
 
     // Строим полный контекст агента (КАГ - Knowledge Augmented Generation)
     // Включает: знания компании, скрипты продаж, ответы на возражения, векторный поиск, Knowledge Graph

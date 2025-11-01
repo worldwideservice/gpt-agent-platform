@@ -126,19 +126,9 @@ export class KommoAPI {
 
   constructor(config: KommoConfig) {
     this.config = config
-    // Отключаем демо-режим для использования реальных токенов
     this.isDemoMode = false
-    // Используем правильный формат: subdomain.kommo.com для API вызовов
-    // Если domain уже содержит полный URL, используем его, иначе формируем из subdomain
-    let apiDomain: string
-    if (config.domain.includes('http://') || config.domain.includes('https://')) {
-      apiDomain = config.domain.replace(/^https?:\/\//, '').replace(/\/api\/v4.*$/, '')
-    } else if (config.domain.includes('.kommo.com') || config.domain.includes('.amocrm.ru')) {
-      apiDomain = config.domain
-    } else {
-      // Используем формат subdomain.kommo.com (новый формат Kommo)
-      apiDomain = `${config.domain}.kommo.com`
-    }
+    // Используем API domain из токена или стандартный формат
+    const apiDomain = config.domain.includes('api.kommo.com') ? config.domain : (config.domain.includes('api-') ? config.domain : `${config.domain}.amocrm.ru`)
     this.baseUrl = `https://${apiDomain}/api/v4`
   }
 
@@ -366,23 +356,12 @@ export class KommoAPI {
     if (this.isDemoMode) {
       return [{
         id: 1,
-        name: 'Основная воронка продаж',
+        name: 'Основная воронка',
         _embedded: {
           statuses: [
             { id: 142, name: 'Первичный контакт', sort: 1 },
             { id: 143, name: 'Переговоры', sort: 2 },
-            { id: 144, name: 'Сделка заключена', sort: 3 },
-            { id: 145, name: 'Отказ', sort: 4 }
-          ]
-        }
-      }, {
-        id: 2,
-        name: 'Техническая поддержка',
-        _embedded: {
-          statuses: [
-            { id: 146, name: 'Новая заявка', sort: 1 },
-            { id: 147, name: 'В работе', sort: 2 },
-            { id: 148, name: 'Решена', sort: 3 }
+            { id: 144, name: 'Сделка заключена', sort: 3 }
           ]
         }
       }];
@@ -419,24 +398,14 @@ export class KommoAPI {
     if (this.isDemoMode) {
       return [{
         id: 1,
-        name: 'Демо сделка 1 - Консультация',
+        name: 'Демо сделка 1',
         price: 50000,
         status_id: 142
       }, {
         id: 2,
-        name: 'Демо сделка 2 - Разработка сайта',
-        price: 150000,
-        status_id: 143
-      }, {
-        id: 3,
-        name: 'Демо сделка 3 - Техническая поддержка',
-        price: 25000,
-        status_id: 142
-      }, {
-        id: 4,
-        name: 'Демо сделка 4 - Аудит системы',
+        name: 'Демо сделка 2',
         price: 75000,
-        status_id: 144
+        status_id: 143
       }];
     }
 
@@ -682,9 +651,9 @@ export class KommoAPI {
   }> {
     if (this.isDemoMode) {
       return {
-        total: 4,
-        by_status: { 142: 2, 143: 1, 144: 1 },
-        by_pipeline: { 1: 3, 2: 1 }
+        total: 15,
+        by_status: { 142: 5, 143: 7, 144: 3 },
+        by_pipeline: { 1: 15 }
       };
     }
 

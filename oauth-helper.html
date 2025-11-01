@@ -202,9 +202,9 @@
 
             const clientId = '2a5c1463-43dd-4ccc-abd0-79516f785e57';
             const redirectUri = 'https://gpt-agent-kwid-43ii46hai-world-wide-services-62780b79.vercel.app/integrations/kommo/oauth/callback';
-            const scope = 'crm:read crm:write leads:read leads:write contacts:read contacts:write tasks:read tasks:write';
+            // НЕ передаем scope - Kommo использует разрешения из настроек интеграции (UI)
             const state = 'auto_oauth_' + Date.now();
-            const authUrl = `https://kommo.com/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}&response_type=code`;
+            const authUrl = `https://kommo.com/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&response_type=code`;
 
             // Открываем окно авторизации
             authWindow = window.open(authUrl, 'kommo_auth', 'width=600,height=700');
@@ -328,9 +328,9 @@ npx tsx test-kommo.ts
             if (display.style.display === 'none') {
                 const clientId = '2a5c1463-43dd-4ccc-abd0-79516f785e57';
                 const redirectUri = 'https://gpt-agent-kwid-43ii46hai-world-wide-services-62780b79.vercel.app/integrations/kommo/oauth/callback';
-                const scope = 'crm:read crm:write leads:read leads:write contacts:read contacts:write tasks:read tasks:write';
+                // НЕ передаем scope - Kommo использует разрешения из настроек интеграции (UI)
                 const state = 'manual_oauth_' + Date.now();
-                const authUrl = `https://kommo.com/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}&response_type=code`;
+                const authUrl = `https://kommo.com/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&response_type=code`;
 
                 document.getElementById('authUrl').value = authUrl;
                 display.style.display = 'block';

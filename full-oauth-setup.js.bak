@@ -8,7 +8,7 @@ const https = require('https');
 const CONFIG = {
   clientId: '2a5c1463-43dd-4ccc-abd0-79516f785e57',
   clientSecret: '6FhlKjCZehELKIShuUQcPHdrF9uUHKLQosf0tDsSvdTuUoahVz3EO44xzVinlbh7',
-  redirectUri: 'https://worldwideservices.kommo.com/oauth/callback',
+  redirectUri: 'https://gpt-agent-kwid-43ii46hai-world-wide-services-62780b79.vercel.app/integrations/kommo/oauth/callback',
   domain: 'kwid'
 };
 

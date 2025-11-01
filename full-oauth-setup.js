@@ -8,7 +8,7 @@ const https = require('https');
 const CONFIG = {
   clientId: '2a5c1463-43dd-4ccc-abd0-79516f785e57',
   clientSecret: '6FhlKjCZehELKIShuUQcPHdrF9uUHKLQosf0tDsSvdTuUoahVz3EO44xzVinlbh7',
-  redirectUri: 'http://localhost:3000/integrations/kommo/oauth/callback',
+  redirectUri: 'https://gpt-agent-kwid-43ii46hai-world-wide-services-62780b79.vercel.app/integrations/kommo/oauth/callback',
   domain: 'kwid'
 };
 
@@ -84,7 +84,7 @@ function generateOAuthUrl() {
   const params = new URLSearchParams({
     client_id: CONFIG.clientId,
     redirect_uri: CONFIG.redirectUri,
-    scope: 'crm:read crm:write leads:read leads:write contacts:read contacts:write tasks:read tasks:write',
+    // НЕ передаем scope - Kommo использует разрешения из настроек интеграции (UI)
     state: `auto_setup_${Date.now()}`,
     response_type: 'code'
   });
