@@ -1,5 +1,9 @@
 'use client'
 
+// Force dynamic rendering (client component, but prevent static generation)
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 
