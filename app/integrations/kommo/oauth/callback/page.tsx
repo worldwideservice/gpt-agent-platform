@@ -1,8 +1,7 @@
 'use client'
 
 // Force dynamic rendering (client component, but prevent static generation)
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+// Note: export const dynamic only works in server components, but we'll handle this differently
 
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
