@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { backendFetch } from '@/lib/backend/client'
-
 const querySchema = z.object({
   code: z.string().min(1),
   state: z.string().min(1),
@@ -43,29 +41,42 @@ export async function GET(request: NextRequest) {
       state: query.state,
     })
 
-    // Отправляем код на backend для обработки
-    const result = await backendFetch<{ success: boolean; connection?: any }>('/kommo/oauth/callback', {
+    // Обмениваем authorization code на токены напрямую через Kommo API
+    const tokenResponse = await fetch('https://kommo.com/oauth/token', {
       method: 'POST',
-      body: JSON.stringify({
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        client_id: '2a5c1463-43dd-4ccc-abd0-79516f785e57',
+        client_secret: '6FhlKjCZehELKIShuUQcPHdrF9uUHKLQosf0tDsSvdTuUoahVz3EO44xzVinlbh7',
+        grant_type: 'authorization_code',
         code: query.code,
-        state: query.state,
-        provider: 'kommo',
+        redirect_uri: 'https://gpt-agent-kwid-a7qk88tgr-world-wide-services-62780b79.vercel.app/integrations/kommo/oauth/callback',
       }),
     })
 
-    console.log('Kommo OAuth callback result:', result)
+    const tokens = await tokenResponse.json()
 
-    if (result.success) {
-      // Перенаправляем на страницу успеха или показываем результат
-      return NextResponse.redirect(
-        new URL('/integrations?success=kommo_oauth', request.url),
-        302
-      )
+    if (tokenResponse.ok && tokens.access_token) {
+      console.log('Tokens received successfully')
+
+      // Возвращаем токены в JSON формате для обработки на frontend
+      return NextResponse.json({
+        success: true,
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        expires_in: tokens.expires_in,
+        token_type: tokens.token_type,
+        base_domain: tokens.base_domain,
+        account_id: tokens.account_id,
+      })
     } else {
+      console.error('Token exchange failed:', tokens)
       return NextResponse.json({
         success: false,
-        error: 'Failed to process OAuth callback',
-      }, { status: 500 })
+        error: tokens.error_description || tokens.error || 'Token exchange failed',
+      }, { status: 400 })
     }
 
   } catch (error) {

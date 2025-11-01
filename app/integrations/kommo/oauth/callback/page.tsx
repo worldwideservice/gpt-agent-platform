@@ -50,26 +50,14 @@ export default function KommoOAuthCallback() {
       setMessage('Обмениваем authorization code на токены...')
 
       try {
-        // Обмениваем authorization code на токены напрямую через Kommo API
-        const tokenResponse = await fetch('https://kommo.com/oauth/token', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: new URLSearchParams({
-            client_id: '2a5c1463-43dd-4ccc-abd0-79516f785e57',
-            client_secret: '6FhlKjCZehELKIShuUQcPHdrF9uUHKLQosf0tDsSvdTuUoahVz3EO44xzVinlbh7',
-            grant_type: 'authorization_code',
-            code: code,
-            redirect_uri: 'https://gpt-agent-kwid-a7qk88tgr-world-wide-services-62780b79.vercel.app/integrations/kommo/oauth/callback',
-          }),
-        })
+        // Вызываем API route для обмена токенов (server-side)
+        const tokenResponse = await fetch(`/api/integrations/kommo/oauth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state || '')}`)
 
-        const tokens = await tokenResponse.json()
+        const data = await tokenResponse.json()
 
-        if (tokenResponse.ok && tokens.access_token) {
+        if (tokenResponse.ok && data.success && data.access_token) {
           setStatus('success')
-          setTokens(tokens)
+          setTokens(data)
           setMessage('✅ Токены успешно получены!')
 
           // Показываем инструкции по использованию токенов
@@ -79,8 +67,8 @@ export default function KommoOAuthCallback() {
 
 Теперь обновите ваш .env.local файл:
 
-KOMMO_TEST_ACCESS_TOKEN=${tokens.access_token}
-KOMMO_TEST_REFRESH_TOKEN=${tokens.refresh_token || ''}
+KOMMO_TEST_ACCESS_TOKEN=${data.access_token}
+KOMMO_TEST_REFRESH_TOKEN=${data.refresh_token || ''}
 
 И протестируйте:
 npx tsx test-kommo.ts
@@ -88,7 +76,7 @@ npx tsx test-kommo.ts
           }, 2000)
         } else {
           setStatus('error')
-          setMessage(`Ошибка получения токенов: ${tokens.error_description || tokens.error || 'Неизвестная ошибка'}`)
+          setMessage(`Ошибка получения токенов: ${data.error || 'Неизвестная ошибка'}`)
         }
       } catch (error) {
         setStatus('error')
@@ -172,12 +160,12 @@ npx tsx test-kommo.ts
                 <div className="flex">
                   <input
                     type="text"
-                    value={tokens.access_token}
+                    value={data.access_token}
                     readOnly
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md bg-gray-50 text-sm font-mono"
                   />
                   <button
-                    onClick={() => copyToClipboard(tokens.access_token)}
+                    onClick={() => copyToClipboard(data.access_token)}
                     className="px-4 py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700"
                   >
                     📋
@@ -185,7 +173,7 @@ npx tsx test-kommo.ts
                 </div>
               </div>
 
-              {tokens.refresh_token && (
+              {data.refresh_token && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Refresh Token
@@ -193,12 +181,12 @@ npx tsx test-kommo.ts
                   <div className="flex">
                     <input
                       type="text"
-                      value={tokens.refresh_token}
+                      value={data.refresh_token}
                       readOnly
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md bg-gray-50 text-sm font-mono"
                     />
                     <button
-                      onClick={() => copyToClipboard(tokens.refresh_token)}
+                      onClick={() => copyToClipboard(data.refresh_token)}
                       className="px-4 py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700"
                     >
                       📋
@@ -210,12 +198,12 @@ npx tsx test-kommo.ts
               <div className="bg-blue-50 p-4 rounded-lg">
                 <h4 className="font-semibold text-blue-900 mb-2">📝 Добавьте в .env.local:</h4>
                 <div className="bg-white p-3 rounded border font-mono text-sm">
-                  <div onClick={() => copyToClipboard(`KOMMO_TEST_ACCESS_TOKEN=${tokens.access_token}\nKOMMO_TEST_REFRESH_TOKEN=${tokens.refresh_token || ''}`)} className="cursor-pointer hover:bg-gray-50">
-                    KOMMO_TEST_ACCESS_TOKEN={tokens.access_token}<br/>
-                    KOMMO_TEST_REFRESH_TOKEN={tokens.refresh_token || ''}
+                  <div onClick={() => copyToClipboard(`KOMMO_TEST_ACCESS_TOKEN=${data.access_token}\nKOMMO_TEST_REFRESH_TOKEN=${data.refresh_token || ''}`)} className="cursor-pointer hover:bg-gray-50">
+                    KOMMO_TEST_ACCESS_TOKEN={data.access_token}<br/>
+                    KOMMO_TEST_REFRESH_TOKEN={data.refresh_token || ''}
                   </div>
                 </div>
-                <p className="text-xs text-blue-700 mt-2 cursor-pointer" onClick={() => copyToClipboard(`KOMMO_TEST_ACCESS_TOKEN=${tokens.access_token}\nKOMMO_TEST_REFRESH_TOKEN=${tokens.refresh_token || ''}`)}>
+                <p className="text-xs text-blue-700 mt-2 cursor-pointer" onClick={() => copyToClipboard(`KOMMO_TEST_ACCESS_TOKEN=${data.access_token}\nKOMMO_TEST_REFRESH_TOKEN=${data.refresh_token || ''}`)}>
                   👆 Нажмите для копирования
                 </p>
               </div>
