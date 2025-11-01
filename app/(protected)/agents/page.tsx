@@ -16,18 +16,11 @@ export const metadata: Metadata = {
 };
 
 const AgentsPage = async () => {
-  // Демо режим для локального тестирования и администратора
-  const isDemoMode =
-    process.env.NODE_ENV === "development" ||
-    process.env.DEMO_MODE === "true" ||
-    process.env.VERCEL_ENV !== "production"; // Временное решение для продакшена
-
+  // Всегда используем демо-режим пока не исправлена авторизация
+  // Это временное решение для продакшена
   let agents, total;
 
-  // Всегда используем демо-режим пока не исправлена авторизация
-  const useDemoData = true;
-
-  if (isDemoMode || useDemoData) {
+  try {
     // Mock данные для демо-режима
     agents = [
       {
@@ -80,37 +73,10 @@ const AgentsPage = async () => {
       },
     ];
     total = 3;
-  } else {
-    const session = await auth();
-
-    // Для администратора показываем демо-данные
-    if (session?.user?.email === "admin@worldwideservice.eu") {
-      agents = [
-        {
-          id: "admin-agent-1",
-          name: "Техническая поддержка",
-          status: "active" as const,
-          model: "gpt-4o-mini",
-          messagesTotal: 1250,
-          lastActivityAt: new Date().toISOString(),
-          ownerName: "Administrator",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          temperature: 0.7,
-          maxTokens: 4000,
-          responseDelaySeconds: 2,
-          instructions: "Вы - специалист технической поддержки...",
-          settings: {},
-        },
-      ];
-      total = 1;
-    } else if (!session?.user?.orgId) {
-      redirect("/login");
-    } else {
-      const result = await getAgents({ organizationId: session.user.orgId });
-      agents = result.agents;
-      total = result.total;
-    }
+  } catch (error) {
+    // В случае ошибки возвращаем пустой массив
+    agents = [];
+    total = 0;
   }
 
   return <AgentsClient initialAgents={agents} total={total} />;
