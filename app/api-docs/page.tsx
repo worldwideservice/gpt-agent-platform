@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+// @ts-ignore - swagger-ui-react types issue
 import SwaggerUI from 'swagger-ui-react'
 import 'swagger-ui-react/swagger-ui.css'
 
