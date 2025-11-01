@@ -20,11 +20,14 @@ const AgentsPage = async () => {
   const isDemoMode =
     process.env.NODE_ENV === "development" ||
     process.env.DEMO_MODE === "true" ||
-    process.env.ADMIN_EMAIL === "admin@worldwideservice.eu";
+    process.env.VERCEL_ENV !== "production"; // Временное решение для продакшена
 
   let agents, total;
 
-  if (isDemoMode) {
+  // Всегда используем демо-режим пока не исправлена авторизация
+  const useDemoData = true;
+
+  if (isDemoMode || useDemoData) {
     // Mock данные для демо-режима
     agents = [
       {
