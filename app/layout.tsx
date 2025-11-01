@@ -1,15 +1,10 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
-import { setRequestLocale } from 'next-intl/server'
 
 import { AppProviders } from '@/components/AppProviders'
 
 import './globals.css'
-
-// Static import of messages for better reliability
-// Using relative path to avoid path alias issues in production
-import ruMessages from '../messages/ru.json'
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] })
 
@@ -81,27 +76,16 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
   // Since we don't use [locale] segment, always use default locale 'ru'
   const locale = 'ru'
   
-  // Use statically imported messages (most reliable approach)
-  // Fallback to empty object if import fails
-  let messages = {}
+  // Dynamically import messages to avoid build/runtime issues
+  let messages: Record<string, any> = {}
   try {
-    messages = ruMessages || {}
+    // Use dynamic import - works in both static and dynamic contexts
+    const messagesModule = await import('../messages/ru.json')
+    messages = messagesModule.default || messagesModule || {}
   } catch (error) {
-    // If static import fails, use empty messages (app will work without translations)
-    console.error('Failed to load messages:', error)
+    // Fallback - app will work without translations
+    console.warn('Could not load messages, using empty object:', error)
     messages = {}
-  }
-  
-  // Don't use setRequestLocale in production - it can cause issues
-  // Enable static rendering by setting request locale (only in development or if explicitly needed)
-  if (process.env.NODE_ENV === 'development') {
-    try {
-      if (typeof setRequestLocale === 'function') {
-        setRequestLocale(locale)
-      }
-    } catch (error) {
-      // Ignore - this is optional
-    }
   }
   const structuredData = {
     '@context': 'https://schema.org',
