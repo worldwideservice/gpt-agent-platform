@@ -5,11 +5,9 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { auth } from "@/auth";
 import { getOrganizationsForUser } from "@/lib/repositories/organizations";
 
-// Отключаем prerendering в демо-режиме
-export const dynamic =
-  process.env.NODE_ENV === "development" || process.env.DEMO_MODE === "true"
-    ? "force-dynamic"
-    : "auto";
+// Отключаем prerendering - всегда динамический для корректной работы auth
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 interface ProtectedLayoutProps {
   children: React.ReactNode;
@@ -44,19 +42,30 @@ const ProtectedLayout = async ({ children }: ProtectedLayoutProps) => {
     ];
     activeOrganization = organizations[0];
   } else {
-    session = await auth();
+    try {
+      session = await auth();
 
-    if (!session?.user?.orgId) {
+      if (!session?.user?.orgId) {
+        redirect("/login");
+      }
+
+      try {
+        organizations = await getOrganizationsForUser(session.user.id);
+        activeOrganization =
+          organizations.find(
+            (organization) => organization.id === session.user.orgId,
+          ) ??
+          organizations[0] ??
+          null;
+      } catch (orgError) {
+        console.error("Error fetching organizations:", orgError);
+        organizations = [];
+        activeOrganization = null;
+      }
+    } catch (authError) {
+      console.error("Error in auth:", authError);
       redirect("/login");
     }
-
-    organizations = await getOrganizationsForUser(session.user.id);
-    activeOrganization =
-      organizations.find(
-        (organization) => organization.id === session.user.orgId,
-      ) ??
-      organizations[0] ??
-      null;
   }
 
   // Редиректим на новый формат URL с tenant-id

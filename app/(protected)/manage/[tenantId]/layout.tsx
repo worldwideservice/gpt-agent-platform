@@ -8,11 +8,9 @@ import { parseTenantId } from "@/lib/utils/tenant";
 import { getSupabaseServiceRoleClient } from "@/lib/supabase/admin";
 import { getSubscription } from "@/lib/repositories/subscriptions";
 
-// Отключаем prerendering в демо-режиме
-export const dynamic =
-  process.env.NODE_ENV === "development" || process.env.DEMO_MODE === "true"
-    ? "force-dynamic"
-    : "auto";
+// Отключаем prerendering - всегда динамический для корректной работы auth
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 interface ManageLayoutProps {
   children: React.ReactNode;
