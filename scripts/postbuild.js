@@ -15,10 +15,32 @@ const nextDir = join(projectRoot, '.next')
 const serverDir = join(nextDir, 'server')
 
 function ensureProtectedAppManifest() {
-  // НЕ создаём манифесты для App Router - Next.js должен создавать их сам
-  // Создание пустых манифестов может конфликтовать с реальными манифестами,
-  // что приводит к ошибке "Cannot read properties of undefined (reading 'clientModules')"
-  // Оставляем эту функцию пустой, чтобы не мешать Next.js
+  const protectedDir = join(serverDir, 'app', '(protected)')
+  const manifestPath = join(protectedDir, 'page_client-reference-manifest.js')
+
+  // Создаём минимальный манифест только если Next.js его не создал
+  // и только если директория существует (значит Next.js работал с этим маршрутом)
+  if (existsSync(protectedDir) && !existsSync(manifestPath)) {
+    try {
+      // Создаём минимальный валидный манифест с правильной структурой
+      // Используем структуру, похожую на те, что создаёт Next.js
+      const minimalManifest = {
+        moduleLoading: { prefix: '/_next/', crossOrigin: null },
+        ssrModuleMapping: {},
+        edgeSSRModuleMapping: {},
+        clientModules: {},
+        entryCSSFiles: {}
+      }
+      
+      // Ключ должен быть пустой строкой для route group (protected)
+      // Это соответствует структуре, которую создаёт Next.js
+      const manifestContent = `globalThis.__RSC_MANIFEST=(globalThis.__RSC_MANIFEST||{});globalThis.__RSC_MANIFEST[""]=${JSON.stringify(minimalManifest)}`
+      writeFileSync(manifestPath, manifestContent)
+      console.log('postbuild: created minimal page_client-reference-manifest.js for (protected)')
+    } catch (error) {
+      console.warn('postbuild: failed to create protected app manifest:', error.message)
+    }
+  }
 }
 
 function collectApiRoutes(apiDir) {
@@ -105,6 +127,6 @@ function ensurePagesManifest() {
   }
 }
 
-// Убираем ensureProtectedAppManifest() - не нужно создавать манифесты для App Router
-// Next.js создаёт их автоматически, и наша попытка создать пустые может сломать их
+// Создаём манифесты только если Next.js их не создал (для совместимости)
+ensureProtectedAppManifest()
 ensurePagesManifest()
