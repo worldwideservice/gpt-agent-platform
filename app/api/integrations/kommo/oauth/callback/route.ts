@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 const querySchema = z.object({
   code: z.string().min(1),
   state: z.string().min(1),

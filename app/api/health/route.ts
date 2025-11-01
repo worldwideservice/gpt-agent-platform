@@ -35,15 +35,32 @@ export const GET = async (request: NextRequest) => {
       health.database_error = dbError instanceof Error ? dbError.message : 'Unknown error'
     }
 
-    // Check Redis connection
+    // Check Redis connection (only if URL is configured and not a placeholder)
     try {
-      const { default: Redis } = await import('ioredis')
+      const redisUrl = process.env.REDIS_URL
+      if (!redisUrl || redisUrl.includes('your-redis-host')) {
+        health.redis = 'skipped'
+        health.redis_error = 'Redis URL not configured or using placeholder'
+      } else {
+        const { default: Redis } = await import('ioredis')
 
-      const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379')
-      await redis.ping()
-      await redis.quit()
-
-      health.redis = 'ok'
+        const redis = new Redis(redisUrl, {
+          maxRetriesPerRequest: 1,
+          lazyConnect: true,
+          connectTimeout: 2000,
+          retryStrategy: () => null, // Don't retry
+        })
+        
+        try {
+          await redis.connect()
+          await redis.ping()
+          await redis.quit()
+          health.redis = 'ok'
+        } catch (connectError) {
+          await redis.quit().catch(() => {}) // Clean up
+          throw connectError
+        }
+      }
     } catch (redisError) {
       health.redis = 'error'
       health.redis_error = redisError instanceof Error ? redisError.message : 'Unknown error'
