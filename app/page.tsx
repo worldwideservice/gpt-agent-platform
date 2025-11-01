@@ -3,6 +3,9 @@ import { ArrowRight, Bot, MessageSquare, Shield, Zap } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
 
+// Force dynamic rendering for landing page
+export const dynamic = 'force-dynamic'
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">

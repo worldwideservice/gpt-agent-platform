@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
-import { getMessages } from 'next-intl/server'
+import { getMessages, setRequestLocale } from 'next-intl/server'
 
 import { AppProviders } from '@/components/AppProviders'
 
@@ -70,11 +70,25 @@ export const viewport: Viewport = {
 
 interface RootLayoutProps {
   children: React.ReactNode
-  params: { locale: string }
+  params: Promise<{ locale: string }>
 }
 
-const RootLayout = async ({ children, params: { locale } }: RootLayoutProps) => {
-  const messages = await getMessages()
+const RootLayout = async ({ children, params }: RootLayoutProps) => {
+  // Await params (Next.js 15 pattern)
+  const { locale } = await params
+  
+  // Enable static rendering by setting request locale
+  setRequestLocale(locale || 'ru')
+  
+  // Safe getMessages with error handling
+  let messages = {}
+  try {
+    messages = await getMessages({ locale: locale || 'ru' })
+  } catch (error) {
+    console.error('Failed to load messages:', error)
+    // Use empty messages as fallback
+    messages = {}
+  }
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
