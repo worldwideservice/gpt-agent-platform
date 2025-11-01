@@ -177,7 +177,7 @@ export const Sidebar = ({ organizations, activeOrganizationId }: SidebarProps) =
             <button
               type="button"
               className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm font-medium text-slate-700 transition-colors hover:border-primary-200 hover:bg-primary-50 hover:text-primary-700"
-              aria-label={t('common.selectOrganization') || 'Select organization'}
+              aria-label={t('selectOrganization') || 'Select organization'}
             >
               <div className="flex flex-col">
                 <span className="text-xs uppercase tracking-wide text-slate-400">{tNav('organization')}</span>
