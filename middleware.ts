@@ -3,13 +3,17 @@ import type { NextRequest } from 'next/server'
 
 import { auth } from '@/auth'
 import { checkRateLimit, checkTierRateLimit, rateLimitConfigs } from '@/lib/rate-limit'
+import { logger } from '@/lib/utils'
 
-const PUBLIC_PATHS = ['/login', '/reset-password', '/support', '/demo', '/', '/pricing', '/onboarding', '/api-docs']
+const PUBLIC_PATHS = ['/login', '/reset-password', '/support', '/demo', '/', '/pricing', '/onboarding', '/api-docs', '/integrations/kommo/oauth/callback']
 const PUBLIC_API_PREFIXES = ['/api/auth', '/api/integrations/kommo/oauth/callback']
 
 const PUBLIC_API_PATHS = new Set([
   '/api/auth/reset-password/request',
   '/api/auth/reset-password/confirm',
+  '/api/auth/register',
+  '/api/health',
+  '/api/health/ready',
 ])
 
 const isPublicPath = (pathname: string) => {
@@ -22,6 +26,47 @@ const isPublicApiRoute = (pathname: string) => {
   }
 
   return PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+}
+
+// Security headers
+function addSecurityHeaders(response: NextResponse) {
+  // Essential security headers
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('X-XSS-Protection', '1; mode=block')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()')
+
+  // HTTPS enforcement
+  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
+
+  // Content Security Policy
+  const csp = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: https:",
+    "font-src 'self'",
+    "connect-src 'self'",
+    "media-src 'self'",
+    "object-src 'none'",
+    "frame-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'"
+  ].join('; ')
+
+  response.headers.set('Content-Security-Policy', csp)
+
+  return response
+}
+
+// Input sanitization
+function sanitizeInput(input: string): string {
+  return input
+    .replace(/[<>]/g, '') // Remove potential HTML tags
+    .trim()
+    .slice(0, 10000) // Limit length
 }
 
 export const config = {
@@ -39,12 +84,31 @@ export const config = {
 
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const startTime = Date.now()
 
-  // Демо режим для локального тестирования
-  const isDemoMode = process.env.NODE_ENV === 'development' ||
-    request.headers.get('host')?.includes('localhost') ||
-    process.env.DEMO_MODE === 'true' ||
-    process.env.E2E_ONBOARDING_FAKE === '1'
+  try {
+    // Input sanitization for query parameters
+    const url = new URL(request.url)
+    for (const [key, value] of url.searchParams) {
+      if (typeof value === 'string') {
+        const sanitized = sanitizeInput(value)
+        if (sanitized !== value) {
+          logger.warn('Potentially malicious input detected', {
+            key,
+            originalLength: value.length,
+            sanitizedLength: sanitized.length,
+            path: pathname,
+            ip: request.headers.get('x-forwarded-for') || 'anonymous',
+          })
+        }
+      }
+    }
+
+    // Демо режим для локального тестирования
+    const isDemoMode = process.env.NODE_ENV === 'development' ||
+      request.headers.get('host')?.includes('localhost') ||
+      process.env.DEMO_MODE === 'true' ||
+      process.env.E2E_ONBOARDING_FAKE === '1'
 
   // Проверяем API routes
   if (pathname.startsWith('/api/')) {
@@ -81,6 +145,14 @@ export default async function middleware(request: NextRequest) {
 
       const rateLimitResult = await checkTierRateLimit(request, endpointType, userId, orgId)
       if (rateLimitResult) {
+        logger.warn('Rate limit exceeded', {
+          userId,
+          orgId,
+          endpointType,
+          path: pathname,
+          ip: request.headers.get('x-forwarded-for') || 'anonymous',
+        })
+        addSecurityHeaders(rateLimitResult as NextResponse)
         return rateLimitResult
       }
     }
@@ -93,11 +165,22 @@ export default async function middleware(request: NextRequest) {
     if (!isDemoMode) {
       const session = await auth()
       if (!session?.user?.orgId) {
-        return NextResponse.json({ success: false, error: 'Не авторизовано' }, { status: 401 })
+        const response = NextResponse.json({ success: false, error: 'Не авторизовано' }, { status: 401 })
+        addSecurityHeaders(response)
+
+        logger.warn('Unauthorized API access attempt', {
+          path: pathname,
+          method: request.method,
+          ip: request.headers.get('x-forwarded-for') || 'anonymous',
+        })
+
+        return response
       }
     }
 
-    return NextResponse.next()
+    const response = NextResponse.next()
+    addSecurityHeaders(response)
+    return response
   }
 
   // Проверяем UI routes (кроме публичных)
@@ -106,6 +189,11 @@ export default async function middleware(request: NextRequest) {
     if (!isDemoMode) {
       const session = await auth()
       if (!session?.user?.orgId) {
+        logger.info('Redirecting to login - unauthorized access', {
+          path: pathname,
+          ip: request.headers.get('x-forwarded-for') || 'anonymous',
+        })
+
         // Редиректим на логин для неавторизованных пользователей
         const loginUrl = new URL('/login', request.url)
         loginUrl.searchParams.set('callbackUrl', pathname)
@@ -118,5 +206,32 @@ export default async function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next()
+  const response = NextResponse.next()
+  addSecurityHeaders(response)
+
+  // Log successful request
+  const duration = Date.now() - startTime
+  logger.debug('Request processed', {
+    method: request.method,
+    path: pathname,
+    duration: `${duration}ms`,
+    userAgent: request.headers.get('user-agent')?.slice(0, 200),
+  })
+
+  return response
+
+  } catch (error) {
+    logger.error('Middleware error', error as Error, {
+      path: pathname,
+      method: request.method,
+      ip: request.headers.get('x-forwarded-for') || 'anonymous',
+    })
+
+    const response = NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+    addSecurityHeaders(response)
+    return response
+  }
 }
