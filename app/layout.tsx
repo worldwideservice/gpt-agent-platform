@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
-import { NextIntlClientProvider } from 'next-intl'
 
 import { AppProviders } from '@/components/AppProviders'
 
@@ -76,17 +75,9 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
   // Since we don't use [locale] segment, always use default locale 'ru'
   const locale = 'ru'
   
-  // Dynamically import messages to avoid build/runtime issues
-  let messages: Record<string, any> = {}
-  try {
-    // Use dynamic import - works in both static and dynamic contexts
-    const messagesModule = await import('../messages/ru.json')
-    messages = messagesModule.default || messagesModule || {}
-  } catch (error) {
-    // Fallback - app will work without translations
-    console.warn('Could not load messages, using empty object:', error)
-    messages = {}
-  }
+  // Temporarily disable next-intl to isolate the issue
+  // Will re-enable once the base layout works
+  const messages: Record<string, any> = {}
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
@@ -123,9 +114,7 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
         />
       </head>
       <body className={inter.className}>
-        <NextIntlClientProvider messages={messages}>
-          <AppProviders>{children}</AppProviders>
-        </NextIntlClientProvider>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   )
