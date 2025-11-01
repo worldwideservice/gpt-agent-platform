@@ -1,7 +1,11 @@
 // Скрипт для обмена authorization code на токены
-// Запуск: node exchange-code.js "YOUR_CODE_HERE"
+// Запуск: node exchange-code.js "YOUR_CODE_HERE" [redirect_uri]
+//
+// Если redirect_uri не указан, используется production URL
+// Для localhost тестирования: node exchange-code.js "CODE" "http://localhost:3000/integrations/kommo/oauth/callback"
 
 const code = process.argv[2];
+const redirectUri = process.argv[3] || 'https://gpt-agent-kwid-7tkz4pejp-world-wide-services-62780b79.vercel.app/integrations/kommo/oauth/callback';
 
 if (!code) {
   console.log('❌ Использование: node exchange-code.js "YOUR_AUTHORIZATION_CODE"');
@@ -20,7 +24,7 @@ fetch('https://kommo.com/oauth/token', {
     client_secret: '6FhlKjCZehELKIShuUQcPHdrF9uUHKLQosf0tDsSvdTuUoahVz3EO44xzVinlbh7',
     grant_type: 'authorization_code',
     code: code,
-    redirect_uri: 'https://gpt-agent-kwid-7tkz4pejp-world-wide-services-62780b79.vercel.app/integrations/kommo/oauth/callback',
+                        redirect_uri: redirectUri,
   }),
 })
 .then(res => res.json())

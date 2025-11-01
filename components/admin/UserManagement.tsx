@@ -1,12 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/shadcn/card'
+import { Button } from '@/components/ui/shadcn/button'
+import { Badge } from '@/components/ui/shadcn/badge'
+import { Input } from '@/components/ui/shadcn/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/shadcn/select'
 import {
   Table,
   TableBody,
@@ -14,7 +20,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
+} from '@/components/ui/shadcn/table'
 import {
   Dialog,
   DialogContent,
@@ -23,7 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
+} from '@/components/ui/shadcn/modal'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,7 +52,7 @@ import {
 import { UserRepository } from '@/lib/repositories/users'
 import type { User } from '@/types/user'
 
-interface UserWithSubscription extends User {
+interface UserWithSubscription extends Omit<User, 'subscription'> {
   subscription?: {
     status: string
     currentPeriodEnd: Date
@@ -175,7 +181,7 @@ export const UserManagement = () => {
             <div className="w-48">
               <Label htmlFor="tier-filter">Тариф</Label>
               <Select value={tierFilter} onValueChange={setTierFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Все тарифы" />
                 </SelectTrigger>
                 <SelectContent>
@@ -310,7 +316,7 @@ export const UserManagement = () => {
                   value={selectedUser.tier}
                   onValueChange={(value) => setSelectedUser({...selectedUser, tier: value as any})}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

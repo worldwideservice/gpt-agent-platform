@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { z } from 'zod'
 
 import { auth } from '@/auth'
-import { findUserById, updateUser } from '@/lib/repositories/users'
+import { UserRepository } from '@/lib/repositories/users'
+import type { User } from '@/types/user'
 
 export const GET = async () => {
   const session = await auth()
@@ -12,7 +13,7 @@ export const GET = async () => {
   }
 
   try {
-    const user = await findUserById(session.user.id)
+    const user = await UserRepository.findUserById(session.user.id)
 
     if (!user) {
       return NextResponse.json({ success: false, error: 'Пользователь не найден' }, { status: 404 })
@@ -23,9 +24,9 @@ export const GET = async () => {
       data: {
         id: user.id,
         email: user.email,
-        fullName: user.full_name,
-        avatarUrl: user.avatar_url,
-        locale: user.locale,
+        fullName: user.name || '',
+        avatarUrl: user.image || null,
+        locale: 'ru', // TODO: Add locale to User type if needed
       },
     })
   } catch (error) {
@@ -71,7 +72,28 @@ export const PATCH = async (request: NextRequest) => {
       )
     }
 
-    const user = await updateUser(session.user.id, parsed.data)
+    const updateData: Partial<User> = {}
+    if (parsed.data.fullName !== undefined) {
+      updateData.name = parsed.data.fullName
+    }
+    if (parsed.data.email !== undefined) {
+      updateData.email = parsed.data.email
+    }
+    if (parsed.data.avatarUrl !== undefined) {
+      updateData.image = parsed.data.avatarUrl || undefined
+    }
+
+    const updated = await UserRepository.updateUser(session.user.id, updateData)
+
+    if (!updated) {
+      return NextResponse.json(
+        { success: false, error: 'User not found' },
+        { status: 404 }
+      )
+    }
+
+    // Fetch updated user
+    const user = await UserRepository.getUserById(session.user.id)
 
     if (!user) {
       return NextResponse.json(
@@ -85,9 +107,9 @@ export const PATCH = async (request: NextRequest) => {
       data: {
         id: user.id,
         email: user.email,
-        fullName: user.full_name,
-        avatarUrl: user.avatar_url,
-        locale: user.locale,
+        fullName: user.name || '',
+        avatarUrl: user.image || null,
+        locale: 'ru', // TODO: Add locale to User type if needed
       },
     })
   } catch (error) {

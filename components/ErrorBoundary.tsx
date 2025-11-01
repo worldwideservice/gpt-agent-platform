@@ -2,9 +2,10 @@
 
 import type { ErrorInfo, ReactNode } from 'react'
 import { Component } from 'react'
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
+import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
+import { logger } from '@/lib/utils'
 
 interface ErrorBoundaryProps {
   children: ReactNode
@@ -32,7 +33,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo)
+    // Log error with structured logging
+    logger.error('ErrorBoundary caught an error', error, {
+      componentStack: errorInfo.componentStack,
+      errorBoundary: 'main',
+      userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'server',
+      url: typeof window !== 'undefined' ? window.location.href : 'server',
+    })
 
     this.setState({
       error,
@@ -60,6 +67,28 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   handleGoHome = () => {
     window.location.href = '/'
+  }
+
+  handleReportError = () => {
+    if (this.state.error && this.state.errorInfo) {
+      // Copy error details to clipboard for reporting
+      const errorReport = {
+        message: this.state.error.message,
+        stack: this.state.error.stack,
+        componentStack: this.state.errorInfo.componentStack,
+        userAgent: navigator.userAgent,
+        url: window.location.href,
+        timestamp: new Date().toISOString(),
+      }
+
+      navigator.clipboard.writeText(JSON.stringify(errorReport, null, 2))
+        .then(() => {
+          alert('Информация об ошибке скопирована в буфер обмена. Пожалуйста, отправьте её разработчикам.')
+        })
+        .catch(() => {
+          alert('Не удалось скопировать информацию об ошибке. Пожалуйста, сделайте скриншот страницы.')
+        })
+    }
   }
 
   render() {
@@ -105,6 +134,16 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 <Home className="h-4 w-4" />
                 На главную
               </Button>
+              {this.state.error && (
+                <Button
+                  onClick={() => this.handleReportError()}
+                  variant="secondary"
+                  className="gap-2"
+                >
+                  <Bug className="h-4 w-4" />
+                  Сообщить об ошибке
+                </Button>
+              )}
             </div>
 
             <p className="text-xs text-muted-foreground">

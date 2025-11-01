@@ -43,7 +43,7 @@ export const InHeader: Story = {
       <div className="flex-1">
         <h1 className="text-lg font-semibold">Application Header</h1>
       </div>
-      <LanguageSwitcher {...args} />
+      <LanguageSwitcher {...(args as any)} />
       <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
     </div>
   ),
@@ -57,7 +57,7 @@ export const InNavigation: Story = {
         <span className="font-semibold">My App</span>
       </div>
       <div className="flex items-center gap-4">
-        <LanguageSwitcher {...args} />
+        <LanguageSwitcher {...(args as any)} />
         <button className="px-3 py-1 text-sm border rounded">Login</button>
       </div>
     </nav>

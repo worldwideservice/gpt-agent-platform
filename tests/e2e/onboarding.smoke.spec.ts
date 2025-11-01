@@ -48,7 +48,7 @@ test.describe('Онбординг администратора', () => {
         }
       } catch (error) {
         // В демо-режиме вход может не сработать, проверяем что страница загрузилась
-        console.log('Login failed:', error.message)
+        console.log('Login failed:', (error as Error).message)
         await expect(page.locator('body')).toBeVisible()
       }
     }

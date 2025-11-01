@@ -57,7 +57,7 @@ test.describe('Chat Page', () => {
         }
       } catch (error) {
         // В демо-режиме отправка может не сработать
-        console.log('Send message failed:', error.message)
+        console.log('Send message failed:', (error as Error).message)
         // Проверяем что хотя бы input доступен
         await expect(messageInput).toBeVisible()
       }
@@ -82,7 +82,7 @@ test.describe('Chat Page', () => {
         await page.waitForTimeout(200)
       } catch (error) {
         // В демо-режиме очистка может не сработать
-        console.log('Clear chat failed:', error.message)
+        console.log('Clear chat failed:', (error as Error).message)
       }
     }
   })
@@ -99,7 +99,7 @@ test.describe('Chat Page', () => {
       await page.waitForTimeout(200)
     } catch (error) {
       // В демо-режиме Enter может не сработать
-      console.log('Enter key failed:', error.message)
+      console.log('Enter key failed:', (error as Error).message)
     }
   })
 

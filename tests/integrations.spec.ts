@@ -57,7 +57,7 @@ test.describe('Integrations Page', () => {
         await page.waitForTimeout(1000)
       } catch (error) {
         // В демо-режиме клик может не сработать
-        console.log('Test button click failed:', error.message)
+        console.log('Test button click failed:', (error as Error).message)
       }
     }
   })

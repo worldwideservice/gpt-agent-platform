@@ -194,7 +194,7 @@ export async function checkTierRateLimit(
   orgId?: string
 ) {
   const userTier = await getUserTier(userId, orgId)
-  const config = tierRateLimitConfigs[userTier][endpointType]
+  const config = tierRateLimitConfigs[userTier][endpointType] as any
 
   const identifier = userId
     ? `user:${userId}:${endpointType}`

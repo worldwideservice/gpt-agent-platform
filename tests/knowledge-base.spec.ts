@@ -53,7 +53,7 @@ test.describe('Knowledge Base Page', () => {
         await page.waitForTimeout(100)
       } catch (error) {
         // В демо-режиме клик может не сработать
-        console.log('Filter click failed:', error.message)
+        console.log('Filter click failed:', (error as Error).message)
       }
     }
   })
@@ -68,7 +68,7 @@ test.describe('Knowledge Base Page', () => {
         await page.waitForTimeout(200)
       } catch (error) {
         // В демо-режиме клик может не сработать
-        console.log('Document preview click failed:', error.message)
+        console.log('Document preview click failed:', (error as Error).message)
       }
     }
   })

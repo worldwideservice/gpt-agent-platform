@@ -9,17 +9,12 @@ export const getRedisClient = (): Redis | null => {
 
   try {
     const redisUrl = process.env.REDIS_URL
-    if (!redisUrl) {
-      console.warn('REDIS_URL not configured, caching disabled')
+    if (!redisUrl || redisUrl.includes('your-redis-host')) {
+      console.warn('REDIS_URL not configured or using placeholder, caching disabled')
       return null
     }
 
-    redisClient = new Redis(redisUrl, {
-      maxRetriesPerRequest: 3,
-      retryDelayOnFailover: 100,
-      enableReadyCheck: false,
-      lazyConnect: true,
-    })
+    redisClient = new Redis(redisUrl)
 
     redisClient.on('error', (err) => {
       console.error('Redis connection error:', err.message)

@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sharp from 'sharp'
-import { rateLimit } from '@/lib/rate-limit'
+import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
 
-const limiter = rateLimit({
-  interval: 60 * 1000, // 1 minute
-  uniqueTokenPerInterval: 100, // Max 100 requests per minute
-})
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
     // Rate limiting
-    try {
-      await limiter.check(5, 'IMAGES_CACHE_TOKEN') // 5 requests per minute
-    } catch {
+    const ip = request.headers.get('x-forwarded-for') ||
+               request.headers.get('x-real-ip') ||
+               'anonymous'
+    
+    const rateLimitResult = await rateLimit(`images:${ip}`, rateLimitConfigs.api)
+    
+    if (!rateLimitResult.success) {
       return NextResponse.json(
         { error: 'Rate limit exceeded' },
         { status: 429 }
@@ -115,7 +116,7 @@ export async function GET(request: NextRequest) {
     const optimizedBuffer = await sharpInstance.toBuffer()
 
     // Return the optimized image
-    return new NextResponse(optimizedBuffer, {
+    return new NextResponse(optimizedBuffer as unknown as BodyInit, {
       headers: {
         'Content-Type': `image/${outputFormat}`,
         'Cache-Control': 'public, max-age=31536000, immutable', // 1 year

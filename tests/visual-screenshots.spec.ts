@@ -102,7 +102,7 @@ test.describe('Visual Screenshots Comparison', () => {
         await expect(page.locator('body')).toBeVisible()
       }
     } catch (error) {
-      console.log('Edit agent page test failed:', error.message)
+      console.log('Edit agent page test failed:', (error as Error).message)
     }
   })
 
@@ -131,7 +131,7 @@ test.describe('Visual Screenshots Comparison', () => {
         await expect(page.locator('body')).toBeVisible()
       }
     } catch (error) {
-      console.log('Edit agent deals tab test failed:', error.message)
+      console.log('Edit agent deals tab test failed:', (error as Error).message)
     }
   })
 
@@ -158,7 +158,7 @@ test.describe('Visual Screenshots Comparison', () => {
         await expect(page.locator('body')).toBeVisible()
       }
     } catch (error) {
-      console.log('Edit agent triggers tab test failed:', error.message)
+      console.log('Edit agent triggers tab test failed:', (error as Error).message)
     }
   })
 
@@ -185,7 +185,7 @@ test.describe('Visual Screenshots Comparison', () => {
         await expect(page.locator('body')).toBeVisible()
       }
     } catch (error) {
-      console.log('Edit agent sequences tab test failed:', error.message)
+      console.log('Edit agent sequences tab test failed:', (error as Error).message)
     }
   })
 
@@ -212,7 +212,7 @@ test.describe('Visual Screenshots Comparison', () => {
         await expect(page.locator('body')).toBeVisible()
       }
     } catch (error) {
-      console.log('Edit agent integrations tab test failed:', error.message)
+      console.log('Edit agent integrations tab test failed:', (error as Error).message)
     }
   })
 
@@ -239,7 +239,7 @@ test.describe('Visual Screenshots Comparison', () => {
         await expect(page.locator('body')).toBeVisible()
       }
     } catch (error) {
-      console.log('Edit agent additional tab test failed:', error.message)
+      console.log('Edit agent additional tab test failed:', (error as Error).message)
     }
   })
 })

@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { rateLimit } from '@/lib/rate-limit'
-
-const limiter = rateLimit({
-  interval: 60 * 1000, // 1 minute
-  uniqueTokenPerInterval: 500, // Max 500 users per minute
-})
+import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
 
 interface AnalyticsEvent {
   event: string
@@ -23,9 +18,13 @@ interface AnalyticsEvent {
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting
-    try {
-      await limiter.check(10, 'ANALYTICS_CACHE_TOKEN') // 10 requests per minute
-    } catch {
+    const ip = request.headers.get('x-forwarded-for') ||
+               request.headers.get('x-real-ip') ||
+               'anonymous'
+    
+    const rateLimitResult = await rateLimit(`analytics:${ip}`, rateLimitConfigs.api)
+    
+    if (!rateLimitResult.success) {
       return NextResponse.json(
         { error: 'Rate limit exceeded' },
         { status: 429 }

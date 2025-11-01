@@ -38,7 +38,7 @@ export const InHeader: Story = {
         <h1 className="text-lg font-semibold text-gray-900 dark:text-white">My App</h1>
       </div>
       <div className="flex items-center gap-4">
-        <ThemeToggle {...args} />
+        <ThemeToggle {...(args as any)} />
         <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
       </div>
     </header>
@@ -57,7 +57,7 @@ export const Standalone: Story = {
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Theme
             </span>
-            <ThemeToggle {...args} />
+            <ThemeToggle {...(args as any)} />
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
             Choose your preferred theme or follow system settings
@@ -72,7 +72,7 @@ export const WithLabels: Story = {
   render: (args) => (
     <div className="flex items-center gap-4 p-4">
       <span className="text-sm font-medium">Theme:</span>
-      <ThemeToggle {...args} />
+      <ThemeToggle {...(args as any)} />
       <span className="text-sm text-gray-600">
         {typeof window !== 'undefined' &&
           (localStorage.getItem('theme') || 'system')}

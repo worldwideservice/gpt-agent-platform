@@ -24,7 +24,6 @@ export { Badge } from './badge'
 export type { BadgeProps } from './badge'
 
 export { Select } from './select'
-export type { SelectProps } from './select'
 
 export {
   Table,

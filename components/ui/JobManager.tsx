@@ -1,11 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/Button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Badge } from '@/components/ui/Badge'
 import { Progress } from '@/components/ui/progress'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   Play,
   Pause,
@@ -155,9 +154,9 @@ export const JobManager = ({ className, showCreateJob, onJobCreate }: JobManager
       </div>
 
       {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 border border-red-400 rounded">
+          {error}
+        </div>
       )}
 
       {showCreateForm && onJobCreate && (
@@ -237,19 +236,17 @@ export const JobManager = ({ className, showCreateJob, onJobCreate }: JobManager
                   </div>
 
                   {job.error && (
-                    <Alert variant="destructive">
-                      <AlertDescription className="text-sm">{job.error}</AlertDescription>
-                    </Alert>
+                    <div className="p-3 text-sm text-red-700 bg-red-100 border border-red-400 rounded">
+                      {job.error}
+                    </div>
                   )}
 
                   {job.result && (
-                    <Alert>
-                      <AlertDescription className="text-sm">
-                        <pre className="whitespace-pre-wrap text-xs">
-                          {JSON.stringify(job.result, null, 2)}
-                        </pre>
-                      </AlertDescription>
-                    </Alert>
+                    <div className="p-3 text-sm text-green-700 bg-green-100 border border-green-400 rounded">
+                      <pre className="whitespace-pre-wrap text-xs">
+                        {JSON.stringify(job.result, null, 2)}
+                      </pre>
+                    </div>
                   )}
 
                   <div className="flex gap-2">

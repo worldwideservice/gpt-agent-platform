@@ -1,12 +1,15 @@
 import { io, Socket } from 'socket.io-client'
 import type { ServerToClientEvents, ClientToServerEvents } from './server'
 
+const SOCKET_PATH = '/api/socket/io'
+
 class WebSocketClient {
   private socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null
   private reconnectAttempts = 0
   private maxReconnectAttempts = 5
   private reconnectDelay = 1000
-  private isConnected = false
+  private connected = false
+  private initializationPromise: Promise<void> | null = null
 
   // Event listeners
   private listeners = {
@@ -18,10 +21,28 @@ class WebSocketClient {
   }
 
   constructor() {
-    this.initializeSocket()
+    void this.ensureSocketReady()
   }
 
-  private initializeSocket() {
+  private async ensureSocketReady(): Promise<void> {
+    if (this.socket || typeof window === 'undefined') {
+      return
+    }
+
+    if (!this.initializationPromise) {
+      this.initializationPromise = this.initializeSocket()
+    }
+
+    await this.initializationPromise
+  }
+
+  private async initializeSocket(): Promise<void> {
+    try {
+      await fetch(SOCKET_PATH, { method: 'GET', cache: 'no-store' })
+    } catch (error) {
+      console.error('Failed to initialize WebSocket endpoint', error)
+    }
+
     const socketUrl = process.env.NODE_ENV === 'production'
       ? process.env.WEBSOCKET_URL || window.location.origin
       : 'http://localhost:3000'
@@ -30,6 +51,7 @@ class WebSocketClient {
       auth: {
         token: this.getAuthToken(),
       },
+      path: SOCKET_PATH,
       transports: ['websocket', 'polling'],
       autoConnect: true,
     })
@@ -61,13 +83,13 @@ class WebSocketClient {
     // Connection events
     this.socket.on('connect', () => {
       console.log('WebSocket connected')
-      this.isConnected = true
+      this.connected = true
       this.reconnectAttempts = 0
     })
 
     this.socket.on('disconnect', (reason) => {
       console.log('WebSocket disconnected:', reason)
-      this.isConnected = false
+      this.connected = false
 
       if (reason === 'io server disconnect') {
         // Server disconnected us, try to reconnect
@@ -126,20 +148,24 @@ class WebSocketClient {
   }
 
   // Public API
-  public connect() {
+  public async connect() {
+    await this.ensureSocketReady()
+
     if (this.socket && !this.socket.connected) {
       this.socket.connect()
     }
   }
 
-  public disconnect() {
+  public async disconnect() {
+    await this.ensureSocketReady()
+
     if (this.socket) {
       this.socket.disconnect()
     }
   }
 
   public isConnected(): boolean {
-    return this.isConnected
+    return this.connected
   }
 
   // Event subscription
@@ -169,32 +195,42 @@ class WebSocketClient {
   }
 
   // Actions
-  public markNotificationAsRead(notificationId: string) {
-    if (this.socket && this.isConnected) {
+  public async markNotificationAsRead(notificationId: string) {
+    await this.ensureSocketReady()
+
+    if (this.socket && this.connected) {
       this.socket.emit('notification:mark_read', notificationId)
     }
   }
 
-  public subscribeToJob(jobId: string) {
-    if (this.socket && this.isConnected) {
+  public async subscribeToJob(jobId: string) {
+    await this.ensureSocketReady()
+
+    if (this.socket && this.connected) {
       this.socket.emit('job:subscribe', jobId)
     }
   }
 
-  public unsubscribeFromJob(jobId: string) {
-    if (this.socket && this.isConnected) {
+  public async unsubscribeFromJob(jobId: string) {
+    await this.ensureSocketReady()
+
+    if (this.socket && this.connected) {
       this.socket.emit('job:unsubscribe', jobId)
     }
   }
 
-  public joinUserRoom(userId: string) {
-    if (this.socket && this.isConnected) {
+  public async joinUserRoom(userId: string) {
+    await this.ensureSocketReady()
+
+    if (this.socket && this.connected) {
       this.socket.emit('user:join', userId)
     }
   }
 
-  public leaveUserRoom(userId: string) {
-    if (this.socket && this.isConnected) {
+  public async leaveUserRoom(userId: string) {
+    await this.ensureSocketReady()
+
+    if (this.socket && this.connected) {
       this.socket.emit('user:leave', userId)
     }
   }

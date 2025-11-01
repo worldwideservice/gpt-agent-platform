@@ -1,8 +1,10 @@
-import { supabase } from '@/lib/supabase/client'
+import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
 // Admin access control
 export async function checkAdminAccess(userId: string): Promise<boolean> {
   try {
+    const supabase = getSupabaseServiceRoleClient()
+    
     // Check if user has admin role in organizations
     const { data: orgMember, error: orgError } = await supabase
       .from('organization_members')
@@ -42,6 +44,8 @@ export async function checkAdminAccess(userId: string): Promise<boolean> {
 // Admin statistics
 export async function getAdminStats() {
   try {
+    const supabase = getSupabaseServiceRoleClient()
+    
     // Users stats
     const { data: users, error: usersError } = await supabase
       .from('users')
@@ -166,6 +170,7 @@ export async function performAdminAction(action: string, payload: any) {
 }
 
 async function updateUserTier(userId: string, tier: string) {
+  const supabase = getSupabaseServiceRoleClient()
   const { error } = await supabase
     .from('users')
     .update({ tier, updated_at: new Date().toISOString() })
@@ -177,6 +182,7 @@ async function updateUserTier(userId: string, tier: string) {
 
 async function deleteUser(userId: string) {
   // Soft delete - mark as inactive instead of hard delete
+  const supabase = getSupabaseServiceRoleClient()
   const { error } = await supabase
     .from('users')
     .update({

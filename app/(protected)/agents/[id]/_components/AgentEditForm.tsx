@@ -646,23 +646,31 @@ const handleChannelSync = useCallback(async () => {
                 <div className="space-y-4 rounded-2xl bg-slate-50 p-4">
                   <Select
                     label="Модель ИИ"
+                    value={formData.model}
+                    onChange={(value: string) => setFormData((prev) => ({ ...prev, model: value }))}
                     options={[
                       { value: 'gpt-5', label: 'OpenAI GPT-5' },
                       { value: 'gpt-4.1', label: 'OpenAI GPT-4.1' },
                       { value: 'gpt-4', label: 'OpenAI GPT-4' },
+                      { value: 'gpt-3.5-turbo', label: 'OpenAI GPT-3.5 Turbo' },
+                      { value: 'claude-3-opus', label: 'Anthropic Claude 3 Opus' },
+                      { value: 'claude-3-sonnet', label: 'Anthropic Claude 3 Sonnet' },
+                      { value: 'claude-3-haiku', label: 'Anthropic Claude 3 Haiku' },
+                      { value: 'gemini-pro', label: 'Google Gemini Pro' },
+                      { value: 'gemini-ultra', label: 'Google Gemini Ultra' },
                     ]}
-                    value={formData.model}
-                    onChange={(value: string) => setFormData((prev) => ({ ...prev, model: value }))}
+                    placeholder="Выберите модель ИИ"
                   />
                   <Select
                     label="Рабочий язык"
+                    value={formData.language}
+                    onChange={(value: string) => setFormData((prev) => ({ ...prev, language: value }))}
                     options={[
                       { value: 'auto', label: 'Автоматически определять' },
                       { value: 'en', label: 'English' },
                       { value: 'ru', label: 'Русский' },
                     ]}
-                    value={formData.language}
-                    onChange={(value: string) => setFormData((prev) => ({ ...prev, language: value }))}
+                    placeholder="Выберите язык"
                   />
                   <Textarea
                     label="Описание"
@@ -701,12 +709,14 @@ const handleChannelSync = useCallback(async () => {
 
               <Select
                 label="Методология диалога"
+                defaultValue="spin"
+                onChange={(value: string) => setFormData((prev) => ({ ...prev, methodology: value }))}
                 options={[
                   { value: 'spin', label: 'SPIN (ситуация, проблема, импликация, решение)' },
                   { value: 'bant', label: 'BANT (Budget, Authority, Need, Timeline)' },
                   { value: 'custom', label: 'Собственный сценарий' },
                 ]}
-                defaultValue="spin"
+                placeholder="Выберите методологию"
               />
 
               <Textarea

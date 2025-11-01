@@ -398,7 +398,7 @@ test.describe('Comprehensive Button Testing', () => {
           }
         } catch (error) {
           // Игнорируем ошибки если модал не открылся
-          console.log(`Modal test failed for button ${i}:`, error.message)
+          console.log(`Modal test failed for button ${i}:`, (error as Error).message)
         }
       }
     }
@@ -505,7 +505,7 @@ test.describe('Comprehensive Button Testing', () => {
             await page.waitForTimeout(100)
           } catch (error) {
             // Игнорируем ошибки навигации для этого теста
-            console.log(`Navigation test failed for link ${href}:`, error.message)
+            console.log(`Navigation test failed for link ${href}:`, (error as Error).message)
           }
         }
       }

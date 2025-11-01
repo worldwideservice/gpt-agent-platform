@@ -44,7 +44,7 @@ test.describe('Account Page', () => {
         await page.waitForTimeout(200)
       } catch (error) {
         // В демо-режиме клик может не сработать
-        console.log('Save button click failed:', error.message)
+        console.log('Save button click failed:', (error as Error).message)
       }
     }
   })

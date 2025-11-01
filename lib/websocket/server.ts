@@ -1,10 +1,9 @@
 import { Server as HTTPServer } from 'http'
 import { Server as SocketServer } from 'socket.io'
-import { auth } from '@/auth'
-import { UserRepository } from '@/lib/repositories/users'
-import type { NextApiRequest, NextApiResponse } from 'next'
 
-interface ServerToClientEvents {
+import { UserRepository } from '@/lib/repositories/users'
+
+export interface ServerToClientEvents {
   'notification:new': (notification: any) => void
   'job:updated': (job: any) => void
   'agent:status_changed': (agent: any) => void
@@ -12,7 +11,7 @@ interface ServerToClientEvents {
   'user:online_status': (onlineUsers: string[]) => void
 }
 
-interface ClientToServerEvents {
+export interface ClientToServerEvents {
   'user:join': (userId: string) => void
   'user:leave': (userId: string) => void
   'notification:mark_read': (notificationId: string) => void
@@ -36,13 +35,20 @@ let io: SocketServer<ClientToServerEvents, ServerToClientEvents, InterServerEven
 const onlineUsers = new Map<string, Set<string>>() // orgId -> Set of userIds
 const userSockets = new Map<string, string>() // userId -> socketId
 
+export const WEBSOCKET_PATH = '/api/socket/io'
+
 export function initializeWebSocketServer(httpServer: HTTPServer) {
+  if (io) {
+    return io
+  }
+
   io = new SocketServer<
     ClientToServerEvents,
     ServerToClientEvents,
     InterServerEvents,
     SocketData
   >(httpServer, {
+    path: WEBSOCKET_PATH,
     cors: {
       origin: process.env.NODE_ENV === 'production'
         ? process.env.FRONTEND_URL
@@ -55,18 +61,22 @@ export function initializeWebSocketServer(httpServer: HTTPServer) {
 
   io.use(async (socket, next) => {
     try {
-      // Get session from socket handshake
-      const sessionToken = socket.handshake.auth.token
+      const authData = socket.handshake.auth || {}
+      const query = socket.handshake.query || {}
+      const userId = typeof authData.userId === 'string'
+        ? authData.userId
+        : typeof query.userId === 'string'
+          ? query.userId
+          : undefined
+      const orgId = typeof authData.orgId === 'string'
+        ? authData.orgId
+        : typeof query.orgId === 'string'
+          ? query.orgId
+          : undefined
 
-      if (sessionToken) {
-        // Verify session token (simplified - in production use proper JWT verification)
-        const session = await auth()
-        if (session?.user) {
-          socket.data.userId = session.user.id
-          socket.data.orgId = session.user.orgId
-          socket.data.sessionId = socket.id
-        }
-      }
+      socket.data.userId = userId
+      socket.data.orgId = orgId
+      socket.data.sessionId = socket.id
 
       next()
     } catch (error) {

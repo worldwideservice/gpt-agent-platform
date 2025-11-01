@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export const GET = async (request: NextRequest) => {
   try {
     // Basic health check
-    const health = {
+    const health: Record<string, string | number | undefined> = {
       status: 'ok',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),

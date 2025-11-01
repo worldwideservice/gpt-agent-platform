@@ -1,5 +1,21 @@
 import { UserTier } from '@/lib/rate-limit'
 
+export { UserTier }
+
+export interface DatabaseUser {
+  id: string
+  email: string
+  full_name?: string
+  password_hash?: string
+  default_org_id?: string
+  avatar_url?: string
+  locale?: string
+  invited_at?: string
+  last_sign_in_at?: string
+  created_at: string
+  updated_at: string
+}
+
 export interface User {
   id: string
   email: string

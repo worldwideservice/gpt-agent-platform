@@ -97,6 +97,13 @@ export const LoginClient = () => {
         </Link>
       </div>
 
+      <div className="mt-4 text-center text-sm">
+        <span className="text-gray-600">Нет аккаунта? </span>
+        <Link href="/register" className="text-primary-600 hover:text-primary-700">
+          Зарегистрироваться
+        </Link>
+      </div>
+
       <div className="mt-6 rounded-lg bg-gray-100 p-4 text-xs text-gray-600">
         <p className="font-medium">Демо-учётные данные</p>
         <p>Email: founder@example.com</p>

@@ -169,7 +169,7 @@ export const Sidebar = ({ organizations, activeOrganizationId }: SidebarProps) =
                   const Icon = item.icon
                   const isActive = item.href === '/'
                     ? pathname === '/'
-                    : pathname.startsWith(item.href)
+                    : pathname?.startsWith(item.href) ?? false
 
                   const className = cn(
                     'group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',

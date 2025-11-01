@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages } from 'next-intl/server'
@@ -13,10 +13,12 @@ export const metadata: Metadata = {
   title: 'GPT Agent - Trainable virtual employee',
   description: 'Обучаемый виртуальный сотрудник для автоматизации общения с клиентами',
   manifest: '/manifest.json',
-  themeColor: '#3b82f6',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=5',
+  metadataBase: new URL(process.env.NODE_ENV === 'production'
+    ? 'https://gpt-agent-kwid-1i1j7zlgl-world-wide-services-62780b79.vercel.app'
+    : 'http://localhost:3000'
+  ),
   appleWebApp: {
-    capable: true,
+    capable: false,
     statusBarStyle: 'default',
     title: 'GPT Agent',
   },
@@ -57,6 +59,13 @@ export const metadata: Metadata = {
   verification: {
     google: 'your-google-site-verification-code',
   },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#3b82f6',
 }
 
 interface RootLayoutProps {
