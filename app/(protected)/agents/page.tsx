@@ -1,10 +1,6 @@
-import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 import { AgentsClient } from "./_components/AgentsClient";
-
-import { auth } from "@/auth";
-import { getAgents } from "@/lib/repositories/agents";
 
 // Отключаем prerendering - всегда динамический
 export const dynamic = "force-dynamic";
@@ -18,11 +14,9 @@ export const metadata: Metadata = {
 const AgentsPage = async () => {
   // Всегда используем демо-режим пока не исправлена авторизация
   // Это временное решение для продакшена
-  let agents, total;
-
-  try {
-    // Mock данные для демо-режима
-    agents = [
+  
+  // Mock данные для демо-режима
+  const agents = [
       {
         id: "demo-agent-1",
         name: "Техническая поддержка",
@@ -72,12 +66,7 @@ const AgentsPage = async () => {
         settings: {},
       },
     ];
-    total = 3;
-  } catch (error) {
-    // В случае ошибки возвращаем пустой массив
-    agents = [];
-    total = 0;
-  }
+  const total = 3;
 
   return <AgentsClient initialAgents={agents} total={total} />;
 };
