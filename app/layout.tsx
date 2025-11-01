@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 
+import { NextIntlClientProvider } from 'next-intl'
 import { AppProviders } from '@/components/AppProviders'
 
 import './globals.css'
@@ -11,9 +12,12 @@ export const metadata: Metadata = {
   title: 'GPT Agent - Trainable virtual employee',
   description: 'Обучаемый виртуальный сотрудник для автоматизации общения с клиентами',
   manifest: '/manifest.json',
-  metadataBase: new URL(process.env.NODE_ENV === 'production'
-    ? 'https://gpt-agent-kwid-1i1j7zlgl-world-wide-services-62780b79.vercel.app'
-    : 'http://localhost:3000'
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || 
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` :
+    process.env.NODE_ENV === 'production'
+      ? 'https://gpt-agent-kwid.vercel.app'
+      : 'http://localhost:3000'
   ),
   appleWebApp: {
     capable: false,
@@ -114,7 +118,9 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
         />
       </head>
       <body className={inter.className}>
-        <AppProviders>{children}</AppProviders>
+        <NextIntlClientProvider messages={messages}>
+          <AppProviders>{children}</AppProviders>
+        </NextIntlClientProvider>
       </body>
     </html>
   )
