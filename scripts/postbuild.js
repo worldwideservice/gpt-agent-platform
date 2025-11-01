@@ -15,16 +15,10 @@ const nextDir = join(projectRoot, '.next')
 const serverDir = join(nextDir, 'server')
 
 function ensureProtectedAppManifest() {
-  const protectedDir = join(serverDir, 'app', '(protected)')
-  const manifestPath = join(protectedDir, 'page_client-reference-manifest.js')
-
-  try {
-    mkdirSync(protectedDir, { recursive: true })
-    writeFileSync(manifestPath, 'module.exports = {}\n')
-    console.log('postbuild: ensured page_client-reference-manifest.js exists')
-  } catch (error) {
-    console.warn('postbuild: failed to prepare protected app manifest:', error.message)
-  }
+  // НЕ создаём манифесты для App Router - Next.js должен создавать их сам
+  // Создание пустых манифестов может конфликтовать с реальными манифестами,
+  // что приводит к ошибке "Cannot read properties of undefined (reading 'clientModules')"
+  // Оставляем эту функцию пустой, чтобы не мешать Next.js
 }
 
 function collectApiRoutes(apiDir) {
@@ -111,5 +105,6 @@ function ensurePagesManifest() {
   }
 }
 
-ensureProtectedAppManifest()
+// Убираем ensureProtectedAppManifest() - не нужно создавать манифесты для App Router
+// Next.js создаёт их автоматически, и наша попытка создать пустые может сломать их
 ensurePagesManifest()
