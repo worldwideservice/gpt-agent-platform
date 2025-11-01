@@ -13,6 +13,8 @@ import { getAgentById } from '@/lib/repositories/agents'
 import { generateChatResponse } from '@/lib/services/llm'
 import { buildFullSystemPrompt, processConversationMemory } from '@/lib/services/agent-context-builder'
 import { AgentActionsService } from '@/lib/services/agent-actions'
+import { createKommoApiForOrg } from '@/lib/repositories/crm-connection'
+import { isAgentConfiguredForStage } from '@/lib/repositories/agent-pipeline-settings'
 
 const sendMessageSchema = z.object({
   conversationId: z.string().uuid().optional(),
@@ -263,20 +265,58 @@ export const POST = async (request: NextRequest) => {
             agentInstructions = 'instructions' in agent ? agent.instructions ?? null : null
             agentModel = agent.model ?? undefined
             
-            // Определяем pipeline_stage_id из CRM если есть активная сделка
-            // Можно получить из conversation.metadata или через CRM API
-            // TODO: Реализовать получение pipeline_id и stage_id из CRM для активной сделки
+            // Определяем pipeline_id и stage_id из CRM если есть активная сделка
+            let pipelineId: string | null = null
             
-            // Если есть pipeline_stage_id, проверяем настройки агента для этого этапа
-            if (pipelineStageId) {
-              // Пока что pipeline_id нужно получать из CRM или metadata
-              // Для простоты проверяем только если есть настройки
-              const { isAgentConfiguredForStage } = await import('@/lib/repositories/agent-pipeline-settings')
-              // TODO: Получить pipeline_id из CRM или metadata
-              // const isConfigured = await isAgentConfiguredForStage(effectiveAgentId, organizationId, pipelineId, pipelineStageId)
-              // if (!isConfigured) {
-              //   canUseAgent = false
-              // }
+            // Получаем leadId из conversation.metadata или ищем по clientIdentifier
+            let leadId: number | null = null
+            
+            if (conversation.metadata && typeof conversation.metadata === 'object') {
+              // Проверяем metadata на наличие leadId
+              if ('leadId' in conversation.metadata && typeof conversation.metadata.leadId === 'number') {
+                leadId = conversation.metadata.leadId
+              } else if ('lead_id' in conversation.metadata && typeof conversation.metadata.lead_id === 'number') {
+                leadId = conversation.metadata.lead_id
+              }
+            }
+            
+            // Если нет leadId в metadata, можно поискать по clientIdentifier через API
+            // Пока что используем только из metadata
+            
+            // Если есть leadId, получаем информацию о сделке из Kommo
+            if (leadId) {
+              try {
+                const kommoApi = await createKommoApiForOrg(organizationId)
+                if (kommoApi) {
+                  const lead = await kommoApi.getLead(leadId)
+                  
+                  if (lead.pipeline_id) {
+                    pipelineId = lead.pipeline_id.toString()
+                  }
+                  
+                  if (lead.status_id) {
+                    pipelineStageId = lead.status_id.toString()
+                  }
+                  
+                  // Проверяем настройки агента для этого этапа
+                  if (pipelineId && pipelineStageId) {
+                    const isConfigured = await isAgentConfiguredForStage(
+                      effectiveAgentId,
+                      organizationId,
+                      pipelineId,
+                      pipelineStageId,
+                    )
+                    
+                    if (!isConfigured) {
+                      canUseAgent = false
+                      console.log(`Agent ${effectiveAgentId} not configured for pipeline ${pipelineId} stage ${pipelineStageId}`)
+                    }
+                  }
+                }
+              } catch (error) {
+                // Если не удалось получить данные из CRM, продолжаем без проверки
+                console.error('Failed to fetch lead from CRM or check agent settings', error)
+              }
             }
           }
         } catch (error) {
