@@ -112,7 +112,7 @@
         <div class="warning">
             <strong>⚠️ АКТУАЛЬНЫЕ ДАННЫЕ ЗАГРУЖЕНЫ:</strong><br>
             Client ID: 2a5c1463-43dd-4ccc-abd0-79516f785e57<br>
-            Redirect URI: https://gpt-agent-kwid-h6zbflthg-world-wide-services-62780b79.vercel.app/integrations/kommo/oauth/callback
+            Redirect URI: https://gpt-agent-kwid-7tkz4pejp-world-wide-services-62780b79.vercel.app/integrations/kommo/oauth/callback
         </div>
 
         <div class="tabs">
@@ -201,7 +201,7 @@
             resultDiv.innerHTML = '<div>🔄 Открываем окно авторизации...</div>';
 
             const clientId = '2a5c1463-43dd-4ccc-abd0-79516f785e57';
-            const redirectUri = 'https://gpt-agent-kwid-h6zbflthg-world-wide-services-62780b79.vercel.app/integrations/kommo/oauth/callback';
+            const redirectUri = 'https://gpt-agent-kwid-7tkz4pejp-world-wide-services-62780b79.vercel.app/integrations/kommo/oauth/callback';
             const scope = 'crm:read crm:write leads:read leads:write contacts:read contacts:write tasks:read tasks:write';
             const state = 'auto_oauth_' + Date.now();
             const authUrl = `https://kommo.com/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}&response_type=code`;
@@ -272,7 +272,7 @@
                         client_secret: '6FhlKjCZehELKIShuUQcPHdrF9uUHKLQosf0tDsSvdTuUoahVz3EO44xzVinlbh7',
                         grant_type: 'authorization_code',
                         code: code,
-                        redirect_uri: 'https://gpt-agent-kwid-h6zbflthg-world-wide-services-62780b79.vercel.app/integrations/kommo/oauth/callback',
+                        redirect_uri: 'https://gpt-agent-kwid-7tkz4pejp-world-wide-services-62780b79.vercel.app/integrations/kommo/oauth/callback',
                     }),
                 });
 
@@ -327,7 +327,7 @@ npx tsx test-kommo.ts
             const display = document.getElementById('auth-url-display');
             if (display.style.display === 'none') {
                 const clientId = '2a5c1463-43dd-4ccc-abd0-79516f785e57';
-                const redirectUri = 'https://gpt-agent-kwid-h6zbflthg-world-wide-services-62780b79.vercel.app/integrations/kommo/oauth/callback';
+                const redirectUri = 'https://gpt-agent-kwid-7tkz4pejp-world-wide-services-62780b79.vercel.app/integrations/kommo/oauth/callback';
                 const scope = 'crm:read crm:write leads:read leads:write contacts:read contacts:write tasks:read tasks:write';
                 const state = 'manual_oauth_' + Date.now();
                 const authUrl = `https://kommo.com/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}&response_type=code`;
