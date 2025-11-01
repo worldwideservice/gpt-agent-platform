@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { signIn, useSession } from 'next-auth/react'
+import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Lock } from 'lucide-react'
 
@@ -12,19 +12,10 @@ import { Input } from '@/components/ui/Input'
 
 export const LoginClient = () => {
   const router = useRouter()
-  const { data: session, status } = useSession()
   const [email, setEmail] = useState('founder@example.com')
   const [password, setPassword] = useState('Demo1234!')
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
-
-  useEffect(() => {
-    // If user is already authenticated, redirect to platform
-    if (status === 'authenticated' && session?.user) {
-      console.log('User already authenticated, redirecting to /agents')
-      router.replace('/agents')
-    }
-  }, [session, status, router])
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -35,17 +26,14 @@ export const LoginClient = () => {
       const result = await signIn('credentials', {
         email,
         password,
-        redirect: false, // Не позволяем NextAuth перенаправлять автоматически
+        redirect: true,
+        callbackUrl: '/agents',
       })
 
       if (result?.error) {
         setError('Неверные email или пароль')
         return
       }
-
-      // Ручное перенаправление на платформу после успешного входа
-      router.replace('/agents')
-      router.refresh()
     })
   }
 
