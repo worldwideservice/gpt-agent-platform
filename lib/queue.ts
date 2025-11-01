@@ -1,20 +1,43 @@
 import { Queue } from 'bullmq'
 import Redis from 'ioredis'
 
-// Initialize Redis connection
-const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379'
-const connection = new Redis(redisUrl, {
-  maxRetriesPerRequest: null,
-})
+// Lazy initialization for Redis connection (to avoid connection during build)
+let connection: Redis | null = null
+let jobQueue: Queue | null = null
 
-// Initialize job queue
-const jobQueue = new Queue('gpt-agent-jobs', {
-  connection,
-  defaultJobOptions: {
-    removeOnComplete: 100, // Keep last 100 completed jobs
-    removeOnFail: 50, // Keep last 50 failed jobs
-  },
-})
+function getRedisConnection(): Redis {
+  if (!connection) {
+    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379'
+    // Skip connection if using placeholder URL (for build time)
+    if (redisUrl.includes('your-redis-host')) {
+      throw new Error('Redis URL not configured')
+    }
+    connection = new Redis(redisUrl, {
+      maxRetriesPerRequest: null,
+      lazyConnect: true, // Don't connect immediately
+    })
+  }
+  return connection
+}
+
+function getJobQueue(): Queue {
+  if (!jobQueue) {
+    try {
+      const conn = getRedisConnection()
+      jobQueue = new Queue('gpt-agent-jobs', {
+        connection: conn,
+        defaultJobOptions: {
+          removeOnComplete: 100, // Keep last 100 completed jobs
+          removeOnFail: 50, // Keep last 50 failed jobs
+        },
+      })
+    } catch (error) {
+      console.warn('Redis not available, queue operations will fail:', error)
+      throw error
+    }
+  }
+  return jobQueue
+}
 
 export interface JobPayload {
   [key: string]: any
@@ -35,7 +58,8 @@ export interface QueuedJob {
 
 // Add job to queue
 export async function addJobToQueue(jobName: string, payload: JobPayload) {
-  const job = await jobQueue.add(jobName, payload, {
+  const queue = getJobQueue()
+  const job = await queue.add(jobName, payload, {
     priority: getJobPriority(jobName),
     delay: getJobDelay(jobName),
     attempts: 3,
@@ -94,24 +118,27 @@ function getJobDelay(jobName: string): number {
 
 // Get job by ID
 export async function getJobById(jobId: string) {
-  const job = await jobQueue.getJob(jobId)
+  const queue = getJobQueue()
+  const job = await queue.getJob(jobId)
   return job
 }
 
 // Get jobs by status
 export async function getJobsByStatus(status: 'active' | 'waiting' | 'completed' | 'failed', limit = 10) {
-  const jobs = await jobQueue.getJobs([status], 0, limit - 1)
+  const queue = getJobQueue()
+  const jobs = await queue.getJobs([status], 0, limit - 1)
   return jobs
 }
 
 // Get queue statistics
 export async function getQueueStats() {
+  const queue = getJobQueue()
   const [waiting, active, completed, failed, delayed] = await Promise.all([
-    jobQueue.getWaiting(),
-    jobQueue.getActive(),
-    jobQueue.getCompleted(),
-    jobQueue.getFailed(),
-    jobQueue.getDelayed(),
+    queue.getWaiting(),
+    queue.getActive(),
+    queue.getCompleted(),
+    queue.getFailed(),
+    queue.getDelayed(),
   ])
 
   return {
@@ -125,13 +152,15 @@ export async function getQueueStats() {
 
 // Clean up old jobs
 export async function cleanupOldJobs() {
-  await jobQueue.clean(24 * 60 * 60 * 1000, 100, 'completed') // Remove completed jobs older than 24 hours
-  await jobQueue.clean(7 * 24 * 60 * 60 * 1000, 50, 'failed') // Remove failed jobs older than 7 days
+  const queue = getJobQueue()
+  await queue.clean(24 * 60 * 60 * 1000, 100, 'completed') // Remove completed jobs older than 24 hours
+  await queue.clean(7 * 24 * 60 * 60 * 1000, 50, 'failed') // Remove failed jobs older than 7 days
 }
 
 // Retry failed job
 export async function retryJob(jobId: string) {
-  const job = await jobQueue.getJob(jobId)
+  const queue = getJobQueue()
+  const job = await queue.getJob(jobId)
   if (job) {
     await job.retry()
     return true
@@ -141,7 +170,8 @@ export async function retryJob(jobId: string) {
 
 // Remove job from queue
 export async function removeJob(jobId: string) {
-  const job = await jobQueue.getJob(jobId)
+  const queue = getJobQueue()
+  const job = await queue.getJob(jobId)
   if (job) {
     await job.remove()
     return true
@@ -151,6 +181,12 @@ export async function removeJob(jobId: string) {
 
 // Graceful shutdown
 export async function closeQueue() {
-  await jobQueue.close()
-  await connection.quit()
+  if (jobQueue) {
+    await jobQueue.close()
+    jobQueue = null
+  }
+  if (connection) {
+    await connection.quit()
+    connection = null
+  }
 }
