@@ -30,7 +30,9 @@ export const GET = async () => {
       },
     })
   } catch (error) {
-    console.error('Account API error', error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Account API error', error)
+    }
 
     return NextResponse.json(
       {

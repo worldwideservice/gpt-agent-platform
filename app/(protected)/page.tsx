@@ -16,14 +16,14 @@ import {
 } from '@/lib/repositories/agents'
 
 // Отключаем prerendering в демо-режиме для предотвращения ошибок
-export const dynamic = process.env.NODE_ENV === 'development' || process.env.DEMO_MODE === 'true'
-  ? 'force-dynamic'
-  : 'auto'
+const isDevelopment = process.env.NODE_ENV === 'development'
+const isDemoModeEnv = process.env.DEMO_MODE === 'true'
+
+export const dynamic = isDevelopment || isDemoModeEnv ? 'force-dynamic' : 'auto'
 
 const DashboardPage = async () => {
   // Демо режим для локального тестирования
-  const isDemoMode = process.env.NODE_ENV === 'development' ||
-    process.env.DEMO_MODE === 'true'
+  const isDemoMode = isDevelopment || isDemoModeEnv
 
   let orgId: string
 

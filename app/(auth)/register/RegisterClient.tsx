@@ -38,7 +38,6 @@ export const RegisterClient = () => {
       setError(null)
 
       try {
-        console.log('RegisterClient: Starting registration...')
         const response = await fetch('/api/auth/register', {
           method: 'POST',
           headers: {
@@ -52,20 +51,12 @@ export const RegisterClient = () => {
           }),
         })
 
-        console.log('RegisterClient: Response status:', response.status)
-
         if (!response.ok) {
           const data = await response.json()
-          console.log('RegisterClient: Error response:', data)
           throw new Error(data.error || 'Ошибка при регистрации')
         }
 
-        const data = await response.json()
-        console.log('RegisterClient: Success response:', data)
-
         // Показываем уведомление об успешной регистрации
-        console.log('RegisterClient: Showing toast...')
-        alert('Регистрация успешна! Перенаправляем на страницу входа...')
         pushToast({
           title: 'Регистрация успешна!',
           description: 'Ваша учетная запись создана. Теперь вы можете войти в систему.',
@@ -73,10 +64,12 @@ export const RegisterClient = () => {
         })
 
         // После успешной регистрации перенаправляем на логин
-        console.log('RegisterClient: Redirecting to login...')
         router.push('/login')
       } catch (error) {
-        console.error('RegisterClient: Error during registration:', error)
+        // Логируем ошибку только в development режиме
+        if (process.env.NODE_ENV === 'development') {
+          console.error('RegisterClient: Error during registration:', error)
+        }
         setError(error instanceof Error ? error.message : 'Неизвестная ошибка')
       }
     })

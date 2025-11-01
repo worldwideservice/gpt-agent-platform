@@ -41,8 +41,13 @@ export async function POST(request: NextRequest) {
     // Create organization for the user
     try {
       const { createClient } = await import('@supabase/supabase-js')
-      const supabaseUrl = process.env.SUPABASE_URL!
-      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+      const supabaseUrl = process.env.SUPABASE_URL
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Supabase configuration is missing')
+      }
+
       const client = createClient(supabaseUrl, supabaseKey)
 
       const { nanoid } = await import('nanoid')
@@ -92,7 +97,9 @@ export async function POST(request: NextRequest) {
           })
       }
     } catch (orgError) {
-      console.warn('Failed to create organization:', orgError)
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Failed to create organization:', orgError)
+      }
       // Continue anyway - user is created
     }
 
@@ -105,7 +112,9 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('Registration error:', error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Registration error:', error)
+    }
 
     if (error instanceof Error) {
       return NextResponse.json(

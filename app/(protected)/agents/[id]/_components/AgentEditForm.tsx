@@ -253,7 +253,9 @@ const fetchAgentChannels = useCallback(
       updateDefaultChannelsSetting(nextChannels, allEnabled)
       setChannelsInitialized(true)
     } catch (error) {
-      console.error('Failed to load channels', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to load channels', error)
+      }
     } finally {
       setChannelsLoading(false)
     }
@@ -307,7 +309,9 @@ const handleChannelToggle = useCallback(
         throw new Error('Failed to update channel')
       }
     } catch (error) {
-      console.error('Failed to update channel', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to update channel', error)
+      }
       alert('Не удалось обновить канал. Попробуйте позже.')
       setChannels(previousChannels.map((channel) => ({ ...channel })))
       updateDefaultChannelsSetting(previousChannels, allChannelsEnabled)
@@ -351,7 +355,9 @@ const handleAllChannelsToggle = useCallback(
           throw new Error('Failed to enable all channels')
         }
       } catch (error) {
-        console.error('Failed to enable all channels', error)
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to enable all channels', error)
+        }
         alert('Не удалось включить все каналы. Попробуйте позже.')
         const revertedAllEnabled = previousChannels.every((channel) => channel.isActive)
         setAllChannelsEnabled(revertedAllEnabled)
@@ -460,7 +466,9 @@ const handleChannelSync = useCallback(async () => {
         router.refresh()
       }
     } catch (error) {
-      console.error('Failed to save agent', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to save agent', error)
+      }
       alert('Не удалось сохранить агента. Попробуйте еще раз.')
     } finally {
       setIsSaving(false)
@@ -488,7 +496,9 @@ const handleChannelSync = useCallback(async () => {
 
       router.push('/agents')
     } catch (error) {
-      console.error('Failed to delete agent', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to delete agent', error)
+      }
       alert('Не удалось удалить агента. Попробуйте еще раз.')
     }
   }

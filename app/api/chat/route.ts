@@ -49,7 +49,9 @@ async function analyzeAndExecuteActions(context: {
     // Выполняем наиболее уверенное действие (если уверенность > 0.7)
     if (suggestions.length > 0 && suggestions[0].confidence > 0.7) {
       const action = suggestions[0]
-      console.log(`🤖 Агент автоматически выполняет действие: ${action.reason} (уверенность: ${action.confidence})`)
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`🤖 Агент автоматически выполняет действие: ${action.reason} (уверенность: ${action.confidence})`)
+      }
 
       await actionsService.executeSuggestedAction(action, {
         organizationId: context.organizationId,
@@ -59,10 +61,14 @@ async function analyzeAndExecuteActions(context: {
         userMessage: context.userMessage,
       })
 
-      console.log(`✅ Действие выполнено: ${action.type}`)
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`✅ Действие выполнено: ${action.type}`)
+      }
     }
   } catch (error) {
-    console.error('Failed to analyze and execute actions:', error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Failed to analyze and execute actions:', error)
+    }
   }
 }
 
@@ -428,7 +434,11 @@ export const POST = async (request: NextRequest) => {
         agentId: agentId || conversation.agentId || null,
         clientIdentifier,
         conversationMessages,
-      }).catch(error => console.error('Memory processing failed', error))
+      }).catch((error: unknown) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Memory processing failed', error)
+        }
+      })
     }
 
     // Анализируем и предлагаем действия агента (асинхронно, не блокируем ответ)
@@ -446,7 +456,11 @@ export const POST = async (request: NextRequest) => {
         leadId: conversation.leadId!,
         conversationHistory,
         userMessage: message,
-      }).catch((error: any) => console.error('Action analysis failed', error))
+      }).catch((error: unknown) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Action analysis failed', error)
+        }
+      })
     }
 
     // Обновляем заголовок диалога на основе первого сообщения, если еще не установлен

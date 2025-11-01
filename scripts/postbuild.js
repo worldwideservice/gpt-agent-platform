@@ -15,32 +15,11 @@ const nextDir = join(projectRoot, '.next')
 const serverDir = join(nextDir, 'server')
 
 function ensureProtectedAppManifest() {
-  const protectedDir = join(serverDir, 'app', '(protected)')
-  const manifestPath = join(protectedDir, 'page_client-reference-manifest.js')
-
-  // Создаём минимальный манифест только если Next.js его не создал
-  // и только если директория существует (значит Next.js работал с этим маршрутом)
-  if (existsSync(protectedDir) && !existsSync(manifestPath)) {
-    try {
-      // Создаём минимальный валидный манифест с правильной структурой
-      // Используем структуру, похожую на те, что создаёт Next.js
-      const minimalManifest = {
-        moduleLoading: { prefix: '/_next/', crossOrigin: null },
-        ssrModuleMapping: {},
-        edgeSSRModuleMapping: {},
-        clientModules: {},
-        entryCSSFiles: {}
-      }
-      
-      // Ключ должен соответствовать пути route group (protected)
-      // Next.js использует "/(protected)" для layout манифеста в route group
-      const manifestContent = `globalThis.__RSC_MANIFEST=(globalThis.__RSC_MANIFEST||{});globalThis.__RSC_MANIFEST["/(protected)"]=${JSON.stringify(minimalManifest)}`
-      writeFileSync(manifestPath, manifestContent)
-      console.log('postbuild: created minimal page_client-reference-manifest.js for (protected)')
-    } catch (error) {
-      console.warn('postbuild: failed to create protected app manifest:', error.message)
-    }
-  }
+  // НЕ создаём манифесты для App Router route groups
+  // Next.js создаёт их автоматически только для страниц (page.tsx), не для layouts
+  // Создание манифеста для (protected) layout может конфликтовать с реальными манифестами
+  // и вызывать ошибку "Cannot read properties of undefined (reading 'clientModules')"
+  // Если Next.js не создал манифест для route group, значит он не нужен
 }
 
 function collectApiRoutes(apiDir) {
@@ -127,6 +106,61 @@ function ensurePagesManifest() {
   }
 }
 
-// Создаём манифесты только если Next.js их не создал (для совместимости)
-ensureProtectedAppManifest()
+function validateAppRouterManifests() {
+  // Проверяем наличие манифестов для критических страниц App Router
+  const criticalPages = [
+    'app/page_client-reference-manifest.js', // Главная страница
+  ]
+
+  let allValid = true
+
+  for (const relPath of criticalPages) {
+    const manifestPath = join(serverDir, relPath)
+
+    if (!existsSync(manifestPath)) {
+      console.warn(`postbuild: ⚠️  Missing manifest: ${relPath}`)
+      allValid = false
+      continue
+    }
+
+    try {
+      // Читаем и проверяем структуру манифеста
+      const content = require('fs').readFileSync(manifestPath, 'utf8')
+      
+      // Проверяем наличие ключевых полей
+      const hasClientModules = content.includes('"clientModules"') || content.includes("'clientModules'")
+      
+      if (!hasClientModules) {
+        console.warn(`postbuild: ⚠️  Manifest ${relPath} missing clientModules`)
+        allValid = false
+      } else {
+        // Пытаемся проверить структуру через eval (безопасно, т.к. это наш код)
+        try {
+          // Извлекаем ключ манифеста из содержимого
+          const keyMatch = content.match(/__RSC_MANIFEST\["([^"]+)"\]/)
+          if (keyMatch) {
+            console.log(`postbuild: ✓ Manifest ${relPath} has key "${keyMatch[1]}" and clientModules`)
+          }
+        } catch (e) {
+          // Игнорируем ошибки парсинга
+        }
+      }
+    } catch (error) {
+      console.warn(`postbuild: ⚠️  Failed to validate ${relPath}:`, error.message)
+      allValid = false
+    }
+  }
+
+  if (allValid) {
+    console.log('postbuild: ✓ All App Router manifests validated')
+  } else {
+    console.warn('postbuild: ⚠️  Some App Router manifests are missing or invalid')
+  }
+}
+
+// Создаём только pages-manifest.json для Pages Router
+// НЕ создаём манифесты для App Router - Next.js делает это сам
 ensurePagesManifest()
+
+// Валидируем манифесты App Router для диагностики
+validateAppRouterManifests()
