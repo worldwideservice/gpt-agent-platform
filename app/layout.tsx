@@ -92,7 +92,7 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
     },
     creator: {
       '@type': 'Organization',
-      name: 'KWID',
+      name: 'GPT Agent',
     },
     featureList: [
       'AI-powered customer communication',

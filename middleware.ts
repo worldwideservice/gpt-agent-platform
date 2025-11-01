@@ -5,7 +5,7 @@ import { auth } from '@/auth'
 import { checkRateLimit, checkTierRateLimit, rateLimitConfigs } from '@/lib/rate-limit'
 import { logger } from '@/lib/utils'
 
-const PUBLIC_PATHS = ['/login', '/reset-password', '/support', '/demo', '/', '/pricing', '/onboarding', '/api-docs', '/integrations/kommo/oauth/callback']
+const PUBLIC_PATHS = ['/login', '/register', '/reset-password', '/support', '/demo', '/', '/pricing', '/onboarding', '/api-docs', '/integrations/kommo/oauth/callback']
 const PUBLIC_API_PREFIXES = ['/api/auth', '/api/integrations/kommo/oauth/callback']
 
 const PUBLIC_API_PATHS = new Set([
@@ -181,6 +181,26 @@ export default async function middleware(request: NextRequest) {
     const response = NextResponse.next()
     addSecurityHeaders(response)
     return response
+  }
+
+  // Проверяем авторизованного пользователя на публичных страницах
+  if (isPublicPath(pathname) && (pathname === '/login' || pathname === '/register' || pathname === '/')) {
+    try {
+      const session = await auth()
+      if (session?.user?.orgId) {
+        // Авторизованный пользователь пытается зайти на страницу входа/регистрации/главную
+        // Перенаправляем на платформу
+        logger.info('Redirecting authenticated user to platform', {
+          path: pathname,
+          userId: session.user.id,
+          ip: request.headers.get('x-forwarded-for') || 'anonymous',
+        })
+
+        return NextResponse.redirect(new URL('/agents', request.url))
+      }
+    } catch (error) {
+      // Игнорируем ошибки авторизации для публичных страниц
+    }
   }
 
   // Проверяем UI routes (кроме публичных)

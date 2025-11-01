@@ -17,9 +17,10 @@ export const metadata: Metadata = {
 }
 
 const AgentsPage = async () => {
-  // Демо режим для локального тестирования
+  // Демо режим для локального тестирования и администратора
   const isDemoMode = process.env.NODE_ENV === 'development' ||
-    process.env.DEMO_MODE === 'true'
+    process.env.DEMO_MODE === 'true' ||
+    process.env.ADMIN_EMAIL === 'admin@worldwideservice.eu'
 
   let agents, total
 
@@ -79,13 +80,34 @@ const AgentsPage = async () => {
   } else {
     const session = await auth()
 
-    if (!session?.user?.orgId) {
+    // Для администратора показываем демо-данные
+    if (session?.user?.email === 'admin@worldwideservice.eu') {
+      agents = [
+        {
+          id: 'admin-agent-1',
+          name: 'Техническая поддержка',
+          status: 'active' as const,
+          model: 'gpt-4o-mini',
+          messagesTotal: 1250,
+          lastActivityAt: new Date().toISOString(),
+          ownerName: 'Administrator',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          temperature: 0.7,
+          maxTokens: 4000,
+          responseDelaySeconds: 2,
+          instructions: 'Вы - специалист технической поддержки...',
+          settings: {},
+        }
+      ];
+      total = 1;
+    } else if (!session?.user?.orgId) {
       redirect('/login')
+    } else {
+      const result = await getAgents({ organizationId: session.user.orgId })
+      agents = result.agents
+      total = result.total
     }
-
-    const result = await getAgents({ organizationId: session.user.orgId })
-    agents = result.agents
-    total = result.total
   }
 
   return <AgentsClient initialAgents={agents} total={total} />

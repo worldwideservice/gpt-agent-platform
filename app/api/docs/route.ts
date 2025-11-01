@@ -1,46 +1,23 @@
 import { NextResponse } from 'next/server'
+import { readFile } from 'fs/promises'
+import { join } from 'path'
 
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
-import swaggerJsdoc from 'swagger-jsdoc'
+let cachedSpec: unknown
 
-const options = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'GPT Agent Platform API',
-      version: '1.0.0',
-      description: 'API для платформы обучения ИИ-агентов',
-    },
-    servers: [
-      {
-        url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-        description: 'Основной сервер',
-      },
-    ],
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-        },
-      },
-    },
-    security: [
-      {
-        bearerAuth: [],
-      },
-    ],
-  },
-  apis: [
-    './app/api/**/*.ts',
-    './app/api/**/*.tsx',
-  ],
+async function loadSpec() {
+  if (!cachedSpec) {
+    const specPath = join(process.cwd(), 'public', 'api-spec.json')
+    const fileContents = await readFile(specPath, 'utf-8')
+    cachedSpec = JSON.parse(fileContents)
+  }
+
+  return cachedSpec
 }
 
-const specs = swaggerJsdoc(options)
-
 export const GET = async () => {
-  return NextResponse.json(specs)
+  const spec = await loadSpec()
+  return NextResponse.json(spec)
 }

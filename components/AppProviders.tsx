@@ -1,6 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import { SessionProvider } from 'next-auth/react'
 
 import { ToastProvider } from '@/components/ui/toast-context'
 import { ToastViewport } from '@/components/ui/toast-viewport'
@@ -19,12 +20,14 @@ export const AppProviders = ({ children }: AppProvidersProps) => {
 
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="system">
-        <ToastProvider>
-          {children}
-          <ToastViewport />
-        </ToastProvider>
-      </ThemeProvider>
+      <SessionProvider>
+        <ThemeProvider defaultTheme="system">
+          <ToastProvider>
+            {children}
+            <ToastViewport />
+          </ToastProvider>
+        </ThemeProvider>
+      </SessionProvider>
     </ErrorBoundary>
   )
 }

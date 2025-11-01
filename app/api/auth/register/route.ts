@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { UserRepository } from '@/lib/repositories/users'
 
 // Force Node.js runtime
@@ -40,38 +41,37 @@ export async function POST(request: NextRequest) {
 
     // Create organization for the user
     try {
-      const { createClient } = await import('@supabase/supabase-js')
-      const supabaseUrl = process.env.SUPABASE_URL
-      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+      console.log('Registration: Creating organization for user:', user.id)
 
-      if (!supabaseUrl || !supabaseKey) {
-        throw new Error('Supabase configuration is missing')
-      }
+      // Simple organization creation - just insert into organizations table
+      const client = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
-      const client = createClient(supabaseUrl, supabaseKey)
-
-      const { nanoid } = await import('nanoid')
-
-      // Create organization
-      const baseSlug = `${firstName.toLowerCase()}-${lastName.toLowerCase()}`.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') || `org-${nanoid(6).toLowerCase()}`
+      const baseSlug = `${firstName.toLowerCase()}-${lastName.toLowerCase()}`.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') || `org-${Date.now()}`
       let slugCandidate = baseSlug
-      let slugIsUnique = false
+      let counter = 0
 
-      while (!slugIsUnique) {
-        const { data } = await client
-          .from('organizations')
-          .select('id')
-          .eq('slug', slugCandidate)
-          .maybeSingle()
+      // Simple slug uniqueness check
+      while (counter < 10) {
+        try {
+          const { data: existing } = await client
+            .from('organizations')
+            .select('id')
+            .eq('slug', slugCandidate)
+            .single()
 
-        if (data) {
-          slugCandidate = `${baseSlug}-${nanoid(4)}`
-        } else {
-          slugIsUnique = true
+          if (existing) {
+            slugCandidate = `${baseSlug}-${counter + 1}`
+            counter++
+          } else {
+            break
+          }
+        } catch (error) {
+          // If no existing org found, slug is unique
+          break
         }
       }
 
-      const { data: organization } = await client
+      const { data: organization, error: orgError } = await client
         .from('organizations')
         .insert({
           name: `${firstName} ${lastName}`,
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
         .select()
         .single()
 
-      if (organization) {
+      if (organization && !orgError) {
         // Update user's default organization
         await client
           .from('users')
@@ -95,11 +95,13 @@ export async function POST(request: NextRequest) {
             user_id: user.id,
             role: 'owner'
           })
+
+        console.log('Registration: Organization created successfully:', organization.id)
+      } else {
+        console.error('Registration: Failed to create organization:', orgError)
       }
     } catch (orgError) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('Failed to create organization:', orgError)
-      }
+      console.error('Registration: Organization creation failed:', orgError)
       // Continue anyway - user is created
     }
 

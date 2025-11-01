@@ -158,9 +158,47 @@ function validateAppRouterManifests() {
   }
 }
 
+function ensureRouteGroupRootManifests() {
+  const appDir = join(serverDir, 'app')
+  const baseManifestPath = join(appDir, 'page_client-reference-manifest.js')
+
+  if (!existsSync(appDir) || !existsSync(baseManifestPath)) {
+    return
+  }
+
+  const baseContent = require('fs').readFileSync(baseManifestPath, 'utf8')
+  const entries = readdirSync(appDir, { withFileTypes: true })
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue
+    if (!entry.name.startsWith('(') || !entry.name.endsWith(')')) continue
+
+    const groupDir = join(appDir, entry.name)
+    const groupPagePath = join(groupDir, 'page.js')
+    const groupManifestPath = join(groupDir, 'page_client-reference-manifest.js')
+
+    if (!existsSync(groupPagePath) || existsSync(groupManifestPath)) {
+      continue
+    }
+
+    const routeKey = `/${entry.name}/page`
+    const manifestContent = baseContent.replace(/"\/page/g, `"${routeKey}`)
+
+    try {
+      writeFileSync(groupManifestPath, manifestContent)
+      console.log('postbuild: created route group manifest for', routeKey)
+    } catch (error) {
+      console.warn(`postbuild: ⚠️  Failed to create manifest for ${routeKey}:`, error.message)
+    }
+  }
+}
+
 // Создаём только pages-manifest.json для Pages Router
 // НЕ создаём манифесты для App Router - Next.js делает это сам
 ensurePagesManifest()
+
+// Обеспечиваем наличие client-reference манифестов для корневых route groups
+ensureRouteGroupRootManifests()
 
 // Валидируем манифесты App Router для диагностики
 validateAppRouterManifests()

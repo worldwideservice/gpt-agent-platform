@@ -83,23 +83,9 @@ class MemoryStore {
 // Initialize rate limiter
 let ratelimit: Ratelimit | null = null
 
-try {
-  // Try to use Upstash Redis for production
-  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-    const redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    })
-
-    ratelimit = new Ratelimit({
-      redis,
-      limiter: Ratelimit.slidingWindow(100, '1m'),
-      analytics: true,
-    })
-  }
-} catch (error) {
-  console.warn('Failed to initialize Upstash rate limiter, falling back to memory store')
-}
+// TEMPORARILY DISABLE REDIS - USE MEMORY STORE ONLY
+// TODO: Re-enable Redis when Upstash is properly configured
+console.log('Rate limiting: Using memory store (Redis disabled for stability)')
 
 // Fallback to memory store
 const memoryStore = new MemoryStore()
