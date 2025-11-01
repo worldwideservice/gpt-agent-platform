@@ -32,9 +32,9 @@ function ensureProtectedAppManifest() {
         entryCSSFiles: {}
       }
       
-      // Ключ должен быть пустой строкой для route group (protected)
-      // Это соответствует структуре, которую создаёт Next.js
-      const manifestContent = `globalThis.__RSC_MANIFEST=(globalThis.__RSC_MANIFEST||{});globalThis.__RSC_MANIFEST[""]=${JSON.stringify(minimalManifest)}`
+      // Ключ должен соответствовать пути route group (protected)
+      // Next.js использует "/(protected)" для layout манифеста в route group
+      const manifestContent = `globalThis.__RSC_MANIFEST=(globalThis.__RSC_MANIFEST||{});globalThis.__RSC_MANIFEST["/(protected)"]=${JSON.stringify(minimalManifest)}`
       writeFileSync(manifestPath, manifestContent)
       console.log('postbuild: created minimal page_client-reference-manifest.js for (protected)')
     } catch (error) {
