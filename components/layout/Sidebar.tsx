@@ -3,21 +3,36 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-// Безопасное использование useTranslations с fallback
-function useSafeTranslations(namespace?: string) {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { useTranslations } = require('next-intl')
-    try {
-      return useTranslations(namespace)
-    } catch {
-      // Если контекст не доступен, возвращаем fallback функцию
-      return (key: string, fallback?: string) => fallback || key
-    }
-  } catch {
-    // Если next-intl не установлен, возвращаем fallback функцию
-    return (key: string, fallback?: string) => fallback || key
+// Простые fallback переводы (так как next-intl временно отключен)
+const getTranslation = (key: string, fallback?: string): string => {
+  const translations: Record<string, string> = {
+    'dashboard': 'Инфопанель',
+    'agents': 'Агенты ИИ',
+    'chat': 'Тестовый чат',
+    'knowledge': 'База знаний',
+    'categories': 'Категории',
+    'articles': 'Статьи',
+    'developers': 'Разработчикам',
+    'apiDocs': 'API Документация',
+    'testKommo': 'Тест Kommo API',
+    'integrations': 'Интеграции',
+    'pricing': 'Тарифы',
+    'account': 'Аккаунт',
+    'support': 'Поддержка',
+    'organization': 'Организация',
+    'gettingStarted': 'Начало работы',
+    'accountSection': 'Аккаунт',
+    'whatsNew': 'Что нового',
+    'facebook': 'Facebook',
+    'instagram': 'Instagram',
+    'selectOrganization': 'Выбрать организацию',
   }
+  
+  // Поддержка вложенных ключей типа "nav.agents" или "common.selectOrganization"
+  const parts = key.split('.')
+  const simpleKey = parts[parts.length - 1]
+  
+  return translations[simpleKey] || translations[key] || fallback || key
 }
 import {
   Bot,
@@ -137,8 +152,9 @@ const getInitials = (value: string): string => {
 
 export const Sidebar = ({ organizations, activeOrganizationId }: SidebarProps) => {
   const pathname = usePathname()
-  const t = useSafeTranslations()
-  const tNav = useSafeTranslations('nav')
+  // Используем fallback переводы (next-intl временно отключен)
+  const t = getTranslation
+  const tNav = getTranslation
   const activeOrganization =
     organizations.find((organization) => organization.id === activeOrganizationId) ?? organizations.at(0)
   const navigation = getNavigation(tNav)
