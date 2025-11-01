@@ -17,16 +17,31 @@ const languages = [
 ]
 
 export const LanguageSwitcher = () => {
-  const t = useTranslations('common')
-  const locale = useLocale()
-  const router = useRouter()
-  const pathname = usePathname()
-
-  const handleLanguageChange = (newLocale: string) => {
-    router.replace(pathname, { locale: newLocale })
+  // Safe hooks usage with fallback
+  let locale = 'ru'
+  let router: any = null
+  let pathname = '/'
+  
+  try {
+    locale = useLocale()
+    router = useRouter()
+    pathname = usePathname()
+  } catch (error) {
+    // If next-intl context is not available, use defaults
+    console.warn('LanguageSwitcher: next-intl context not available, using defaults')
   }
 
-  const currentLanguage = languages.find(lang => lang.code === locale)
+  const handleLanguageChange = (newLocale: string) => {
+    if (router) {
+      try {
+        router.replace(pathname, { locale: newLocale })
+      } catch (error) {
+        console.warn('LanguageSwitcher: Failed to change language', error)
+      }
+    }
+  }
+
+  const currentLanguage = languages.find(lang => lang.code === locale) || languages[0]
 
   return (
     <DropdownMenu>
