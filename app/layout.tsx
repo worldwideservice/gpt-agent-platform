@@ -74,35 +74,30 @@ interface RootLayoutProps {
 }
 
 const RootLayout = async ({ children, params }: RootLayoutProps) => {
-  // Get locale from params or use default
-  let locale = 'ru' // Default locale
-  if (params) {
-    try {
-      const resolvedParams = await params
-      locale = resolvedParams?.locale || 'ru'
-    } catch (error) {
-      console.error('Failed to resolve params:', error)
-    }
-  }
+  // Since we don't use [locale] segment, always use default locale 'ru'
+  const locale = 'ru'
   
   // Enable static rendering by setting request locale
   try {
     setRequestLocale(locale)
   } catch (error) {
-    // Ignore if locale already set
+    // Ignore if locale already set or if setRequestLocale is not available
   }
   
   // Safe getMessages with error handling
   let messages = {}
   try {
+    // Try to get messages through next-intl API first
     messages = await getMessages({ locale })
   } catch (error) {
-    console.error('Failed to load messages:', error)
-    // Use empty messages as fallback - try to load default locale
+    console.error('Failed to load messages via getMessages:', error)
+    // Fallback: direct import of messages file
     try {
-      messages = (await import(`@/messages/${locale}.json`)).default || {}
+      const messagesModule = await import(`@/messages/${locale}.json`)
+      messages = messagesModule.default || {}
     } catch (importError) {
-      console.error('Failed to import messages file:', importError)
+      console.error('Failed to import messages file directly:', importError)
+      // Last resort: return empty object
       messages = {}
     }
   }
