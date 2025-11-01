@@ -23,16 +23,19 @@ export const LoginClient = () => {
     startTransition(async () => {
       setError(null)
 
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: true,
-        callbackUrl: '/agents',
-      })
+      try {
+        const result = await signIn('credentials', {
+          email,
+          password,
+          redirect: true,
+          callbackUrl: '/agents',
+        })
 
-      if (result?.error) {
+        // Если redirect: true, signIn не возвращает результат
+        // Ошибки обрабатываются автоматически через NextAuth
+      } catch (error) {
+        // Если произошла ошибка, показываем сообщение
         setError('Неверные email или пароль')
-        return
       }
     })
   }
