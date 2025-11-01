@@ -5,15 +5,9 @@ import { hash } from 'bcryptjs'
 // Helper function to get Supabase client
 async function getSupabaseClient() {
   try {
-    const { createClient } = await import('@supabase/supabase-js')
-    const supabaseUrl = process.env.SUPABASE_URL
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Missing Supabase environment variables')
-    }
-
-    return createClient(supabaseUrl, supabaseKey)
+    // Use validated Supabase client with proper env loading
+    const { getSupabaseServiceRoleClient } = await import('@/lib/supabase/admin')
+    return getSupabaseServiceRoleClient()
   } catch (error) {
     console.error('Failed to create Supabase client:', error)
     throw error
@@ -487,11 +481,8 @@ export class UserRepository {
       // Hash password
       const passwordHash = await hash(password, 12)
 
-      // Direct supabase call to avoid any import issues
-      const { createClient } = await import('@supabase/supabase-js')
-      const supabaseUrl = process.env.SUPABASE_URL!
-      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-      const client = createClient(supabaseUrl, supabaseKey)
+      // Use validated Supabase client
+      const client = await getSupabaseClient()
 
       const { data, error } = await client
         .from('users')

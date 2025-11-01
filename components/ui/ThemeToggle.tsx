@@ -2,7 +2,7 @@
 
 import { Moon, Sun, Monitor } from 'lucide-react'
 
-import { Button } from '@/components/ui/Button'
+import { KwidButton } from '@/components/kwid'
 import { useTheme } from '@/contexts/ThemeContext'
 
 export const ThemeToggle = () => {
@@ -45,14 +45,14 @@ export const ThemeToggle = () => {
   }
 
   return (
-    <Button
-      variant="ghost"
+    <KwidButton
+      variant="outline"
       size="sm"
       onClick={cycleTheme}
       aria-label={`Переключить тему. Текущая: ${getLabel()}`}
       title={`Переключить тему. Текущая: ${getLabel()}`}
     >
       {getIcon()}
-    </Button>
+    </KwidButton>
   )
 }

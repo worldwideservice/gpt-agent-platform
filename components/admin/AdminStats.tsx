@@ -1,7 +1,7 @@
 'use client'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/shadcn/card'
-import { Button } from '@/components/ui/shadcn/button'
+import { KwidButton } from '@/components/kwid'
 import { Badge } from '@/components/ui/shadcn/badge'
 import {
   Users,
@@ -79,10 +79,10 @@ export const AdminStats = ({ stats, onRefresh }: AdminStatsProps) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold">Обзор системы</h2>
-        <Button onClick={onRefresh} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 mr-2" />
+        <KwidButton onClick={onRefresh} variant="outline" size="sm" className="gap-2">
+          <RefreshCw className="h-4 w-4" />
           Обновить
-        </Button>
+        </KwidButton>
       </div>
 
       {/* Main Stats Cards */}

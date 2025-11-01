@@ -36,6 +36,7 @@ const ProtectedLayout = async ({ children }: ProtectedLayoutProps) => {
     organizations = [{
       id: 'demo-org-123',
       name: 'World Wide Services',
+      slug: 'worldwideservices',
       createdAt: new Date().toISOString()
     }]
     activeOrganization = organizations[0]
@@ -50,6 +51,9 @@ const ProtectedLayout = async ({ children }: ProtectedLayoutProps) => {
     activeOrganization =
       organizations.find((organization) => organization.id === session.user.orgId) ?? organizations[0] ?? null
   }
+
+  // Редиректим на новый формат URL с tenant-id
+  // Это будет обрабатываться в middleware или в middleware перенаправлении
 
   return (
     <div className="min-h-screen bg-slate-50">

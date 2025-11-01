@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { ArrowRight, Bot, MessageSquare, Shield, Zap } from 'lucide-react'
 
-import { Button } from '@/components/ui/Button'
+import { KwidButton } from '@/components/kwid'
 
 export function LandingPageClient() {
   const router = useRouter()
@@ -54,14 +54,14 @@ export function LandingPageClient() {
             </nav>
             <div className="flex items-center gap-3">
               <Link href="/login">
-                <Button variant="outline" size="sm">
+                <KwidButton variant="outline" size="sm">
                   Войти
-                </Button>
+                </KwidButton>
               </Link>
               <Link href="/login">
-                <Button size="sm" className="gap-2">
+                <KwidButton variant="primary" size="sm" className="gap-2">
                   Начать <ArrowRight className="h-4 w-4" />
-                </Button>
+                </KwidButton>
               </Link>
             </div>
           </div>
@@ -82,14 +82,14 @@ export function LandingPageClient() {
             </p>
             <div className="mt-10 flex items-center justify-center gap-4">
               <Link href="/login">
-                <Button size="lg" className="gap-2">
+                <KwidButton variant="primary" size="lg" className="gap-2">
                   Начать бесплатно <ArrowRight className="h-5 w-5" />
-                </Button>
+                </KwidButton>
               </Link>
               <Link href="/demo">
-                <Button variant="outline" size="lg">
+                <KwidButton variant="outline" size="lg">
                   Посмотреть демо
-                </Button>
+                </KwidButton>
               </Link>
             </div>
           </div>
@@ -172,9 +172,9 @@ export function LandingPageClient() {
             </p>
             <div className="mt-10">
               <Link href="/login">
-                <Button size="lg" variant="secondary" className="gap-2">
+                <KwidButton size="lg" variant="secondary" className="gap-2">
                   Создать аккаунт <ArrowRight className="h-5 w-5" />
-                </Button>
+                </KwidButton>
               </Link>
             </div>
           </div>

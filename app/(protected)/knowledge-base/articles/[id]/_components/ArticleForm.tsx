@@ -5,12 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save } from 'lucide-react'
 
-import { Button } from '@/components/ui/Button'
-import { Card, CardContent } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
-import { Textarea } from '@/components/ui/Textarea'
-import { Toggle } from '@/components/ui/Toggle'
+import { KwidButton, KwidInput, KwidSelect, KwidTextarea, KwidSwitch, KwidSection } from '@/components/kwid'
 
 import type { KnowledgeBaseArticle } from '@/types'
 
@@ -104,101 +99,112 @@ export const ArticleForm = ({ articleId, initialArticle, categories }: ArticleFo
 
   return (
     <div className="space-y-6">
-      <Card className="border-none bg-white shadow-sm">
-        <CardContent className="space-y-6 p-6">
+      <KwidSection title={isNew ? 'Создание статьи' : `Редактирование статьи`}>
+        <div className="space-y-6">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-4">
               <button
                 type="button"
                 onClick={() => router.push('/knowledge-base/articles')}
-                className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-primary-600"
+                className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 transition-colors hover:text-custom-600 dark:text-gray-400 dark:hover:text-custom-400"
               >
                 <ArrowLeft className="h-4 w-4" /> Назад к списку
               </button>
 
               <div className="space-y-2">
-                <nav className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide text-slate-400">
+                <nav className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500">
                   <Link
                     href="/knowledge-base/articles"
-                    className="font-semibold text-primary-600 hover:underline"
+                    className="font-semibold text-custom-600 hover:underline dark:text-custom-400"
                   >
                     Статьи
                   </Link>
                   <span>/</span>
-                  <span className="font-semibold text-slate-500">
+                  <span className="font-semibold text-gray-500 dark:text-gray-400">
                     {isNew ? 'Новая статья' : initialArticle?.title ?? 'Редактирование'}
                   </span>
                 </nav>
-                <h1 className="text-3xl font-semibold text-slate-900">
+                <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
                   {isNew ? 'Создание статьи' : `Редактирование статьи`}
                 </h1>
-                <p className="max-w-2xl text-sm text-slate-500">
+                <p className="max-w-2xl text-sm text-gray-500 dark:text-gray-400">
                   Создайте статью для базы знаний, которую смогут использовать AI-агенты
                 </p>
               </div>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button type="button" onClick={handleSave} disabled={isSaving}>
+              <KwidButton type="button" onClick={handleSave} disabled={isSaving} variant="primary" size="md">
                 <Save className="mr-2 h-4 w-4" /> {isSaving ? 'Сохранение…' : 'Сохранить'}
-              </Button>
+              </KwidButton>
             </div>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[1fr,300px]">
+            <KwidSection
+              title="Содержание статьи"
+              description="Основная информация и контент"
+            >
+              <div className="space-y-4">
+                <KwidInput
+                  label="Название статьи*"
+                  placeholder="Например: Как начать работу с AI-агентом"
+                  value={formData.title}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                  required
+                />
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Активно</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Когда выключено, статья не будет использоваться агентами.
+                    </p>
+                  </div>
+                  <KwidSwitch
+                    checked={formData.isPublished}
+                    onCheckedChange={(value) => setFormData((prev) => ({ ...prev, isPublished: value }))}
+                  />
+                </div>
+
+                <KwidSelect
+                  label="Категория"
+                  options={categoryOptions}
+                  value={formData.categoryId}
+                  onChange={(value: string) => setFormData((prev) => ({ ...prev, categoryId: value }))}
+                />
+
+                <KwidTextarea
+                  label="Содержание статьи*"
+                  placeholder="Полное содержание статьи..."
+                  rows={20}
+                  value={formData.content}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
+                  required
+                />
+              </div>
+            </KwidSection>
+
             <div className="space-y-4">
-              <Input
-                label="Название статьи*"
-                placeholder="Например: Как начать работу с AI-агентом"
-                value={formData.title}
-                onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-                required
-              />
-
-              <Toggle
-                checked={formData.isPublished}
-                onChange={(value) => setFormData((prev) => ({ ...prev, isPublished: value }))}
-                label="Активно"
-                description="Когда выключено, статья не будет использоваться агентами."
-              />
-
-              <Select
-                label="Категория"
-                options={categoryOptions}
-                value={formData.categoryId}
-                onChange={(value: string) => setFormData((prev) => ({ ...prev, categoryId: value }))}
-              />
-
-              <Textarea
-                label="Содержание статьи*"
-                placeholder="Полное содержание статьи..."
-                rows={20}
-                value={formData.content}
-                onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
-                required
-              />
-            </div>
-
-            <div className="space-y-4">
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <h3 className="text-sm font-semibold text-slate-900">Информация</h3>
-                <p className="mt-2 text-sm text-slate-500">
+              <div className="rounded-xl bg-gray-50 p-4 dark:bg-gray-800">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Информация</h3>
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                   Статьи базы знаний используются AI-агентами для ответов на вопросы пользователей. Чем
                   точнее и подробнее контент, тем лучше будут ответы агента.
                 </p>
               </div>
 
-              <Input
+              <KwidInput
                 label="Slug (URL)"
                 placeholder="avtomaticheskiy-slug"
                 value={formData.slug}
                 onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
-                description="Автоматически создаётся из названия, если не указан"
+                hint="Автоматически создаётся из названия, если не указан"
               />
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </KwidSection>
     </div>
   )
 }

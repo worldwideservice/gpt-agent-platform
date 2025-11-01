@@ -2,10 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/shadcn/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/shadcn/tabs'
-import { Button } from '@/components/ui/shadcn/button'
+import { KwidTabs, KwidTabsContent } from '@/components/kwid'
 import { Badge } from '@/components/ui/shadcn/badge'
-import { Input } from '@/components/ui/shadcn/input'
 import { Label } from '@/components/ui/label'
 import {
   Users,
@@ -101,27 +99,25 @@ export const AdminDashboard = () => {
         </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Обзор</TabsTrigger>
-          <TabsTrigger value="users">Пользователи</TabsTrigger>
-          <TabsTrigger value="system">Система</TabsTrigger>
-          <TabsTrigger value="analytics">Аналитика</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
+      <KwidTabs value={activeTab} onValueChange={setActiveTab} className="space-y-6" tabs={[
+        { value: 'overview', label: 'Обзор' },
+        { value: 'users', label: 'Пользователи' },
+        { value: 'system', label: 'Система' },
+        { value: 'analytics', label: 'Аналитика' },
+      ]} listClassName="grid w-full grid-cols-4">
+        <KwidTabsContent value="overview" className="space-y-6">
           <AdminStats stats={stats} onRefresh={fetchStats} />
-        </TabsContent>
+        </KwidTabsContent>
 
-        <TabsContent value="users" className="space-y-6">
+        <KwidTabsContent value="users" className="space-y-6">
           <UserManagement />
-        </TabsContent>
+        </KwidTabsContent>
 
-        <TabsContent value="system" className="space-y-6">
+        <KwidTabsContent value="system" className="space-y-6">
           <SystemSettings />
-        </TabsContent>
+        </KwidTabsContent>
 
-        <TabsContent value="analytics" className="space-y-6">
+        <KwidTabsContent value="analytics" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Расширенная аналитика</CardTitle>
@@ -138,8 +134,8 @@ export const AdminDashboard = () => {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </KwidTabsContent>
+      </KwidTabs>
     </div>
   )
 }

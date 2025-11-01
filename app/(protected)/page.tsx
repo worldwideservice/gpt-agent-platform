@@ -4,7 +4,7 @@ import { Bot, CalendarCheck2, MessageSquare, Sparkles } from 'lucide-react'
 import { BarChartCard } from '@/components/dashboard/BarChartCard'
 import { LineChartCard } from '@/components/dashboard/LineChartCard'
 import { RecentUpdates } from '@/components/dashboard/RecentUpdates'
-import { StatCard } from '@/components/dashboard/StatCard'
+import { KwidStatCard } from '@/components/kwid'
 
 import { auth } from '@/auth'
 import { getOnboardingState } from '@/lib/onboarding/server'
@@ -95,7 +95,7 @@ const DashboardPage = async () => {
   return (
     <div className="space-y-8">
       <section className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard
+        <KwidStatCard
           title="Ответы ИИ за этот месяц"
           value={stats.monthlyResponses}
           change={stats.monthlyChange}
@@ -103,20 +103,20 @@ const DashboardPage = async () => {
           icon={MessageSquare}
         />
 
-        <StatCard
+        <KwidStatCard
           title="Ответы ИИ за последние 7 дней"
           value={stats.weeklyResponses}
           subtitle="Последние 7 дней"
           icon={CalendarCheck2}
         />
 
-        <StatCard
+        <KwidStatCard
           title="Ответы ИИ сегодня"
           value={stats.todayResponses}
           icon={Sparkles}
         />
 
-        <StatCard
+        <KwidStatCard
           title="Агенты"
           value={stats.totalAgents}
           subtitle="Всего агентов"

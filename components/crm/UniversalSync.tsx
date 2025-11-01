@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { RefreshCw, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { KwidButton } from '@/components/kwid'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/shadcn/badge'
 import type { SyncResult, UniversalPipeline, UniversalChannel } from '@/types/crm'
@@ -122,15 +122,16 @@ export const UniversalSync = ({
               <span className="ml-1">{getStatusText()}</span>
             </Badge>
             
-            <Button 
+            <KwidButton 
               onClick={handleSync} 
               disabled={isLoading || !isConnected}
               variant="outline"
               size="sm"
+              className="gap-2"
             >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               Синхронизировать
-            </Button>
+            </KwidButton>
           </div>
         </div>
 

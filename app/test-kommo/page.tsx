@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/shadcn/button'
+import { KwidButton } from '@/components/kwid'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/shadcn/card'
 
 type TestResult = Record<string, unknown>
@@ -110,9 +110,9 @@ export default function TestKommoPage() {
               <CardDescription>Проверка работы API Kommo с реальными ключами</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button onClick={runKommoTest} disabled={loading} className="w-full">
+              <KwidButton onClick={runKommoTest} disabled={loading} variant="primary" className="w-full">
                 {loading ? 'Тестирование...' : 'Запустить тест'}
-              </Button>
+              </KwidButton>
             </CardContent>
           </Card>
 
@@ -122,9 +122,9 @@ export default function TestKommoPage() {
               <CardDescription>Проверка отправки email через сделку</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button onClick={testEmailAction} disabled={loading} variant="outline" className="w-full">
+              <KwidButton onClick={testEmailAction} disabled={loading} variant="outline" className="w-full">
                 Тест email действия
-              </Button>
+              </KwidButton>
             </CardContent>
           </Card>
         </div>

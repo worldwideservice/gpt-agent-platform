@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import type { LucideIcon } from 'lucide-react'
 import { 
   Settings, 
   Users, 
@@ -14,10 +15,7 @@ import {
   X,
   Link2
 } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Textarea } from '@/components/ui/Textarea'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
+import { KwidButton, KwidInput, KwidTextarea, KwidTabs, KwidTabsContent, KwidSwitch, KwidSection, KwidSelect } from '@/components/kwid'
 import { InteractionSettings } from '@/components/crm/InteractionSettings'
 import { CRMSync } from '@/components/crm/CRMSync'
 import { DealContactFieldsSelector } from '@/components/crm/DealContactFieldsSelector'
@@ -35,7 +33,7 @@ interface ChannelItem {
   isActive: boolean
 }
 
-const tabs = [
+const tabs: Array<{ value: string; label: string; icon: LucideIcon }> = [
   { value: 'general', label: 'Основные', icon: Settings },
   { value: 'deals', label: 'Сделки и контакты', icon: Users },
   { value: 'triggers', label: 'Триггеры', icon: Zap },
@@ -278,15 +276,16 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
-      <div className="text-sm text-gray-600">
-        <span>Агенты ИИ</span> {'>'} <span className="text-gray-900 font-medium">АИ ассистент</span> {'>'} <span className="text-gray-900 font-medium">{tabs.find(t => t.value === activeTab)?.label || 'Основные'}</span>
+      <div className="text-sm text-gray-600 dark:text-gray-400">
+        <span>Агенты ИИ</span> {'>'} <span className="text-gray-900 dark:text-white font-medium">АИ ассистент</span> {'>'} <span className="text-gray-900 dark:text-white font-medium">{tabs.find(t => t.value === activeTab)?.label || 'Основные'}</span>
       </div>
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-semibold text-slate-900">Редактирование АИ ассистент</h1>
-        <Button 
-          variant="destructive"
+        <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">Редактирование АИ ассистент</h1>
+        <KwidButton 
+          variant="danger"
+          size="md"
           onClick={async () => {
             if (!resolvedParams) return
             
@@ -312,59 +311,39 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
         >
           <Trash2 className="w-4 h-4 mr-2" />
           Удалить
-        </Button>
+        </KwidButton>
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full">
-          {tabs.map((tab) => {
-            const Icon = tab.icon
-            return (
-              <TabsTrigger 
-                key={tab.value} 
-                value={tab.value}
-                className="flex items-center gap-2 px-4 py-3"
-              >
-                <Icon className="w-4 h-4" />
-                {tab.label}
-              </TabsTrigger>
-            )
-          })}
-        </TabsList>
-
+      <KwidTabs value={activeTab} onValueChange={setActiveTab} tabs={tabs} listClassName="w-full">
         {/* Основные (General) */}
-        <TabsContent value="general" className="mt-6 space-y-6">
+        <KwidTabsContent value="general" className="mt-6 space-y-6">
           {/* Профиль агента */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
-            <div className="flex items-center space-x-2 mb-4">
-              <Settings className="w-5 h-5 text-gray-600" />
-              <h2 className="text-lg font-semibold text-gray-900">Профиль агента</h2>
-                </div>
-            
+          <KwidSection
+            title="Профиль агента"
+            icon={Settings}
+            description="Основные настройки агента"
+          >
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Название
-                </label>
-                <Input
-                  value={agentName}
-                  onChange={(e) => setAgentName(e.target.value)}
-                  placeholder="Введите название агента"
-                />
-              </div>
+              <KwidInput
+                label="Название"
+                value={agentName}
+                onChange={(e) => setAgentName(e.target.value)}
+                placeholder="Введите название агента"
+                required
+              />
 
-                <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-700 mb-1">Активно</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Активно</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     Агент будет получать и обрабатывать входящие сообщения
                   </p>
                 </div>
-                <button
-                  onClick={async () => {
-                    const newStatus = !isActive
-                    setIsActive(newStatus)
+                <KwidSwitch
+                  checked={isActive}
+                  onCheckedChange={async (checked) => {
+                    setIsActive(checked)
                     
                     // Сохраняем статус
                     if (resolvedParams) {
@@ -372,77 +351,68 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
                         const response = await fetch(`/api/agents/${resolvedParams.id}/status`, {
                           method: 'PATCH',
                           headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ status: newStatus ? 'active' : 'inactive' }),
+                          body: JSON.stringify({ status: checked ? 'active' : 'inactive' }),
                         })
 
                         if (!response.ok) {
                           // Откатываем изменение при ошибке
-                          setIsActive(!newStatus)
+                          setIsActive(!checked)
                           alert('Не удалось изменить статус агента')
                         }
                       } catch (error) {
                         console.error('Failed to update agent status', error)
-                        setIsActive(!newStatus)
+                        setIsActive(!checked)
                         alert('Ошибка обновления статуса')
                       }
                     }
                   }}
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
-                    isActive ? 'bg-primary-600' : 'bg-gray-200'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                      isActive ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-                  </div>
-                  </div>
-                </div>
+                />
+              </div>
+            </div>
+          </KwidSection>
 
           {/* Инструкции для агента */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Инструкции для агента<span className="text-red-500 ml-1">*</span>
-              </label>
-              <Textarea
-                value={instructions}
-                onChange={(e) => setInstructions(e.target.value)}
-                rows={15}
-                placeholder="Введите инструкции для агента..."
-                className="font-mono text-sm"
-              />
-                </div>
-                </div>
+          <KwidSection
+            title="Инструкции для агента"
+            description="Определите поведение и стиль общения агента"
+          >
+            <KwidTextarea
+              label="Инструкции для агента"
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              rows={15}
+              placeholder="Введите инструкции для агента..."
+              className="font-mono text-sm"
+              required
+            />
+          </KwidSection>
 
           {/* Твоя цель */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
-            <div className="flex items-center space-x-2 mb-4">
-              <Zap className="w-5 h-5 text-gray-600" />
-              <h2 className="text-lg font-semibold text-gray-900">Твоя цель</h2>
-                </div>
-
+          <KwidSection
+            title="Твоя цель"
+            icon={Zap}
+            description="Основные цели агента при общении с клиентами"
+          >
             <div className="space-y-3">
               {[
                 { id: '1', text: 'Я помогу вам быстро и бесплатно получить консультацию по иммиграции в Польшу. Для этого мне нужен ваш email.' },
                 { id: '2', text: 'Я отвечу в течение 24 часов, как только получу ваш email.' },
               ].map((goal) => (
                 <div key={goal.id} className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-xs font-bold text-primary-700">{goal.id}</span>
+                  <div className="w-6 h-6 bg-custom-100 dark:bg-custom-900/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-custom-700 dark:text-custom-400">{goal.id}</span>
                   </div>
-                  <p className="text-sm text-gray-700">{goal.text}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{goal.text}</p>
                 </div>
               ))}
             </div>
-                </div>
+          </KwidSection>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end space-x-3">
-            <Button 
+          <div className="fi-form-actions">
+            <KwidButton 
               variant="outline"
+              size="md"
               onClick={() => {
                 // Отмена - перезагружаем данные
                 if (resolvedParams) {
@@ -452,8 +422,10 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
             >
               <X className="w-4 h-4 mr-2" />
               Отмена
-            </Button>
-            <Button
+            </KwidButton>
+            <KwidButton
+              variant="primary"
+              size="md"
               onClick={async () => {
                 if (!resolvedParams) return
 
@@ -484,18 +456,18 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
             >
               <Save className="w-4 h-4 mr-2" />
               Сохранить
-            </Button>
+            </KwidButton>
           </div>
-        </TabsContent>
+        </KwidTabsContent>
 
         {/* Сделки и контакты (Deals) */}
-        <TabsContent value="deals" className="mt-6 space-y-6">
+        <KwidTabsContent value="deals" className="mt-6 space-y-6">
           <div className="mb-4">
-            <h2 className="text-3xl font-bold text-slate-900">Сделки и контакты</h2>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Сделки и контакты</h2>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-blue-800">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 dark:bg-blue-900/20 dark:border-blue-800">
+            <p className="text-sm text-blue-800 dark:text-blue-200">
               Выбирайте только необходимые поля. Большее количество полей добавляет дополнительный контекст и может снизить точность ответов.
             </p>
           </div>
@@ -514,9 +486,10 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
           {resolvedParams && <DealContactFieldsSelector agentId={resolvedParams.id} />}
 
           {/* Кнопки сохранения */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
-            <Button 
+          <div className="fi-form-actions">
+            <KwidButton 
               variant="outline"
+              size="md"
               onClick={() => {
                 // Отмена - перезагружаем данные
                 if (resolvedParams) {
@@ -525,59 +498,59 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
               }}
             >
               Отмена
-            </Button>
-            <Button onClick={handleSavePipelineSettings}>
+            </KwidButton>
+            <KwidButton onClick={handleSavePipelineSettings} variant="primary" size="md">
               Сохранить
-            </Button>
+            </KwidButton>
           </div>
-        </TabsContent>
+        </KwidTabsContent>
 
         {/* Триггеры (Triggers) */}
-        <TabsContent value="triggers" className="mt-6 space-y-6">
+        <KwidTabsContent value="triggers" className="mt-6 space-y-6">
           {resolvedParams && (
             <TriggerManager agentId={resolvedParams.id} />
           )}
-        </TabsContent>
+        </KwidTabsContent>
 
         {/* Цепочки (Chains) */}
-        <TabsContent value="chains" className="mt-6 space-y-6">
+        <KwidTabsContent value="chains" className="mt-6 space-y-6">
           {resolvedParams && (
             <AgentSequencesManager agentId={resolvedParams.id} />
           )}
-        </TabsContent>
+        </KwidTabsContent>
 
         {/* Интеграции (Integrations) */}
-        <TabsContent value="integrations" className="mt-6 space-y-6">
+        <KwidTabsContent value="integrations" className="mt-6 space-y-6">
           <div className="space-y-6">
             <div>
-              <h2 className="text-3xl font-bold text-slate-900">Интеграции</h2>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Интеграции</h2>
             </div>
 
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
-                <input
+                <KwidInput
                   type="search"
                   placeholder="Поиск"
-                  className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                  className="pl-10"
                 />
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
-                    <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Интеграция</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Установлено</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Активно</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-slate-600"></th>
+                  <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Интеграция</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Установлено</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Активно</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 dark:text-gray-400"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {/* Kommo Integration */}
-                  <tr className="border-b border-slate-100">
+                  <tr className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800">
                     <td className="px-4 py-3">
-                      <span className="text-sm font-semibold text-slate-900">Kommo</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">Kommo</span>
                     </td>
                     <td className="px-4 py-3">
                       {crmConnection ? (
@@ -610,19 +583,19 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Button variant="outline" size="sm" asChild>
+                      <KwidButton variant="outline" size="sm" asChild>
                         <Link href="/integrations">
                           <Settings className="mr-2 h-4 w-4" />
                           {crmConnection ? 'Настройки' : 'Установить'}
                         </Link>
-                      </Button>
+                      </KwidButton>
                     </td>
                   </tr>
 
                   {/* Google Calendar Integration */}
-                  <tr className="border-b border-slate-100">
+                  <tr className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800">
                     <td className="px-4 py-3">
-                      <span className="text-sm font-semibold text-slate-900">Google Calendar</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">Google Calendar</span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500">
@@ -639,41 +612,39 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Button variant="outline" size="sm" asChild>
+                      <KwidButton variant="outline" size="sm" asChild>
                         <Link href="/integrations">
                           <Link2 className="mr-2 h-4 w-4" />
                           Установить
                         </Link>
-                      </Button>
+                      </KwidButton>
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </div>
-        </TabsContent>
+        </KwidTabsContent>
 
         {/* Дополнительно (Additional) */}
-        <TabsContent value="additional" className="mt-6 space-y-6">
+        <KwidTabsContent value="additional" className="mt-6 space-y-6">
           {/* PRODUCT VENDORS (PARTNERSHIP) */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <KwidSection
+            title="PRODUCT VENDORS (PARTNERSHIP)"
+            description="Управление партнерскими продуктами"
+          >
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">PRODUCT VENDORS (PARTNERSHIP)</h2>
-              <button
-                onClick={() => setProductVendorsActive(!productVendorsActive)}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
-                  productVendorsActive ? 'bg-primary-600' : 'bg-gray-200'
-                }`}
-                aria-label={productVendorsActive ? 'Деактивировать' : 'Активировать'}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    productVendorsActive ? 'translate-x-5' : 'translate-x-0'
-                  }`}
-                />
-              </button>
+              <div className="flex-1">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Включить функционал партнерских продуктов
+                </p>
+              </div>
+              <KwidSwitch
+                checked={productVendorsActive}
+                onCheckedChange={setProductVendorsActive}
+              />
             </div>
-          </div>
+          </KwidSection>
 
           {/* Каналы */}
           <ChannelsSettings
@@ -699,77 +670,70 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
           />
 
           {/* Модель ИИ */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-sm font-semibold text-gray-900 mb-1">Модель ИИ</h3>
-            <div className="mt-3">
-              <select 
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-                value={aiModel}
-                onChange={(e) => setAiModel(e.target.value)}
-              >
-                <option value="gpt-5">OpenAI GPT-5 - Новейшая модель OpenAI с надёжными и естественными ответами</option>
-                <option value="gpt-4.1">OpenAI GPT-4.1</option>
-                <option value="gpt-4">OpenAI GPT-4</option>
-              </select>
-            </div>
-            <p className="mt-2 text-xs text-gray-500">
-              Выберите, насколько умным вы хотите сделать ИИ. Более продвинутые модели стоят дороже.
-            </p>
-          </div>
+          <KwidSection
+            title="Модель ИИ"
+            description="Выберите модель для обработки запросов"
+          >
+            <KwidSelect
+              label="Модель ИИ"
+              value={aiModel}
+              onChange={(value) => setAiModel(value)}
+              options={[
+                { value: 'gpt-5', label: 'OpenAI GPT-5 - Новейшая модель OpenAI с надёжными и естественными ответами' },
+                { value: 'gpt-4.1', label: 'OpenAI GPT-4.1' },
+                { value: 'gpt-4', label: 'OpenAI GPT-4' },
+              ]}
+              hint="Выберите, насколько умным вы хотите сделать ИИ. Более продвинутые модели стоят дороже."
+            />
+          </KwidSection>
 
           {/* Язык */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Язык</h3>
+          <KwidSection
+            title="Язык"
+            description="Настройки определения языка"
+          >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-700">Автоматически определять язык пользователя</p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Автоматически определять язык пользователя</p>
               </div>
-              <button
-                onClick={() => setAutoDetectLanguage(!autoDetectLanguage)}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
-                  autoDetectLanguage ? 'bg-primary-600' : 'bg-gray-200'
-                }`}
-              >
-                <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                  autoDetectLanguage ? 'translate-x-5' : 'translate-x-0'
-                }`} />
-              </button>
-            </div>
-          </div>
-
-          {/* Настройки ответа */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-sm font-semibold text-gray-900 mb-1">Настройки ответа</h3>
-            <div className="mt-3">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Задержка ответа (секунд)
-              </label>
-              <Input
-                type="number"
-                min="0"
-                max="86400"
-                value={responseDelay}
-                onChange={(e) => setResponseDelay(parseInt(e.target.value, 10) || 0)}
-                className="w-full"
+              <KwidSwitch
+                checked={autoDetectLanguage}
+                onCheckedChange={setAutoDetectLanguage}
               />
             </div>
-            <p className="mt-2 text-xs text-gray-500">
-              Сколько секунд ждать перед ответом. Рекомендуем установить задержку не менее 30 секунд, чтобы избежать дублирования ответов, если клиент отправит другое сообщение, пока агент отвечает.
-            </p>
-          </div>
+          </KwidSection>
+
+          {/* Настройки ответа */}
+          <KwidSection
+            title="Настройки ответа"
+            description="Конфигурация времени ответа агента"
+          >
+            <KwidInput
+              label="Задержка ответа (секунд)"
+              type="number"
+              min="0"
+              max="86400"
+              value={responseDelay.toString()}
+              onChange={(e) => setResponseDelay(parseInt(e.target.value, 10) || 0)}
+              hint="Сколько секунд ждать перед ответом. Рекомендуем установить задержку не менее 30 секунд, чтобы избежать дублирования ответов, если клиент отправит другое сообщение, пока агент отвечает."
+            />
+          </KwidSection>
 
           {/* Кнопки действий */}
-          <div className="flex items-center justify-end space-x-3">
-            <Button 
+          <div className="fi-form-actions">
+            <KwidButton 
               variant="outline"
+              size="md"
               onClick={() => {
                 // Отмена - можно вернуть значения из сохраненных данных
               }}
             >
               <X className="w-4 h-4 mr-2" />
               Отмена
-            </Button>
-            <Button
+            </KwidButton>
+            <KwidButton
+              variant="primary"
+              size="md"
               onClick={async () => {
                 if (!resolvedParams) return
 
@@ -799,10 +763,10 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
             >
               <Save className="w-4 h-4 mr-2" />
               Сохранить
-            </Button>
+            </KwidButton>
           </div>
-        </TabsContent>
-      </Tabs>
+        </KwidTabsContent>
+      </KwidTabs>
     </div>
   )
 }

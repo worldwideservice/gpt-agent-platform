@@ -5,12 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, ArrowRight, Bot, Check, Database, Loader2, Sparkles } from 'lucide-react'
 
 import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
-import { Textarea } from '@/components/ui/Textarea'
-import { Toggle } from '@/components/ui/Toggle'
+import { KwidButton, KwidInput, KwidSelect, KwidTextarea, KwidSwitch, KwidSection } from '@/components/kwid'
 import { useToast } from '@/components/ui/toast-context'
 import { cn } from '@/lib/utils'
 
@@ -515,100 +510,78 @@ export const OnboardingClient = ({ initialState }: OnboardingClientProps) => {
       case 'crm':
         return (
           <form className="space-y-6" onSubmit={handleConnectCrm}>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700" htmlFor="crm-provider">
-                CRM система
-              </label>
-              <Select
-                id="crm-provider"
-                value={crmForm.provider}
-                onChange={(value: string) =>
-                  setCrmForm((prev) => ({
-                    ...prev,
-                    provider: value,
-                  }))
-                }
-                options={crmProviders}
+            <KwidSelect
+              label="CRM система"
+              id="crm-provider"
+              value={crmForm.provider}
+              onChange={(value: string) =>
+                setCrmForm((prev) => ({
+                  ...prev,
+                  provider: value,
+                }))
+              }
+              options={crmProviders}
+              required
+              disabled
+            />
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <KwidInput
+                label="Client ID / Integration ID"
+                id="crm-client-id"
+                placeholder="XXXXXXXXXXXXXX"
+                value={crmForm.clientId}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCrmForm((prev) => ({ ...prev, clientId: e.target.value }))}
                 required
-                disabled
+              />
+
+              <KwidInput
+                label="Client Secret / OAuth Secret"
+                id="crm-client-secret"
+                placeholder="••••••••••••••"
+                type="password"
+                value={crmForm.clientSecret}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCrmForm((prev) => ({ ...prev, clientSecret: e.target.value }))}
+                required
+              />
+
+              <KwidInput
+                label="Redirect URI"
+                id="crm-redirect-uri"
+                placeholder="https://app.example.com/integrations/kommo/oauth/callback"
+                value={crmForm.redirectUri}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCrmForm((prev) => ({ ...prev, redirectUri: e.target.value }))}
+                required
+              />
+
+              <KwidInput
+                label="Домен CRM"
+                id="crm-base-domain"
+                placeholder="example.amocrm.ru"
+                value={crmForm.baseDomain}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCrmForm((prev) => ({ ...prev, baseDomain: e.target.value }))}
+                required
               />
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="flex items-center justify-between rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
               <div>
-                <label className="text-sm font-medium text-gray-700" htmlFor="crm-client-id">
-                  Client ID / Integration ID
-                </label>
-                <Input
-                  id="crm-client-id"
-                  placeholder="XXXXXXXXXXXXXX"
-                  value={crmForm.clientId}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCrmForm((prev) => ({ ...prev, clientId: e.target.value }))}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700" htmlFor="crm-client-secret">
-                  Client Secret / OAuth Secret
-                </label>
-                <Input
-                  id="crm-client-secret"
-                  placeholder="••••••••••••••"
-                  type="password"
-                  value={crmForm.clientSecret}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCrmForm((prev) => ({ ...prev, clientSecret: e.target.value }))}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700" htmlFor="crm-redirect-uri">
-                  Redirect URI
-                </label>
-                <Input
-                  id="crm-redirect-uri"
-                  placeholder="https://app.example.com/integrations/kommo/oauth/callback"
-                  value={crmForm.redirectUri}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCrmForm((prev) => ({ ...prev, redirectUri: e.target.value }))}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700" htmlFor="crm-base-domain">
-                  Домен CRM
-                </label>
-                <Input
-                  id="crm-base-domain"
-                  placeholder="example.amocrm.ru"
-                  value={crmForm.baseDomain}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCrmForm((prev) => ({ ...prev, baseDomain: e.target.value }))}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4">
-              <div>
-                <p className="font-medium text-gray-900">Тестовая синхронизация данных</p>
-                <p className="text-sm text-gray-600">
+                <p className="font-medium text-gray-900 dark:text-white">Тестовая синхронизация данных</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   Выгрузим только 20 последних сделок и контактов, чтобы проверить корректность работы интеграции.
                 </p>
               </div>
-              <Toggle
-                aria-label="Тестовая синхронизация"
-                pressed={crmForm.testSync}
-                onPressedChange={(value) => setCrmForm((prev) => ({ ...prev, testSync: value }))}
-              >
-                {crmForm.testSync ? 'Включено' : 'Выключено'}
-              </Toggle>
+              <KwidSwitch
+                checked={crmForm.testSync}
+                onCheckedChange={(value) => setCrmForm((prev) => ({ ...prev, testSync: value }))}
+                label="Тестовая синхронизация"
+              />
             </div>
 
-            {crmError && <p className="text-sm text-red-600">{crmError}</p>}
+            {crmError && <p className="text-sm text-red-600 dark:text-red-400">{crmError}</p>}
 
             <div className="flex items-center justify-end space-x-3">
-              <Button type="submit" disabled={isSavingCredentials || isAwaitingOAuth || isPollingSync || crmReady}>
+              <KwidButton type="submit" disabled={isSavingCredentials || isAwaitingOAuth || isPollingSync || crmReady} variant="primary" size="md">
                 {isSavingCredentials ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Сохранение...
@@ -620,18 +593,20 @@ export const OnboardingClient = ({ initialState }: OnboardingClientProps) => {
                 ) : crmReady ? (
                   'CRM подключена'
                 ) : (
-                  'Подключить CRM'
+                  <>
+                    Подключить CRM
+                    {!crmReady && !isSavingCredentials && !isAwaitingOAuth && !isPollingSync ? (
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    ) : null}
+                  </>
                 )}
-                {!crmReady && !isSavingCredentials && !isAwaitingOAuth && !isPollingSync ? (
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                ) : null}
-              </Button>
+              </KwidButton>
             </div>
 
             {crmStatus.sync && (
-              <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-700">
-                <p className="font-medium text-gray-900">Статус синхронизации: {crmStatus.sync.status}</p>
-                <p className="text-sm text-gray-600">{syncDescription}</p>
+              <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                <p className="font-medium text-gray-900 dark:text-white">Статус синхронизации: {crmStatus.sync.status}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{syncDescription}</p>
               </div>
             )}
           </form>
@@ -640,48 +615,36 @@ export const OnboardingClient = ({ initialState }: OnboardingClientProps) => {
         return (
           <form className="space-y-6" onSubmit={handleAgentSubmit}>
             <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="text-sm font-medium text-gray-700" htmlFor="agent-name">
-                  Название агента
-                </label>
-                <Input
-                  id="agent-name"
-                  placeholder="AI менеджер"
-                  value={agentForm.name}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAgentForm((prev) => ({ ...prev, name: e.target.value }))}
-                  required
-                />
-              </div>
+              <KwidInput
+                label="Название агента"
+                id="agent-name"
+                placeholder="AI менеджер"
+                value={agentForm.name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAgentForm((prev) => ({ ...prev, name: e.target.value }))}
+                required
+              />
 
-              <div>
-                <label className="text-sm font-medium text-gray-700" htmlFor="agent-model">
-                  Модель LLM
-                </label>
-                <Select
-                  id="agent-model"
-                  value={agentForm.model}
-                  onChange={(value: string) => setAgentForm((prev) => ({ ...prev, model: value }))}
-                  options={agentModels}
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700" htmlFor="agent-goal">
-                Основная задача агента
-              </label>
-              <Textarea
-                id="agent-goal"
-                rows={4}
-                value={agentForm.goal}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setAgentForm((prev) => ({ ...prev, goal: e.target.value }))}
+              <KwidSelect
+                label="Модель LLM"
+                id="agent-model"
+                value={agentForm.model}
+                onChange={(value: string) => setAgentForm((prev) => ({ ...prev, model: value }))}
+                options={agentModels}
                 required
               />
             </div>
 
+            <KwidTextarea
+              label="Основная задача агента"
+              id="agent-goal"
+              rows={4}
+              value={agentForm.goal}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setAgentForm((prev) => ({ ...prev, goal: e.target.value }))}
+              required
+            />
+
             <div className="space-y-3">
-              <p className="text-sm font-medium text-gray-700">Каналы коммуникации</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Каналы коммуникации</p>
               <div className="flex flex-wrap gap-2">
                 {agentChannels.map((channel) => {
                   const isActive = agentForm.channels.includes(channel.value)
@@ -699,26 +662,22 @@ export const OnboardingClient = ({ initialState }: OnboardingClientProps) => {
               </div>
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-gray-700" htmlFor="agent-schedule">
-                Расписание
-              </label>
-              <Select
-                id="agent-schedule"
-                value={agentForm.schedule}
-                onChange={(value: string) => setAgentForm((prev) => ({ ...prev, schedule: value }))}
-                options={schedules}
-                required
-              />
-            </div>
+            <KwidSelect
+              label="Расписание"
+              id="agent-schedule"
+              value={agentForm.schedule}
+              onChange={(value: string) => setAgentForm((prev) => ({ ...prev, schedule: value }))}
+              options={schedules}
+              required
+            />
 
-            {agentError && <p className="text-sm text-red-600">{agentError}</p>}
+            {agentError && <p className="text-sm text-red-600 dark:text-red-400">{agentError}</p>}
 
             <div className="flex items-center justify-between">
-              <Button type="button" variant="secondary" onClick={() => setCurrentStep(0)}>
+              <KwidButton type="button" variant="outline" size="md" onClick={() => setCurrentStep(0)}>
                 <ArrowLeft className="mr-2 h-4 w-4" /> Назад
-              </Button>
-              <Button type="submit" disabled={isSavingAgent}>
+              </KwidButton>
+              <KwidButton type="submit" disabled={isSavingAgent} variant="primary" size="md">
                 {isSavingAgent ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Сохраняем...
@@ -728,38 +687,40 @@ export const OnboardingClient = ({ initialState }: OnboardingClientProps) => {
                     Сохранить настройки <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}
-              </Button>
+              </KwidButton>
             </div>
           </form>
         )
       case 'summary':
         return (
           <div className="space-y-6">
-            <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-              <h3 className="text-base font-semibold text-green-900">CRM успешно подключена</h3>
-              <p className="mt-1 text-sm text-green-700">{syncDescription}</p>
+            <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
+              <h3 className="text-base font-semibold text-green-900 dark:text-green-400">CRM успешно подключена</h3>
+              <p className="mt-1 text-sm text-green-700 dark:text-green-300">{syncDescription}</p>
             </div>
 
-            <Card className="space-y-4 p-6">
-              <div>
-                <p className="text-sm font-medium text-gray-600">CRM система</p>
-                <p className="text-lg font-semibold text-gray-900">{providerLabel}</p>
-                <p className="text-sm text-gray-500">Поддомен: {crmStatus.connection?.baseDomain ?? '—'}</p>
-              </div>
+            <KwidSection title="Итоговая информация">
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">CRM система</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{providerLabel}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Поддомен: {crmStatus.connection?.baseDomain ?? '—'}</p>
+                </div>
 
-              {renderCrmSummary()}
+                {renderCrmSummary()}
 
-              <div className="pt-2">
-                <p className="text-sm font-medium text-gray-600">AI агент</p>
-                {renderAgentSummary()}
+                <div className="pt-2">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">AI агент</p>
+                  {renderAgentSummary()}
+                </div>
               </div>
-            </Card>
+            </KwidSection>
 
             <div className="flex items-center justify-between">
-              <Button type="button" variant="secondary" onClick={() => setCurrentStep(1)}>
+              <KwidButton type="button" variant="outline" size="md" onClick={() => setCurrentStep(1)}>
                 <ArrowLeft className="mr-2 h-4 w-4" /> Назад
-              </Button>
-              <Button type="button" onClick={handleLaunchAgent} disabled={isLaunchingAgent}>
+              </KwidButton>
+              <KwidButton type="button" onClick={handleLaunchAgent} disabled={isLaunchingAgent} variant="primary" size="md">
                 {isLaunchingAgent ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Перенаправляем...
@@ -770,7 +731,7 @@ export const OnboardingClient = ({ initialState }: OnboardingClientProps) => {
                     <Sparkles className="ml-2 h-4 w-4" />
                   </>
                 )}
-              </Button>
+              </KwidButton>
             </div>
           </div>
         )
@@ -785,27 +746,24 @@ export const OnboardingClient = ({ initialState }: OnboardingClientProps) => {
   return (
     <div className="mx-auto max-w-5xl space-y-10 py-10">
       <header className="space-y-2">
-        <h1 className="text-3xl font-semibold text-gray-900">Добро пожаловать! Настроим систему за 3 шага</h1>
-        <p className="max-w-3xl text-sm text-gray-600">
+        <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">Добро пожаловать! Настроим систему за 3 шага</h1>
+        <p className="max-w-3xl text-sm text-gray-600 dark:text-gray-400">
           Сначала подключим CRM и заберём данные о клиентах, затем настроим AI-агента и определим, что он будет делать.
           После этого останется запустить агента в работу — всё это займёт не больше 5 минут.
         </p>
       </header>
 
       <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
-        <Card className="h-fit divide-y divide-gray-100 p-6">
-          <div className="space-y-1">
-            <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">Прогресс</p>
-            <p className="text-lg font-semibold text-gray-900">{currentStep + 1} / {steps.length}</p>
-            <div className="mt-3 h-2 w-full rounded-full bg-gray-100">
+        <KwidSection title={`Прогресс: ${currentStep + 1} / ${steps.length}`}>
+          <div className="space-y-6">
+            <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-gray-800">
               <div
-                className="h-full rounded-full bg-primary-500 transition-all"
+                className="h-full rounded-full bg-custom-500 transition-all"
                 style={{ width: `${progress}%` }}
               />
             </div>
-          </div>
 
-          <nav className="space-y-2 pt-6">
+            <nav className="space-y-2">
             {steps.map((step, index) => {
               const isActive = index === currentStep
               const isCompleted = completedStepIds.includes(step.id)
@@ -821,10 +779,10 @@ export const OnboardingClient = ({ initialState }: OnboardingClientProps) => {
                   }}
                   className={cn(
                     'w-full rounded-lg px-4 py-3 text-left transition-colors',
-                    'border border-transparent hover:border-primary-200',
-                    isActive && 'border-primary-200 bg-primary-50',
-                    !isActive && 'bg-white',
-                    isCompleted && !isActive && 'border-emerald-200 bg-emerald-50',
+                    'border border-transparent hover:border-custom-200 dark:hover:border-custom-800',
+                    isActive && 'border-custom-200 bg-custom-50 dark:border-custom-800 dark:bg-custom-900/20',
+                    !isActive && 'bg-white dark:bg-gray-900',
+                    isCompleted && !isActive && 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20',
                   )}
                 >
                   <div className="flex items-center justify-between">
@@ -832,36 +790,33 @@ export const OnboardingClient = ({ initialState }: OnboardingClientProps) => {
                       <div
                         className={cn(
                           'flex h-8 w-8 items-center justify-center rounded-full border text-sm font-semibold',
-                          isActive ? 'border-primary-400 text-primary-600' : 'border-gray-200 text-gray-500',
-                          isCompleted && 'border-emerald-300 bg-emerald-100 text-emerald-600',
+                          isActive ? 'border-custom-400 text-custom-600 dark:border-custom-500 dark:text-custom-400' : 'border-gray-200 text-gray-500 dark:border-gray-700 dark:text-gray-400',
+                          isCompleted && 'border-emerald-300 bg-emerald-100 text-emerald-600 dark:border-emerald-500 dark:bg-emerald-900/20 dark:text-emerald-400',
                         )}
                       >
                         {isCompleted ? <Check className="h-4 w-4" /> : index + 1}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-gray-900">{step.title}</p>
-                        <p className="text-xs text-gray-500">{step.description}</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{step.title}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{step.description}</p>
                       </div>
                     </div>
-                    <step.icon className="h-4 w-4 text-gray-400" />
+                    <step.icon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                   </div>
                 </button>
               )
             })}
           </nav>
-        </Card>
-
-        <Card className="space-y-6 p-8">
-          <div>
-            <div className="flex items-center space-x-3">
-              <CurrentStepIcon className="h-5 w-5 text-primary-600" />
-              <h2 className="text-xl font-semibold text-gray-900">{currentStepConfig.title}</h2>
-            </div>
-            <p className="mt-1 text-sm text-gray-600">{currentStepConfig.description}</p>
           </div>
+        </KwidSection>
 
+        <KwidSection
+          title={currentStepConfig.title}
+          description={currentStepConfig.description}
+          icon={CurrentStepIcon}
+        >
           {renderStepContent(currentStepConfig.id)}
-        </Card>
+        </KwidSection>
       </div>
     </div>
   )

@@ -5,11 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save } from 'lucide-react'
 
-import { Button } from '@/components/ui/Button'
-import { Card, CardContent } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
-import { Textarea } from '@/components/ui/Textarea'
+import { KwidButton, KwidInput, KwidSelect, KwidTextarea, KwidSection } from '@/components/kwid'
 
 import type { KnowledgeBaseCategory } from '@/types'
 
@@ -97,80 +93,85 @@ export const CategoryForm = ({ categoryId, initialCategory, categories }: Catego
 
   return (
     <div className="space-y-6">
-      <Card className="border-none bg-white shadow-sm">
-        <CardContent className="space-y-6 p-6">
+      <KwidSection title={isNew ? 'Создание категории' : `Редактирование категории`}>
+        <div className="space-y-6">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-4">
               <button
                 type="button"
                 onClick={() => router.push('/knowledge-base/categories')}
-                className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-primary-600"
+                className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 transition-colors hover:text-custom-600 dark:text-gray-400 dark:hover:text-custom-400"
               >
                 <ArrowLeft className="h-4 w-4" /> Назад к списку
               </button>
 
               <div className="space-y-2">
-                <nav className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide text-slate-400">
-                  <Link href="/knowledge-base/categories" className="font-semibold text-primary-600 hover:underline">
+                <nav className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                  <Link href="/knowledge-base/categories" className="font-semibold text-custom-600 hover:underline dark:text-custom-400">
                     Категории
                   </Link>
                   <span>/</span>
-                  <span className="font-semibold text-slate-500">
+                  <span className="font-semibold text-gray-500 dark:text-gray-400">
                     {isNew ? 'Новая категория' : initialCategory?.name ?? 'Редактирование'}
                   </span>
                 </nav>
-                <h1 className="text-3xl font-semibold text-slate-900">
+                <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
                   {isNew ? 'Создание категории' : `Редактирование категории`}
                 </h1>
-                <p className="max-w-2xl text-sm text-slate-500">
+                <p className="max-w-2xl text-sm text-gray-500 dark:text-gray-400">
                   Создайте категорию для организации статей базы знаний
                 </p>
               </div>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button type="button" onClick={handleSave} disabled={isSaving}>
+              <KwidButton type="button" onClick={handleSave} disabled={isSaving} variant="primary" size="md">
                 <Save className="mr-2 h-4 w-4" /> {isSaving ? 'Сохранение…' : 'Сохранить'}
-              </Button>
+              </KwidButton>
             </div>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-2">
-            <div className="space-y-4">
-              <Input
-                label="Название категории*"
-                placeholder="Например: FAQ, Документация, Политика"
-                value={formData.name}
-                onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                required
-              />
+            <KwidSection
+              title="Основная информация"
+              description="Заполните данные категории"
+            >
+              <div className="space-y-4">
+                <KwidInput
+                  label="Название категории*"
+                  placeholder="Например: FAQ, Документация, Политика"
+                  value={formData.name}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                  required
+                />
 
-              <Select
-                label="Родительская категория"
-                value={formData.parentId ?? ''}
-                onChange={(value: string) => setFormData((prev) => ({ ...prev, parentId: value }))}
-                options={parentOptions}
-              />
+                <KwidSelect
+                  label="Родительская категория"
+                  value={formData.parentId ?? ''}
+                  onChange={(value: string) => setFormData((prev) => ({ ...prev, parentId: value }))}
+                  options={parentOptions}
+                />
 
-              <Textarea
-                label="Описание"
-                placeholder="Описание категории (необязательно)"
-                rows={6}
-                value={formData.description}
-                onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-              />
-            </div>
+                <KwidTextarea
+                  label="Описание"
+                  placeholder="Описание категории (необязательно)"
+                  rows={6}
+                  value={formData.description}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                />
+              </div>
+            </KwidSection>
 
-            <div className="rounded-2xl bg-slate-50 p-4">
-              <h3 className="text-sm font-semibold text-slate-900">Информация</h3>
-              <p className="mt-2 text-sm text-slate-500">
+            <div className="rounded-xl bg-gray-50 p-4 dark:bg-gray-800">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Информация</h3>
+              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                 Категории помогают организовать статьи базы знаний. Вы можете создавать подкатегории,
                 назначая родительскую категорию.
               </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </KwidSection>
     </div>
   )
 }

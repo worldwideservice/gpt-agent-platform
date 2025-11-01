@@ -1,10 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { Button } from '@/components/ui/Button'
-import { Card, CardContent } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
-import { Toggle } from '@/components/ui/Toggle'
+import { KwidButton, KwidInput, KwidSwitch, KwidSection } from '@/components/kwid'
 
 interface AccountSettings {
   stopOnHumanReply?: boolean
@@ -97,8 +94,8 @@ const AccountPage = () => {
     return (
       <div className="space-y-6">
         <header className="space-y-2">
-          <h1 className="text-3xl font-semibold text-slate-900">Настройки аккаунта</h1>
-          <p className="text-sm text-slate-500">Загрузка...</p>
+          <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">Настройки аккаунта</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Загрузка...</p>
         </header>
       </div>
     )
@@ -107,58 +104,56 @@ const AccountPage = () => {
   return (
     <div className="space-y-6">
       <header className="space-y-2">
-        <h1 className="text-3xl font-semibold text-slate-900">Настройки аккаунта</h1>
-        <p className="text-sm text-slate-500">Управление поведением AI-агентов и уведомлениями</p>
+        <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">Настройки аккаунта</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Управление поведением AI-агентов и уведомлениями</p>
       </header>
 
-      <Card className="shadow-sm">
-        <CardContent className="space-y-6 p-6">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">Профиль пользователя</h2>
-            <p className="mt-1 text-sm text-slate-500">Информация о вашем аккаунте</p>
-          </div>
+      <KwidSection
+        title="Профиль пользователя"
+        description="Информация о вашем аккаунте"
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <KwidInput
+            label="Имя"
+            value={user?.fullName ?? ''}
+            placeholder="Ваше имя"
+            disabled
+          />
+          <KwidInput
+            label="Email"
+            type="email"
+            value={user?.email ?? ''}
+            placeholder="email@example.com"
+            disabled
+          />
+        </div>
+      </KwidSection>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <Input
-              label="Имя"
-              value={user?.fullName ?? ''}
-              placeholder="Ваше имя"
-              disabled
-            />
-            <Input
-              label="Email"
-              type="email"
-              value={user?.email ?? ''}
-              placeholder="email@example.com"
-              disabled
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-sm">
-        <CardContent className="space-y-6 p-6">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">Общие настройки</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Если включить, агенты перестанут отвечать, как только человек отправит сообщение в этом чате.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <Toggle
+      <KwidSection
+        title="Общие настройки"
+        description="Если включить, агенты перестанут отвечать, как только человек отправит сообщение в этом чате."
+      >
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Останавливать агентов ИИ при ответе человека</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Агенты автоматически отключаются после сообщения менеджера.
+              </p>
+            </div>
+            <KwidSwitch
               checked={stopOnHumanReply}
-              onChange={setStopOnHumanReply}
-              label="Останавливать агентов ИИ при ответе человека"
-              description="Агенты автоматически отключаются после сообщения менеджера."
+              onCheckedChange={setStopOnHumanReply}
             />
           </div>
 
-          <Button onClick={handleSave} disabled={isSaving} className="gap-2 text-sm">
-            {isSaving ? 'Сохранение…' : 'Сохранить изменения'}
-          </Button>
-        </CardContent>
-      </Card>
+          <div className="fi-form-actions pt-4">
+            <KwidButton onClick={handleSave} disabled={isSaving} variant="primary" size="md">
+              {isSaving ? 'Сохранение…' : 'Сохранить изменения'}
+            </KwidButton>
+          </div>
+        </div>
+      </KwidSection>
     </div>
   )
 }

@@ -94,3 +94,54 @@ export const getAgentPipelineSettings = async (
   return (data ?? []) as AgentPipelineSetting[]
 }
 
+/**
+ * Получает все агенты организации, которые настроены для обработки сделок на конкретном этапе воронки
+ * @param organizationId - ID организации
+ * @param pipelineId - ID воронки из CRM
+ * @param stageId - ID этапа из CRM
+ * @returns Массив ID агентов, которые должны обработать событие
+ */
+export const getAgentsForPipelineStage = async (
+  organizationId: string,
+  pipelineId: string,
+  stageId?: string | null,
+): Promise<string[]> => {
+  const supabase = getSupabaseServiceRoleClient()
+
+  try {
+    // Получаем все активные настройки для этой воронки
+    const { data, error } = await supabase
+      .from('agent_pipeline_settings')
+      .select('agent_id, all_stages, selected_stages')
+      .eq('org_id', organizationId)
+      .eq('pipeline_id', pipelineId)
+      .eq('is_active', true)
+
+    if (error || !data) {
+      return []
+    }
+
+    const agentIds: string[] = []
+
+    for (const setting of data) {
+      // Если все этапы разрешены - агент включен
+      if (setting.all_stages) {
+        agentIds.push(setting.agent_id)
+        continue
+      }
+
+      // Если указан конкретный этап - проверяем, есть ли он в списке разрешенных
+      if (stageId && setting.selected_stages && setting.selected_stages.includes(stageId)) {
+        agentIds.push(setting.agent_id)
+      }
+    }
+
+    return agentIds
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Failed to get agents for pipeline stage', error)
+    }
+    return []
+  }
+}
+

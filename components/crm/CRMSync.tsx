@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { RefreshCw, ChevronDown, ChevronUp, X, Plus } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Toggle } from '@/components/ui/Toggle'
+import { KwidButton, KwidSwitch, KwidTextarea, KwidSelect } from '@/components/kwid'
 import { Badge } from '@/components/ui/shadcn/badge'
 import { useCRMData } from '@/hooks/useCRMData'
 import type { UniversalPipeline, UniversalStage, CRMConnection } from '@/types/crm'
@@ -97,26 +96,27 @@ export const CRMSync = ({ connection, pipelineSettings, onPipelineUpdate }: CRMS
   return (
     <div className="space-y-6">
       {/* Настройки воронок */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-6 dark:bg-gray-900 dark:border-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
             </svg>
-            <h2 className="text-lg font-semibold text-gray-900">Настройки воронок</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Настройки воронок</h2>
           </div>
-          <Button 
+          <KwidButton 
             onClick={handleSync} 
             disabled={isLoading}
             variant="outline"
             size="sm"
+            className="gap-2"
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             Синхронизировать настройки CRM
-          </Button>
+          </KwidButton>
         </div>
         
-        <p className="text-sm text-gray-600 mb-6">
+        <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
           Выберите воронки и этапы сделок, в которых агент должен работать
         </p>
 
@@ -124,13 +124,13 @@ export const CRMSync = ({ connection, pipelineSettings, onPipelineUpdate }: CRMS
           {pipelines.map((pipeline) => {
             const settings = getPipelineSettings(pipeline.id)
             return (
-              <div key={pipeline.id} className="border border-gray-200 rounded-lg">
+              <div key={pipeline.id} className="border border-gray-200 rounded-lg dark:border-gray-800">
                 {/* Pipeline Header */}
-                <div className="flex items-center justify-between p-4 bg-gray-50">
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800">
                   <div className="flex items-center space-x-3 flex-1">
                     <button
                       onClick={() => togglePipeline(pipeline.id)}
-                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                      className="text-gray-400 hover:text-gray-600 transition-colors dark:text-gray-500 dark:hover:text-gray-400"
                       aria-label={expandedPipelines.has(pipeline.id) ? 'Свернуть' : 'Развернуть'}
                     >
                       {expandedPipelines.has(pipeline.id) ? (
@@ -139,24 +139,23 @@ export const CRMSync = ({ connection, pipelineSettings, onPipelineUpdate }: CRMS
                         <ChevronDown className="w-5 h-5" />
                       )}
                     </button>
-                    <h3 className="font-medium text-gray-900 uppercase">{pipeline.name}</h3>
+                    <h3 className="font-medium text-gray-900 uppercase dark:text-white">{pipeline.name}</h3>
                   </div>
                   
-                  <Toggle
+                  <KwidSwitch
                     checked={settings.isActive}
-                    onChange={(checked) => onPipelineUpdate(pipeline.id, { isActive: checked })}
-                    label="Активно"
+                    onCheckedChange={(checked) => onPipelineUpdate(pipeline.id, { isActive: checked })}
                   />
                 </div>
 
                 {/* Pipeline Content */}
                 {expandedPipelines.has(pipeline.id) && (
-                  <div className="px-4 pb-4 space-y-4 border-t border-gray-100">
+                  <div className="px-4 pb-4 space-y-4 border-t border-gray-100 dark:border-gray-800">
                     {/* All Stages Toggle */}
                     <div className="flex items-center justify-between">
-                      <Toggle
+                      <KwidSwitch
                         checked={settings.allStages}
-                        onChange={(checked) => onPipelineUpdate(pipeline.id, { 
+                        onCheckedChange={(checked) => onPipelineUpdate(pipeline.id, { 
                           allStages: checked,
                           selectedStages: checked ? pipeline.stages.map(s => s.id) : []
                         })}
@@ -167,12 +166,12 @@ export const CRMSync = ({ connection, pipelineSettings, onPipelineUpdate }: CRMS
                     {/* Selected Stages */}
                     {!settings.allStages && (
                       <div>
-                        <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-2">
+                        <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
                           Выберите этапы сделок
                           <span className="text-red-500">*</span>
                           <button
                             type="button"
-                            className="w-4 h-4 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100"
+                            className="w-4 h-4 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
                             title="Информация о выборе этапов сделок"
                           >
                             <span className="text-xs">i</span>
@@ -198,26 +197,20 @@ export const CRMSync = ({ connection, pipelineSettings, onPipelineUpdate }: CRMS
                         </div>
 
                         {/* Available Stages Dropdown */}
-                        <div className="relative">
-                          <select 
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                            onChange={(e) => {
-                              if (e.target.value) {
-                                toggleStage(pipeline.id, e.target.value)
-                                e.target.value = ''
-                              }
-                            }}
-                          >
-                            <option value="">Выбрать вариант</option>
-                            {pipeline.stages
+                        <KwidSelect
+                          options={[
+                            { value: '', label: 'Выбрать вариант' },
+                            ...pipeline.stages
                               .filter(stage => !settings.selectedStages.includes(stage.id))
-                              .map((stage) => (
-                                <option key={stage.id} value={stage.id}>
-                                  {stage.name}
-                                </option>
-                              ))}
-                          </select>
-                        </div>
+                              .map((stage) => ({ value: stage.id, label: stage.name })),
+                          ]}
+                          value=""
+                          onChange={(value) => {
+                            if (value) {
+                              toggleStage(pipeline.id, value)
+                            }
+                          }}
+                        />
                       </div>
                     )}
 
@@ -240,12 +233,11 @@ export const CRMSync = ({ connection, pipelineSettings, onPipelineUpdate }: CRMS
                           const currentInstruction = instructions[stageId] || ''
 
                           return (
-                            <div key={stageId} className="border border-gray-200 rounded-lg p-3">
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <div key={stageId} className="border border-gray-200 rounded-lg p-3 dark:border-gray-800">
+                              <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
                                 {stage.name}
                               </label>
-                              <textarea
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm min-h-[80px]"
+                              <KwidTextarea
                                 placeholder="Введите инструкции для этого этапа..."
                                 value={currentInstruction}
                                 onChange={(e) => {
@@ -257,8 +249,9 @@ export const CRMSync = ({ connection, pipelineSettings, onPipelineUpdate }: CRMS
                                     stageInstructions: newInstructions,
                                   })
                                 }}
+                                rows={3}
                               />
-                              <p className="mt-1 text-xs text-gray-500">
+                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                 Эти инструкции будут использоваться агентом при работе с этой стадией сделки
                               </p>
                             </div>

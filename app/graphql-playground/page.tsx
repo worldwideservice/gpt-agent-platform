@@ -1,10 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Button } from '@/components/ui/shadcn/button'
+import { KwidButton, KwidTextarea, KwidTabs, KwidTabsContent } from '@/components/kwid'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/shadcn/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/shadcn/tabs'
-import { Textarea } from '@/components/ui/shadcn/textarea'
 import { Badge } from '@/components/ui/shadcn/badge'
 import { Loader2, Play, Code, FileText } from 'lucide-react'
 
@@ -207,8 +205,8 @@ query GetAnalytics {
   return (
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">GraphQL Playground</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-3xl font-bold mb-2 dark:text-white">GraphQL Playground</h1>
+        <p className="text-muted-foreground dark:text-gray-400">
           Test and explore the GraphQL API for GPT Agent Platform
         </p>
       </div>
@@ -225,69 +223,69 @@ query GetAnalytics {
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="grid grid-cols-1 gap-2">
-                <Button
+                <KwidButton
                   variant="outline"
                   size="sm"
                   onClick={() => loadSampleQuery('profile')}
-                  className="justify-start"
+                  className="justify-start gap-2"
                 >
-                  <FileText className="w-4 h-4 mr-2" />
+                  <FileText className="w-4 h-4" />
                   My Profile
-                </Button>
-                <Button
+                </KwidButton>
+                <KwidButton
                   variant="outline"
                   size="sm"
                   onClick={() => loadSampleQuery('agents')}
-                  className="justify-start"
+                  className="justify-start gap-2"
                 >
-                  <Code className="w-4 h-4 mr-2" />
+                  <Code className="w-4 h-4" />
                   Agents
-                </Button>
-                <Button
+                </KwidButton>
+                <KwidButton
                   variant="outline"
                   size="sm"
                   onClick={() => loadSampleQuery('knowledge')}
-                  className="justify-start"
+                  className="justify-start gap-2"
                 >
-                  <FileText className="w-4 h-4 mr-2" />
+                  <FileText className="w-4 h-4" />
                   Knowledge Base
-                </Button>
-                <Button
+                </KwidButton>
+                <KwidButton
                   variant="outline"
                   size="sm"
                   onClick={() => loadSampleQuery('jobs')}
-                  className="justify-start"
+                  className="justify-start gap-2"
                 >
-                  <Code className="w-4 h-4 mr-2" />
+                  <Code className="w-4 h-4" />
                   Background Jobs
-                </Button>
-                <Button
+                </KwidButton>
+                <KwidButton
                   variant="outline"
                   size="sm"
                   onClick={() => loadSampleQuery('analytics')}
-                  className="justify-start"
+                  className="justify-start gap-2"
                 >
-                  <Code className="w-4 h-4 mr-2" />
+                  <Code className="w-4 h-4" />
                   Analytics
-                </Button>
+                </KwidButton>
                 <div className="border-t pt-2 mt-2">
-                  <p className="text-xs font-medium text-muted-foreground mb-2">Mutations:</p>
-                  <Button
+                  <p className="text-xs font-medium text-muted-foreground mb-2 dark:text-gray-400">Mutations:</p>
+                  <KwidButton
                     variant="outline"
                     size="sm"
                     onClick={() => loadSampleQuery('createAgent')}
                     className="justify-start w-full"
                   >
                     Create Agent
-                  </Button>
-                  <Button
+                  </KwidButton>
+                  <KwidButton
                     variant="outline"
                     size="sm"
                     onClick={() => loadSampleQuery('createArticle')}
                     className="justify-start w-full mt-1"
                   >
                     Create Article
-                  </Button>
+                  </KwidButton>
                 </div>
               </div>
             </CardContent>
@@ -296,30 +294,28 @@ query GetAnalytics {
 
         {/* Main Query Interface */}
         <div className="lg:col-span-3 space-y-6">
-          <Tabs defaultValue="query" className="w-full">
-            <TabsList>
-              <TabsTrigger value="query">Query</TabsTrigger>
-              <TabsTrigger value="variables">Variables</TabsTrigger>
-              <TabsTrigger value="result">Result</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="query" className="space-y-4">
+          <KwidTabs defaultValue="query" className="w-full" tabs={[
+            { value: 'query', label: 'Query' },
+            { value: 'variables', label: 'Variables' },
+            { value: 'result', label: 'Result' },
+          ]}>
+            <KwidTabsContent value="query" className="space-y-4">
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle>GraphQL Query</CardTitle>
-                    <Button onClick={executeQuery} disabled={loading}>
+                    <KwidButton onClick={executeQuery} disabled={loading} variant="primary" className="gap-2">
                       {loading ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
-                        <Play className="w-4 h-4 mr-2" />
+                        <Play className="w-4 h-4" />
                       )}
                       Execute
-                    </Button>
+                    </KwidButton>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Textarea
+                  <KwidTextarea
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Enter your GraphQL query here..."
@@ -327,15 +323,15 @@ query GetAnalytics {
                   />
                 </CardContent>
               </Card>
-            </TabsContent>
+            </KwidTabsContent>
 
-            <TabsContent value="variables" className="space-y-4">
+            <KwidTabsContent value="variables" className="space-y-4">
               <Card>
                 <CardHeader>
                   <CardTitle>Query Variables (JSON)</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Textarea
+                  <KwidTextarea
                     value={variables}
                     onChange={(e) => setVariables(e.target.value)}
                     placeholder='{}'
@@ -343,9 +339,9 @@ query GetAnalytics {
                   />
                 </CardContent>
               </Card>
-            </TabsContent>
+            </KwidTabsContent>
 
-            <TabsContent value="result" className="space-y-4">
+            <KwidTabsContent value="result" className="space-y-4">
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -371,21 +367,21 @@ query GetAnalytics {
                     </div>
                   )}
                   {result && (
-                    <Textarea
+                    <KwidTextarea
                       value={result}
                       readOnly
                       className="min-h-[300px] font-mono text-sm bg-green-50 dark:bg-green-900/20"
                     />
                   )}
                   {!result && !error && (
-                    <div className="text-center text-muted-foreground py-8">
+                    <div className="text-center text-muted-foreground py-8 dark:text-gray-400">
                       Execute a query to see results here
                     </div>
                   )}
                 </CardContent>
               </Card>
-            </TabsContent>
-          </Tabs>
+            </KwidTabsContent>
+          </KwidTabs>
 
           {/* API Documentation */}
           <Card>

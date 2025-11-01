@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTenantId } from '@/hooks/useTenantId'
 import {
   ArrowLeft,
   BookOpen,
@@ -28,13 +29,7 @@ import { KnowledgeBaseSettings } from '@/components/crm/KnowledgeBaseSettings'
 import { ChannelsSettings } from '@/components/crm/ChannelsSettings'
 import { InteractionSettings } from '@/components/crm/InteractionSettings'
 import { AgentSequencesManager } from './AgentSequencesManager'
-import { Button } from '@/components/ui/Button'
-import { Card, CardContent } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
-import { Textarea } from '@/components/ui/Textarea'
-import { Toggle } from '@/components/ui/Toggle'
+import { KwidButton, KwidInput, KwidSelect, KwidTextarea, KwidSwitch, KwidTabs, KwidTabsContent, KwidSection } from '@/components/kwid'
 
 import type { Agent } from '@/types'
 import type { AgentChannel } from '@/lib/repositories/agent-sequences'
@@ -42,6 +37,7 @@ import type { AgentChannel } from '@/lib/repositories/agent-sequences'
 interface AgentEditFormProps {
   agentId: string
   initialAgent?: Agent | null
+  tenantId?: string
 }
 
 interface SummaryCardProps {
@@ -51,10 +47,10 @@ interface SummaryCardProps {
 }
 
 const SummaryCard = ({ icon: Icon, title, description }: SummaryCardProps) => (
-  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-    <Icon className="mb-2 h-5 w-5 text-primary-600" />
-    <h3 className="mb-1 text-sm font-semibold text-slate-900">{title}</h3>
-    <p className="text-xs text-slate-600">{description}</p>
+  <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800">
+    <Icon className="mb-2 h-5 w-5 text-custom-600 dark:text-custom-400" />
+    <h3 className="mb-1 text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
+    <p className="text-xs text-gray-600 dark:text-gray-400">{description}</p>
   </div>
 )
 
@@ -175,9 +171,29 @@ const deriveFormState = (agent?: Agent | null): AgentFormState => {
   }
 }
 
-export const AgentEditForm = ({ agentId, initialAgent }: AgentEditFormProps) => {
+export const AgentEditForm = ({ agentId, initialAgent, tenantId }: AgentEditFormProps) => {
   const router = useRouter()
+  const activeTenantId = useTenantId() || tenantId
   const isNew = agentId === 'new'
+  
+  // Функция для построения пути с tenant-id
+  const getPath = (path: string) => {
+    if (activeTenantId) {
+      const cleanPath = path.startsWith('/') ? path.slice(1) : path
+      const mapping: Record<string, string> = {
+        'agents': 'ai-agents',
+        'agents/[id]': 'ai-agents/[id]',
+        'agents/[id]/edit': 'ai-agents/[id]/edit',
+        'agents/[id]/training': 'ai-agents/[id]/training',
+        'agents/[id]/pipelines': 'ai-agents/[id]/pipelines',
+        'knowledge-base': 'knowledge-categories',
+      }
+      const mappedPath = mapping[cleanPath] || cleanPath
+      const finalPath = mappedPath.replace('[id]', agentId)
+      return `/manage/${activeTenantId}/${finalPath}`
+    }
+    return path.replace('[id]', agentId)
+  }
 
   const initialFormState = useMemo(() => deriveFormState(initialAgent), [initialAgent])
 
@@ -450,7 +466,10 @@ const handleChannelSync = useCallback(async () => {
       }
 
       if (isNew) {
-        router.push(`/agents/${result.data.id}`)
+        const redirectPath = activeTenantId 
+          ? `/manage/${activeTenantId}/ai-agents/${result.data.id}/edit`
+          : `/agents/${result.data.id}/edit`
+        router.push(redirectPath)
       } else {
         setAgent(result.data)
         const nextForm = deriveFormState(result.data)
@@ -477,7 +496,10 @@ const handleChannelSync = useCallback(async () => {
 
   const handleDelete = async () => {
     if (isNew) {
-      router.push('/agents')
+      const redirectPath = activeTenantId 
+        ? `/manage/${activeTenantId}/ai-agents`
+        : '/agents'
+      router.push(redirectPath)
       return
     }
 
@@ -494,7 +516,10 @@ const handleChannelSync = useCallback(async () => {
         throw new Error('Не удалось удалить агента')
       }
 
-      router.push('/agents')
+      const redirectPath = activeTenantId 
+        ? `/manage/${activeTenantId}/ai-agents`
+        : '/agents'
+      router.push(redirectPath)
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
         console.error('Failed to delete agent', error)
@@ -507,59 +532,71 @@ const handleChannelSync = useCallback(async () => {
 
   return (
     <div className="space-y-8">
-      <Card className="border-none bg-white shadow-sm">
-        <CardContent className="space-y-6 p-6">
+      <KwidSection
+        title={isNew ? 'Создание агента' : `Редактирование ${agentTitle}`}
+      >
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-4">
               <button
                 type="button"
-                onClick={() => router.push('/agents')}
-                className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-primary-600"
+                onClick={() => {
+                  const redirectPath = activeTenantId 
+                    ? `/manage/${activeTenantId}/ai-agents`
+                    : '/agents'
+                  router.push(redirectPath)
+                }}
+                className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 transition-colors hover:text-custom-600 dark:text-gray-400 dark:hover:text-custom-400"
               >
                 <ArrowLeft className="h-4 w-4" /> Назад к списку
               </button>
 
               <div className="space-y-2">
-                <nav className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide text-slate-400">
-                  <Link href="/agents" className="font-semibold text-primary-600 hover:underline">
+                <nav className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                  <Link href={activeTenantId ? `/manage/${activeTenantId}/ai-agents` : '/agents'} className="font-semibold text-custom-600 hover:underline dark:text-custom-400">
                     Агенты ИИ
                   </Link>
                   <span>/</span>
-                  <span className="font-semibold text-slate-500">{agentTitle}</span>
+                  <span className="font-semibold text-gray-500 dark:text-gray-400">{agentTitle}</span>
                 </nav>
-                <h1 className="text-3xl font-semibold text-slate-900">
+                <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
                   {isNew ? 'Создание агента' : `Редактирование ${agentTitle}`}
                 </h1>
-                <p className="max-w-2xl text-sm text-slate-500">
+                <p className="max-w-2xl text-sm text-gray-500 dark:text-gray-400">
                   Управляйте настройками, сценариями и интеграциями, чтобы агент работал в соответствии с вашими
                   бизнес-процессами.
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                <Toggle
-                  checked={formData.status === 'active'}
-                  onChange={(checked) => setFormData((prev) => ({ ...prev, status: checked ? 'active' : 'inactive' }))}
-                  label="Статус"
-                  description={formData.status === 'active' ? 'Агент отвечает пользователям' : 'Ответы временно отключены'}
-                />
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Статус</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {formData.status === 'active' ? 'Агент отвечает пользователям' : 'Ответы временно отключены'}
+                    </p>
+                  </div>
+                  <KwidSwitch
+                    checked={formData.status === 'active'}
+                    onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, status: checked ? 'active' : 'inactive' }))}
+                  />
+                </div>
               </div>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
               {!isNew && (
-                <Button
+                <KwidButton
                   type="button"
-                  variant="destructive"
-                  className="border-rose-200 text-rose-600 hover:bg-rose-50"
+                  variant="danger"
+                  size="md"
                   onClick={handleDelete}
                 >
                   <Trash2 className="mr-2 h-4 w-4" /> Удалить
-                </Button>
+                </KwidButton>
               )}
-              <Button type="button" onClick={handleSave} disabled={isSaving}>
+              <KwidButton type="button" onClick={handleSave} disabled={isSaving} variant="primary" size="md">
                 <Save className="mr-2 h-4 w-4" /> {isSaving ? 'Сохранение…' : 'Сохранить изменения'}
-              </Button>
+              </KwidButton>
             </div>
           </div>
 
@@ -580,71 +617,43 @@ const handleChannelSync = useCallback(async () => {
               description="Подключите статьи и категории базы знаний, чтобы ответы были точными и компетентными."
             />
           </div>
-        </CardContent>
-      </Card>
+      </KwidSection>
 
       {!isNew && <CalloutPipelines agentId={agentId} />}
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="w-full justify-start overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
-          <TabsTrigger value="basic" className="flex-1 rounded-xl px-4 py-2 text-sm">
-            <Settings className="mr-2 h-4 w-4" />
-            Основные
-          </TabsTrigger>
-          <TabsTrigger value="instructions" className="flex-1 rounded-xl px-4 py-2 text-sm">
-            <FileText className="mr-2 h-4 w-4" />
-            Инструкции
-          </TabsTrigger>
-          <TabsTrigger value="crm" className="flex-1 rounded-xl px-4 py-2 text-sm">
-            <Users className="mr-2 h-4 w-4" />
-            Сделки и контакты
-          </TabsTrigger>
-          <TabsTrigger value="triggers" className="flex-1 rounded-xl px-4 py-2 text-sm">
-            <Zap className="mr-2 h-4 w-4" />
-            Триггеры
-          </TabsTrigger>
-          <TabsTrigger value="chains" className="flex-1 rounded-xl px-4 py-2 text-sm">
-            <Clock className="mr-2 h-4 w-4" />
-            Цепочки
-          </TabsTrigger>
-          <TabsTrigger value="integrations" className="flex-1 rounded-xl px-4 py-2 text-sm">
-            <Plug className="mr-2 h-4 w-4" />
-            Интеграции
-          </TabsTrigger>
-          <TabsTrigger value="training" className="flex-1 rounded-xl px-4 py-2 text-sm">
-            <BookOpen className="mr-2 h-4 w-4" />
-            Обучение
-          </TabsTrigger>
-          <TabsTrigger value="advanced" className="flex-1 rounded-xl px-4 py-2 text-sm">
-            <Settings2 className="mr-2 h-4 w-4" />
-            Дополнительно
-          </TabsTrigger>
-        </TabsList>
+      <KwidTabs value={activeTab} onValueChange={setActiveTab} className="space-y-6" tabs={[
+        { value: 'basic', label: 'Основные', icon: Settings },
+        { value: 'instructions', label: 'Инструкции', icon: FileText },
+        { value: 'crm', label: 'Сделки и контакты', icon: Users },
+        { value: 'triggers', label: 'Триггеры', icon: Zap },
+        { value: 'chains', label: 'Цепочки', icon: Clock },
+        { value: 'integrations', label: 'Интеграции', icon: Plug },
+        { value: 'training', label: 'Обучение', icon: BookOpen },
+        { value: 'advanced', label: 'Дополнительно', icon: Settings2 },
+      ]}>
 
-        <TabsContent value="basic" className="space-y-6">
-          <Card className="shadow-sm">
-            <CardContent className="space-y-6 p-6">
+        <KwidTabsContent value="basic" className="space-y-6">
+          <div className="fi-fo-component-ctn">
+            <KwidSection title="Основные настройки">
               <div className="grid gap-4 lg:grid-cols-[1fr,280px]">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-600">Название агента*</label>
-                    <Input
+                  <div className="space-y-4">
+                    <KwidInput
+                      label="Название агента*"
                       value={formData.name}
                       onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                       placeholder="Например: Консультант по продажам"
                       required
                     />
-                  </div>
 
-                  <Textarea
-                    label="Инструкции для агента*"
-                    placeholder="Опишите роль, допускаемые и запрещенные действия"
+                    <KwidTextarea
+                      label="Инструкции для агента*"
+                      placeholder="Опишите роль, допускаемые и запрещенные действия"
                     rows={6}
                     value={formData.instructions}
                     onChange={(e) => setFormData((prev) => ({ ...prev, instructions: e.target.value }))}
                   />
 
-                  <Textarea
+                  <KwidTextarea
                     label="Приветственное сообщение"
                     placeholder="Сообщение, которое увидит пользователь при первом обращении"
                     rows={4}
@@ -653,8 +662,8 @@ const handleChannelSync = useCallback(async () => {
                   />
                 </div>
 
-                <div className="space-y-4 rounded-2xl bg-slate-50 p-4">
-                  <Select
+                <div className="space-y-4 rounded-xl bg-gray-50 p-4 dark:bg-gray-800">
+                  <KwidSelect
                     label="Модель ИИ"
                     value={formData.model}
                     onChange={(value: string) => setFormData((prev) => ({ ...prev, model: value }))}
@@ -671,7 +680,7 @@ const handleChannelSync = useCallback(async () => {
                     ]}
                     placeholder="Выберите модель ИИ"
                   />
-                  <Select
+                  <KwidSelect
                     label="Рабочий язык"
                     value={formData.language}
                     onChange={(value: string) => setFormData((prev) => ({ ...prev, language: value }))}
@@ -682,7 +691,7 @@ const handleChannelSync = useCallback(async () => {
                     ]}
                     placeholder="Выберите язык"
                   />
-                  <Textarea
+                  <KwidTextarea
                     label="Описание"
                     placeholder="Опишите назначение агента"
                     rows={3}
@@ -691,15 +700,15 @@ const handleChannelSync = useCallback(async () => {
                   />
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+          </KwidSection>
+          </div>
+        </KwidTabsContent>
 
-        <TabsContent value="instructions" className="space-y-6">
-          <Card className="shadow-sm">
-            <CardContent className="space-y-6 p-6">
+        <KwidTabsContent value="instructions" className="space-y-6">
+          <div className="fi-fo-component-ctn">
+            <KwidSection title="Инструкции и стратегия">
               <div className="grid gap-6 lg:grid-cols-2">
-                <Textarea
+                <KwidTextarea
                   label="Стратегия общения"
                   placeholder="Опишите ключевые принципы общения с клиентом"
                   rows={8}
@@ -707,7 +716,7 @@ const handleChannelSync = useCallback(async () => {
 2. Предлагай подходящий продукт.
 3. Всегда подтверждай следующий шаг."
                 />
-                <Textarea
+                <KwidTextarea
                   label="Запрещено"
                   placeholder="Что агент не должен делать"
                   rows={8}
@@ -717,10 +726,10 @@ const handleChannelSync = useCallback(async () => {
                 />
               </div>
 
-              <Select
+              <KwidSelect
                 label="Методология диалога"
-                defaultValue="spin"
-                onChange={(value: string) => setFormData((prev) => ({ ...prev, methodology: value }))}
+                value={(formData as any).methodology || 'spin'}
+                onChange={(value: string) => setFormData((prev) => ({ ...prev, methodology: value } as any))}
                 options={[
                   { value: 'spin', label: 'SPIN (ситуация, проблема, импликация, решение)' },
                   { value: 'bant', label: 'BANT (Budget, Authority, Need, Timeline)' },
@@ -729,19 +738,19 @@ const handleChannelSync = useCallback(async () => {
                 placeholder="Выберите методологию"
               />
 
-              <Textarea
+              <KwidTextarea
                 label="Завершение диалога"
                 placeholder="Опишите, как агент завершает разговор"
                 rows={5}
                 defaultValue="Подведи итоги, подтвердив договоренности, и предложи клиенту следующий шаг: консультация, звонок или заполнение формы."
               />
-            </CardContent>
-          </Card>
-        </TabsContent>
+          </KwidSection>
+          </div>
+        </KwidTabsContent>
 
-        <TabsContent value="crm" className="space-y-6">
-          <Card className="shadow-sm">
-            <CardContent className="space-y-6 p-6">
+        <KwidTabsContent value="crm" className="space-y-6">
+          <div className="fi-fo-component-ctn">
+            <KwidSection title="Сделки и контакты">
               <InteractionSettings 
                 checkBeforeSending={formData.checkBeforeSending}
                 onCheckBeforeSendingToggle={(enabled: boolean) => 
@@ -749,17 +758,18 @@ const handleChannelSync = useCallback(async () => {
                 }
               />
 
-              <Select
+              <KwidSelect
                 label="Рабочая воронка"
                 options={[
                   { value: 'generation', label: 'Generation Lead' },
                   { value: 'sales', label: 'Sales Pipeline' },
                   { value: 'support', label: 'Customer Support' },
                 ]}
-                defaultValue="generation"
+                value={(formData as any).pipeline || 'generation'}
+                onChange={(value: string) => setFormData((prev) => ({ ...prev, pipeline: value } as any))}
               />
 
-              <Textarea
+              <KwidTextarea
                 label="Инструкции по работе со стадией сделки"
                 placeholder="Опишите, как агент работает с каждой стадией"
                 rows={6}
@@ -774,39 +784,38 @@ const handleChannelSync = useCallback(async () => {
                 )}
               </div>
 
-              <div className="rounded-2xl border border-dashed border-slate-200 p-4">
-                <h3 className="text-sm font-semibold text-slate-900">Доступные данные сделки</h3>
-                <p className="mt-1 text-sm text-slate-500">
+              <div className="rounded-xl border border-dashed border-gray-300 p-4 dark:border-gray-700">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Доступные данные сделки</h3>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                   Агент сможет читать только выбранные поля. Это помогает исключить лишние личные данные и делает ответы
                   более точными.
                 </p>
-                <div className="mt-3 flex flex-wrap gap-2 text-xs font-medium text-slate-600">
+                <div className="mt-3 flex flex-wrap gap-2 text-xs font-medium text-gray-600 dark:text-gray-400">
                   {['Название сделки', 'Ответственный', 'Тип услуги', 'Этап', 'Email клиента'].map((item) => (
-                    <span key={item} className="rounded-full bg-slate-100 px-3 py-1">
+                    <span key={item} className="rounded-full bg-gray-100 px-3 py-1 dark:bg-gray-800">
                       {item}
                     </span>
                   ))}
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+          </KwidSection>
+          </div>
+        </KwidTabsContent>
 
-        <TabsContent value="triggers">
+        <KwidTabsContent value="triggers">
           <TriggerManager agentId={agentId} />
-        </TabsContent>
+        </KwidTabsContent>
 
-        <TabsContent value="chains" className="space-y-6">
+        <KwidTabsContent value="chains" className="space-y-6">
           <AgentSequencesManager agentId={agentId} />
-        </TabsContent>
+        </KwidTabsContent>
 
-        <TabsContent value="integrations">
-          <Card className="shadow-sm">
-            <CardContent className="space-y-6 p-6">
-              <h3 className="text-lg font-semibold text-slate-900">Каналы коммуникаций</h3>
-              <p className="text-sm text-slate-500">
-                Управляйте подключенными каналами, где агент общается с клиентами.
-              </p>
+        <KwidTabsContent value="integrations">
+          <KwidSection
+            title="Каналы коммуникаций"
+            description="Управляйте подключенными каналами, где агент общается с клиентами."
+          >
+            <div className="space-y-4">
               <ChannelsSettings
                 channels={channels}
                 allChannelsEnabled={allChannelsEnabled}
@@ -816,41 +825,37 @@ const handleChannelSync = useCallback(async () => {
                 isSyncing={channelsLoading}
                 disabled={isNew}
               />
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
+          </KwidSection>
+        </KwidTabsContent>
 
-        <TabsContent value="training" className="space-y-6">
-          <Card className="shadow-sm">
-            <CardContent className="p-6">
-              <div className="space-y-4 text-center">
-                <BookOpen className="mx-auto h-16 w-16 text-primary-500" />
-                <h3 className="text-xl font-semibold text-slate-900">Обучение агента</h3>
-                <p className="text-sm text-slate-600">
-                  Обучите агента всей информацией о компании: продукты, услуги, процессы, скрипты продаж
-                </p>
-                <p className="text-sm text-slate-500">
-                  Загрузите файлы, добавьте структурированные знания и скрипты для полного цикла продаж от 0 до 100%
-                </p>
-                <Link href={`/agents/${agentId}/training`}>
-                  <Button className="mt-4 gap-2">
-                    <BookOpen className="h-4 w-4" />
-                    Перейти к обучению
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        <KwidTabsContent value="training" className="space-y-6">
+          <KwidSection
+            title="Обучение агента"
+            description="Обучите агента всей информацией о компании: продукты, услуги, процессы, скрипты продаж"
+          >
+            <div className="space-y-4 text-center">
+              <BookOpen className="mx-auto h-16 w-16 text-custom-500 dark:text-custom-400" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Загрузите файлы, добавьте структурированные знания и скрипты для полного цикла продаж от 0 до 100%
+              </p>
+              <Link href={activeTenantId ? `/manage/${activeTenantId}/ai-agents/${agentId}/training` : `/agents/${agentId}/training`}>
+                <KwidButton className="mt-4 gap-2" variant="primary" size="md">
+                  <BookOpen className="h-4 w-4" />
+                  Перейти к обучению
+                </KwidButton>
+              </Link>
+            </div>
+          </KwidSection>
+        </KwidTabsContent>
 
-        <TabsContent value="advanced">
-          <Card className="shadow-sm">
-            <CardContent className="space-y-6 p-6">
-              <h3 className="text-lg font-semibold text-slate-900">Расширенные настройки</h3>
+        <KwidTabsContent value="advanced">
+          <div className="fi-fo-component-ctn">
+            <KwidSection title="Расширенные настройки">
 
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-3">
-                  <label className="block text-sm font-medium text-slate-700">Температура (creativity)</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Температура (creativity)</label>
                   <input
                     type="range"
                     min="0"
@@ -862,12 +867,12 @@ const handleChannelSync = useCallback(async () => {
                     }
                     className="w-full"
                   />
-                  <div className="flex items-center justify-between text-xs text-slate-500">
-                    <span className="text-slate-400">Точный (0)</span>
-                    <span className="font-medium text-slate-600">{formData.temperature.toFixed(2)}</span>
-                    <span className="text-slate-400">Креативный (2)</span>
+                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <span className="text-gray-400 dark:text-gray-500">Точный (0)</span>
+                    <span className="font-medium text-gray-600 dark:text-gray-300">{formData.temperature.toFixed(2)}</span>
+                    <span className="text-gray-400 dark:text-gray-500">Креативный (2)</span>
                   </div>
-                  <Input
+                  <KwidInput
                     type="number"
                     step={0.1}
                     min={0}
@@ -884,8 +889,8 @@ const handleChannelSync = useCallback(async () => {
                 </div>
 
                 <div className="space-y-3">
-                  <label className="block text-sm font-medium text-slate-700">Задержка ответа (секунды)</label>
-                  <Input
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Задержка ответа (секунды)</label>
+                  <KwidInput
                     type="number"
                     min={0}
                     max={86400}
@@ -898,8 +903,8 @@ const handleChannelSync = useCallback(async () => {
                     }
                   />
 
-                  <label className="block text-sm font-medium text-slate-700">Максимальная длина ответа (токены)</label>
-                  <Input
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Максимальная длина ответа (токены)</label>
+                  <KwidInput
                     type="number"
                     min={128}
                     max={8000}
@@ -916,8 +921,8 @@ const handleChannelSync = useCallback(async () => {
 
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-slate-700">Presence Penalty</label>
-                  <Input
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Presence Penalty</label>
+                  <KwidInput
                     type="number"
                     step={0.1}
                     min={-2}
@@ -930,12 +935,12 @@ const handleChannelSync = useCallback(async () => {
                       }))
                     }
                   />
-                  <p className="text-xs text-slate-500">Повышайте значение, чтобы модель реже повторялась и исследовала новые темы.</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Повышайте значение, чтобы модель реже повторялась и исследовала новые темы.</p>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-slate-700">Frequency Penalty</label>
-                  <Input
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Frequency Penalty</label>
+                  <KwidInput
                     type="number"
                     step={0.1}
                     min={-2}
@@ -948,7 +953,7 @@ const handleChannelSync = useCallback(async () => {
                       }))
                     }
                   />
-                  <p className="text-xs text-slate-500">Контролируйте повторяемость слов в ответах агента.</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Контролируйте повторяемость слов в ответах агента.</p>
                 </div>
               </div>
 
@@ -965,13 +970,18 @@ const handleChannelSync = useCallback(async () => {
                 onMessageChange={(message) =>
                   setFormData((prev) => ({ ...prev, notFoundMessage: message }))
                 }
-                onOpenKnowledgeBase={() => router.push('/knowledge-base')}
+                onOpenKnowledgeBase={() => {
+                  const redirectPath = activeTenantId 
+                    ? `/manage/${activeTenantId}/knowledge-categories`
+                    : '/knowledge-base'
+                  router.push(redirectPath)
+                }}
                 disabled={isNew}
               />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          </KwidSection>
+          </div>
+        </KwidTabsContent>
+      </KwidTabs>
     </div>
   )
 }

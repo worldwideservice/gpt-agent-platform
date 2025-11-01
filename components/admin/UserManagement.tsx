@@ -2,17 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/shadcn/card'
-import { Button } from '@/components/ui/shadcn/button'
+import { KwidButton, KwidInput, KwidSelect } from '@/components/kwid'
 import { Badge } from '@/components/ui/shadcn/badge'
-import { Input } from '@/components/ui/shadcn/input'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/shadcn/select'
 import {
   Table,
   TableBody,
@@ -155,10 +147,10 @@ export const UserManagement = () => {
             Просмотр и управление пользователями платформы
           </p>
         </div>
-        <Button onClick={fetchUsers} variant="outline" size="sm">
-          <Users className="h-4 w-4 mr-2" />
+        <KwidButton onClick={fetchUsers} variant="outline" size="sm" className="gap-2">
+          <Users className="h-4 w-4" />
           Обновить
-        </Button>
+        </KwidButton>
       </div>
 
       {/* Filters */}
@@ -168,8 +160,8 @@ export const UserManagement = () => {
             <div className="flex-1">
               <Label htmlFor="search">Поиск пользователей</Label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground dark:text-gray-500" />
+                <KwidInput
                   id="search"
                   placeholder="Email или имя..."
                   value={searchTerm}
@@ -179,18 +171,17 @@ export const UserManagement = () => {
               </div>
             </div>
             <div className="w-48">
-              <Label htmlFor="tier-filter">Тариф</Label>
-              <Select value={tierFilter} onValueChange={setTierFilter}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Все тарифы" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Все тарифы</SelectItem>
-                  <SelectItem value="free">Бесплатный</SelectItem>
-                  <SelectItem value="premium">Премиум</SelectItem>
-                  <SelectItem value="vip">VIP</SelectItem>
-                </SelectContent>
-              </Select>
+              <KwidSelect
+                label="Тариф"
+                value={tierFilter}
+                onChange={(value: string) => setTierFilter(value)}
+                options={[
+                  { value: 'all', label: 'Все тарифы' },
+                  { value: 'free', label: 'Бесплатный' },
+                  { value: 'premium', label: 'Премиум' },
+                  { value: 'vip', label: 'VIP' },
+                ]}
+              />
             </div>
           </div>
         </CardContent>
@@ -261,9 +252,9 @@ export const UserManagement = () => {
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
+                        <KwidButton variant="outline" size="sm">
                           <MoreHorizontal className="h-4 w-4" />
-                        </Button>
+                        </KwidButton>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => setSelectedUser(user)}>
@@ -310,33 +301,27 @@ export const UserManagement = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <div>
-                <Label htmlFor="user-tier">Тариф</Label>
-                <Select
-                  value={selectedUser.tier}
-                  onValueChange={(value) => setSelectedUser({...selectedUser, tier: value as any})}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="free">Бесплатный</SelectItem>
-                    <SelectItem value="premium">Премиум</SelectItem>
-                    <SelectItem value="vip">VIP</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <KwidSelect
+                label="Тариф"
+                value={selectedUser.tier}
+                onChange={(value: string) => setSelectedUser({...selectedUser, tier: value as any})}
+                options={[
+                  { value: 'free', label: 'Бесплатный' },
+                  { value: 'premium', label: 'Премиум' },
+                  { value: 'vip', label: 'VIP' },
+                ]}
+              />
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              <KwidButton variant="outline" onClick={() => setShowEditDialog(false)}>
                 Отмена
-              </Button>
-              <Button onClick={() => {
+              </KwidButton>
+              <KwidButton variant="primary" onClick={() => {
                 handleUpdateUserTier(selectedUser.id, selectedUser.tier)
                 setShowEditDialog(false)
               }}>
                 Сохранить
-              </Button>
+              </KwidButton>
             </DialogFooter>
           </DialogContent>
         </Dialog>

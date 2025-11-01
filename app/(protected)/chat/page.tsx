@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Bot, Loader2, MessageSquarePlus, Send, User } from 'lucide-react'
 
-import { Button } from '@/components/ui/Button'
-import { Select } from '@/components/ui/Select'
+import { KwidButton, KwidSelect, KwidTextarea } from '@/components/kwid'
 
 interface Conversation {
   id: string
@@ -281,24 +280,24 @@ const ChatPage = () => {
   return (
     <div className="grid gap-6 lg:grid-cols-[360px_1fr] xl:grid-cols-[400px_1fr]">
       {/* Боковая панель с диалогами */}
-      <aside className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-slate-900">Чаты</h2>
-          <Button variant="outline" className="gap-2 text-sm" onClick={handleNewChat}>
+      <aside className="rounded-xl border border-gray-200 bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Чаты</h2>
+          <KwidButton variant="outline" size="sm" className="gap-2" onClick={handleNewChat}>
             <MessageSquarePlus className="h-4 w-4" /> Новый чат
-          </Button>
+          </KwidButton>
         </div>
         <div className="max-h-[calc(100vh-280px)] overflow-y-auto px-4 py-3">
           {isLoading && conversations.length === 0 ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+              <Loader2 className="h-5 w-5 animate-spin text-gray-400 dark:text-gray-500" />
             </div>
           ) : error && conversations.length === 0 ? (
-            <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
               {error}
             </div>
           ) : conversations.length === 0 ? (
-            <div className="py-8 text-center text-sm text-slate-500">Нет диалогов</div>
+            <div className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">Нет диалогов</div>
           ) : (
             <div className="space-y-2">
               {conversations.map((conversation) => {
@@ -311,12 +310,12 @@ const ChatPage = () => {
                     onClick={() => handleOpenConversation(conversation.id)}
                     className={`w-full rounded-xl border px-4 py-3 text-left text-sm transition-colors ${
                       isActive
-                        ? 'border-primary-200 bg-primary-50 text-primary-700'
-                        : 'border-transparent bg-slate-50 hover:bg-slate-100'
+                        ? 'border-custom-200 bg-custom-50 text-custom-700 dark:border-custom-800 dark:bg-custom-900/20 dark:text-custom-400'
+                        : 'border-transparent bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700'
                     }`}
                   >
                     <p className="font-medium">{conversation.title ?? 'Без названия'}</p>
-                    <p className="mt-2 text-[11px] uppercase tracking-wide text-slate-400">
+                    <p className="mt-2 text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">
                       {formatTime(conversation.updatedAt)}
                     </p>
                   </button>
@@ -328,24 +327,24 @@ const ChatPage = () => {
       </aside>
 
       {/* Основная область чата */}
-      <section className="flex h-[calc(100vh-224px)] flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <header className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+      <section className="flex h-[calc(100vh-224px)] flex-col rounded-xl border border-gray-200 bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+        <header className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-800">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
               <Bot className="h-5 w-5" />
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-slate-900">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 {selectedConversationTitle ?? 'Новый чат'}
               </p>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 Выберите агента и протестируйте поведение в реальном времени
               </p>
             </div>
           </div>
           {agentOptions.length > 0 && (
             <div className="w-64">
-              <Select
+              <KwidSelect
                 label="Выберите агента ИИ"
                 value={selectedAgentId}
                 onChange={(value: string) => setSelectedAgentId(value)}
@@ -358,20 +357,20 @@ const ChatPage = () => {
         <div className="flex flex-1 flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto px-6 py-6">
             {error && (
-              <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+              <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
                 {error}
               </div>
             )}
 
             {isLoading && messages.length === 0 ? (
-              <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-slate-400">
-                <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
-                <p className="text-sm font-medium text-slate-500">Загрузка...</p>
+              <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-gray-400 dark:text-gray-500">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <p className="text-sm font-medium">Загрузка...</p>
               </div>
             ) : messages.length === 0 ? (
-              <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-slate-400">
-                <div className="h-16 w-16 rounded-full bg-slate-100" />
-                <p className="text-sm font-medium text-slate-500">
+              <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-gray-400 dark:text-gray-500">
+                <div className="h-16 w-16 rounded-full bg-gray-100 dark:bg-gray-800" />
+                <p className="text-sm font-medium">
                   Выберите чат или начните новый
                 </p>
               </div>
@@ -387,8 +386,8 @@ const ChatPage = () => {
                     <div
                       className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
                         message.role === 'assistant'
-                          ? 'bg-primary-100 text-primary-600'
-                          : 'bg-slate-100 text-slate-500'
+                          ? 'bg-custom-100 text-custom-600 dark:bg-custom-900/20 dark:text-custom-400'
+                          : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
                       }`}
                     >
                       {message.role === 'assistant' ? (
@@ -398,22 +397,24 @@ const ChatPage = () => {
                       )}
                     </div>
                     <div
-                      className={`max-w-xl rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 ${
-                        message.role === 'user' ? 'bg-primary-50 border-primary-200' : ''
+                      className={`max-w-xl rounded-xl border px-4 py-3 text-sm ${
+                        message.role === 'user'
+                          ? 'bg-custom-50 border-custom-200 text-custom-700 dark:bg-custom-900/20 dark:border-custom-800 dark:text-custom-400'
+                          : 'border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-300'
                       }`}
                     >
                       <p className="whitespace-pre-wrap">{message.content}</p>
-                      <p className="mt-2 text-xs text-slate-400">{formatTime(message.createdAt)}</p>
+                      <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">{formatTime(message.createdAt)}</p>
                     </div>
                   </div>
                 ))}
                 {isSending && (
                   <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-custom-100 text-custom-600 dark:bg-custom-900/20 dark:text-custom-400">
                       <Bot className="h-5 w-5" />
                     </div>
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                      <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-800">
+                      <Loader2 className="h-4 w-4 animate-spin text-gray-400 dark:text-gray-500" />
                     </div>
                   </div>
                 )}
@@ -421,10 +422,10 @@ const ChatPage = () => {
             )}
           </div>
 
-          <footer className="border-t border-slate-200 px-6 py-4">
+          <footer className="border-t border-gray-200 px-6 py-4 dark:border-gray-800">
             <div className="flex items-center gap-3">
               {agentOptions.length > 0 && (
-                <Select
+                <KwidSelect
                   label=" "
                   aria-label="Выберите агента"
                   className="w-60"
@@ -433,7 +434,7 @@ const ChatPage = () => {
                   options={agentOptions}
                 />
               )}
-              <textarea
+              <KwidTextarea
                 value={messageValue}
                 onChange={(event) => setMessageValue(event.target.value)}
                 onKeyDown={(event) => {
@@ -445,12 +446,14 @@ const ChatPage = () => {
                 placeholder="Введите сообщение здесь..."
                 rows={2}
                 disabled={isSending || !selectedAgentId}
-                className="flex-1 resize-none rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-600 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:opacity-50"
+                className="flex-1 resize-none"
               />
-              <Button
+              <KwidButton
                 onClick={handleSend}
                 disabled={!messageValue.trim() || isSending || !selectedAgentId}
-                className="h-[52px] w-36 gap-2 text-sm"
+                variant="primary"
+                size="md"
+                className="h-[52px] w-36 gap-2"
               >
                 {isSending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -458,7 +461,7 @@ const ChatPage = () => {
                   <Send className="h-4 w-4" />
                 )}{' '}
                 Отправить
-              </Button>
+              </KwidButton>
             </div>
           </footer>
         </div>

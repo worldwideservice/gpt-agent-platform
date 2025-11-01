@@ -3,9 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Check, Info, Star, X } from 'lucide-react'
 
-import { Button } from '@/components/ui/Button'
-import { Select } from '@/components/ui/Select'
-import { Toggle } from '@/components/ui/Toggle'
+import { KwidButton, KwidSelect, KwidSwitch } from '@/components/kwid'
 
 interface Plan {
   id: string
@@ -195,79 +193,81 @@ const PricingPage = () => {
           <p className="text-sm text-slate-500">Выберите подходящий тариф и управляйте лимитами ответов ИИ</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2 text-sm" onClick={() => setNotificationsOpen(true)}>
+          <KwidButton variant="outline" size="sm" className="gap-2" onClick={() => setNotificationsOpen(true)}>
             <Info className="h-4 w-4" /> Уведомления
-          </Button>
-          <Button variant="outline" className="gap-2 text-sm">
+          </KwidButton>
+          <KwidButton variant="outline" size="sm" className="gap-2">
             Управление подпиской
-          </Button>
+          </KwidButton>
         </div>
       </header>
 
       {subscription && (
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="space-y-1">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Ваш текущий план</p>
-              <h2 className="text-lg font-semibold text-slate-900">
-                {currentPlan?.name ?? subscription.plan} ({subscription.tokenQuota.toLocaleString('ru-RU')} ответов ИИ в месяц)
-              </h2>
-              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                {subscription.renewsAt && <span>Активно до: {formatDate(subscription.renewsAt)}</span>}
-                <span>Платёжный цикл: {billingCycle === 'monthly' ? 'Ежемесячно' : 'Ежегодно'}</span>
-                <button type="button" className="text-primary-600 hover:underline">
-                  Перейти на годовой
-                </button>
-              </div>
-            </div>
-            <div className="flex flex-col gap-2 text-sm text-slate-500">
-              <span>
-                Использовано: {subscription.tokenUsed.toLocaleString('ru-RU')} из{' '}
-                {subscription.tokenQuota.toLocaleString('ru-RU')} (Сбросится: {nextResetDate})
-              </span>
-              <div className="w-72 rounded-full bg-slate-100">
-                <div
-                  className={`h-2 rounded-full ${
-                    usagePercentage >= 100 ? 'bg-rose-500' : usagePercentage >= 80 ? 'bg-yellow-500' : 'bg-primary-500'
-                  }`}
-                  style={{ width: `${usagePercentage}%` }}
-                />
-              </div>
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500">Ваш текущий план</p>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              {currentPlan?.name ?? subscription.plan} ({subscription.tokenQuota.toLocaleString('ru-RU')} ответов ИИ в месяц)
+            </h2>
+            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-gray-400">
+              {subscription.renewsAt && <span>Активно до: {formatDate(subscription.renewsAt)}</span>}
+              <span>Платёжный цикл: {billingCycle === 'monthly' ? 'Ежемесячно' : 'Ежегодно'}</span>
+              <button type="button" className="text-custom-600 hover:underline dark:text-custom-400">
+                Перейти на годовой
+              </button>
             </div>
           </div>
+          <div className="flex flex-col gap-2 text-sm text-slate-500 dark:text-gray-400">
+            <span>
+              Использовано: {subscription.tokenUsed.toLocaleString('ru-RU')} из{' '}
+              {subscription.tokenQuota.toLocaleString('ru-RU')} (Сбросится: {nextResetDate})
+            </span>
+            <div className="w-72 rounded-full bg-slate-100 dark:bg-gray-800">
+              <div
+                className={`h-2 rounded-full ${
+                  usagePercentage >= 100 ? 'bg-rose-500' : usagePercentage >= 80 ? 'bg-yellow-500' : 'bg-custom-500'
+                }`}
+                style={{ width: `${usagePercentage}%` }}
+              />
+            </div>
+          </div>
+        </div>
 
           <div className="mt-6 flex flex-wrap items-center gap-4">
-          <div className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-600">
+          <div className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             Ответов ИИ: {Number(selectedResponses).toLocaleString('ru-RU')}
           </div>
-          <Select
+          <KwidSelect
             label=" "
-            defaultValue={selectedResponses}
+            value={selectedResponses}
             options={responsesOptions}
             className="w-48"
             onChange={(value: string) => setSelectedResponses(value)}
           />
-          <div className="rounded-full border border-slate-200 bg-slate-50 px-1 py-1">
+          <div className="rounded-full border border-slate-200 bg-slate-50 px-1 py-1 dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center gap-1">
-              <Button
-                variant={billingCycle === 'monthly' ? 'default' : 'ghost'}
-                className="rounded-full px-4 text-sm"
+              <KwidButton
+                variant={billingCycle === 'monthly' ? 'primary' : 'outline'}
+                size="sm"
+                className="rounded-full px-4"
                 onClick={() => setBillingCycle('monthly')}
               >
                 Ежемесячно
-              </Button>
-              <Button
-                variant={billingCycle === 'yearly' ? 'default' : 'ghost'}
-                className="rounded-full px-4 text-sm"
+              </KwidButton>
+              <KwidButton
+                variant={billingCycle === 'yearly' ? 'primary' : 'outline'}
+                size="sm"
+                className="rounded-full px-4"
                 onClick={() => setBillingCycle('yearly')}
               >
                 Ежегодно
-              </Button>
+              </KwidButton>
             </div>
           </div>
-          <Toggle
+          <KwidSwitch
             checked={autoRenew}
-            onChange={setAutoRenew}
+            onCheckedChange={setAutoRenew}
             label="Автопродление"
             description="30-дневная гарантия возврата денег"
           />
@@ -308,13 +308,14 @@ const PricingPage = () => {
                   </li>
                 ))}
               </ul>
-              <Button
-                variant={isCurrent ? 'secondary' : 'default'}
+              <KwidButton
+                variant={isCurrent ? 'secondary' : 'primary'}
                 disabled={isCurrent ?? false}
-                className="mt-auto text-sm"
+                size="sm"
+                className="mt-auto"
               >
                 {isCurrent ? 'Текущий план' : 'Выбрать план'}
-              </Button>
+              </KwidButton>
             </div>
           )
         })}
@@ -352,9 +353,9 @@ const PricingPage = () => {
                 <div key={notification.id} className="rounded-xl border border-slate-200 p-4">
                   <p className="text-sm font-semibold text-slate-900">{notification.title}</p>
                   <p className="mt-2 text-xs text-slate-500">{notification.timestamp}</p>
-                  <Button variant="outline" size="sm" className="mt-3 text-xs">
+                  <KwidButton variant="outline" size="sm" className="mt-3">
                     Обновить план
-                  </Button>
+                  </KwidButton>
                 </div>
               ))}
             </div>

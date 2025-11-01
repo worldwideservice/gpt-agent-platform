@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Inter Font from fonts.bunny.net (как в Kwid) */
+@import url('https://fonts.bunny.net/css?family=inter:400,500,600,700');
+
 @layer base {
   body {
     @apply bg-background text-foreground;
@@ -61,6 +64,133 @@
   }
 }
 
+@layer components {
+  /* Filament-подобные компоненты для реплики Kwid */
+  .fi-wi-stats-overview-stat {
+    @apply relative rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5;
+    @apply dark:bg-gray-900 dark:ring-white/10;
+  }
+
+  .fi-btn {
+    @apply relative grid-flow-col items-center justify-center font-semibold;
+    @apply outline-none transition duration-75 focus-visible:ring-2 rounded-lg;
+    @apply inline-grid gap-1 shadow-sm;
+  }
+
+  .fi-color-primary {
+    @apply bg-custom-600 text-white hover:bg-custom-500;
+    @apply focus-visible:ring-custom-500/50;
+    @apply dark:bg-custom-500 dark:hover:bg-custom-400 dark:focus-visible:ring-custom-400/50;
+  }
+
+  .fi-size-sm {
+    @apply px-2.5 py-1.5 text-sm;
+  }
+
+  .fi-input {
+    @apply block w-full rounded-lg border-gray-300 shadow-sm;
+    @apply focus:border-custom-500 focus:ring-custom-500;
+    @apply dark:border-gray-600 dark:bg-gray-900;
+    @apply bg-white text-gray-900 dark:text-white;
+    @apply placeholder:text-gray-400 dark:placeholder:text-gray-500;
+  }
+
+  .fi-input-wrp {
+    @apply space-y-2;
+  }
+
+  .fi-section {
+    @apply rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900;
+  }
+
+  .fi-section-header {
+    @apply flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800;
+  }
+
+  .fi-section-header-heading {
+    @apply text-base font-semibold text-gray-900 dark:text-white;
+  }
+
+  .fi-section-header-description {
+    @apply mt-1 text-sm text-gray-500 dark:text-gray-400;
+  }
+
+  .fi-section-header-icon {
+    @apply h-6 w-6 text-gray-400 dark:text-gray-500;
+  }
+
+  .fi-section-content-ctn {
+    @apply p-4 pt-0;
+  }
+
+  .fi-section-content {
+    @apply space-y-4;
+  }
+
+  .fi-tabs-item-active {
+    @apply bg-white text-slate-900 shadow-sm dark:bg-gray-950 dark:text-white;
+  }
+
+  .fi-fo-toggle {
+    @apply relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors;
+    @apply bg-custom-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-600 focus-visible:ring-offset-2;
+    @apply dark:bg-custom-500 dark:focus-visible:ring-custom-500;
+  }
+
+  .fi-fo-toggle[aria-checked="true"] {
+    @apply bg-custom-600 dark:bg-custom-500;
+  }
+
+  .fi-fo-toggle[aria-checked="false"] {
+    @apply bg-slate-200 dark:bg-gray-700;
+  }
+
+  .fi-checkbox-input {
+    @apply h-4 w-4 rounded border-gray-300;
+    @apply text-custom-600 focus:ring-custom-500;
+    @apply dark:border-gray-600 dark:bg-gray-800;
+  }
+
+  .fi-tabs {
+    @apply flex flex-wrap gap-x-1 border-b border-gray-200;
+    @apply dark:border-gray-700;
+  }
+
+  .fi-tabs-item {
+    @apply flex items-center gap-2 px-4 py-2 text-sm font-medium;
+    @apply border-b-2 transition-colors;
+  }
+
+  .fi-tabs-item-active {
+    @apply border-custom-600 text-custom-600;
+    @apply dark:border-custom-400 dark:text-custom-400;
+  }
+
+  .fi-form {
+    @apply grid gap-y-6;
+  }
+
+  .fi-fo-component-ctn {
+    @apply space-y-6;
+  }
+
+  .fi-fo-field-wrp {
+    @apply space-y-2;
+  }
+
+  .fi-fo-field-wrp-label {
+    @apply text-sm font-medium text-slate-600 dark:text-gray-300;
+  }
+
+  .fi-fo-field-wrp-helper-text {
+    @apply text-xs text-slate-500 dark:text-gray-400;
+  }
+
+  .fi-form-actions {
+    @apply flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800;
+  }
+}
+
 @layer utilities {
   .animate-fadeIn {
     animation: fadeIn 0.2s ease-in-out;
@@ -78,8 +208,6 @@
   }
 }
 
-
-
 @layer base {
   * {
     @apply border-border;
@@ -88,4 +216,3 @@
     @apply bg-background text-foreground;
   }
 }
-

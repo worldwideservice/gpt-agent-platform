@@ -2,9 +2,8 @@
 
 import { useState } from 'react'
 import { Bug, Play, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { KwidButton, KwidInput } from '@/components/kwid'
 import { Card } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
 
 interface APITestResult {
   endpoint: string
@@ -111,49 +110,46 @@ export const KommoAPIDebugger = () => {
   return (
     <Card className="p-6">
       <div className="flex items-center space-x-2 mb-4">
-        <Bug className="w-5 h-5 text-gray-600" />
-        <h3 className="text-lg font-semibold text-gray-900">Отладка API Kommo</h3>
+        <Bug className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Отладка API Kommo</h3>
       </div>
 
       <div className="space-y-4">
         {/* Токен ввода */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Токен доступа Kommo
-          </label>
-          <div className="flex space-x-2">
-            <Input
-              type="password"
-              placeholder="Введите токен доступа"
-              value={accessToken}
-              onChange={(e) => setAccessToken(e.target.value)}
-              className="flex-1"
-            />
-            <Button 
-              onClick={runAllTests}
-              disabled={isTesting || !accessToken.trim()}
-            >
-              {isTesting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Тестирование...
-                </>
-              ) : (
-                <>
-                  <Play className="w-4 h-4 mr-2" />
-                  Запустить тесты
-                </>
-              )}
-            </Button>
-          </div>
+        <div className="flex space-x-2">
+          <KwidInput
+            type="password"
+            placeholder="Введите токен доступа"
+            value={accessToken}
+            onChange={(e) => setAccessToken(e.target.value)}
+            className="flex-1"
+          />
+          <KwidButton 
+            onClick={runAllTests}
+            disabled={isTesting || !accessToken.trim()}
+            variant="primary"
+            className="gap-2"
+          >
+            {isTesting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Тестирование...
+              </>
+            ) : (
+              <>
+                <Play className="w-4 h-4" />
+                Запустить тесты
+              </>
+            )}
+          </KwidButton>
         </div>
 
         {/* Общий статус */}
         {overallStatus !== 'idle' && (
           <div className={`p-4 rounded-lg border ${
             overallStatus === 'success' 
-              ? 'bg-green-50 border-green-200 text-green-800' 
-              : 'bg-red-50 border-red-200 text-red-800'
+              ? 'bg-green-50 border-green-200 text-green-800 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400' 
+              : 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'
           }`}>
             <div className="flex items-center space-x-2">
               {overallStatus === 'success' ? (
@@ -174,7 +170,7 @@ export const KommoAPIDebugger = () => {
         {/* Результаты тестов */}
         {results.length > 0 && (
           <div className="space-y-3">
-            <h4 className="text-sm font-medium text-gray-700">Результаты тестирования:</h4>
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Результаты тестирования:</h4>
             {results.map((result, index) => (
               <div 
                 key={index}
@@ -212,9 +208,9 @@ export const KommoAPIDebugger = () => {
         )}
 
         {/* Инструкции */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-blue-900 mb-2">Как получить токен:</h4>
-          <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 dark:bg-blue-900/20 dark:border-blue-800">
+          <h4 className="text-sm font-medium text-blue-900 mb-2 dark:text-blue-400">Как получить токен:</h4>
+          <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside dark:text-blue-300">
             <li>Войдите в Kommo CRM</li>
             <li>Настройки → Интеграции → API</li>
             <li>Создайте приложение или используйте существующее</li>

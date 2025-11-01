@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/Button'
+import { KwidButton } from '@/components/kwid'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Progress } from '@/components/ui/progress'
@@ -147,9 +147,9 @@ export const JobManager = ({ className, showCreateJob, onJobCreate }: JobManager
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Background Tasks</h2>
         {showCreateJob && (
-          <Button onClick={() => setShowCreateForm(!showCreateForm)}>
+          <KwidButton onClick={() => setShowCreateForm(!showCreateForm)} variant="outline">
             {showCreateForm ? 'Cancel' : 'Create Job'}
-          </Button>
+          </KwidButton>
         )}
       </div>
 
@@ -251,23 +251,25 @@ export const JobManager = ({ className, showCreateJob, onJobCreate }: JobManager
 
                   <div className="flex gap-2">
                     {job.status === 'failed' && (
-                      <Button
+                      <KwidButton
                         size="sm"
                         variant="outline"
                         onClick={() => handleRetryJob(job.id)}
+                        className="gap-1"
                       >
-                        <RotateCcw className="h-4 w-4 mr-1" />
+                        <RotateCcw className="h-4 w-4" />
                         Retry
-                      </Button>
+                      </KwidButton>
                     )}
-                    <Button
+                    <KwidButton
                       size="sm"
                       variant="outline"
                       onClick={() => handleDeleteJob(job.id)}
+                      className="gap-1"
                     >
-                      <Trash2 className="h-4 w-4 mr-1" />
+                      <Trash2 className="h-4 w-4" />
                       Delete
-                    </Button>
+                    </KwidButton>
                   </div>
                 </CardContent>
               </Card>

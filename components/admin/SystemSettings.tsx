@@ -2,12 +2,9 @@
 
 import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/shadcn/card'
-import { Button } from '@/components/ui/shadcn/button'
+import { KwidButton, KwidInput, KwidTextarea, KwidSwitch } from '@/components/kwid'
 import { Badge } from '@/components/ui/shadcn/badge'
-import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/shadcn/textarea'
-import { Input } from '@/components/ui/shadcn/input'
 import {
   Settings,
   Database,
@@ -70,10 +67,10 @@ export const SystemSettings = () => {
             Управление настройками и состоянием системы
           </p>
         </div>
-        <Button onClick={handleSaveSettings}>
-          <Settings className="h-4 w-4 mr-2" />
+        <KwidButton onClick={handleSaveSettings} variant="primary" className="gap-2">
+          <Settings className="h-4 w-4" />
           Сохранить изменения
-        </Button>
+        </KwidButton>
       </div>
 
       {/* General Settings */}
@@ -95,7 +92,7 @@ export const SystemSettings = () => {
                 Временно отключить доступ к платформе для всех пользователей
               </p>
             </div>
-            <Switch
+            <KwidSwitch
               id="maintenance"
               checked={settings.maintenanceMode}
               onCheckedChange={(checked) =>
@@ -107,11 +104,11 @@ export const SystemSettings = () => {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="registration">Регистрация пользователей</Label>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground dark:text-gray-400">
                 Разрешить новым пользователям создавать аккаунты
               </p>
             </div>
-            <Switch
+            <KwidSwitch
               id="registration"
               checked={settings.allowRegistration}
               onCheckedChange={(checked) =>
@@ -123,11 +120,11 @@ export const SystemSettings = () => {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="email-notifications">Email уведомления</Label>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground dark:text-gray-400">
                 Отправлять автоматические email уведомления
               </p>
             </div>
-            <Switch
+            <KwidSwitch
               id="email-notifications"
               checked={settings.emailNotifications}
               onCheckedChange={(checked) =>
@@ -168,7 +165,7 @@ export const SystemSettings = () => {
                 <Badge variant={enabled ? 'default' : 'secondary'}>
                   {enabled ? 'Включено' : 'Отключено'}
                 </Badge>
-                <Switch
+                <KwidSwitch
                   id={key}
                   checked={enabled}
                   onCheckedChange={(checked) =>
@@ -204,44 +201,40 @@ export const SystemSettings = () => {
               <div key={tier} className="space-y-3 p-4 border rounded-lg">
                 <h4 className="font-medium capitalize">{tier}</h4>
                 <div className="space-y-2">
-                  <div>
-                    <Label className="text-sm">API запросов/мин</Label>
-                    <Input
-                      type="number"
-                      value={limits.requests}
-                      onChange={(e) =>
-                        setSettings({
-                          ...settings,
-                          rateLimits: {
-                            ...settings.rateLimits,
-                            [tier]: {
-                              ...limits,
-                              requests: parseInt(e.target.value),
-                            },
+                  <KwidInput
+                    label="API запросов/мин"
+                    type="number"
+                    value={limits.requests.toString()}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        rateLimits: {
+                          ...settings.rateLimits,
+                          [tier]: {
+                            ...limits,
+                            requests: parseInt(e.target.value),
                           },
-                        })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-sm">Токенов/месяц</Label>
-                    <Input
-                      type="number"
-                      value={limits.tokens}
-                      onChange={(e) =>
-                        setSettings({
-                          ...settings,
-                          rateLimits: {
-                            ...settings.rateLimits,
-                            [tier]: {
-                              ...limits,
-                              tokens: parseInt(e.target.value),
-                            },
+                        },
+                      })
+                    }
+                  />
+                  <KwidInput
+                    label="Токенов/месяц"
+                    type="number"
+                    value={limits.tokens.toString()}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        rateLimits: {
+                          ...settings.rateLimits,
+                          [tier]: {
+                            ...limits,
+                            tokens: parseInt(e.target.value),
                           },
-                        })
-                      }
-                    />
-                  </div>
+                        },
+                      })
+                    }
+                  />
                 </div>
               </div>
             ))}
@@ -262,41 +255,41 @@ export const SystemSettings = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Button
+            <KwidButton
               variant="outline"
               onClick={() => handleSystemAction('clear_cache')}
               className="flex flex-col items-center gap-2 h-20"
             >
               <Database className="h-6 w-6" />
               <span className="text-sm">Очистить кэш</span>
-            </Button>
+            </KwidButton>
 
-            <Button
+            <KwidButton
               variant="outline"
               onClick={() => handleSystemAction('restart_worker')}
               className="flex flex-col items-center gap-2 h-20"
             >
               <RefreshCw className="h-6 w-6" />
               <span className="text-sm">Перезапустить worker</span>
-            </Button>
+            </KwidButton>
 
-            <Button
+            <KwidButton
               variant="outline"
               onClick={() => handleSystemAction('backup_database')}
               className="flex flex-col items-center gap-2 h-20"
             >
               <HardDrive className="h-6 w-6" />
               <span className="text-sm">Создать backup</span>
-            </Button>
+            </KwidButton>
 
-            <Button
+            <KwidButton
               variant="outline"
               onClick={() => handleSystemAction('send_test_email')}
               className="flex flex-col items-center gap-2 h-20"
             >
               <Mail className="h-6 w-6" />
               <span className="text-sm">Тестовый email</span>
-            </Button>
+            </KwidButton>
           </div>
         </CardContent>
       </Card>
@@ -310,7 +303,7 @@ export const SystemSettings = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Textarea
+          <KwidTextarea
             placeholder="Системные логи будут отображаться здесь..."
             className="min-h-[200px] font-mono text-sm"
             readOnly

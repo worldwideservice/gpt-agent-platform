@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 
-import { Button } from '@/components/ui/Button'
+import { KwidButton } from '@/components/kwid'
 
 interface AgentsErrorBoundaryProps {
   error: Error & { digest?: string }
@@ -15,16 +15,16 @@ const AgentsError = ({ error, reset }: AgentsErrorBoundaryProps) => {
   }, [error])
 
   return (
-    <div className="space-y-4 rounded-lg border border-red-200 bg-red-50 p-6 text-red-700">
+    <div className="space-y-4 rounded-lg border border-red-200 bg-red-50 p-6 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
       <div>
         <h2 className="text-lg font-semibold">Произошла ошибка загрузки агентов</h2>
         <p className="mt-2 text-sm">
           Попробуйте обновить страницу или повторите попытку позже. Если ошибка повторяется, обратитесь к администратору.
         </p>
       </div>
-      <Button variant="destructive" onClick={reset} className="w-fit">
+      <KwidButton variant="danger" onClick={reset} className="w-fit">
         Попробовать снова
-      </Button>
+      </KwidButton>
     </div>
   )
 }

@@ -4,9 +4,8 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { ShieldCheck } from 'lucide-react'
 
-import { Button } from '@/components/ui/Button'
+import { KwidButton, KwidInput } from '@/components/kwid'
 import { Card } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
 
 interface ConfirmFormProps {
   token: string
@@ -72,53 +71,44 @@ export const ConfirmForm = ({ token }: ConfirmFormProps) => {
 
       {isSuccess ? (
         <div className="space-y-6">
-          <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+          <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
             Пароль успешно изменён. Теперь вы можете войти в систему.
           </div>
-          <Link
-            href="/login"
-            className="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
-          >
-            Вернуться ко входу
+          <Link href="/login">
+            <KwidButton variant="primary" className="w-full">
+              Вернуться ко входу
+            </KwidButton>
           </Link>
         </div>
       ) : (
         <form className="space-y-4" onSubmit={handleSubmit}>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="password">
-              Новый пароль
-            </label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              minLength={8}
-            />
-          </div>
+          <KwidInput
+            id="password"
+            label="Новый пароль"
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+            minLength={8}
+          />
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="passwordConfirm">
-              Подтвердите пароль
-            </label>
-            <Input
-              id="passwordConfirm"
-              type="password"
-              autoComplete="new-password"
-              value={passwordConfirm}
-              onChange={(event) => setPasswordConfirm(event.target.value)}
-              required
-              minLength={8}
-            />
-          </div>
+          <KwidInput
+            id="passwordConfirm"
+            label="Подтвердите пароль"
+            type="password"
+            autoComplete="new-password"
+            value={passwordConfirm}
+            onChange={(event) => setPasswordConfirm(event.target.value)}
+            required
+            minLength={8}
+          />
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-          <Button type="submit" className="w-full" disabled={isPending}>
+          <KwidButton type="submit" variant="primary" className="w-full" disabled={isPending}>
             {isPending ? 'Сохранение...' : 'Сохранить пароль'}
-          </Button>
+          </KwidButton>
         </form>
       )}
     </Card>

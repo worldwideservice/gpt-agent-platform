@@ -4,8 +4,7 @@ import { useCallback, useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { Edit, Filter, FileText, Plus, Search, Trash2 } from 'lucide-react'
 
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { KwidButton, KwidInput } from '@/components/kwid'
 import {
   Table,
   TableBody,
@@ -130,16 +129,16 @@ export const ArticlesClient = ({ initialArticles, categories }: ArticlesClientPr
   return (
     <div className="space-y-6">
       <header className="space-y-2">
-        <h1 className="text-3xl font-semibold text-slate-900">Статьи</h1>
-        <p className="text-sm text-slate-500">Материалы базы знаний, доступные для AI-агентов</p>
+        <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">Статьи</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Материалы базы знаний, доступные для AI-агентов</p>
       </header>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="text-xs font-medium uppercase tracking-wide text-slate-400">Статьи / Список</div>
+        <div className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">Статьи / Список</div>
         <div className="flex items-center gap-3">
           <div className="relative w-full max-w-xs">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-            <Input
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+            <KwidInput
               type="search"
               placeholder="Поиск статей..."
               value={searchTerm}
@@ -148,32 +147,32 @@ export const ArticlesClient = ({ initialArticles, categories }: ArticlesClientPr
               className="pl-10"
             />
           </div>
-          <Button variant="outline" className="gap-2 text-sm">
+          <KwidButton variant="outline" size="sm" className="gap-2">
             <Filter className="h-4 w-4" /> Фильтры
-          </Button>
+          </KwidButton>
           <Link href="/knowledge-base/articles/new">
-            <Button className="gap-2 text-sm">
+            <KwidButton variant="primary" size="sm" className="gap-2">
               <Plus className="h-4 w-4" /> Создать
-            </Button>
+            </KwidButton>
           </Link>
         </div>
       </div>
 
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700" role="alert">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400" role="alert">
           {error}
         </div>
       )}
 
       {filteredArticles.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center shadow-sm">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
-            <FileText className="h-7 w-7 text-slate-400" />
+        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center shadow-sm dark:border-gray-700 dark:bg-gray-900">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+            <FileText className="h-7 w-7 text-gray-400 dark:text-gray-500" />
           </div>
-          <h3 className="mt-6 text-lg font-semibold text-slate-900">
+          <h3 className="mt-6 text-lg font-semibold text-gray-900 dark:text-white">
             {searchTerm ? 'Статьи не найдены' : 'Статьи не найдены'}
           </h3>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             {searchTerm
               ? 'Попробуйте изменить параметры поиска'
               : 'Добавьте новую статью, чтобы она была доступна агентам и сотрудникам.'}
@@ -181,21 +180,21 @@ export const ArticlesClient = ({ initialArticles, categories }: ArticlesClientPr
           {!searchTerm && (
             <div className="mt-6 flex justify-center gap-3">
               <Link href="/knowledge-base/articles/new">
-                <Button className="gap-2 text-sm">
+                <KwidButton variant="primary" size="sm" className="gap-2">
                   <Plus className="h-4 w-4" /> Создать статью
-                </Button>
+                </KwidButton>
               </Link>
-              <Button variant="outline" className="text-sm">
+              <KwidButton variant="outline" size="sm">
                 Импортировать
-              </Button>
+              </KwidButton>
             </div>
           )}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
           <Table>
             <TableHeader>
-              <TableRow className="bg-slate-50">
+              <TableRow className="bg-gray-50 dark:bg-gray-800">
                 <TableHead>Название</TableHead>
                 <TableHead>Категория</TableHead>
                 <TableHead>Статус</TableHead>
@@ -206,50 +205,50 @@ export const ArticlesClient = ({ initialArticles, categories }: ArticlesClientPr
             </TableHeader>
             <TableBody>
               {filteredArticles.map((article) => (
-                <TableRow key={article.id} className="border-b border-slate-100">
+                <TableRow key={article.id} className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800">
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <FileText className="h-5 w-5 text-slate-400" />
+                      <FileText className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                       <Link
                         href={`/knowledge-base/articles/${article.id}`}
-                        className="font-medium text-primary-600 hover:text-primary-700 hover:underline"
+                        className="font-medium text-custom-600 hover:text-custom-700 hover:underline dark:text-custom-400 dark:hover:text-custom-300"
                       >
                         {article.title}
                       </Link>
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm text-slate-600">{getCategoryName(article.categoryId)}</TableCell>
+                  <TableCell className="text-sm text-gray-600 dark:text-gray-400">{getCategoryName(article.categoryId)}</TableCell>
                   <TableCell>
                     <span
                       className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
                         article.isPublished
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-slate-100 text-slate-600'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                          : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
                       }`}
                     >
                       {article.isPublished ? 'Активна' : 'Черновик'}
                     </span>
                   </TableCell>
-                  <TableCell className="text-sm text-slate-600">{formatDate(article.createdAt)}</TableCell>
-                  <TableCell className="text-sm text-slate-600">{formatDate(article.updatedAt)}</TableCell>
+                  <TableCell className="text-sm text-gray-600 dark:text-gray-400">{formatDate(article.createdAt)}</TableCell>
+                  <TableCell className="text-sm text-gray-600 dark:text-gray-400">{formatDate(article.updatedAt)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-3 text-sm font-medium">
                       <Link
                         href={`/knowledge-base/articles/${article.id}`}
-                        className="text-primary-600 hover:text-primary-700"
+                        className="text-custom-600 hover:text-custom-700 dark:text-custom-400 dark:hover:text-custom-300"
                       >
                         Открыть
                       </Link>
                       <Link
                         href={`/knowledge-base/articles/${article.id}/edit`}
-                        className="text-slate-500 transition-colors hover:text-slate-700"
+                        className="text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                       >
                         Редактировать
                       </Link>
                       <button
                         type="button"
                         onClick={() => handleDelete(article.id)}
-                        className="text-rose-500 transition-colors hover:text-rose-600"
+                        className="text-red-600 transition-colors hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                       >
                         Удалить
                       </button>

@@ -3,11 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Loader2, Plus, Trash2, Edit2, Pause, Play, MessageSquare, Save, X, Search, Filter } from 'lucide-react'
 
-import { Button } from '@/components/ui/Button'
-import { Card, CardContent } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
-import { Textarea } from '@/components/ui/Textarea'
-import { Toggle } from '@/components/ui/Toggle'
+import { KwidButton, KwidInput, KwidTextarea, KwidSwitch, KwidSelect, KwidSection } from '@/components/kwid'
 
 import type { AgentSequence } from '@/lib/repositories/agent-sequences'
 
@@ -343,38 +339,38 @@ export const AgentSequencesManager = ({ agentId }: AgentSequencesManagerProps) =
   return (
     <div className="space-y-6">
       {isDraft ? (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
+        <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
           Сначала сохраните агента, чтобы управлять автоматическими цепочками.
         </div>
       ) : null}
 
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900">Цепочки</h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Цепочки</h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Автоматизируйте отправку последующих сообщений и выполнение действий по расписанию.
           </p>
         </div>
-        <Button onClick={openCreateEditor} className="w-full gap-2 sm:w-auto" disabled={isDraft}>
+        <KwidButton onClick={openCreateEditor} className="w-full gap-2 sm:w-auto" disabled={isDraft} variant="primary" size="md">
           <Plus className="h-4 w-4" /> Создать
-        </Button>
+        </KwidButton>
       </div>
 
       {!isDraft && (
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-            <input
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+            <KwidInput
               type="search"
               placeholder="Поиск"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              className="pl-10"
             />
           </div>
           <button
             type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-colors hover:border-primary-200 hover:text-primary-600"
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-colors hover:border-custom-200 hover:text-custom-600 dark:border-gray-700 dark:text-gray-400 dark:hover:border-custom-700 dark:hover:text-custom-400"
             aria-label="Фильтры"
           >
             <Filter className="h-5 w-5" />
@@ -383,74 +379,66 @@ export const AgentSequencesManager = ({ agentId }: AgentSequencesManagerProps) =
       )}
 
       {isDraft ? null : isLoading ? (
-        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
+        <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
           <Loader2 className="h-4 w-4 animate-spin" /> Загрузка цепочек…
         </div>
       ) : error ? (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</div>
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">{error}</div>
       ) : filteredSequences.length === 0 ? (
-        <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
-            <X className="h-8 w-8 text-slate-400" />
+        <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+            <X className="h-8 w-8 text-gray-400 dark:text-gray-500" />
           </div>
-          <h3 className="mb-2 text-lg font-semibold text-slate-900">Не найдено Цепочки</h3>
-          <p className="mb-6 text-sm text-slate-500">Создать Цепочка для старта.</p>
-          <Button onClick={openCreateEditor} className="gap-2">
+          <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Не найдено Цепочки</h3>
+          <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">Создать Цепочка для старта.</p>
+          <KwidButton onClick={openCreateEditor} className="gap-2" variant="primary" size="md">
             <Plus className="h-4 w-4" />
             Создать
-          </Button>
+          </KwidButton>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50">
-                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Название</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Активно</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Шаги</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Действия</th>
+              <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Название</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Активно</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Шаги</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 dark:text-gray-400">Действия</th>
               </tr>
             </thead>
             <tbody>
               {filteredSequences.map((sequence) => (
-                <tr key={sequence.id} className="border-b border-slate-100">
+                <tr key={sequence.id} className="border-b border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800">
                   <td className="px-4 py-3">
                     <div className="flex flex-col">
-                      <span className="text-sm font-semibold text-slate-900">{sequence.name}</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">{sequence.name}</span>
                       {sequence.description && (
-                        <span className="mt-1 text-xs text-slate-500">{sequence.description}</span>
+                        <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">{sequence.description}</span>
                       )}
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <button
-                      onClick={() => toggleSequenceActive(sequence, !sequence.isActive)}
-                      className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
-                        sequence.isActive ? 'bg-primary-600' : 'bg-gray-200'
-                      }`}
+                    <KwidSwitch
+                      checked={sequence.isActive}
+                      onCheckedChange={(checked) => toggleSequenceActive(sequence, checked)}
                       aria-label={sequence.isActive ? 'Деактивировать' : 'Активировать'}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          sequence.isActive ? 'translate-x-5' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
+                    />
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-sm text-slate-600">{sequence.steps.length} шагов</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{sequence.steps.length} шагов</span>
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-3">
                       <button
                         onClick={() => openEditEditor(sequence)}
-                        className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                        className="text-custom-600 hover:text-custom-700 text-sm font-medium dark:text-custom-400 dark:hover:text-custom-300"
                       >
                         Изменить
                       </button>
                       <button
                         onClick={() => deleteSequence(sequence.id)}
-                        className="text-rose-500 hover:text-rose-600 text-sm font-medium"
+                        className="text-red-600 hover:text-red-700 text-sm font-medium dark:text-red-400 dark:hover:text-red-300"
                       >
                         Удалить
                       </button>
@@ -464,41 +452,42 @@ export const AgentSequencesManager = ({ agentId }: AgentSequencesManagerProps) =
       )}
 
       {isEditorOpen ? (
-        <Card className="border-primary-200 shadow-lg">
-          <CardContent className="space-y-5 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900">{editorTitle}</h3>
-                <p className="text-sm text-slate-500">
-                  Опишите шаги, которые агент выполнит автоматически.
-                </p>
-              </div>
-              <Button variant="ghost" size="sm" onClick={closeEditor}>
+        <KwidSection
+          title={editorTitle}
+          description="Опишите шаги, которые агент выполнит автоматически."
+        >
+          <div className="space-y-5">
+            <div className="flex items-center justify-end">
+              <KwidButton variant="outline" size="sm" onClick={closeEditor}>
                 Отменить
-              </Button>
+              </KwidButton>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <Input
+              <KwidInput
                 label="Название"
                 placeholder="Например, Приветствие нового лида"
                 value={formState.name}
                 onChange={(event) => setFormState((prev) => ({ ...prev, name: event.target.value }))}
                 required
               />
-              <Toggle
-                checked={formState.isActive}
-                onChange={(value) => setFormState((prev) => ({ ...prev, isActive: value }))}
-                label="Цепочка активна"
-                description={
-                  formState.isActive
-                    ? 'Будет выполняться автоматически'
-                    : 'Цепочка отключена до повторного включения'
-                }
-              />
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Цепочка активна</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {formState.isActive
+                      ? 'Будет выполняться автоматически'
+                      : 'Цепочка отключена до повторного включения'}
+                  </p>
+                </div>
+                <KwidSwitch
+                  checked={formState.isActive}
+                  onCheckedChange={(value) => setFormState((prev) => ({ ...prev, isActive: value }))}
+                />
+              </div>
             </div>
 
-            <Textarea
+            <KwidTextarea
               label="Описание"
               placeholder="Кратко опишите назначение цепочки"
               rows={3}
@@ -508,35 +497,29 @@ export const AgentSequencesManager = ({ agentId }: AgentSequencesManagerProps) =
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium text-slate-700">Шаги</h4>
-                <Button variant="outline" size="sm" onClick={addStep}>
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Шаги</h4>
+                <KwidButton variant="outline" size="sm" onClick={addStep}>
                   <Plus className="mr-2 h-4 w-4" /> Добавить шаг
-                </Button>
+                </KwidButton>
               </div>
 
               <div className="space-y-4">
                 {formState.steps.map((step, index) => (
-                  <div key={index} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div key={index} className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 space-y-3">
-                        <label className="text-xs font-medium text-slate-500">Тип шага</label>
+                        <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Тип шага</label>
                         <div className="grid gap-3 md:grid-cols-2">
-                          <select
-                            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                          <KwidSelect
+                            options={STEP_TYPE_OPTIONS}
                             value={step.stepType}
-                            onChange={(event) =>
-                              handleStepChange(index, 'stepType', event.target.value as SequenceStepInput['stepType'])
+                            onChange={(value: string) =>
+                              handleStepChange(index, 'stepType', value as SequenceStepInput['stepType'])
                             }
-                          >
-                            {STEP_TYPE_OPTIONS.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
+                          />
 
                           {step.stepType === 'wait' ? (
-                            <Input
+                            <KwidInput
                               type="number"
                               min={0}
                               label="Задержка, сек"
@@ -546,7 +529,7 @@ export const AgentSequencesManager = ({ agentId }: AgentSequencesManagerProps) =
                               }
                             />
                           ) : step.stepType === 'send_message' ? (
-                            <Textarea
+                            <KwidTextarea
                               label="Сообщение"
                               rows={3}
                               value={String((step.payload as { text?: unknown })?.text ?? '')}
@@ -555,7 +538,7 @@ export const AgentSequencesManager = ({ agentId }: AgentSequencesManagerProps) =
                               }
                             />
                           ) : (
-                            <Input
+                            <KwidInput
                               label="URL Webhook"
                               value={String((step.payload as { url?: unknown })?.url ?? '')}
                               onChange={(event) =>
@@ -566,15 +549,15 @@ export const AgentSequencesManager = ({ agentId }: AgentSequencesManagerProps) =
                         </div>
                       </div>
 
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-rose-500 hover:text-rose-700"
+                      <KwidButton
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 p-0"
                         onClick={() => removeStep(index)}
                         aria-label="Удалить шаг"
                       >
                         <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </KwidButton>
                     </div>
                   </div>
                 ))}
@@ -582,16 +565,16 @@ export const AgentSequencesManager = ({ agentId }: AgentSequencesManagerProps) =
             </div>
 
             <div className="flex items-center justify-end gap-3">
-              <Button variant="outline" onClick={closeEditor}>
+              <KwidButton variant="outline" size="md" onClick={closeEditor}>
                 Отмена
-              </Button>
-              <Button onClick={handleSubmit} disabled={!canSubmit || isSaving} className="gap-2">
+              </KwidButton>
+              <KwidButton onClick={handleSubmit} disabled={!canSubmit || isSaving} className="gap-2" variant="primary" size="md">
                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 {editingSequenceId ? 'Сохранить изменения' : 'Создать цепочку'}
-              </Button>
+              </KwidButton>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </KwidSection>
       ) : null}
     </div>
   )

@@ -3,12 +3,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Plus, Edit, Trash2, CheckCircle, Loader2, Zap, Search, Filter, ArrowDown, X, ChevronUp, ChevronDown, Link2, Settings } from 'lucide-react'
 
-import { Button } from '@/components/ui/Button'
+import { KwidButton, KwidInput, KwidSelect, KwidTextarea, KwidSwitch } from '@/components/kwid'
 import { Card, CardContent } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
-import { Textarea } from '@/components/ui/Textarea'
-import { Toggle } from '@/components/ui/Toggle'
 
 import type { Trigger, TriggerCondition, TriggerAction } from '@/lib/repositories/triggers'
 
@@ -326,7 +322,7 @@ export const TriggerManager = ({ agentId }: TriggerManagerProps) => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-gray-400 dark:text-gray-500" />
       </div>
     )
   }
@@ -334,8 +330,8 @@ export const TriggerManager = ({ agentId }: TriggerManagerProps) => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold text-slate-900">Триггеры</h2>
-        <p className="mt-1 text-sm text-slate-500">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Триггеры</h2>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Выполняйте мгновенные действия при соблюдении определённых условий в ходе разговора.
         </p>
       </div>
@@ -343,47 +339,48 @@ export const TriggerManager = ({ agentId }: TriggerManagerProps) => {
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-            <input
+            <KwidInput
               type="search"
               placeholder="Поиск"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              className="pl-10"
             />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
           </div>
-          <button
-            type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-colors hover:border-primary-200 hover:text-primary-600"
+          <KwidButton
+            variant="outline"
+            size="sm"
+            className="h-10 w-10 p-0"
             aria-label="Фильтры"
           >
             <Filter className="h-5 w-5" />
-          </button>
+          </KwidButton>
         </div>
-        <Button onClick={handleCreate} className="gap-2">
+        <KwidButton onClick={handleCreate} variant="primary" size="sm" className="gap-2">
           <Plus className="h-4 w-4" />
           Создать
-        </Button>
+        </KwidButton>
       </div>
 
       {triggers.length === 0 ? (
-        <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
-            <Zap className="h-8 w-8 text-slate-400" />
+        <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
+            <Zap className="h-8 w-8 text-gray-400 dark:text-gray-500" />
           </div>
-          <h3 className="mb-2 text-lg font-semibold text-slate-900">Не найдено Триггеры</h3>
-          <p className="mb-6 text-sm text-slate-500">Создать Триггер для старта.</p>
-          <Button onClick={handleCreate} className="gap-2">
+          <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Не найдено Триггеры</h3>
+          <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">Создать Триггер для старта.</p>
+          <KwidButton onClick={handleCreate} variant="primary" size="sm" className="gap-2">
             <Plus className="h-4 w-4" />
             Создать
-          </Button>
+          </KwidButton>
         </div>
       ) : (
         <>
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50">
+                <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
                   <th className="w-12 px-4 py-3">
                     <input
                       type="checkbox"
@@ -392,19 +389,19 @@ export const TriggerManager = ({ agentId }: TriggerManagerProps) => {
                         if (input) input.indeterminate = selectedTriggers.length > 0 && selectedTriggers.length < filteredTriggers.length
                       }}
                       onChange={handleSelectAll}
-                      className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                      className="h-4 w-4 rounded border-gray-300 text-custom-600 focus:ring-custom-500 dark:border-gray-600 dark:text-custom-500"
                       aria-label="Выбрать все триггеры"
                     />
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Название</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">
-                    <button className="flex items-center gap-1 hover:text-slate-900">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">Название</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">
+                    <button className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white">
                       Активно
                       <ArrowDown className="h-4 w-4" />
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Условие</th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Действия</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">Условие</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 dark:text-gray-300">Действия</th>
                 </tr>
               </thead>
               <tbody>
@@ -413,49 +410,40 @@ export const TriggerManager = ({ agentId }: TriggerManagerProps) => {
                     ? `Когда ты понял, что это клиент по продукту ${formatConditionValue(trigger.conditions[0]).substring(0, 50)}...`
                     : 'Нет условия'
                   return (
-                    <tr key={trigger.id} className="border-b border-slate-100">
+                    <tr key={trigger.id} className="border-b border-gray-100 dark:border-gray-800">
                       <td className="px-4 py-3">
                         <input
                           type="checkbox"
                           checked={selectedTriggers.includes(trigger.id)}
                           onChange={() => handleSelectTrigger(trigger.id)}
-                          className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                          className="h-4 w-4 rounded border-gray-300 text-custom-600 focus:ring-custom-500 dark:border-gray-600 dark:text-custom-500"
                           aria-label={`Выбрать триггер ${trigger.name}`}
                         />
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-sm font-semibold text-slate-900">{trigger.name}</span>
+                        <span className="text-sm font-semibold text-gray-900 dark:text-white">{trigger.name}</span>
                       </td>
                       <td className="px-4 py-3">
-                        <button
-                          onClick={() => handleToggleActive(trigger.id, trigger.isActive)}
-                          className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
-                            trigger.isActive ? 'bg-primary-600' : 'bg-gray-200'
-                          }`}
-                          aria-label={trigger.isActive ? 'Деактивировать' : 'Активировать'}
-                        >
-                          <span
-                            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                              trigger.isActive ? 'translate-x-5' : 'translate-x-0'
-                            }`}
-                          />
-                        </button>
+                        <KwidSwitch
+                          checked={trigger.isActive}
+                          onCheckedChange={() => handleToggleActive(trigger.id, trigger.isActive)}
+                        />
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-sm text-slate-600">{conditionText}</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{conditionText}</span>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-3">
                           <button
                             onClick={() => handleEdit(trigger)}
-                            className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center gap-1"
+                            className="text-custom-600 hover:text-custom-700 text-sm font-medium flex items-center gap-1 dark:text-custom-400 dark:hover:text-custom-300"
                           >
                             <Edit className="h-4 w-4" />
                             Изменить
                           </button>
                           <button
                             onClick={() => handleDelete(trigger.id)}
-                            className="text-rose-500 hover:text-rose-600 text-sm font-medium flex items-center gap-1"
+                            className="text-red-500 hover:text-red-600 text-sm font-medium flex items-center gap-1 dark:text-red-400 dark:hover:text-red-300"
                           >
                             <Trash2 className="h-4 w-4" />
                             Удалить
@@ -468,29 +456,34 @@ export const TriggerManager = ({ agentId }: TriggerManagerProps) => {
               </tbody>
             </table>
           </div>
-          <div className="flex items-center justify-between text-sm text-slate-500">
+          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
             <p>Показано с {filteredTriggers.length > 0 ? 1 : 0} по {filteredTriggers.length} из {triggers.length}</p>
             <div className="flex items-center gap-4">
               <p>на страницу</p>
-              <select className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100">
-                <option value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-              </select>
+              <KwidSelect
+                options={[
+                  { value: '10', label: '10' },
+                  { value: '25', label: '25' },
+                  { value: '50', label: '50' },
+                  { value: '100', label: '100' },
+                ]}
+                value="10"
+                onChange={() => {}}
+                className="w-24"
+              />
             </div>
           </div>
         </>
       )}
 
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-end bg-slate-900/40 p-4 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && setModalOpen(false)}>
-          <div className="w-full max-w-lg h-full bg-white shadow-xl overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
-              <h3 className="text-xl font-semibold text-slate-900">{editingTrigger ? 'Редактировать триггер' : 'Создать триггер'}</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-end bg-gray-900/40 p-4 backdrop-blur-sm dark:bg-gray-900/60" onClick={(e) => e.target === e.currentTarget && setModalOpen(false)}>
+          <div className="w-full max-w-lg h-full bg-white shadow-xl overflow-y-auto dark:bg-gray-900" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10 dark:bg-gray-900 dark:border-gray-800">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{editingTrigger ? 'Редактировать триггер' : 'Создать триггер'}</h3>
               <button
                 onClick={() => setModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300"
                 aria-label="Закрыть"
               >
                 <X className="h-5 w-5" />
@@ -498,54 +491,38 @@ export const TriggerManager = ({ agentId }: TriggerManagerProps) => {
             </div>
             <div className="px-6 py-6 space-y-6">
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Название<span className="text-red-500 ml-1">*</span>
-            </label>
-            <Input
-              placeholder="Например, запрос оплаты"
-              value={formData.name}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-            />
-          </div>
+          <KwidInput
+            label="Название"
+            placeholder="Например, запрос оплаты"
+            value={formData.name}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+            required
+          />
 
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-700">Активно</label>
-            <button
-              onClick={() => setFormData(prev => ({ ...prev, isActive: !prev.isActive }))}
-              className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
-                formData.isActive ? 'bg-primary-600' : 'bg-gray-200'
-              }`}
-            >
-              <span
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                  formData.isActive ? 'translate-x-5' : 'translate-x-0'
-                }`}
-              />
-            </button>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Условие<span className="text-red-500 ml-1">*</span>
-            </label>
-            <Input
-              placeholder="Например, если клиент просит оплатить"
-              value={formData.conditions[0]?.value || ''}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  conditions: [{ conditionType: 'message_contains', value: e.target.value, ordering: 0 }],
-                }))
-              }
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Активно</label>
+            <KwidSwitch
+              checked={formData.isActive}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
             />
-            <p className="mt-1 text-xs text-gray-500">
-              Укажите, когда этот триггер должен срабатывать
-            </p>
           </div>
 
+          <KwidInput
+            label="Условие"
+            placeholder="Например, если клиент просит оплатить"
+            value={formData.conditions[0]?.value || ''}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                conditions: [{ conditionType: 'message_contains', value: e.target.value, ordering: 0 }],
+              }))
+            }
+            hint="Укажите, когда этот триггер должен срабатывать"
+            required
+          />
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
               Действия<span className="text-red-500 ml-1">*</span>
             </label>
             <div className="space-y-3">
@@ -553,84 +530,75 @@ export const TriggerManager = ({ agentId }: TriggerManagerProps) => {
                 <div key={index} className="flex items-center gap-2">
                   <button
                     type="button"
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
                     aria-label="Переместить вверх"
                   >
                     <ChevronUp className="h-4 w-4" />
                   </button>
                   <button
                     type="button"
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
                     aria-label="Переместить вниз"
                   >
                     <ChevronDown className="h-4 w-4" />
                   </button>
-                  <select
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                  <KwidSelect
+                    options={[
+                      { value: '', label: 'Выбрать действие' },
+                      ...ACTION_TYPES.map((type) => ({ value: type.value, label: type.label })),
+                    ]}
                     value={action.actionType}
-                    onChange={(e) =>
+                    onChange={(value) =>
                       setFormData((prev) => ({
                         ...prev,
                         actions: prev.actions.map((a, i) =>
-                          i === index ? { ...a, actionType: e.target.value } : a,
+                          i === index ? { ...a, actionType: value } : a,
                         ),
                       }))
                     }
-                  >
-                    <option value="">Выбрать действие</option>
-                    {ACTION_TYPES.map((type) => (
-                      <option key={type.value} value={type.value}>
-                        {type.label}
-                      </option>
-                    ))}
-                  </select>
+                    className="flex-1"
+                  />
                 </div>
               ))}
-              <Button variant="outline" size="sm" onClick={addAction} className="gap-2">
+              <KwidButton variant="outline" size="sm" onClick={addAction} className="gap-2">
                 <Plus className="h-4 w-4" />
                 Добавить действие
-              </Button>
+              </KwidButton>
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Ответное сообщение
-            </label>
-            <Input
-              placeholder="Например, я обработал ваш запрос и создал задачу для нашей финансовой команды."
-              value={formData.description}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              Сообщение, возвращаемое при выполнении триггера
-            </p>
-          </div>
+          <KwidInput
+            label="Ответное сообщение"
+            placeholder="Например, я обработал ваш запрос и создал задачу для нашей финансовой команды."
+            value={formData.description}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+            hint="Сообщение, возвращаемое при выполнении триггера"
+          />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
               Лимит запусков в чате
             </label>
             <div className="flex items-center gap-2">
-              <input
+              <KwidInput
                 type="number"
-                min="0"
-                className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                min={0}
+                className="w-20"
                 value="0"
               />
-              <span className="text-sm text-gray-600">раз</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">раз</span>
             </div>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Максимальное количество запусков этого триггера в одном чате. Установите 0 для неограниченного количества.
             </p>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
-            <Button variant="outline" onClick={() => setModalOpen(false)} disabled={isSaving}>
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
+            <KwidButton variant="outline" onClick={() => setModalOpen(false)} disabled={isSaving}>
               Отменить
-            </Button>
+            </KwidButton>
             {!editingTrigger && (
-              <Button 
+              <KwidButton 
                 variant="outline" 
                 onClick={async () => {
                   await handleSave()
@@ -641,9 +609,9 @@ export const TriggerManager = ({ agentId }: TriggerManagerProps) => {
                 disabled={isSaving}
               >
                 Создать и создать еще один
-              </Button>
+              </KwidButton>
             )}
-            <Button onClick={handleSave} disabled={isSaving || !formData.name.trim() || !formData.conditions[0]?.value}>
+            <KwidButton onClick={handleSave} disabled={isSaving || !formData.name.trim() || !formData.conditions[0]?.value} variant="primary">
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -654,7 +622,7 @@ export const TriggerManager = ({ agentId }: TriggerManagerProps) => {
               ) : (
                 'Создать'
               )}
-            </Button>
+            </KwidButton>
           </div>
             </div>
           </div>

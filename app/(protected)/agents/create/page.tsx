@@ -4,22 +4,25 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 
-import { Button } from '@/components/ui/Button'
-import { Card, CardContent, CardHeader } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
+import { KwidButton, KwidInput, KwidSection } from '@/components/kwid'
 import { useToast } from '@/components/ui/toast-context'
+import { useTenantId } from '@/hooks/useTenantId'
 
 import type { Agent } from '@/types'
 
 const CreateAgentPage = () => {
   const router = useRouter()
+  const tenantId = useTenantId()
   const { push: pushToast } = useToast()
   const [agentName, setAgentName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   const handleBack = () => {
-    router.push('/agents')
+    const redirectPath = tenantId 
+      ? `/manage/${tenantId}/ai-agents`
+      : '/agents'
+    router.push(redirectPath)
   }
 
   const handleSubmit = (mode: 'create' | 'createAndNew') => {
@@ -56,7 +59,10 @@ const CreateAgentPage = () => {
         })
 
         if (mode === 'create') {
-          router.push(`/agents/${payload.data.id}`)
+          const redirectPath = tenantId 
+            ? `/manage/${tenantId}/ai-agents/${payload.data.id}/edit`
+            : `/agents/${payload.data.id}/edit`
+          router.push(redirectPath)
           return
         }
 
@@ -77,48 +83,41 @@ const CreateAgentPage = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-4">
-        <Button variant="ghost" onClick={handleBack} className="p-2">
+        <KwidButton variant="outline" size="sm" onClick={handleBack} className="p-2">
           <ArrowLeft className="w-5 h-5" />
-        </Button>
+        </KwidButton>
         <div>
-          <div className="flex items-center space-x-2 text-sm text-gray-500">
+          <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
             <span>Агенты ИИ</span>
             <span>›</span>
             <span>Создать</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mt-1">Создать Агент ИИ</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">Создать Агент ИИ</h1>
         </div>
       </div>
 
-      <Card>
-        <CardHeader className="border-b border-gray-200">
-          <div className="flex items-center space-x-2">
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            <h3 className="text-lg font-semibold text-gray-900">Профиль агента</h3>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Название<span className="text-red-500 ml-1">*</span>
-            </label>
-            <Input
-              placeholder=""
-              value={agentName}
-              onChange={(e) => setAgentName(e.target.value)}
-              required
-              autoFocus
-              disabled={isPending}
-            />
-            {error && <p className="mt-2 text-sm text-rose-600">{error}</p>}
-          </div>
+      <KwidSection
+        title="Профиль агента"
+        description="Введите название агента для начала работы"
+      >
+        <div className="space-y-6">
+          <KwidInput
+            label="Название"
+            placeholder="Введите название агента"
+            value={agentName}
+            onChange={(e) => setAgentName(e.target.value)}
+            required
+            autoFocus
+            disabled={isPending}
+            error={error || undefined}
+          />
 
-          <div className="flex items-center space-x-3">
-            <Button 
+          <div className="fi-form-actions">
+            <KwidButton 
               onClick={() => handleSubmit('create')} 
               disabled={!agentName.trim() || isPending}
+              variant="primary"
+              size="md"
             >
               {isPending ? (
                 <>
@@ -127,20 +126,21 @@ const CreateAgentPage = () => {
               ) : (
                 'Создать'
               )}
-            </Button>
-            <Button 
+            </KwidButton>
+            <KwidButton 
               variant="outline" 
+              size="md"
               onClick={() => handleSubmit('createAndNew')}
               disabled={!agentName.trim() || isPending}
             >
               Создать и создать ещё
-            </Button>
-            <Button variant="outline" onClick={handleBack} disabled={isPending}>
+            </KwidButton>
+            <KwidButton variant="outline" size="md" onClick={handleBack} disabled={isPending}>
               Отмена
-            </Button>
+            </KwidButton>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </KwidSection>
     </div>
   )
 }

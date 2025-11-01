@@ -35,6 +35,7 @@ export interface DashboardStats {
   monthlyChange: number
   weeklyResponses: number
   todayResponses: number
+  todayChange?: number // Изменение для "Today's AI Responses" vs yesterday (Kwid)
   totalAgents: number
 }
 

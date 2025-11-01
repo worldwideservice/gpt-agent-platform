@@ -5,12 +5,8 @@ import { BookOpen, FileText, MessageSquare, Target, Upload, X } from 'lucide-rea
 
 import { FileUpload } from './FileUpload'
 
-import { Button } from '@/components/ui/Button'
+import { KwidButton, KwidInput, KwidSelect, KwidTextarea, KwidTabs, KwidTabsContent } from '@/components/kwid'
 import { Card, CardContent, CardHeader } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
-import { Textarea } from '@/components/ui/Textarea'
 
 interface KnowledgeItem {
   id: string
@@ -38,9 +34,10 @@ interface ObjectionResponse {
 interface AgentTrainingPageProps {
   agentId: string
   agentName: string
+  tenantId?: string
 }
 
-export const AgentTrainingPage = ({ agentId, agentName }: AgentTrainingPageProps) => {
+export const AgentTrainingPage = ({ agentId, agentName, tenantId }: AgentTrainingPageProps) => {
   const [activeTab, setActiveTab] = useState('knowledge')
   const [knowledge, setKnowledge] = useState<KnowledgeItem[]>([])
   const [scripts, setScripts] = useState<SalesScript[]>([])
@@ -288,71 +285,60 @@ export const AgentTrainingPage = ({ agentId, agentName }: AgentTrainingPageProps
   return (
     <div className="space-y-6">
       <header className="space-y-2">
-        <h1 className="text-3xl font-semibold text-slate-900">Обучение агента: {agentName}</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">Обучение агента: {agentName}</h1>
+        <p className="text-sm text-slate-500 dark:text-gray-400">
           Загрузите знания о компании, продукты, услуги, скрипты продаж и процессы работы
         </p>
       </header>
 
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700" role="alert">
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-900/20 dark:text-rose-400" role="alert">
           {error}
         </div>
       )}
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="knowledge">
-            <BookOpen className="mr-2 h-4 w-4" /> Знания
-          </TabsTrigger>
-          <TabsTrigger value="scripts">
-            <MessageSquare className="mr-2 h-4 w-4" /> Скрипты
-          </TabsTrigger>
-          <TabsTrigger value="objections">
-            <FileText className="mr-2 h-4 w-4" /> Возражения
-          </TabsTrigger>
-          <TabsTrigger value="files">
-            <Upload className="mr-2 h-4 w-4" /> Файлы
-          </TabsTrigger>
-          <TabsTrigger value="memory">
-            <Target className="mr-2 h-4 w-4" /> Память
-          </TabsTrigger>
-        </TabsList>
-
+      <KwidTabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        tabs={[
+          { value: 'knowledge', label: 'Знания', icon: BookOpen },
+          { value: 'scripts', label: 'Скрипты', icon: MessageSquare },
+          { value: 'objections', label: 'Возражения', icon: FileText },
+          { value: 'files', label: 'Файлы', icon: Upload },
+          { value: 'memory', label: 'Память', icon: Target },
+        ]}
+        listClassName="grid w-full grid-cols-5"
+      >
         {/* Вкладка: Структурированные знания */}
-        <TabsContent value="knowledge" className="space-y-6">
+        <KwidTabsContent value="knowledge" className="space-y-6">
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold text-slate-900">Добавить новое знание</h2>
-              <p className="text-sm text-slate-500">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Добавить новое знание</h2>
+              <p className="text-sm text-slate-500 dark:text-gray-400">
                 Структурированная информация о компании для обучения агента
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Select
-                    label="Категория"
-                    value={knowledgeForm.category}
-                    onChange={(value: string) => setKnowledgeForm({ ...knowledgeForm, category: value as typeof knowledgeForm.category })}
-                    options={categoryOptions}
-                  />
-                </div>
-                <div>
-                  <Input
-                    label="Приоритет (0-100)"
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={knowledgeForm.priority.toString()}
-                    onChange={(e) =>
-                      setKnowledgeForm({ ...knowledgeForm, priority: Number.parseInt(e.target.value, 10) || 0 })
-                    }
-                  />
-                </div>
+                <KwidSelect
+                  label="Категория"
+                  value={knowledgeForm.category}
+                  onChange={(value: string) => setKnowledgeForm({ ...knowledgeForm, category: value as typeof knowledgeForm.category })}
+                  options={categoryOptions}
+                />
+                <KwidInput
+                  label="Приоритет (0-100)"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={knowledgeForm.priority.toString()}
+                  onChange={(e) =>
+                    setKnowledgeForm({ ...knowledgeForm, priority: Number.parseInt(e.target.value, 10) || 0 })
+                  }
+                />
               </div>
 
-              <Input
+              <KwidInput
                 label="Название"
                 placeholder="Например: Наш основной продукт X"
                 value={knowledgeForm.title}
@@ -360,7 +346,7 @@ export const AgentTrainingPage = ({ agentId, agentName }: AgentTrainingPageProps
                 required
               />
 
-              <Textarea
+              <KwidTextarea
                 label="Содержание"
                 placeholder="Подробное описание..."
                 rows={8}
@@ -370,7 +356,7 @@ export const AgentTrainingPage = ({ agentId, agentName }: AgentTrainingPageProps
               />
 
               <div className="flex items-center justify-end gap-3">
-                <Button variant="outline" onClick={() => setKnowledgeForm({
+                <KwidButton variant="outline" onClick={() => setKnowledgeForm({
                   category: 'company_info',
                   title: '',
                   content: '',
@@ -378,10 +364,10 @@ export const AgentTrainingPage = ({ agentId, agentName }: AgentTrainingPageProps
                   isGlobal: true,
                 })}>
                   Очистить
-                </Button>
-                <Button onClick={handleCreateKnowledge} disabled={isSaving}>
+                </KwidButton>
+                <KwidButton variant="primary" onClick={handleCreateKnowledge} disabled={isSaving}>
                   {isSaving ? 'Сохранение...' : 'Сохранить знание'}
-                </Button>
+                </KwidButton>
               </div>
             </CardContent>
           </Card>
@@ -389,18 +375,18 @@ export const AgentTrainingPage = ({ agentId, agentName }: AgentTrainingPageProps
           {/* Список знаний */}
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold text-slate-900">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                 Загруженные знания ({knowledge.length})
               </h2>
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <div className="py-8 text-center text-sm text-slate-500">Загрузка...</div>
+                <div className="py-8 text-center text-sm text-slate-500 dark:text-gray-400">Загрузка...</div>
               ) : knowledge.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-10 text-center">
-                  <BookOpen className="mx-auto h-12 w-12 text-slate-400" />
-                  <h3 className="mt-4 text-lg font-semibold text-slate-900">Нет знаний</h3>
-                  <p className="mt-2 text-sm text-slate-500">
+                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-10 text-center dark:border-gray-800 dark:bg-gray-800">
+                  <BookOpen className="mx-auto h-12 w-12 text-slate-400 dark:text-gray-500" />
+                  <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-white">Нет знаний</h3>
+                  <p className="mt-2 text-sm text-slate-500 dark:text-gray-400">
                     Добавьте знания о компании, чтобы агент мог осмысленно отвечать на вопросы
                   </p>
                 </div>
@@ -409,24 +395,24 @@ export const AgentTrainingPage = ({ agentId, agentName }: AgentTrainingPageProps
                   {knowledge.map((item) => (
                     <div
                       key={item.id}
-                      className="rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:bg-slate-50"
+                      className="rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:bg-slate-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="rounded-full bg-primary-100 px-2 py-1 text-xs font-medium text-primary-700">
+                            <span className="rounded-full bg-custom-100 px-2 py-1 text-xs font-medium text-custom-700 dark:bg-custom-900/30 dark:text-custom-400">
                               {item.category}
                             </span>
-                            <h3 className="font-semibold text-slate-900">{item.title}</h3>
+                            <h3 className="font-semibold text-slate-900 dark:text-white">{item.title}</h3>
                             {item.priority > 0 && (
-                              <span className="text-xs text-slate-500">Приоритет: {item.priority}</span>
+                              <span className="text-xs text-slate-500 dark:text-gray-400">Приоритет: {item.priority}</span>
                             )}
                           </div>
-                          <p className="mt-2 text-sm text-slate-600">{item.content.slice(0, 200)}...</p>
+                          <p className="mt-2 text-sm text-slate-600 dark:text-gray-300">{item.content.slice(0, 200)}...</p>
                         </div>
                         <button
                           type="button"
-                          className="text-slate-400 transition-colors hover:text-rose-500"
+                          className="text-slate-400 transition-colors hover:text-rose-500 dark:text-gray-500 dark:hover:text-rose-400"
                           aria-label="Удалить"
                           onClick={async () => {
                             if (!confirm('Удалить это знание?')) return
@@ -456,28 +442,28 @@ export const AgentTrainingPage = ({ agentId, agentName }: AgentTrainingPageProps
               )}
             </CardContent>
           </Card>
-        </TabsContent>
+        </KwidTabsContent>
 
         {/* Вкладка: Скрипты продаж */}
-        <TabsContent value="scripts" className="space-y-6">
+        <KwidTabsContent value="scripts" className="space-y-6">
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold text-slate-900">Скрипты продаж</h2>
-              <p className="text-sm text-slate-500">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Скрипты продаж</h2>
+              <p className="text-sm text-slate-500 dark:text-gray-400">
                 Создайте скрипты для разных этапов воронки продаж
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Форма создания скрипта */}
-              <div className="border border-slate-200 rounded-xl p-4 space-y-4">
-                <Input
+              <div className="border border-slate-200 rounded-xl p-4 space-y-4 dark:border-gray-800">
+                <KwidInput
                   label="Название скрипта"
                   placeholder="Например: Приветствие для нового клиента"
                   value={scriptForm.title}
                   onChange={(e) => setScriptForm({ ...scriptForm, title: e.target.value })}
                 />
                 <div className="grid grid-cols-2 gap-4">
-                  <Select
+                  <KwidSelect
                     label="Тип скрипта"
                     value={scriptForm.scriptType}
                     onChange={(value: string) => setScriptForm({ ...scriptForm, scriptType: value as SalesScript['scriptType'] })}
@@ -490,7 +476,7 @@ export const AgentTrainingPage = ({ agentId, agentName }: AgentTrainingPageProps
                     ]}
                   />
                 </div>
-                <Textarea
+                <KwidTextarea
                   label="Содержание скрипта"
                   placeholder="Введите текст скрипта..."
                   rows={8}
@@ -499,26 +485,26 @@ export const AgentTrainingPage = ({ agentId, agentName }: AgentTrainingPageProps
                   required
                 />
                 <div className="flex items-center justify-end gap-3">
-                  <Button variant="outline" onClick={() => setScriptForm({
+                  <KwidButton variant="outline" onClick={() => setScriptForm({
                     title: '',
                     scriptType: 'greeting',
                     content: '',
                     pipelineStageId: null,
                   })}>
                     Очистить
-                  </Button>
-                  <Button onClick={handleCreateScript} disabled={isSaving || !scriptForm.title.trim() || !scriptForm.content.trim()}>
+                  </KwidButton>
+                  <KwidButton variant="primary" onClick={handleCreateScript} disabled={isSaving || !scriptForm.title.trim() || !scriptForm.content.trim()}>
                     {isSaving ? 'Сохранение...' : 'Сохранить скрипт'}
-                  </Button>
+                  </KwidButton>
                 </div>
               </div>
 
               {/* Список скриптов */}
               {scripts.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-10 text-center">
-                  <MessageSquare className="mx-auto h-12 w-12 text-slate-400" />
-                  <h3 className="mt-4 text-lg font-semibold text-slate-900">Нет скриптов</h3>
-                  <p className="mt-2 text-sm text-slate-500">
+                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-10 text-center dark:border-gray-800 dark:bg-gray-800">
+                  <MessageSquare className="mx-auto h-12 w-12 text-slate-400 dark:text-gray-500" />
+                  <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-white">Нет скриптов</h3>
+                  <p className="mt-2 text-sm text-slate-500 dark:text-gray-400">
                     Создайте скрипты для разных этапов воронки продаж
                   </p>
                 </div>
@@ -527,21 +513,21 @@ export const AgentTrainingPage = ({ agentId, agentName }: AgentTrainingPageProps
                   {scripts.map((script) => (
                     <div
                       key={script.id}
-                      className="rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:bg-slate-50"
+                      className="rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:bg-slate-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="rounded-full bg-primary-100 px-2 py-1 text-xs font-medium text-primary-700">
+                            <span className="rounded-full bg-custom-100 px-2 py-1 text-xs font-medium text-custom-700 dark:bg-custom-900/30 dark:text-custom-400">
                               {script.scriptType}
                             </span>
-                            <h3 className="font-semibold text-slate-900">{script.title}</h3>
+                            <h3 className="font-semibold text-slate-900 dark:text-white">{script.title}</h3>
                           </div>
-                          <p className="mt-2 text-sm text-slate-600">{script.content.slice(0, 200)}...</p>
+                          <p className="mt-2 text-sm text-slate-600 dark:text-gray-300">{script.content.slice(0, 200)}...</p>
                         </div>
                         <button
                           type="button"
-                          className="text-slate-400 transition-colors hover:text-rose-500"
+                          className="text-slate-400 transition-colors hover:text-rose-500 dark:text-gray-500 dark:hover:text-rose-400"
                           aria-label="Удалить"
                           onClick={async () => {
                             if (!confirm('Удалить этот скрипт?')) return
@@ -571,14 +557,14 @@ export const AgentTrainingPage = ({ agentId, agentName }: AgentTrainingPageProps
               )}
             </CardContent>
           </Card>
-        </TabsContent>
+        </KwidTabsContent>
 
         {/* Вкладка: Загрузка файлов */}
-        <TabsContent value="files" className="space-y-6">
+        <KwidTabsContent value="files" className="space-y-6">
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold text-slate-900">Загрузка файлов</h2>
-              <p className="text-sm text-slate-500">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Загрузка файлов</h2>
+              <p className="text-sm text-slate-500 dark:text-gray-400">
                 Загрузите документы о компании, они будут автоматически обработаны и добавлены в базу знаний.
                 Система автоматически извлечет Knowledge Graph (сущности и связи) для осмысленного понимания контента.
               </p>
@@ -587,24 +573,24 @@ export const AgentTrainingPage = ({ agentId, agentName }: AgentTrainingPageProps
               <FileUpload agentId={agentId} onUploadComplete={fetchKnowledge} />
             </CardContent>
           </Card>
-        </TabsContent>
+        </KwidTabsContent>
 
         {/* Вкладка: Возражения */}
-        <TabsContent value="objections" className="space-y-6">
+        <KwidTabsContent value="objections" className="space-y-6">
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold text-slate-900">Ответы на возражения</h2>
-              <p className="text-sm text-slate-500">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Ответы на возражения</h2>
+              <p className="text-sm text-slate-500 dark:text-gray-400">
                 Создайте готовые ответы на типичные возражения клиентов
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Форма создания ответа на возражение */}
-              <div className="border border-slate-200 rounded-xl p-4 space-y-4">
-                <Select
+              <div className="border border-slate-200 rounded-xl p-4 space-y-4 dark:border-gray-800">
+                <KwidSelect
                   label="Тип возражения"
                   value={objectionForm.objectionType}
-                   onChange={(value: string) => setObjectionForm({ ...objectionForm, objectionType: value as ObjectionResponse['objectionType'] })}
+                  onChange={(value: string) => setObjectionForm({ ...objectionForm, objectionType: value as ObjectionResponse['objectionType'] })}
                   options={[
                     { value: 'price', label: 'Цена' },
                     { value: 'timing', label: 'Время' },
@@ -614,13 +600,13 @@ export const AgentTrainingPage = ({ agentId, agentName }: AgentTrainingPageProps
                     { value: 'other', label: 'Другое' },
                   ]}
                 />
-                <Input
+                <KwidInput
                   label="Пример возражения (опционально)"
                   placeholder="Например: Это слишком дорого"
                   value={objectionForm.objectionText || ''}
                   onChange={(e) => setObjectionForm({ ...objectionForm, objectionText: e.target.value })}
                 />
-                <Textarea
+                <KwidTextarea
                   label="Ответ на возражение"
                   placeholder="Введите ответ, который должен дать агент..."
                   rows={8}
@@ -629,25 +615,25 @@ export const AgentTrainingPage = ({ agentId, agentName }: AgentTrainingPageProps
                   required
                 />
                 <div className="flex items-center justify-end gap-3">
-                  <Button variant="outline" onClick={() => setObjectionForm({
+                  <KwidButton variant="outline" onClick={() => setObjectionForm({
                     objectionType: 'price',
                     objectionText: '',
                     responseScript: '',
                   })}>
                     Очистить
-                  </Button>
-                  <Button onClick={handleCreateObjection} disabled={isSaving || !objectionForm.responseScript.trim()}>
+                  </KwidButton>
+                  <KwidButton variant="primary" onClick={handleCreateObjection} disabled={isSaving || !objectionForm.responseScript.trim()}>
                     {isSaving ? 'Сохранение...' : 'Сохранить ответ'}
-                  </Button>
+                  </KwidButton>
                 </div>
               </div>
 
               {/* Список ответов на возражения */}
               {objections.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-10 text-center">
-                  <MessageSquare className="mx-auto h-12 w-12 text-slate-400" />
-                  <h3 className="mt-4 text-lg font-semibold text-slate-900">Нет ответов на возражения</h3>
-                  <p className="mt-2 text-sm text-slate-500">
+                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-10 text-center dark:border-gray-800 dark:bg-gray-800">
+                  <MessageSquare className="mx-auto h-12 w-12 text-slate-400 dark:text-gray-500" />
+                  <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-white">Нет ответов на возражения</h3>
+                  <p className="mt-2 text-sm text-slate-500 dark:text-gray-400">
                     Создайте готовые ответы на типичные возражения клиентов
                   </p>
                 </div>
@@ -656,25 +642,25 @@ export const AgentTrainingPage = ({ agentId, agentName }: AgentTrainingPageProps
                   {objections.map((objection) => (
                     <div
                       key={objection.id}
-                      className="rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:bg-slate-50"
+                      className="rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:bg-slate-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
+                            <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                               {objection.objectionType}
                             </span>
                             {objection.objectionText && (
-                              <span className="text-sm text-slate-600 italic">
+                              <span className="text-sm text-slate-600 italic dark:text-gray-300">
                                 "{objection.objectionText}"
                               </span>
                             )}
                           </div>
-                          <p className="mt-2 text-sm text-slate-700">{objection.responseScript}</p>
+                          <p className="mt-2 text-sm text-slate-700 dark:text-gray-300">{objection.responseScript}</p>
                         </div>
                         <button
                           type="button"
-                          className="text-slate-400 transition-colors hover:text-rose-500"
+                          className="text-slate-400 transition-colors hover:text-rose-500 dark:text-gray-500 dark:hover:text-rose-400"
                           aria-label="Удалить"
                           onClick={async () => {
                             if (!confirm('Удалить этот ответ на возражение?')) return
@@ -704,29 +690,29 @@ export const AgentTrainingPage = ({ agentId, agentName }: AgentTrainingPageProps
               )}
             </CardContent>
           </Card>
-        </TabsContent>
+        </KwidTabsContent>
 
         {/* Вкладка: Память агента */}
-        <TabsContent value="memory" className="space-y-6">
+        <KwidTabsContent value="memory" className="space-y-6">
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold text-slate-900">Долгосрочная память</h2>
-              <p className="text-sm text-slate-500">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Долгосрочная память</h2>
+              <p className="text-sm text-slate-500 dark:text-gray-400">
                 Агент автоматически запоминает важные факты из взаимодействий с клиентами
               </p>
             </CardHeader>
             <CardContent>
-              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-10 text-center">
-                <Target className="mx-auto h-12 w-12 text-slate-400" />
-                <h3 className="mt-4 text-lg font-semibold text-slate-900">Память агента</h3>
-                <p className="mt-2 text-sm text-slate-500">
+              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-10 text-center dark:border-gray-800 dark:bg-gray-800">
+                <Target className="mx-auto h-12 w-12 text-slate-400 dark:text-gray-500" />
+                <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-white">Память агента</h3>
+                <p className="mt-2 text-sm text-slate-500 dark:text-gray-400">
                   Память формируется автоматически на основе диалогов с клиентами
                 </p>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </KwidTabsContent>
+      </KwidTabs>
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Check, ExternalLink } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { KwidButton } from '@/components/kwid'
 import { Card } from '@/components/ui/Card'
 import type { CRMConfig } from '@/types/crm'
 
@@ -46,8 +46,8 @@ export const CRMSelector = ({ onSelect, connectedCRMs }: CRMSelectorProps) => {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Выберите CRM систему</h2>
-        <p className="text-gray-600">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2 dark:text-white">Выберите CRM систему</h2>
+        <p className="text-gray-600 dark:text-gray-400">
           Подключите вашу CRM систему для автоматической синхронизации данных
         </p>
       </div>
@@ -61,8 +61,8 @@ export const CRMSelector = ({ onSelect, connectedCRMs }: CRMSelectorProps) => {
             <Card
               key={crm.id}
               className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
-                isSelected ? 'ring-2 ring-primary-500 bg-primary-50' : ''
-              } ${isConnected ? 'border-green-200 bg-green-50' : ''}`}
+                isSelected ? 'ring-2 ring-custom-500 bg-custom-50 dark:ring-custom-400 dark:bg-custom-900/20' : ''
+              } ${isConnected ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20' : ''}`}
               onClick={() => !isConnected && handleSelect(crm)}
             >
               <div className="p-6">
@@ -74,20 +74,20 @@ export const CRMSelector = ({ onSelect, connectedCRMs }: CRMSelectorProps) => {
                       </span>
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{crm.name}</h3>
-                      <p className="text-sm text-gray-500">{crm.authType.toUpperCase()}</p>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{crm.name}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{crm.authType.toUpperCase()}</p>
                     </div>
                   </div>
                   
                   {isConnected && (
-                    <div className="flex items-center space-x-1 text-green-600">
+                    <div className="flex items-center space-x-1 text-green-600 dark:text-green-400">
                       <Check className="w-4 h-4" />
                       <span className="text-sm font-medium">Подключено</span>
                     </div>
                   )}
                 </div>
 
-                <p className="text-gray-600 text-sm mb-4">{crm.description}</p>
+                <p className="text-gray-600 text-sm mb-4 dark:text-gray-400">{crm.description}</p>
 
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center justify-between text-sm">
@@ -112,19 +112,20 @@ export const CRMSelector = ({ onSelect, connectedCRMs }: CRMSelectorProps) => {
 
                 <div className="flex items-center justify-between">
                   {isConnected ? (
-                    <Button variant="outline" size="sm" disabled>
-                      <Check className="w-4 h-4 mr-2" />
+                    <KwidButton variant="outline" size="sm" disabled className="gap-2">
+                      <Check className="w-4 h-4" />
                       Подключено
-                    </Button>
+                    </KwidButton>
                   ) : (
-                    <Button
+                    <KwidButton
                       onClick={() => handleSelect(crm)}
                       size="sm"
-                      className="w-full"
+                      variant="primary"
+                      className="w-full gap-2"
                     >
                       Подключить
-                      <ExternalLink className="w-4 h-4 ml-2" />
-                    </Button>
+                      <ExternalLink className="w-4 h-4" />
+                    </KwidButton>
                   )}
                 </div>
               </div>

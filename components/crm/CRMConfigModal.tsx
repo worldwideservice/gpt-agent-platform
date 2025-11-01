@@ -2,10 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Copy, RefreshCw, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { KwidButton, KwidInput, KwidTabs, KwidTabsContent } from '@/components/kwid'
 import { Card, CardContent } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { Modal } from '@/components/ui/Modal'
 
 interface CRMConfigModalProps {
@@ -140,138 +138,125 @@ export const CRMConfigModal = ({ isOpen, onClose, crmType, onSave }: CRMConfigMo
             <span className="text-2xl">{crmInfo.logo}</span>
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">{crmInfo.name}</h2>
-            <p className="text-sm text-gray-600">{crmInfo.description}</p>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{crmInfo.name}</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{crmInfo.description}</p>
           </div>
         </div>
 
         {/* Вкладки */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="description">Описание</TabsTrigger>
-            <TabsTrigger value="keys">Ключи и доступы</TabsTrigger>
-            <TabsTrigger value="access">Выданные доступы</TabsTrigger>
-          </TabsList>
-
+        <KwidTabs value={activeTab} onValueChange={setActiveTab} tabs={[
+          { value: 'description', label: 'Описание' },
+          { value: 'keys', label: 'Ключи и доступы' },
+          { value: 'access', label: 'Выданные доступы' },
+        ]}>
           {/* Вкладка: Описание */}
-          <TabsContent value="description">
+          <KwidTabsContent value="description">
             <Card>
               <CardContent className="space-y-4">
                 <div>
-                  <h3 className="font-medium text-gray-900 mb-2">Описание интеграции</h3>
-                  <p className="text-sm text-gray-600">
+                  <h3 className="font-medium text-gray-900 mb-2 dark:text-white">Описание интеграции</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     {crmInfo.description}
                   </p>
                 </div>
 
                 <div>
-                  <h3 className="font-medium text-gray-900 mb-2">Инструкция по подключению:</h3>
-                  <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
+                  <h3 className="font-medium text-gray-900 mb-2 dark:text-white">Инструкция по подключению:</h3>
+                  <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside dark:text-gray-400">
                     {crmInfo.instructions.map((instruction, index) => (
                       <li key={index}>{instruction}</li>
                     ))}
                   </ol>
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="text-sm font-medium text-blue-900 mb-2">Статус подключения:</h4>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 dark:bg-blue-900/20 dark:border-blue-800">
+                  <h4 className="text-sm font-medium text-blue-900 mb-2 dark:text-blue-400">Статус подключения:</h4>
                   <div className="flex items-center space-x-2">
                     {config.isConnected ? (
                       <>
-                        <CheckCircle className="w-4 h-4 text-green-600" />
-                        <span className="text-sm text-green-700">Подключено</span>
+                        <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                        <span className="text-sm text-green-700 dark:text-green-400">Подключено</span>
                       </>
                     ) : (
                       <>
-                        <AlertCircle className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">Не подключено</span>
+                        <AlertCircle className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Не подключено</span>
                       </>
                     )}
                   </div>
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          </KwidTabsContent>
 
           {/* Вкладка: Подключение */}
-          <TabsContent value="keys">
+          <KwidTabsContent value="keys">
             <Card>
               <CardContent className="space-y-6">
                 {/* Access Token */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Access Token <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    type="password"
-                    value={config.accessToken}
-                    onChange={(e) => setConfig(prev => ({ ...prev, accessToken: e.target.value }))}
-                    placeholder="Вставьте Access Token из CRM"
-                    className="flex-1"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Получите в настройках приложения CRM
-                  </p>
-                </div>
+                <KwidInput
+                  label="Access Token"
+                  type="password"
+                  value={config.accessToken}
+                  onChange={(e) => setConfig(prev => ({ ...prev, accessToken: e.target.value }))}
+                  placeholder="Вставьте Access Token из CRM"
+                  required
+                  hint="Получите в настройках приложения CRM"
+                />
 
                 {/* Domain (только для Kommo) */}
                 {crmType === 'kommo' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Домен Kommo <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      value={config.domain || ''}
-                      onChange={(e) => setConfig(prev => ({ ...prev, domain: e.target.value }))}
-                      placeholder="your-domain.kommo.com"
-                      className="flex-1"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Ваш домен в Kommo CRM
-                    </p>
-                  </div>
+                  <KwidInput
+                    label="Домен Kommo"
+                    value={config.domain || ''}
+                    onChange={(e) => setConfig(prev => ({ ...prev, domain: e.target.value }))}
+                    placeholder="your-domain.kommo.com"
+                    required
+                    hint="Ваш домен в Kommo CRM"
+                  />
                 )}
 
                 {/* Кнопка подключения */}
-                <div className="pt-4 border-t">
-                  <Button
+                <div className="pt-4 border-t dark:border-gray-800">
+                  <KwidButton
                     onClick={handleConnect}
                     disabled={!config.accessToken || isConnecting}
-                    className="w-full"
+                    variant="primary"
+                    className="w-full gap-2"
                   >
                     {isConnecting ? (
                       <>
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        <RefreshCw className="w-4 h-4 animate-spin" />
                         Подключение...
                       </>
                     ) : (
                       <>
-                        <ExternalLink className="w-4 h-4 mr-2" />
+                        <ExternalLink className="w-4 h-4" />
                         Подключить к CRM
                       </>
                     )}
-                  </Button>
-                  <p className="text-xs text-gray-500 mt-2 text-center">
+                  </KwidButton>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
                     Проверим токен и подключимся к CRM
                   </p>
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          </KwidTabsContent>
 
           {/* Вкладка: Выданные доступы */}
-          <TabsContent value="access">
+          <KwidTabsContent value="access">
             <Card>
               <CardContent className="space-y-4">
                 <div>
-                  <h3 className="font-medium text-gray-900 mb-2">Текущие подключения</h3>
+                  <h3 className="font-medium text-gray-900 mb-2 dark:text-white">Текущие подключения</h3>
                   {config.isConnected ? (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 dark:bg-green-900/20 dark:border-green-800">
                       <div className="flex items-center space-x-2 mb-2">
-                        <CheckCircle className="w-5 h-5 text-green-600" />
-                        <span className="font-medium text-green-900">Подключено</span>
+                        <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        <span className="font-medium text-green-900 dark:text-green-400">Подключено</span>
                       </div>
-                      <div className="text-sm text-green-700 space-y-1">
+                      <div className="text-sm text-green-700 space-y-1 dark:text-green-400">
                         <p>CRM: {crmInfo.name}</p>
                         <p>Последняя синхронизация: {config.lastSyncAt?.toLocaleString('ru-RU') || 'Никогда'}</p>
                         <p>Access Token: {config.accessToken ? '✓ Установлен' : '✗ Отсутствует'}</p>
@@ -279,12 +264,12 @@ export const CRMConfigModal = ({ isOpen, onClose, crmType, onSave }: CRMConfigMo
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 dark:bg-gray-800 dark:border-gray-700">
                       <div className="flex items-center space-x-2 mb-2">
-                        <AlertCircle className="w-5 h-5 text-gray-400" />
-                        <span className="font-medium text-gray-600">Не подключено</span>
+                        <AlertCircle className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                        <span className="font-medium text-gray-600 dark:text-gray-300">Не подключено</span>
                       </div>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         Для подключения перейдите на вкладку "Ключи и доступы"
                       </p>
                     </div>
@@ -295,22 +280,22 @@ export const CRMConfigModal = ({ isOpen, onClose, crmType, onSave }: CRMConfigMo
                   <div>
                     <h3 className="font-medium text-gray-900 mb-2">Действия</h3>
                     <div className="space-y-2">
-                      <Button variant="outline" size="sm" className="w-full">
+                      <KwidButton variant="outline" size="sm" className="w-full">
                         Синхронизировать данные
-                      </Button>
-                      <Button variant="outline" size="sm" className="w-full">
+                      </KwidButton>
+                      <KwidButton variant="outline" size="sm" className="w-full">
                         Обновить токены
-                      </Button>
-                      <Button variant="destructive" size="sm" className="w-full">
+                      </KwidButton>
+                      <KwidButton variant="danger" size="sm" className="w-full">
                         Отключить
-                      </Button>
+                      </KwidButton>
                     </div>
                   </div>
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+          </KwidTabsContent>
+        </KwidTabs>
       </div>
     </Modal>
   )

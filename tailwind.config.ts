@@ -11,6 +11,19 @@ const config: Config = {
   theme: {
   	extend: {
   		colors: {
+  			// Custom цвета для реплики Kwid (Filament стиль)
+  			custom: {
+  				'50': '#f0f9ff',
+  				'100': '#e0f2fe',
+  				'200': '#bae6fd',
+  				'300': '#7dd3fc',
+  				'400': '#38bdf8',
+  				'500': '#0ea5e9',
+  				'600': '#0284c7', // Основной цвет Kwid
+  				'700': '#0369a1',
+  				'800': '#075985',
+  				'900': '#0c4a6e',
+  			},
   			primary: {
   				'50': '#eff6ff',
   				'100': '#dbeafe',
@@ -78,6 +91,9 @@ const config: Config = {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
+  		},
+  		fontFamily: {
+  			sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
   		}
   	}
   },

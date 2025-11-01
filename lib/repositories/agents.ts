@@ -345,11 +345,15 @@ const loadDashboardStatsFromView = async (
 
   const totalAgents = await countAgents(supabase, organizationId)
 
+  // Kwid: Получаем todayChange из view или вычисляем (если есть поле today_change)
+  const todayChange = (row as any).today_change ?? 0
+
   return {
     monthlyResponses: row.monthly_responses,
     monthlyChange: row.monthly_change,
     weeklyResponses: row.weekly_responses,
     todayResponses: row.today_responses,
+    todayChange,
     totalAgents,
   }
 }
@@ -375,11 +379,15 @@ const loadDashboardStatsFromFunction = async (
 
   const totalAgents = await countAgents(supabase, organizationId)
 
+  // Kwid: Получаем todayChange из функции или вычисляем
+  const todayChange = (result as any).today_change ?? 0
+
   return {
     monthlyResponses: result.monthly_responses,
     monthlyChange: result.monthly_change,
     weeklyResponses: result.weekly_responses,
     todayResponses: result.today_responses,
+    todayChange,
     totalAgents,
   }
 }
@@ -397,25 +405,27 @@ const buildDashboardStatsFromAgents = async (
 
   if (error) {
     console.error('Failed to load agent activity metrics', error)
-    return {
-      monthlyResponses: 0,
-      monthlyChange: 0,
-      weeklyResponses: 0,
-      todayResponses: 0,
-      totalAgents,
-    }
+  return {
+    monthlyResponses: 0,
+    monthlyChange: 0,
+    weeklyResponses: 0,
+    todayResponses: 0,
+    todayChange: 0,
+    totalAgents,
+  }
   }
 
   const metrics = (data as AgentActivityMetricRow[] | null) ?? []
 
   if (metrics.length === 0) {
-    return {
-      monthlyResponses: 0,
-      monthlyChange: 0,
-      weeklyResponses: 0,
-      todayResponses: 0,
-      totalAgents,
-    }
+  return {
+    monthlyResponses: 0,
+    monthlyChange: 0,
+    weeklyResponses: 0,
+    todayResponses: 0,
+    todayChange: 0,
+    totalAgents,
+  }
   }
 
   const now = new Date()
@@ -445,11 +455,26 @@ const buildDashboardStatsFromAgents = async (
   const previousMonthResponses = calculatePreviousMonthTotal(metrics, now)
   const monthlyChange = calculatePercentageChange(previousMonthResponses, monthlyResponses)
 
+  // Kwid: Расчет изменения для "Today's AI Responses" vs yesterday
+  const yesterday = new Date(now)
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1)
+  let yesterdayResponses = 0
+
+  metrics.forEach((metric) => {
+    const activityDate = new Date(metric.activity_date)
+    if (isSameUTCDate(activityDate, yesterday)) {
+      yesterdayResponses += metric.messages_count
+    }
+  })
+
+  const todayChange = calculatePercentageChange(yesterdayResponses, todayResponses)
+
   return {
     monthlyResponses,
     monthlyChange,
     weeklyResponses,
     todayResponses,
+    todayChange, // Добавляем изменение для "Today's AI Responses"
     totalAgents,
   }
 }

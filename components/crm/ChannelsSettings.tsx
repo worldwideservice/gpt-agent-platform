@@ -2,8 +2,7 @@
 
 import { MessageSquare, RefreshCw } from 'lucide-react'
 
-import { Button } from '@/components/ui/Button'
-import { Toggle } from '@/components/ui/Toggle'
+import { KwidButton, KwidSwitch } from '@/components/kwid'
 
 interface ChannelItem {
   id: string
@@ -42,13 +41,13 @@ export const ChannelsSettings = ({
   const hasChannels = channels.length > 0
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6">
+    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5 text-slate-500" />
-          <h2 className="text-lg font-semibold text-slate-900">Каналы</h2>
+          <MessageSquare className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Каналы</h2>
         </div>
-        <Button
+        <KwidButton
           onClick={handleSync}
           disabled={disabled || isSyncing}
           variant="outline"
@@ -57,49 +56,46 @@ export const ChannelsSettings = ({
         >
           <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
           Синхронизировать настройки CRM
-        </Button>
+        </KwidButton>
       </div>
 
-      <p className="mb-6 text-sm text-gray-600">
+      <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
         Выберите каналы, в которых агент может отвечать
       </p>
 
       <div className="mb-6">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-gray-700">Все каналы</label>
-          <button
-            onClick={() => onAllChannelsToggle(!allChannelsEnabled)}
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Все каналы</p>
+          </div>
+          <KwidSwitch
+            checked={allChannelsEnabled}
+            onCheckedChange={(checked) => onAllChannelsToggle(checked)}
             disabled={disabled}
-            className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
-              allChannelsEnabled ? 'bg-primary-600' : 'bg-gray-200'
-            }`}
-          >
-            <span
-              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                allChannelsEnabled ? 'translate-x-5' : 'translate-x-0'
-              }`}
-            />
-          </button>
+          />
         </div>
       </div>
 
       {!allChannelsEnabled ? (
         hasChannels ? (
           <div className="space-y-4">
-            <h3 className="text-sm font-medium text-slate-600">Доступные каналы</h3>
+            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Доступные каналы</h3>
             {channels.map((channel) => (
-              <Toggle
-                key={channel.id}
-                checked={channel.isActive}
-                onChange={(enabled) => onChannelToggle(channel.id, enabled)}
-                label={channel.name}
-                description={`Тип: ${channel.type}`}
-                disabled={disabled}
-              />
+              <div key={channel.id} className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{channel.name}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Тип: {channel.type}</p>
+                </div>
+                <KwidSwitch
+                  checked={channel.isActive}
+                  onCheckedChange={(enabled) => onChannelToggle(channel.id, enabled)}
+                  disabled={disabled}
+                />
+              </div>
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+          <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
             Нет данных о каналах. Синхронизируйте интеграцию с CRM.
           </div>
         )

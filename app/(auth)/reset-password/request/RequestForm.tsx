@@ -4,9 +4,8 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { Mail } from 'lucide-react'
 
-import { Button } from '@/components/ui/Button'
+import { KwidButton, KwidInput } from '@/components/kwid'
 import { Card } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
 
 interface ResetResponse {
   success: boolean
@@ -62,30 +61,26 @@ export const RequestForm = () => {
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="email">
-            Email
-          </label>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-          />
-        </div>
+        <KwidInput
+          id="email"
+          label="Email"
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          required
+        />
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         {isSuccess && (
-          <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+          <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
             Если указанный email зарегистрирован, мы отправили инструкцию по сбросу пароля.
           </div>
         )}
 
-        <Button type="submit" className="w-full" disabled={isPending}>
+        <KwidButton type="submit" variant="primary" className="w-full" disabled={isPending}>
           {isPending ? 'Отправка...' : 'Отправить ссылку'}
-        </Button>
+        </KwidButton>
       </form>
 
       <div className="mt-6 text-center text-sm text-gray-600">

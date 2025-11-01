@@ -26,7 +26,7 @@ const TrainingPage = async ({ params }: TrainingPageProps) => {
       redirect('/agents')
     }
 
-    return <AgentTrainingPage agentId={id} agentName={agent.name} />
+    return <AgentTrainingPage agentId={id} agentName={agent.name} tenantId={undefined} />
   } catch (error) {
     console.error('Failed to load agent', error)
     redirect('/agents')

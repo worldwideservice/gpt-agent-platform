@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { Bell, Calendar, LogOut, Menu, Search, X } from 'lucide-react'
+import { signOut } from 'next-auth/react'
 import Link from 'next/link'
 
 import { SignOutButton } from '@/components/auth/SignOutButton'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
+import { KwidButton, KwidInput } from '@/components/kwid'
 import { formatTimestamp } from '@/lib/repositories/notifications'
 
 import type { Notification } from '@/lib/repositories/notifications'
@@ -16,6 +18,8 @@ interface HeaderProps {
     name?: string | null
     email?: string | null
   }
+  subscriptionRenewsAt?: string | null
+  tenantId?: string
 }
 
 const formatInitials = (value?: string | null): string => {
@@ -38,7 +42,7 @@ const formatInitials = (value?: string | null): string => {
   return trimmed.slice(0, 2).toUpperCase()
 }
 
-export const Header = ({ user }: HeaderProps) => {
+export const Header = ({ user, subscriptionRenewsAt, tenantId }: HeaderProps) => {
   const today = new Intl.DateTimeFormat('ru-RU', {
     weekday: 'short',
     day: '2-digit',
@@ -170,42 +174,47 @@ export const Header = ({ user }: HeaderProps) => {
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur lg:px-6">
+    <header className="fi-topbar sticky top-0 z-20 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur dark:border-gray-800 dark:bg-gray-900/90 lg:px-6">
       <div className="flex items-center gap-4">
-        {/* Логотип слева */}
-        <div className="hidden items-center gap-3 md:flex">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-600 text-sm font-semibold text-white">WW</div>
-            <div>
-              <p className="text-base font-semibold text-slate-900">GPT Агент</p>
-              <p className="-mt-0.5 text-[11px] leading-none text-slate-500">Trainable virtual employee</p>
-            </div>
-          </Link>
-        </div>
-
-        {/* Поиск по центру */}
-        <form className="relative ml-0 flex-1" action="/search" role="search">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-          <input
-            type="search"
-            name="q"
-            placeholder="Поиск"
-            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
-            autoComplete="off"
-          />
+        {/* Kwid: Global Search (слева) */}
+        <form className="fi-global-search relative ml-0 flex-1" action="/search" role="search">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-slate-400 dark:text-gray-500" />
+            <KwidInput
+              type="search"
+              name="q"
+              placeholder="Поиск"
+              className="w-full pl-10"
+              autoComplete="off"
+            />
+          </div>
         </form>
 
-        {/* Правая часть: дата, уведомления, пользователь */}
+        {/* Правая часть: дата подписки, уведомления, пользователь */}
         <div className="flex items-center justify-end gap-3">
-          <div className="hidden items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600 sm:flex">
-            <Calendar className="h-4 w-4 text-slate-400" />
-            <span>{today}</span>
-          </div>
+          {/* Kwid: Дата подписки с ссылкой на Pricing */}
+          {subscriptionRenewsAt && (
+            <Link 
+              href={tenantId ? `/manage/${tenantId}/pricing` : '/pricing'}
+              className="hidden items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 sm:flex"
+            >
+              <Calendar className="h-4 w-4 text-slate-400 dark:text-gray-500" />
+              <span>{new Date(subscriptionRenewsAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}</span>
+            </Link>
+          )}
+          {!subscriptionRenewsAt && (
+            <div className="hidden items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600 dark:bg-gray-800 dark:text-gray-300 sm:flex">
+              <Calendar className="h-4 w-4 text-slate-400 dark:text-gray-500" />
+              <span>{today}</span>
+            </div>
+          )}
 
           <div className="relative">
-            <button
+            <KwidButton
               type="button"
-              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:border-primary-200 hover:text-primary-600"
+              variant="outline"
+              size="sm"
+              className="fi-topbar-database-notifications-btn relative h-10 w-10 rounded-full"
               aria-label="Уведомления"
               onClick={toggleNotifications}
             >
@@ -219,80 +228,90 @@ export const Header = ({ user }: HeaderProps) => {
                       : unreadCount}
                 </span>
               )}
-            </button>
+            </KwidButton>
 
             {notificationsOpen && (
-              <div className="absolute right-0 mt-3 w-80 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+              <div className="absolute right-0 mt-3 w-80 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl dark:border-gray-800 dark:bg-gray-900">
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-slate-900">
-                    Уведомления <span className="text-slate-500">({notifications.length})</span>
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                    Уведомления <span className="text-slate-500 dark:text-gray-400">({notifications.length})</span>
                   </h3>
                   <div className="flex gap-2">
                     {unreadCount > 0 && (
-                      <button
+                      <KwidButton
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={handleMarkAllRead}
-                        className="text-xs font-medium text-primary-600 hover:underline"
+                        className="text-xs"
                       >
                         Отметить как прочитанное
-                      </button>
+                      </KwidButton>
                     )}
                     {notifications.length > 0 && (
-                      <button
+                      <KwidButton
                         type="button"
+                        variant="danger"
+                        size="sm"
                         onClick={handleDeleteAll}
-                        className="text-xs font-medium text-rose-600 hover:underline"
+                        className="text-xs"
                       >
                         Удалить
-                      </button>
+                      </KwidButton>
                     )}
                   </div>
                 </div>
                 <div className="max-h-72 space-y-3 overflow-y-auto pr-1">
                   {isLoadingNotifications ? (
-                    <div className="py-8 text-center text-sm text-slate-500">Загрузка...</div>
+                    <div className="py-8 text-center text-sm text-slate-500 dark:text-gray-400">Загрузка...</div>
                   ) : notifications.length === 0 ? (
-                    <div className="py-8 text-center text-sm text-slate-500">Нет уведомлений</div>
+                    <div className="py-8 text-center text-sm text-slate-500 dark:text-gray-400">Нет уведомлений</div>
                   ) : (
                     notifications.map((notification) => (
                       <div
                         key={notification.id}
-                        className={`relative rounded-xl border p-3 ${
-                          notification.isRead ? 'border-slate-100 bg-slate-50' : 'border-slate-200 bg-white'
+                        className={`relative rounded-xl border p-3 dark:border-gray-800 ${
+                          notification.isRead 
+                            ? 'border-slate-100 bg-slate-50 dark:bg-gray-800' 
+                            : 'border-slate-200 bg-white dark:bg-gray-900'
                         }`}
                       >
-                        <button
+                        <KwidButton
                           type="button"
+                          variant="outline"
+                          size="sm"
                           onClick={() => handleDeleteNotification(notification.id)}
-                          className="absolute right-2 top-2 text-slate-400 transition-colors hover:text-slate-600"
+                          className="absolute right-2 top-2 h-6 w-6 rounded-full p-0"
                           aria-label="Закрыть уведомление"
                         >
                           <X className="h-4 w-4" />
-                        </button>
-                        <p className="pr-6 text-sm font-semibold text-slate-900">{notification.title}</p>
+                        </KwidButton>
+                        <p className="pr-6 text-sm font-semibold text-slate-900 dark:text-white">{notification.title}</p>
                         {notification.message && (
-                          <p className="mt-1 text-xs text-slate-500">{notification.message}</p>
+                          <p className="mt-1 text-xs text-slate-500 dark:text-gray-400">{notification.message}</p>
                         )}
-                        <p className="mt-2 text-[11px] uppercase tracking-wide text-slate-400">
+                        <p className="mt-2 text-[11px] uppercase tracking-wide text-slate-400 dark:text-gray-500">
                           {formatTimestamp(notification.createdAt)}
                         </p>
                         {notification.linkUrl && notification.linkText && (
                           <Link
                             href={notification.linkUrl}
                             onClick={() => !notification.isRead && handleMarkAsRead(notification.id)}
-                            className="mt-3 inline-flex items-center text-xs font-semibold text-primary-600 hover:underline"
+                            className="mt-3 inline-flex items-center text-xs font-semibold text-custom-600 hover:underline dark:text-custom-400"
                           >
                             {notification.linkText}
                           </Link>
                         )}
                         {!notification.isRead && !notification.linkUrl && (
-                          <button
+                          <KwidButton
                             type="button"
+                            variant="outline"
+                            size="sm"
                             onClick={() => handleMarkAsRead(notification.id)}
-                            className="mt-2 text-xs text-slate-500 hover:text-slate-700"
+                            className="mt-2 text-xs"
                           >
                             Отметить как прочитанное
-                          </button>
+                          </KwidButton>
                         )}
                       </div>
                     ))
@@ -313,23 +332,28 @@ export const Header = ({ user }: HeaderProps) => {
             <LanguageSwitcher />
             <ThemeToggle />
             <div className="relative">
-              <button
+              <KwidButton
                 type="button"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:border-primary-200 hover:text-primary-600"
+                variant="outline"
+                size="sm"
+                className="h-10 w-10 rounded-full"
                 aria-label="Меню пользователя"
                 onClick={toggleUserMenu}
               >
                 <Menu className="h-5 w-5" />
-              </button>
+              </KwidButton>
               {userMenuOpen && (
-                <div className="absolute right-0 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
-                  <button
+                <div className="absolute right-0 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                  <KwidButton
                     type="button"
-                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50"
-                    onClick={() => undefined}
+                    variant="danger"
+                    className="w-full justify-start gap-3 px-4 py-2 text-sm"
+                    onClick={() => {
+                      void signOut({ callbackUrl: '/login' })
+                    }}
                   >
                     <LogOut className="h-4 w-4" /> Выйти
-                  </button>
+                  </KwidButton>
                 </div>
               )}
             </div>

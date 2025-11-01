@@ -4,7 +4,7 @@ import type { ErrorInfo, ReactNode } from 'react'
 import { Component } from 'react'
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react'
 
-import { Button } from '@/components/ui/Button'
+import { KwidButton } from '@/components/kwid'
 import { logger } from '@/lib/utils'
 
 interface ErrorBoundaryProps {
@@ -126,23 +126,23 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             )}
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button onClick={this.handleRetry} variant="default" className="gap-2">
+              <KwidButton onClick={this.handleRetry} variant="primary" className="gap-2">
                 <RefreshCw className="h-4 w-4" />
                 Попробовать снова
-              </Button>
-              <Button onClick={this.handleGoHome} variant="outline" className="gap-2">
+              </KwidButton>
+              <KwidButton onClick={this.handleGoHome} variant="outline" className="gap-2">
                 <Home className="h-4 w-4" />
                 На главную
-              </Button>
+              </KwidButton>
               {this.state.error && (
-                <Button
+                <KwidButton
                   onClick={() => this.handleReportError()}
                   variant="secondary"
                   className="gap-2"
                 >
                   <Bug className="h-4 w-4" />
                   Сообщить об ошибке
-                </Button>
+                </KwidButton>
               )}
             </div>
 

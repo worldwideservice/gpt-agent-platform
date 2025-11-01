@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Save } from 'lucide-react'
+import { useTenantId } from '@/hooks/useTenantId'
 
-import { Button } from '@/components/ui/Button'
-import { Card, CardContent, CardHeader } from '@/components/ui/Card'
+import { KwidButton, KwidSection } from '@/components/kwid'
 
 interface AgentPipelinesPageProps {
   params: {
@@ -62,6 +62,7 @@ const mockPipelines: Pipeline[] = [
 
 const AgentPipelinesPage = ({ params }: AgentPipelinesPageProps) => {
   const router = useRouter()
+  const tenantId = useTenantId()
   const [selectedPipelines, setSelectedPipelines] = useState<string[]>(['1'])
   const [selectedStages, setSelectedStages] = useState<Record<string, string[]>>({
     '1': ['1', '2', '3', '4'],
@@ -69,7 +70,10 @@ const AgentPipelinesPage = ({ params }: AgentPipelinesPageProps) => {
   const [isSaving, setIsSaving] = useState(false)
 
   const handleBack = () => {
-    router.push(`/agents/${params.id}`)
+    const redirectPath = tenantId 
+      ? `/manage/${tenantId}/ai-agents/${params.id}/edit`
+      : `/agents/${params.id}/edit`
+    router.push(redirectPath)
   }
 
   const handlePipelineToggle = (pipelineId: string) => {
@@ -125,7 +129,10 @@ const AgentPipelinesPage = ({ params }: AgentPipelinesPageProps) => {
     // Здесь будет сохранение настроек
     setTimeout(() => {
       setIsSaving(false)
-      router.push(`/agents/${params.id}`)
+      const redirectPath = tenantId 
+        ? `/manage/${tenantId}/ai-agents/${params.id}/edit`
+        : `/agents/${params.id}/edit`
+      router.push(redirectPath)
     }, 1000)
   }
 
@@ -133,43 +140,38 @@ const AgentPipelinesPage = ({ params }: AgentPipelinesPageProps) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" onClick={handleBack} className="p-2">
+          <KwidButton variant="outline" onClick={handleBack} className="p-2">
             <ArrowLeft className="w-5 h-5" />
-          </Button>
+          </KwidButton>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               Настройка воронок и этапов
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-gray-600 mt-1 dark:text-gray-400">
               Выберите воронки и этапы сделок, где агент должен работать
             </p>
           </div>
         </div>
-        <Button onClick={handleSave} disabled={isSaving}>
-          <Save className="w-5 h-5 mr-2" />
+        <KwidButton variant="primary" onClick={handleSave} disabled={isSaving} className="gap-2">
+          <Save className="w-5 h-5" />
           {isSaving ? 'Сохранение...' : 'Сохранить'}
-        </Button>
+        </KwidButton>
       </div>
 
-      <Card className="bg-blue-50 border-blue-200">
-        <CardContent>
-          <div className="flex items-start space-x-3">
-            <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-white text-sm font-bold">!</span>
-            </div>
-            <div>
-              <p className="font-semibold text-blue-900 mb-1">
-                Рекомендация для тестирования
-              </p>
-              <p className="text-sm text-blue-800">
-                Создайте тестовую воронку в Kommo и предоставьте доступ Агенту ИИ только к
-                этой воронке. Это позволит безопасно тестировать Агента ИИ, не влияя на
-                другие процессы.
-              </p>
-            </div>
+      <KwidSection title="Рекомендация для тестирования" className="bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
+        <div className="flex items-start space-x-3">
+          <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+            <span className="text-white text-sm font-bold">!</span>
           </div>
-        </CardContent>
-      </Card>
+          <div>
+            <p className="text-sm text-blue-800 dark:text-blue-300">
+              Создайте тестовую воронку в Kommo и предоставьте доступ Агенту ИИ только к
+              этой воронке. Это позволит безопасно тестировать Агента ИИ, не влияя на
+              другие процессы.
+            </p>
+          </div>
+        </div>
+      </KwidSection>
 
       <div className="space-y-6">
         {mockPipelines.map(pipeline => {
@@ -177,9 +179,10 @@ const AgentPipelinesPage = ({ params }: AgentPipelinesPageProps) => {
           const pipelineStages = selectedStages[pipeline.id] || []
 
           return (
-            <Card key={pipeline.id}>
-              <CardHeader className="border-b border-gray-200">
-                <div className="flex items-center justify-between">
+            <KwidSection
+              key={pipeline.id}
+              title={
+                <div className="flex items-center justify-between w-full">
                   <label className="flex items-center space-x-3 cursor-pointer">
                     <input
                       type="checkbox"
@@ -187,33 +190,33 @@ const AgentPipelinesPage = ({ params }: AgentPipelinesPageProps) => {
                       onChange={() => handlePipelineToggle(pipeline.id)}
                       className="w-5 h-5 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
                     />
-                    <span className="text-lg font-semibold text-gray-900">
+                    <span className="text-lg font-semibold text-gray-900 dark:text-white">
                       {pipeline.name}
                     </span>
                   </label>
                   {isPipelineSelected && (
                     <div className="flex items-center space-x-2">
-                      <Button
-                        variant="ghost"
+                      <KwidButton
+                        variant="outline"
                         size="sm"
                         onClick={() => handleSelectAllStages(pipeline.id)}
                       >
                         Выбрать все
-                      </Button>
-                      <Button
-                        variant="ghost"
+                      </KwidButton>
+                      <KwidButton
+                        variant="outline"
                         size="sm"
                         onClick={() => handleDeselectAllStages(pipeline.id)}
                       >
                         Снять все
-                      </Button>
+                      </KwidButton>
                     </div>
                   )}
                 </div>
-              </CardHeader>
-
+              }
+            >
               {isPipelineSelected && (
-                <CardContent>
+                <div>
                   <div className="space-y-2">
                     {pipeline.stages.map(stage => (
                       <label
@@ -250,7 +253,7 @@ const AgentPipelinesPage = ({ params }: AgentPipelinesPageProps) => {
                                   : '#6b7280',
                             }}
                           />
-                          <span className="text-sm font-medium text-gray-900">
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">
                             {stage.name}
                           </span>
                         </div>
@@ -264,22 +267,20 @@ const AgentPipelinesPage = ({ params }: AgentPipelinesPageProps) => {
                       из {pipeline.stages.length}
                     </p>
                   </div>
-                </CardContent>
+                </div>
               )}
-            </Card>
+            </KwidSection>
           )
         })}
       </div>
 
       {selectedPipelines.length === 0 && (
-        <Card className="bg-yellow-50 border-yellow-200">
-          <CardContent>
-            <p className="text-yellow-800">
-              ⚠️ Не выбрано ни одной воронки. Агент не будет работать, пока вы не выберете
-              хотя бы одну воронку и этап.
-            </p>
-          </CardContent>
-        </Card>
+        <KwidSection title="Внимание" className="bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
+          <p className="text-yellow-800 dark:text-yellow-300">
+            ⚠️ Не выбрано ни одной воронки. Агент не будет работать, пока вы не выберете
+            хотя бы одну воронку и этап.
+          </p>
+        </KwidSection>
       )}
     </div>
   )

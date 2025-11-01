@@ -5,14 +5,16 @@ import Link from 'next/link'
 import { Loader2, Plus, Search, Filter } from 'lucide-react'
 
 import { AgentTable } from '@/components/agents/AgentTable'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { KwidButton } from '@/components/kwid'
+import { KwidInput } from '@/components/kwid'
+import { useTenantId } from '@/hooks/useTenantId'
 
 import type { Agent } from '@/types'
 
 interface AgentsClientProps {
   initialAgents: Agent[]
   total: number
+  tenantId?: string
 }
 
 interface AgentsApiResponse {
@@ -26,7 +28,7 @@ interface AgentsApiResponse {
 
 const SEARCH_DEBOUNCE_MS = 350
 
-export const AgentsClient = ({ initialAgents, total }: AgentsClientProps) => {
+export const AgentsClient = ({ initialAgents, total, tenantId }: AgentsClientProps) => {
   const [agents, setAgents] = useState<Agent[]>(initialAgents)
   const [totalCount, setTotalCount] = useState(total)
   const [searchTerm, setSearchTerm] = useState('')
@@ -34,8 +36,25 @@ export const AgentsClient = ({ initialAgents, total }: AgentsClientProps) => {
   const [isPending, startTransition] = useTransition()
   const isInitialFetch = useRef(true)
   const [selectedAgents, setSelectedAgents] = useState<string[]>([])
+  const activeTenantId = useTenantId() || tenantId
 
   const hasAgents = agents.length > 0
+  
+  // Функция для построения пути с tenant-id
+  const getPath = (path: string) => {
+    if (activeTenantId) {
+      const cleanPath = path.startsWith('/') ? path.slice(1) : path
+      const mapping: Record<string, string> = {
+        'agents': 'ai-agents',
+        'agents/create': 'ai-agents/create',
+        'agents/[id]': 'ai-agents/[id]',
+        'agents/[id]/edit': 'ai-agents/[id]/edit',
+      }
+      const mappedPath = mapping[cleanPath] || cleanPath
+      return `/manage/${activeTenantId}/${mappedPath.replace('[id]', '')}`
+    }
+    return path
+  }
 
   const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value)
@@ -279,14 +298,16 @@ export const AgentsClient = ({ initialAgents, total }: AgentsClientProps) => {
     <div className="space-y-8">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-slate-900">Агенты ИИ</h1>
-          <p className="mt-1 text-sm text-slate-500">Управляйте поведением и статусом виртуальных сотрудников</p>
+          {/* Kwid: Заголовок "AI Agents" */}
+          <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">AI Agents</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Управляйте поведением и статусом виртуальных сотрудников</p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          {/* Kwid: Поиск агентов */}
           <div className="relative flex items-center gap-2 w-full sm:w-72">
             <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-              <Input
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+              <KwidInput
                 type="search"
                 placeholder="Поиск"
                 value={searchTerm}
@@ -295,28 +316,30 @@ export const AgentsClient = ({ initialAgents, total }: AgentsClientProps) => {
                 className="pl-10"
               />
             </div>
+            {/* Kwid: Toggle columns (показать/скрыть колонки) - кнопка фильтров */}
             <button
               type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-colors hover:border-primary-200 hover:text-primary-600"
-              aria-label="Фильтры"
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-colors hover:border-custom-200 hover:text-custom-600 dark:border-gray-700 dark:text-gray-400 dark:hover:border-custom-700 dark:hover:text-custom-400"
+              aria-label="Toggle columns"
             >
               <Filter className="h-5 w-5" />
             </button>
           </div>
-          <Link href="/agents/create" className="w-full sm:w-auto">
-            <Button className="w-full sm:w-auto">
-              <Plus className="mr-2 h-4 w-4" />Создать
-            </Button>
+          {/* Kwid: Кнопка "New AI Agent" */}
+          <Link href={activeTenantId ? `/manage/${activeTenantId}/ai-agents/create` : '/agents/create'} className="w-full sm:w-auto">
+            <KwidButton variant="primary" size="md" className="w-full sm:w-auto">
+              <Plus className="mr-2 h-4 w-4" />New AI Agent
+            </KwidButton>
           </Link>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-5 py-4 text-sm text-slate-600 shadow-sm">
-        Всего агентов: <span className="font-semibold text-slate-900">{totalCount}</span>
+      <div className="rounded-xl border border-dashed border-gray-300 bg-white px-5 py-4 text-sm text-gray-600 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
+        Всего агентов: <span className="font-semibold text-gray-900 dark:text-white">{totalCount}</span>
       </div>
 
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700" role="alert">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400" role="alert">
           {error}
         </div>
       )}
@@ -332,11 +355,11 @@ export const AgentsClient = ({ initialAgents, total }: AgentsClientProps) => {
         onSelectAll={handleSelectAll}
       />
 
-      <div className="flex items-center justify-between text-sm text-slate-500">
+      <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
         <p aria-live="polite">{resultLabel}</p>
         <div className="flex items-center gap-4">
-          <p className="text-sm text-slate-500">на страницу</p>
-          <select className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100">
+          <p className="text-sm text-gray-500 dark:text-gray-400">на страницу</p>
+          <select className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:border-custom-500 focus:outline-none focus:ring-2 focus:ring-custom-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-custom-400 dark:focus:ring-custom-900/20">
             <option value="10">10</option>
             <option value="25">25</option>
             <option value="50">50</option>
