@@ -78,23 +78,30 @@ export const {
             let user: DatabaseUser | null = null
 
             try {
-              console.log('NextAuth: Looking for user with email:', email)
+              console.log('[NextAuth] Looking for user with email:', email)
               user = await Promise.race([
                 UserRepository.findUserByEmail(email),
                 new Promise<never>((_, reject) =>
                   setTimeout(() => reject(new Error('Database timeout')), 5000)
                 )
               ])
-              console.log('NextAuth: User found:', !!user, user?.id)
+              console.log('[NextAuth] User found:', !!user, user?.id, user?.email)
+              if (!user) {
+                console.log('[NextAuth] User not found in database')
+                return null
+              }
             } catch (error) {
-              console.error('NextAuth: Error finding user:', error)
+              console.error('[NextAuth] Error finding user:', error)
+              if (error instanceof Error) {
+                console.error('[NextAuth] Error details:', error.message, error.stack)
+              }
               if (process.env.NODE_ENV !== 'production' && email === 'founder@example.com' && password === 'Demo1234!') {
-                console.log('NextAuth: Using demo user fallback')
+                console.log('[NextAuth] Using demo user fallback')
                 return createDemoUser()
               }
 
               // Если это таймаут или ошибка БД, возвращаем null вместо throw
-              console.log('NextAuth: Database error, returning null')
+              console.log('[NextAuth] Database error, returning null')
               return null
             }
 
@@ -112,21 +119,30 @@ export const {
             }
 
             try {
-              console.log('NextAuth: Checking password for user:', user.id)
+              console.log('[NextAuth] Checking password for user:', user.id)
+              console.log('[NextAuth] Has password_hash:', !!user.password_hash)
+              if (!user.password_hash) {
+                console.log('[NextAuth] User has no password_hash')
+                return null
+              }
+              
               const passwordMatch = await Promise.race([
-                compare(password, user.password_hash ?? ''),
+                compare(password, user.password_hash),
                 new Promise<never>((_, reject) =>
                   setTimeout(() => reject(new Error('Password check timeout')), 3000)
                 )
               ])
-              console.log('NextAuth: Password match:', passwordMatch)
+              console.log('[NextAuth] Password match result:', passwordMatch)
 
               if (!passwordMatch) {
-                console.log('NextAuth: Password does not match')
+                console.log('[NextAuth] Password does not match - returning null')
                 return null
               }
             } catch (error) {
-              console.error('NextAuth: Password check error:', error)
+              console.error('[NextAuth] Password check error:', error)
+              if (error instanceof Error) {
+                console.error('[NextAuth] Password error details:', error.message)
+              }
               return null
             }
 
