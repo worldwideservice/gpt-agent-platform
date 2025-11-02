@@ -449,11 +449,11 @@ export const PricingClient = ({ tenantId }: PricingClientProps) => {
                   disabled={isCurrent || isUnavailable}
                   style={
                     isCurrent
-                      ? {
+                      ? ({
                           '--c-400': 'var(--primary-400)',
                           '--c-500': 'var(--primary-500)',
                           '--c-600': 'var(--primary-600)',
-                        }
+                        } as React.CSSProperties)
                       : {}
                   }
                   className={isCurrent ? "fi-color-custom" : ""}
