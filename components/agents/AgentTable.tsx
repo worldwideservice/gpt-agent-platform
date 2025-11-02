@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { Edit, Copy, Trash2 } from 'lucide-react'
 
 import { KwidSwitch } from '@/components/kwid'
 import {
@@ -141,6 +142,7 @@ export const AgentTable = ({
                         '--c-600': 'var(--primary-600)',
                       } as React.CSSProperties}
                     >
+                      <Edit className="h-4 w-4" />
                       <span className="font-semibold text-sm text-custom-600 dark:text-custom-400 group-hover/link:underline group-focus-visible/link:underline">
                         Изменить
                       </span>
@@ -154,6 +156,7 @@ export const AgentTable = ({
                         '--c-600': 'var(--primary-600)',
                       } as React.CSSProperties}
                     >
+                      <Copy className="h-4 w-4" />
                       <span className="font-semibold text-sm text-custom-600 dark:text-custom-400 group-hover/link:underline group-focus-visible/link:underline">
                         Копировать
                       </span>
@@ -167,6 +170,7 @@ export const AgentTable = ({
                         '--c-600': 'var(--danger-600)',
                       } as React.CSSProperties}
                     >
+                      <Trash2 className="h-4 w-4" />
                       <span className="font-semibold text-sm text-custom-600 dark:text-custom-400 group-hover/link:underline group-focus-visible/link:underline">
                         Удалить
                       </span>
