@@ -495,13 +495,23 @@ export class UserRepository {
         .single()
 
       if (error) {
-        console.error('Error creating user:', error)
-        throw new Error('Не удалось создать пользователя')
+        console.error('Error creating user - Supabase error:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+        })
+        throw new Error(`Не удалось создать пользователя: ${error.message || error.details || 'Неизвестная ошибка'}`)
+      }
+
+      if (!data) {
+        console.error('Error creating user - No data returned from insert')
+        throw new Error('Не удалось создать пользователя: нет данных в ответе')
       }
 
       return data as DatabaseUser
     } catch (error) {
-      console.error('Error creating user:', error)
+      console.error('Error creating user - Exception:', error)
       if (error instanceof Error) {
         throw error
       }

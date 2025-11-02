@@ -49,16 +49,27 @@ export async function POST(request: NextRequest) {
     }
 
     // Create user
-    const user = await UserRepository.createUser({
-      email,
-      password,
-      firstName,
-      lastName,
-    })
+    let user
+    try {
+      user = await UserRepository.createUser({
+        email,
+        password,
+        firstName,
+        lastName,
+      })
 
-    if (!user) {
+      if (!user) {
+        console.error('Registration: createUser returned null')
+        return NextResponse.json(
+          { error: 'Не удалось создать пользователя' },
+          { status: 500 }
+        )
+      }
+    } catch (createError) {
+      console.error('Registration: Error in createUser:', createError)
+      const errorMessage = createError instanceof Error ? createError.message : 'Неизвестная ошибка при создании пользователя'
       return NextResponse.json(
-        { error: 'Не удалось создать пользователя' },
+        { error: errorMessage },
         { status: 500 }
       )
     }
@@ -188,11 +199,13 @@ export async function POST(request: NextRequest) {
       organizationId,
     })
   } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Registration error:', error)
-    }
-
+    // Логируем ошибки в production тоже для диагностики
+    console.error('Registration error:', error)
     if (error instanceof Error) {
+      console.error('Registration error details:', {
+        message: error.message,
+        stack: error.stack,
+      })
       return NextResponse.json(
         { error: error.message },
         { status: 400 }
