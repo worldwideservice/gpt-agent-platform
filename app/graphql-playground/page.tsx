@@ -6,6 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/shadcn/badge'
 import { Loader2, Play, Code, FileText } from 'lucide-react'
 
+// Отключаем статическую генерацию для этой страницы
+export const dynamic = 'force-dynamic'
+
 export default function GraphQLPlayground() {
   const [query, setQuery] = useState(`# Welcome to GraphQL Playground
 # Try some queries:
