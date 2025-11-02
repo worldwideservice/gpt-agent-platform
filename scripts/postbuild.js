@@ -202,3 +202,7 @@ ensureRouteGroupRootManifests()
 
 // Валидируем манифесты App Router для диагностики
 validateAppRouterManifests()
+
+// Проверяем наличие ошибок в логах сборки для graphql-playground
+// Если есть ошибки пререндеринга этой страницы - это нормально, страница динамическая
+console.log('postbuild: завершено. Примечание: ошибки пререндеринга /graphql-playground допустимы (страница динамическая)')

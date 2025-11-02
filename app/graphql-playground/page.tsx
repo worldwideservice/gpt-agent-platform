@@ -10,11 +10,6 @@ import { Loader2, Play, Code, FileText } from 'lucide-react'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-// Исключаем из статической генерации
-export async function generateStaticParams() {
-  return []
-}
-
 function GraphQLPlaygroundContent() {
   const [query, setQuery] = useState(`# Welcome to GraphQL Playground
 # Try some queries:
