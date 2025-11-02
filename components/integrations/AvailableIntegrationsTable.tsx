@@ -186,24 +186,34 @@ export const AvailableIntegrationsTable = ({
 
                   {/* Колонка "Установлено" */}
                   <TableCell className="px-3 py-4">
-                    <div className="fi-ta-icon flex items-center">
-                      {integration.isInstalled ? (
+                    {integration.isInstalled ? (
+                      <Link
+                        href={getSettingsPath(integration.id)}
+                        className="fi-ta-icon flex items-center"
+                      >
                         <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-                      ) : (
+                      </Link>
+                    ) : (
+                      <div className="fi-ta-icon flex items-center">
                         <XCircle className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </TableCell>
 
                   {/* Колонка "Активно" */}
                   <TableCell className="px-3 py-4">
-                    <div className="fi-ta-icon flex items-center">
-                      {integration.isActive ? (
+                    {integration.isActive ? (
+                      <Link
+                        href={getSettingsPath(integration.id)}
+                        className="fi-ta-icon flex items-center"
+                      >
                         <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-                      ) : (
+                      </Link>
+                    ) : (
+                      <div className="fi-ta-icon flex items-center">
                         <XCircle className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </TableCell>
 
                   {/* Колонка "Actions" */}
