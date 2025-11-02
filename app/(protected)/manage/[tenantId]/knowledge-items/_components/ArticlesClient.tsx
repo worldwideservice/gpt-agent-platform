@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
-import { Edit, FileText, Plus, Search, Trash2, Filter, Columns, X } from "lucide-react";
+import { Edit, FileText, Plus, Search, Trash2, Filter, Settings, X } from "lucide-react";
 
 import { KwidButton } from "@/components/kwid";
 import { useTenantId } from "@/hooks/useTenantId";
