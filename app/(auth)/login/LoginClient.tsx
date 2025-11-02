@@ -27,7 +27,7 @@ export const LoginClient = () => {
       return
     }
 
-    window.location.href = '/'
+    window.location.href = '/workspace'
   }
 
   return (
