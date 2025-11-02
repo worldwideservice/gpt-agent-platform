@@ -255,7 +255,6 @@ export const CRMSync = ({ connection, pipelineSettings, onPipelineUpdate }: CRMS
           )
         })}
       </div>
-      </div>
     </div>
   )
 }
