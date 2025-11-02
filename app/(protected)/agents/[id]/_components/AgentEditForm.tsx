@@ -1006,6 +1006,22 @@ export const AgentEditForm = ({
         </KwidTabsContent>
 
         <KwidTabsContent value="advanced">
+          <div className="space-y-6">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Расширенные настройки доступны на отдельной странице.
+            </p>
+            <Link
+              href={`/manage/${activeTenantId}/ai-agents/${agentId}/advanced`}
+              className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+            >
+              Перейти к расширенным настройкам
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </KwidTabsContent>
+
+        {/* УДАЛЕНО: Старое содержимое вкладки advanced */}
+        {/* <KwidTabsContent value="advanced-old">
           <div className="flex flex-col gap-8">
             <div
               style={{
