@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
 
+import { HeaderWithSidebar } from "@/components/layout/HeaderWithSidebar";
+import { SidebarProvider } from "@/components/layout/SidebarToggle";
+import { auth } from "@/auth";
+import { getOrganizationsForUser } from "@/lib/repositories/organizations";
+
+// Отключаем prerendering - всегда динамический для корректной работы auth
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
@@ -8,30 +13,45 @@ interface ProtectedLayoutProps {
   children: React.ReactNode;
 }
 
-export default async function ProtectedLayout({ children }: ProtectedLayoutProps) {
-  const session = await auth();
+const ProtectedLayout = async ({ children }: ProtectedLayoutProps) => {
+  let session: any;
+  let organizations: any[] = [];
+  let activeOrganization: any = null;
 
-  if (!session?.user) {
-    redirect("/");
+  try {
+    session = await auth();
+
+    if (!session?.user?.orgId) {
+      redirect("/login");
+    }
+
+    try {
+      organizations = await getOrganizationsForUser(session.user.id);
+      activeOrganization =
+        organizations.find(
+          (organization) => organization.id === session.user.orgId,
+        ) ??
+        organizations[0] ??
+        null;
+    } catch (orgError) {
+      organizations = [];
+      activeOrganization = null;
+    }
+  } catch (authError) {
+    redirect("/login");
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <h1 className="text-xl font-bold text-slate-900">AI Agent Platform</h1>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-slate-600">
-                {session.user.name || session.user.email}
-              </span>
-            </div>
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <SidebarProvider>
+      <HeaderWithSidebar
+        session={session}
+        organizations={organizations}
+        activeOrganization={activeOrganization}
+      >
         {children}
-      </main>
-    </div>
+      </HeaderWithSidebar>
+    </SidebarProvider>
   );
-}
+};
+
+export default ProtectedLayout;

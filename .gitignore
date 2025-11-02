@@ -17,15 +17,14 @@ dist/
 .env.test.local
 .env.production.local
 .env.production
+.env*.bak
+.env*.backup
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# Cursor IDE
-.cursor/
 
 # OS
 .DS_Store
@@ -103,4 +102,10 @@ playwright-report/
 
 # Temporary files
 *.tmp
-*.temp.cursor/
+*.temp
+
+# All node_modules (including nested)
+**/node_modules/
+services/**/node_modules/
+kwid-extraction/node_modules/
+.cursor/

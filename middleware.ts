@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { auth } from '@/auth'
 
 /**
- * Middleware для обработки маршрутизации и проверки авторизации
- * Выполняется ДО загрузки страницы - блокирует доступ неавторизованным
+ * Middleware для редиректов со старых путей на новые Kwid-подобные пути
+ * Если пользователь на старом пути и есть организация, редиректим на новый формат
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -20,23 +19,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Публичные пути (главная страница)
-  if (pathname === '/') {
+  // Если уже на новом пути, пропускаем
+  if (pathname.startsWith('/manage/')) {
     return NextResponse.next()
   }
 
-  // Защищенные пути - проверяем авторизацию
-  if (pathname.startsWith('/platform')) {
-    const session = await auth()
-    
-    if (!session?.user) {
-      // Неавторизованный пользователь - редирект на главную
-      const url = request.nextUrl.clone()
-      url.pathname = '/'
-      return NextResponse.redirect(url)
-    }
+  // Редиректы для публичных страниц (не требуют tenant-id)
+  const publicPaths = ['/login', '/register', '/reset-password', '/', '/pricing', '/demo', '/support']
+  if (publicPaths.includes(pathname) || publicPaths.some(p => pathname.startsWith(p))) {
+    return NextResponse.next()
   }
 
+  // Для защищенных путей - редирект будет обрабатываться в layout
+  // Здесь просто пропускаем дальше
   return NextResponse.next()
 }
 

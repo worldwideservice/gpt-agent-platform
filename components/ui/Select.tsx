@@ -1,46 +1,94 @@
-'use client'
+import * as React from 'react'
+import {
+  Select as ShadcnSelect,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './shadcn/select'
 
-import type { SelectHTMLAttributes } from 'react'
-
-interface SelectOption {
-  value: string
-  label: string
-}
-
-interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
+export interface SelectProps {
   label?: string
-  options: SelectOption[]
+  options: { value: string; label: string }[]
+  value?: string
+  defaultValue?: string
   onChange?: (value: string) => void
-  error?: string
+  onValueChange?: (value: string) => void
+  placeholder?: string
+  disabled?: boolean
+  required?: boolean
+  className?: string
+  id?: string
+  'aria-label'?: string
 }
 
-export const Select = ({ label, options, onChange, error, className = '', value, ...props }: SelectProps) => {
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    if (onChange) {
-      onChange(e.target.value)
-    }
+export const Select = React.memo(React.forwardRef<
+  React.ElementRef<typeof ShadcnSelect>,
+  SelectProps
+>(({
+  label,
+  options,
+  value,
+  defaultValue,
+  onChange,
+  onValueChange,
+  placeholder = 'Выберите...',
+  disabled,
+  required,
+  className,
+  id,
+  'aria-label': ariaLabel,
+  ...props
+}, ref) => {
+  const handleValueChange = (newValue: string) => {
+    onValueChange?.(newValue)
+    onChange?.(newValue)
   }
-  
+
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
       {label && (
-        <label className="block text-sm font-medium text-slate-700 dark:text-gray-300">
+        <label htmlFor={id} className="text-sm font-medium block">
           {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
-      <select
-        className={`w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white ${className}`}
+      <ShadcnSelect
         value={value}
-        onChange={handleChange}
+        defaultValue={defaultValue}
+        onValueChange={handleValueChange}
+        disabled={disabled}
+        required={required}
         {...props}
       >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+        <SelectTrigger
+          id={id}
+          className={className}
+          aria-label={ariaLabel}
+        >
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </ShadcnSelect>
     </div>
   )
-}
+}))
+
+Select.displayName = 'Select'
+
+// Re-export shadcn components for direct usage when needed
+export {
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './shadcn/select'
+
+// Legacy alias for backward compatibility
+export { ShadcnSelect as SelectPrimitive }

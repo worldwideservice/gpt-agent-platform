@@ -16,15 +16,12 @@ export async function POST(request: NextRequest) {
     const { email, password, firstName, lastName, organizationName } = await request.json()
 
     // Validation
-    if (!email || !password || !firstName) {
+    if (!email || !password || !firstName || !lastName) {
       return NextResponse.json(
-        { error: 'Email, пароль и имя обязательны для заполнения' },
+        { error: 'Все поля обязательны для заполнения' },
         { status: 400 }
       )
     }
-    
-    // Если lastName не указан, используем firstName
-    const finalLastName = lastName || firstName
 
     if (password.length < 6) {
       return NextResponse.json(
@@ -58,7 +55,7 @@ export async function POST(request: NextRequest) {
         email,
         password,
         firstName,
-        lastName: finalLastName,
+        lastName,
       })
 
       if (!user) {
@@ -114,7 +111,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Используем переданное имя организации или имя пользователя
-      const orgName = organizationName?.trim() || `${firstName} ${finalLastName}`
+      const orgName = organizationName?.trim() || `${firstName} ${lastName}`
 
       const { data: organization, error: orgError } = await client
         .from('organizations')

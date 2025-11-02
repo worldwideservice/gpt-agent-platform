@@ -26,7 +26,7 @@ export default function GlobalError({
             </div>
             <button
               onClick={reset}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700"
+              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
             >
               Попробовать снова
             </button>
@@ -36,6 +36,7 @@ export default function GlobalError({
     </html>
   )
 }
+
 
 
 
