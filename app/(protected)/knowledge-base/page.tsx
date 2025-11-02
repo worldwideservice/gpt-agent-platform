@@ -1,8 +1,11 @@
-import { redirect } from "next/navigation";
+import { redirectToTenantPath } from "@/lib/utils/getTenantRedirect";
 
-const KnowledgeBaseRedirectPage = () => {
-  redirect("/knowledge-base/categories");
-  return null;
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
+const KnowledgeBaseRedirectPage = async () => {
+  // Редиректим на категории базы знаний с tenant-id
+  return redirectToTenantPath("/knowledge-categories");
 };
 
 export default KnowledgeBaseRedirectPage;

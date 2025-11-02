@@ -45,51 +45,14 @@ const DashboardPage = async () => {
       .eq("id", activeOrganization.id)
       .single();
 
-    if (orgData) {
+    if (orgData && orgData.slug) {
       const tenantId = generateTenantId(orgData.id, orgData.slug);
       redirect(`/manage/${tenantId}`);
     }
   }
 
-  const onboardingState = await getOnboardingState(orgId);
-  if (!onboardingState.isCompleted) {
-    redirect("/onboarding");
-  }
-
-  const [stats, weeklyBarData, monthlyData, dailyData] = await Promise.all([
-    getDashboardStats(orgId),
-    getWeeklyBarChartData(orgId),
-    getMonthlyResponsesSeries(orgId, 6),
-    getDailyResponsesSeries(orgId, 14),
-  ]);
-
-  // Пока нет реальных обновлений - используем пустой массив
-  // TODO: Реализовать получение реальных обновлений из БД/уведомлений
-  const recentUpdates: Array<{
-    id: string;
-    message: string;
-    timestamp: string;
-    color: "green" | "blue" | "purple" | "yellow";
-  }> = [];
-
-  return (
-    <div className="space-y-8">
-      <SimpleDashboardStats stats={stats} />
-
-      <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <LineChartCard title="Ответы ИИ за этот месяц" data={monthlyData} />
-        <LineChartCard title="Ответы ИИ за день" data={dailyData} />
-      </section>
-
-      <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <BarChartCard
-          title="Активность за последние 7 дней"
-          data={weeklyBarData}
-        />
-        <RecentUpdates updates={recentUpdates} />
-      </section>
-    </div>
-  );
+  // Fallback - если не удалось получить tenant-id
+  redirect("/login");
 };
 
 export default DashboardPage;

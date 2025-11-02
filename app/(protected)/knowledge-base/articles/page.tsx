@@ -1,31 +1,11 @@
-import { redirect } from "next/navigation";
+import { redirectToTenantPath } from "@/lib/utils/getTenantRedirect";
 
-import { ArticlesClient } from "./_components/ArticlesClient";
-
-import { auth } from "@/auth";
-import {
-  getKnowledgeBaseArticles,
-  getKnowledgeBaseCategories,
-} from "@/lib/repositories/knowledge-base";
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 const ArticlesPage = async () => {
-  const session = await auth();
-
-  if (!session?.user?.orgId) {
-    redirect("/login");
-  }
-
-  const [articles, categories] = await Promise.all([
-    getKnowledgeBaseArticles(session.user.orgId),
-    getKnowledgeBaseCategories(session.user.orgId),
-  ]);
-
-  return (
-    <ArticlesClient
-      initialArticles={articles}
-      categories={categories.map((cat) => ({ id: cat.id, name: cat.name }))}
-    />
-  );
+  // Редиректим на новый формат с tenant-id
+  return redirectToTenantPath("/knowledge-items");
 };
 
 export default ArticlesPage;

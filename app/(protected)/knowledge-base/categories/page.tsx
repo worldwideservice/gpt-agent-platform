@@ -1,20 +1,11 @@
-import { redirect } from "next/navigation";
+import { redirectToTenantPath } from "@/lib/utils/getTenantRedirect";
 
-import { CategoriesClient } from "./_components/CategoriesClient";
-
-import { auth } from "@/auth";
-import { getKnowledgeBaseCategories } from "@/lib/repositories/knowledge-base";
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 const CategoriesPage = async () => {
-  const session = await auth();
-
-  if (!session?.user?.orgId) {
-    redirect("/login");
-  }
-
-  const categories = await getKnowledgeBaseCategories(session.user.orgId);
-
-  return <CategoriesClient initialCategories={categories} />;
+  // Редиректим на новый формат с tenant-id
+  return redirectToTenantPath("/knowledge-categories");
 };
 
 export default CategoriesPage;
