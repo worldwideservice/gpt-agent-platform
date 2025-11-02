@@ -51,16 +51,58 @@ export const LoginClient = () => {
         }
 
         if (result?.ok) {
-          // Показываем уведомление об успешном входе
-          pushToast({
-            title: 'Вход выполнен! ✅',
-            description: `Добро пожаловать, ${email}!`,
-            variant: 'success',
-          })
+          // Получаем tenant-id для редиректа
+          try {
+            const response = await fetch('/api/auth/get-tenant-redirect', {
+              method: 'GET',
+              credentials: 'include',
+            })
 
-          // Перенаправляем на dashboard
-          router.push('/agents')
-          router.refresh()
+            const payload = (await response.json()) as {
+              success: boolean
+              tenantId: string | null
+              error?: string
+            }
+
+            if (payload.success && payload.tenantId) {
+              // Показываем уведомление об успешном входе
+              pushToast({
+                title: 'Вход выполнен! ✅',
+                description: `Добро пожаловать, ${email}!`,
+                variant: 'success',
+              })
+
+              // Перенаправляем на dashboard с tenant-id
+              router.push(`/manage/${payload.tenantId}`)
+              router.refresh()
+            } else {
+              // Если tenant-id не получен, попробуем еще раз через небольшую задержку
+              console.warn('Failed to get tenant-id, retrying...', payload.error)
+              setTimeout(async () => {
+                const retryResponse = await fetch('/api/auth/get-tenant-redirect', {
+                  method: 'GET',
+                  credentials: 'include',
+                })
+                const retryPayload = (await retryResponse.json()) as {
+                  success: boolean
+                  tenantId: string | null
+                }
+                if (retryPayload.success && retryPayload.tenantId) {
+                  router.push(`/manage/${retryPayload.tenantId}`)
+                  router.refresh()
+                } else {
+                  // Fallback - редирект на главную страницу
+                  router.push('/')
+                  router.refresh()
+                }
+              }, 1000)
+            }
+          } catch (fetchError) {
+            console.error('Failed to get tenant redirect:', fetchError)
+            // Fallback - редирект на главную страницу
+            router.push('/')
+            router.refresh()
+          }
         }
       } catch (error) {
         // Если произошла ошибка, показываем сообщение
