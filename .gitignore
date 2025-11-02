@@ -100,4 +100,4 @@ playwright-report/
 
 # Temporary files
 *.tmp
-*.temp
+*.temp.cursor/
