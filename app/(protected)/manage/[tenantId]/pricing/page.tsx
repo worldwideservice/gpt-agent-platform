@@ -13,7 +13,11 @@ const PricingPage = ({ params }: PricingPageProps) => {
   } | null>(null);
 
   useEffect(() => {
-    params.then(setResolvedParams);
+    const resolveParams = async () => {
+      const resolved = await params;
+      setResolvedParams(resolved);
+    };
+    resolveParams();
   }, [params]);
 
   if (!resolvedParams) {

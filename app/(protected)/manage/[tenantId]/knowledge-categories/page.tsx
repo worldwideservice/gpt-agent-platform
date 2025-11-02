@@ -26,9 +26,21 @@ const CategoriesPage = async ({ params }: CategoriesPageProps) => {
     redirect("/login");
   }
 
-  const categories = await getKnowledgeBaseCategories(session.user.orgId);
-
-  return <CategoriesClient initialCategories={categories} />;
+  try {
+    const categories = await getKnowledgeBaseCategories(session.user.orgId);
+    return <CategoriesClient initialCategories={categories} />;
+  } catch (error) {
+    console.error("Failed to load knowledge categories", error);
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 dark:text-red-400">
+            Не удалось загрузить категории. Попробуйте обновить страницу.
+          </p>
+        </div>
+      </div>
+    );
+  }
 };
 
 export default CategoriesPage;

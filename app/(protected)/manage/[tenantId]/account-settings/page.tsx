@@ -31,7 +31,11 @@ const AccountPage = ({ params }: ChatPageProps) => {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    params.then(setResolvedParams);
+    const resolveParams = async () => {
+      const resolved = await params;
+      setResolvedParams(resolved);
+    };
+    resolveParams();
   }, [params]);
 
   useEffect(() => {

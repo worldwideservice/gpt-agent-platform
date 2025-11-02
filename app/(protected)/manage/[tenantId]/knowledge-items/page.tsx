@@ -29,17 +29,30 @@ const ArticlesPage = async ({ params }: ArticlesPageProps) => {
     redirect("/login");
   }
 
-  const [articlesResult, categoriesResult] = await Promise.all([
-    getKnowledgeBaseArticles(session.user.orgId),
-    getKnowledgeBaseCategories(session.user.orgId),
-  ]);
-  const articles = articlesResult;
-  const categories = categoriesResult.map((cat) => ({
-    id: cat.id,
-    name: cat.name,
-  }));
+  try {
+    const [articlesResult, categoriesResult] = await Promise.all([
+      getKnowledgeBaseArticles(session.user.orgId),
+      getKnowledgeBaseCategories(session.user.orgId),
+    ]);
+    const articles = articlesResult;
+    const categories = categoriesResult.map((cat) => ({
+      id: cat.id,
+      name: cat.name,
+    }));
 
-  return <ArticlesClient initialArticles={articles} categories={categories} />;
+    return <ArticlesClient initialArticles={articles} categories={categories} />;
+  } catch (error) {
+    console.error("Failed to load knowledge items", error);
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 dark:text-red-400">
+            Не удалось загрузить статьи. Попробуйте обновить страницу.
+          </p>
+        </div>
+      </div>
+    );
+  }
 };
 
 export default ArticlesPage;

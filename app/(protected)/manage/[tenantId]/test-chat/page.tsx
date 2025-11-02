@@ -46,7 +46,11 @@ const ChatPage = ({ params }: ChatPageProps) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    params.then(setResolvedParams);
+    const resolveParams = async () => {
+      const resolved = await params;
+      setResolvedParams(resolved);
+    };
+    resolveParams();
   }, [params]);
 
   // Загружаем список агентов
