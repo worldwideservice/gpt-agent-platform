@@ -935,7 +935,7 @@ export const AgentEditForm = ({
               style={{
                 '--cols-default': 'repeat(1, minmax(0, 1fr))',
                 '--cols-lg': 'repeat(2, minmax(0, 1fr))',
-              }}
+              } as React.CSSProperties}
               className="grid grid-cols-[--cols-default] lg:grid-cols-[--cols-lg] fi-fo-component-ctn gap-6"
             >
               {/* Модель ИИ */}
