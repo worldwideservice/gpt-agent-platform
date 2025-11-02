@@ -253,7 +253,6 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
               />
             </div>
           )}
-        </div>
 
           {/* Данные контакта */}
           <header 
