@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     // Validate environment variables
     loadSupabaseServerEnv()
 
-    const { email, password, firstName, lastName } = await request.json()
+    const { email, password, firstName, lastName, organizationName } = await request.json()
 
     // Validation
     if (!email || !password || !firstName || !lastName) {
@@ -110,10 +110,13 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // Используем переданное имя организации или имя пользователя
+      const orgName = organizationName?.trim() || `${firstName} ${lastName}`
+
       const { data: organization, error: orgError } = await client
         .from('organizations')
         .insert({
-          name: `${firstName} ${lastName}`,
+          name: orgName,
           slug: slugCandidate
         })
         .select()

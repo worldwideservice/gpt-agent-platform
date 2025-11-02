@@ -17,6 +17,7 @@ export const RegisterClient = () => {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [organizationName, setOrganizationName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -47,6 +48,7 @@ export const RegisterClient = () => {
             password,
             firstName,
             lastName,
+            organizationName: organizationName.trim() || undefined,
           }),
         })
 
@@ -119,6 +121,16 @@ export const RegisterClient = () => {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
+        />
+
+        <KwidInput
+          id="organizationName"
+          label="Название организации (необязательно)"
+          type="text"
+          autoComplete="organization"
+          value={organizationName}
+          onChange={(event) => setOrganizationName(event.target.value)}
+          placeholder="Если не указано, будет создана организация с вашим именем"
         />
 
         <KwidInput
