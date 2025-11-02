@@ -307,16 +307,41 @@ export const GET = async (request: NextRequest) => {
     })
   }
 
-  // Fallback - никогда не должно сработать, так как isDemoMode всегда true
-  return NextResponse.json({
-    success: true,
-    data: [],
-    pagination: {
-      total: 0,
-      page: 1,
-      limit: 25,
-    },
-  })
+  // Реальная работа с авторизацией
+  const session = await auth()
+
+  if (!session?.user?.orgId) {
+    return NextResponse.json({ success: false, error: 'Не авторизовано' }, { status: 401 })
+  }
+
+  try {
+    const parsedParams = parseAgentsParams(request)
+    const result = await getAgents({
+      organizationId: session.user.orgId,
+      page: parsedParams.data.page,
+      limit: parsedParams.data.limit,
+      search: parsedParams.data.search,
+      status: parsedParams.data.status,
+    })
+
+    return NextResponse.json({
+      success: true,
+      data: result.agents,
+      pagination: {
+        total: result.total,
+        page: parsedParams.data.page,
+        limit: parsedParams.data.limit,
+      },
+    })
+  } catch (error) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Не удалось загрузить агентов',
+      },
+      { status: 500 },
+    )
+  }
 }
 
 const settingsSchema = z
