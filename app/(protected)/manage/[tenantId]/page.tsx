@@ -1,16 +1,13 @@
 import { redirect } from "next/navigation";
 import { Bot, CalendarCheck2, MessageSquare, Sparkles } from "lucide-react";
 
-import { BarChartCard } from "@/components/dashboard/BarChartCard";
 import { LineChartCard } from "@/components/dashboard/LineChartCard";
-import { RecentUpdates } from "@/components/dashboard/RecentUpdates";
 import { KwidStatCard } from "@/components/kwid";
 
 import { auth } from "@/auth";
 import { getOnboardingState } from "@/lib/onboarding/server";
 import {
   getDashboardStats,
-  getWeeklyBarChartData,
   getMonthlyResponsesSeries,
   getDailyResponsesSeries,
 } from "@/lib/repositories/agents";
@@ -39,73 +36,54 @@ const DashboardPage = async ({ params }: DashboardPageProps) => {
   //   redirect("/onboarding");
   // }
 
-  const [stats, weeklyBarData, monthlyData, dailyData] = await Promise.all([
+  const [stats, monthlyData, dailyData] = await Promise.all([
     getDashboardStats(orgId),
-    getWeeklyBarChartData(orgId),
     getMonthlyResponsesSeries(orgId, 6),
     getDailyResponsesSeries(orgId, 14),
   ]);
 
-  // Пока нет реальных обновлений - используем пустой массив
-  // TODO: Реализовать получение реальных обновлений из БД/уведомлений
-  const recentUpdates: Array<{
-    id: string;
-    message: string;
-    timestamp: string;
-    color: "green" | "blue" | "purple" | "yellow";
-  }> = [];
-
   return (
     <div className="space-y-8">
       <section className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {/* Kwid: "This Month AI Responses" */}
+        {/* Kwid: "Ответы ИИ за этот месяц" */}
         <KwidStatCard
-          title="This Month AI Responses"
+          title="Ответы ИИ за этот месяц"
           value={stats.monthlyResponses}
           change={stats.monthlyChange}
-          subtitle="vs last month"
+          subtitle="к прошлому месяцу"
           icon={MessageSquare}
         />
 
-        {/* Kwid: "Last 7 Days Responses" */}
+        {/* Kwid: "Ответы ИИ за последние 7 дней" */}
         <KwidStatCard
-          title="Last 7 Days Responses"
+          title="Ответы ИИ за последние 7 дней"
           value={stats.weeklyResponses}
-          subtitle="Past 7 days"
           icon={CalendarCheck2}
         />
 
-        {/* Kwid: "Today's AI Responses" */}
+        {/* Kwid: "Ответы ИИ сегодня" */}
         <KwidStatCard
-          title="Today's AI Responses"
+          title="Ответы ИИ сегодня"
           value={stats.todayResponses}
           change={stats.todayChange}
-          subtitle="vs yesterday"
+          subtitle="к вчерашнему дню"
           icon={Sparkles}
         />
 
-        {/* Kwid: "Agents" */}
+        {/* Kwid: "Агенты" */}
         <KwidStatCard
-          title="Agents"
+          title="Агенты"
           value={stats.totalAgents}
-          subtitle="Total agents"
+          subtitle="Всего агентов"
           icon={Bot}
         />
       </section>
 
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Kwid: "This Month AI Responses" график */}
-        <LineChartCard title="This Month AI Responses" data={monthlyData} />
-        {/* Kwid: "Daily AI Responses" график */}
-        <LineChartCard title="Daily AI Responses" data={dailyData} />
-      </section>
-
-      <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <BarChartCard
-          title="Активность за последние 7 дней"
-          data={weeklyBarData}
-        />
-        <RecentUpdates updates={recentUpdates} />
+        {/* Kwid: "Ответы ИИ за этот месяц" график */}
+        <LineChartCard title="Ответы ИИ за этот месяц" data={monthlyData} />
+        {/* Kwid: "Ответы ИИ за день" график */}
+        <LineChartCard title="Ответы ИИ за день" data={dailyData} />
       </section>
     </div>
   );
