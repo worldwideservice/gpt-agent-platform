@@ -39,76 +39,79 @@ export const LoginClient = () => {
       setError(null)
 
       try {
-        // Простой подход: используем обычную HTML форму
-        // NextAuth сам обработает редирект через API
-        const form = event.currentTarget
-        const formData = new FormData(form)
-        const rawEmail = formData.get('email')
-        const rawPassword = formData.get('password')
-
-        if (typeof rawEmail !== 'string' || typeof rawPassword !== 'string') {
-          throw new Error('Не удалось получить данные формы')
-        }
-
-        const payload = new URLSearchParams()
-        payload.set('email', rawEmail)
-        payload.set('password', rawPassword)
-
         console.log('🔐 Submitting login form...')
 
-        const response = await fetch('/api/auth/callback/credentials', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: payload.toString(),
-          redirect: 'follow',
+        const result = await signIn('credentials', {
+          email,
+          password,
+          redirect: false,
         })
 
-        console.log('🔐 Form submission status:', response.status);
-        console.log('🔐 Final URL:', response.url);
+        console.log('🔐 SignIn result:', result)
 
-        const isSuccessful =
-          response.ok ||
-          response.status === 302 ||
-          response.type === 'opaqueredirect'
+        if (result?.error) {
+          console.error('🔐 Login error:', result.error)
+          setError('Неверные email или пароль')
+          return
+        }
 
-        if (isSuccessful) {
-          console.log('🔐 Login successful, checking session...');
+        if (result?.ok) {
+          console.log('🔐 Login successful, checking session...')
 
           // Ждем немного для обновления сессии
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 1000))
 
           // Проверяем сессию
-          const sessionResponse = await fetch('/api/auth/session');
-          const sessionData = await sessionResponse.json();
+          const sessionResponse = await fetch('/api/auth/session')
+          const sessionData = await sessionResponse.json()
+
+          console.log('🔐 Session data:', sessionData)
 
           if (sessionData?.user) {
-            console.log('🔐 Session confirmed, redirecting...');
+            console.log('🔐 Session confirmed, redirecting...')
 
             // Получаем tenant-id
-            const redirectResponse = await fetch('/api/auth/get-tenant-redirect');
-            const redirectData = await redirectResponse.json();
+            const redirectResponse = await fetch('/api/auth/get-tenant-redirect')
+            const redirectData = await redirectResponse.json()
+
+            console.log('🔐 Redirect data:', redirectData)
 
             if (redirectData.success && redirectData.tenantId) {
               pushToast({
                 title: 'Вход выполнен! ✅',
                 description: `Добро пожаловать, ${email}!`,
                 variant: 'success',
-              });
+              })
 
-              window.location.href = `/manage/${redirectData.tenantId}`;
-              return;
+              window.location.href = `/manage/${redirectData.tenantId}`
+              return
+            } else {
+              // Если нет tenantId, пробуем получить из сессии
+              const orgId = sessionData.user.orgId || sessionData.user.id
+              if (orgId) {
+                pushToast({
+                  title: 'Вход выполнен! ✅',
+                  description: `Добро пожаловать, ${email}!`,
+                  variant: 'success',
+                })
+                window.location.href = `/manage/${orgId}`
+                return
+              }
             }
           }
+
+          // Если нет сессии, но signIn вернул ok, пробуем редирект на dashboard
+          console.log('🔐 No session found, redirecting to dashboard')
+          window.location.href = '/dashboard'
+          return
         }
 
         // Если дошли сюда, значит вход не удался
-        throw new Error('Неверные email или пароль');
+        setError('Неверные email или пароль')
 
       } catch (error) {
-        console.error('🔐 Login error:', error);
-        setError(error instanceof Error ? error.message : 'Неверные email или пароль');
+        console.error('🔐 Login error:', error)
+        setError(error instanceof Error ? error.message : 'Неверные email или пароль')
       }
     })
   }
