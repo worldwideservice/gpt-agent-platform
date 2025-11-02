@@ -6,10 +6,8 @@ import { PipelinesClient } from "./_components/PipelinesClient";
 import { auth } from "@/auth";
 import { getAgentById } from "@/lib/repositories/agents";
 
-export const dynamic =
-  process.env.NODE_ENV === "development" || process.env.DEMO_MODE === "true"
-    ? "force-dynamic"
-    : "auto";
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export const metadata: Metadata = {
   title: "Настройка воронок",
@@ -24,36 +22,15 @@ const PipelinesPage = async ({ params }: PipelinesPageProps) => {
   const resolvedParams = await params;
   const { id, tenantId } = resolvedParams;
 
-  const isDemoMode =
-    process.env.NODE_ENV === "development" || process.env.DEMO_MODE === "true";
+  const session = await auth();
 
-  let agent;
+  if (!session?.user?.orgId) {
+    redirect("/login");
+  }
 
-  if (isDemoMode) {
-    agent = {
-      id,
-      name: "Демо агент",
-      status: "active" as const,
-      model: "gpt-4o-mini",
-      instructions: "Вы - демо агент...",
-      temperature: 0.7,
-      maxTokens: 4000,
-      responseDelaySeconds: 2,
-      settings: {},
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-  } else {
-    const session = await auth();
-
-    if (!session?.user?.orgId) {
-      redirect("/login");
-    }
-
-    agent = await getAgentById(id, session.user.orgId);
-    if (!agent) {
-      notFound();
-    }
+  const agent = await getAgentById(id, session.user.orgId);
+  if (!agent) {
+    notFound();
   }
 
   return (

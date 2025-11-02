@@ -219,95 +219,6 @@ export const GET = async (request: NextRequest) => {
     )
   }
 
-  // Демо-режим: возвращаем mock-данные
-  const isDemoMode = process.env.NODE_ENV === 'development' ||
-    process.env.DEMO_MODE === 'true' ||
-    process.env.E2E_ONBOARDING_FAKE === '1'
-
-  if (isDemoMode) {
-    const mockAgents = [
-      {
-        id: 'demo-agent-1',
-        name: 'Техническая поддержка',
-        status: 'active' as const,
-        model: 'gpt-4o-mini',
-        messagesTotal: 1250,
-        lastActivityAt: new Date().toISOString(),
-        ownerName: 'Demo User',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        temperature: 0.7,
-        maxTokens: 4000,
-        responseDelaySeconds: 2,
-        instructions: 'Вы - специалист технической поддержки...',
-        settings: {},
-      },
-      {
-        id: 'demo-agent-2',
-        name: 'Продажи',
-        status: 'active' as const,
-        model: 'gpt-4o-mini',
-        messagesTotal: 890,
-        lastActivityAt: new Date().toISOString(),
-        ownerName: 'Demo User',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        temperature: 0.8,
-        maxTokens: 4000,
-        responseDelaySeconds: 3,
-        instructions: 'Вы - менеджер по продажам...',
-        settings: {},
-      },
-      {
-        id: 'demo-agent-3',
-        name: 'Консультации',
-        status: 'inactive' as const,
-        model: 'gpt-4o-mini',
-        messagesTotal: 234,
-        lastActivityAt: null,
-        ownerName: 'Demo User',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        temperature: 0.6,
-        maxTokens: 4000,
-        responseDelaySeconds: 1,
-        instructions: 'Вы - консультант по продуктам...',
-        settings: {},
-      },
-    ]
-
-    // Фильтрация по параметрам
-    let filteredAgents = mockAgents
-
-    if (parsedParams.data.search) {
-      filteredAgents = filteredAgents.filter(agent =>
-        agent.name.toLowerCase().includes(parsedParams.data.search!.toLowerCase())
-      )
-    }
-
-    if (parsedParams.data.status) {
-      filteredAgents = filteredAgents.filter(agent => agent.status === parsedParams.data.status)
-    }
-
-    // Пагинация
-    const limit = parsedParams.data.limit ?? 25
-    const page = parsedParams.data.page ?? 1
-    const from = (page - 1) * limit
-    const to = from + limit
-    const paginatedAgents = filteredAgents.slice(from, to)
-
-    return NextResponse.json({
-      success: true,
-      data: paginatedAgents,
-      pagination: {
-        total: filteredAgents.length,
-        page,
-        limit,
-      },
-    })
-  }
-
-  // Реальная работа с авторизацией
   const session = await auth()
 
   if (!session?.user?.orgId) {
@@ -315,7 +226,6 @@ export const GET = async (request: NextRequest) => {
   }
 
   try {
-    const parsedParams = parseAgentsParams(request)
     const result = await getAgents({
       organizationId: session.user.orgId,
       page: parsedParams.data.page,
@@ -370,63 +280,6 @@ const createAgentSchema = z.object({
 })
 
 export const POST = async (request: NextRequest) => {
-  // Демо-режим: создаем mock-агента
-  const isDemoMode = process.env.NODE_ENV === 'development' ||
-    process.env.DEMO_MODE === 'true' ||
-    process.env.E2E_ONBOARDING_FAKE === '1'
-
-  if (isDemoMode) {
-    try {
-      const body = await request.json()
-      const parsed = createAgentSchema.safeParse(body)
-
-      if (!parsed.success) {
-        const issues = parsed.error.issues.map((issue) => issue.message)
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Некорректные данные',
-            details: issues,
-          },
-          { status: 400 },
-        )
-      }
-
-      // Создаем mock-агента
-      const newAgent = {
-        id: `demo-agent-${Date.now()}`,
-        name: parsed.data.name,
-        status: parsed.data.status ?? 'draft',
-        model: parsed.data.model ?? 'gpt-4o-mini',
-        messagesTotal: 0,
-        lastActivityAt: null,
-        ownerName: 'Demo User',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        temperature: parsed.data.temperature ?? 0.7,
-        maxTokens: parsed.data.maxTokens ?? 4000,
-        responseDelaySeconds: parsed.data.responseDelaySeconds ?? 2,
-        instructions: parsed.data.instructions ?? 'Вы - AI ассистент...',
-        settings: parsed.data.settings ?? {},
-      }
-
-      return NextResponse.json({
-        success: true,
-        data: newAgent,
-      })
-    } catch (error) {
-      console.error('Demo agent create error', error)
-
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Не удалось создать агента в демо-режиме',
-        },
-        { status: 500 },
-      )
-    }
-  }
-
   const session = await auth()
 
   if (!session?.user?.orgId) {
@@ -465,8 +318,6 @@ export const POST = async (request: NextRequest) => {
       data: agent,
     })
   } catch (error) {
-    console.error('Agent create API error', error)
-
     return NextResponse.json(
       {
         success: false,

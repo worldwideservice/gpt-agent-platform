@@ -5,10 +5,8 @@ import { AgentEditForm } from "@/app/(protected)/agents/[id]/_components/AgentEd
 
 import { auth } from "@/auth";
 
-export const dynamic =
-  process.env.NODE_ENV === "development" || process.env.DEMO_MODE === "true"
-    ? "force-dynamic"
-    : "auto";
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export const metadata: Metadata = {
   title: "Создание агента",
@@ -23,15 +21,10 @@ const CreateAgentPage = async ({ params }: CreateAgentPageProps) => {
   const resolvedParams = await params;
   const { tenantId } = resolvedParams;
 
-  const isDemoMode =
-    process.env.NODE_ENV === "development" || process.env.DEMO_MODE === "true";
+  const session = await auth();
 
-  if (!isDemoMode) {
-    const session = await auth();
-
-    if (!session?.user?.orgId) {
-      redirect("/login");
-    }
+  if (!session?.user?.orgId) {
+    redirect("/login");
   }
 
   return (

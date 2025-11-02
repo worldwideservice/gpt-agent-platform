@@ -35,37 +35,6 @@ export const GET = async (
   { params }: { params: Promise<{ id: string }> },
 ) => {
   const { id } = await params
-  
-  // Демо-режим: возвращаем mock-данные
-  const isDemoMode = process.env.NODE_ENV === 'development' ||
-    process.env.DEMO_MODE === 'true' ||
-    process.env.E2E_ONBOARDING_FAKE === '1'
-
-  if (isDemoMode) {
-    // Возвращаем mock-агента
-    const mockAgent = {
-      id,
-      name: 'Демо-агент',
-      status: 'active' as const,
-      model: 'gpt-4o-mini',
-      messagesTotal: 0,
-      lastActivityAt: null,
-      ownerName: 'Demo User',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      temperature: 0.7,
-      maxTokens: 4000,
-      responseDelaySeconds: 2,
-      instructions: 'Вы - AI ассистент...',
-      settings: {},
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: mockAgent,
-    })
-  }
-
   const session = await auth()
 
   if (!session?.user?.orgId) {
@@ -99,62 +68,6 @@ export const PATCH = async (
   { params }: { params: Promise<{ id: string }> },
 ) => {
   const { id } = await params
-  
-  // Демо-режим: возвращаем mock-агента
-  const isDemoMode = process.env.NODE_ENV === 'development' ||
-    process.env.DEMO_MODE === 'true' ||
-    process.env.E2E_ONBOARDING_FAKE === '1'
-
-  if (isDemoMode) {
-    try {
-      const body = await request.json()
-      const parsed = updateSchema.safeParse(body)
-
-      if (!parsed.success) {
-        const issues = parsed.error.issues.map((issue) => issue.message)
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Некорректные данные',
-            details: issues,
-          },
-          { status: 400 },
-        )
-      }
-
-      // Возвращаем обновленный mock-агента
-      const updatedAgent = {
-        id,
-        name: parsed.data.name ?? 'Демо-агент',
-        status: parsed.data.status ?? 'active',
-        model: parsed.data.model ?? 'gpt-4o-mini',
-        messagesTotal: 0,
-        lastActivityAt: null,
-        ownerName: 'Demo User',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        temperature: parsed.data.temperature ?? 0.7,
-        maxTokens: parsed.data.maxTokens ?? 4000,
-        responseDelaySeconds: parsed.data.responseDelaySeconds ?? 2,
-        instructions: parsed.data.instructions ?? 'Вы - AI ассистент...',
-        settings: parsed.data.settings ?? {},
-      }
-
-      return NextResponse.json({
-        success: true,
-        data: updatedAgent,
-      })
-    } catch (error) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Не удалось обновить агента в демо-режиме',
-        },
-        { status: 500 },
-      )
-    }
-  }
-
   const session = await auth()
 
   if (!session?.user?.orgId) {
@@ -208,19 +121,6 @@ export const DELETE = async (
   { params }: { params: Promise<{ id: string }> },
 ) => {
   const { id } = await params
-  
-  // Демо-режим: просто возвращаем успех
-  const isDemoMode = process.env.NODE_ENV === 'development' ||
-    process.env.DEMO_MODE === 'true' ||
-    process.env.E2E_ONBOARDING_FAKE === '1'
-
-  if (isDemoMode) {
-    // В демо-режиме просто возвращаем успех
-    return NextResponse.json({
-      success: true,
-    })
-  }
-
   const session = await auth()
 
   if (!session?.user?.orgId) {
