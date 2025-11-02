@@ -1,9 +1,6 @@
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
-
-const DEFAULT_EMAIL = process.env.AUTH_DEFAULT_EMAIL?.trim().toLowerCase() || 'demo@example.com'
-const DEFAULT_PASSWORD = process.env.AUTH_DEFAULT_PASSWORD ?? 'Demo1234!'
-const DEFAULT_USER_NAME = process.env.AUTH_DEFAULT_NAME ?? 'Demo User'
+import { getSupabaseServerClient } from '@/lib/supabase/server'
 
 const toSafeString = (value: unknown) => (typeof value === 'string' ? value.trim() : '')
 
@@ -12,7 +9,7 @@ export const authConfig = {
     strategy: 'jwt' as const,
   },
   pages: {
-    signIn: '/login',
+    signIn: '/',
   },
   providers: [
     Credentials({
@@ -29,15 +26,33 @@ export const authConfig = {
           return null
         }
 
-        if (email === DEFAULT_EMAIL && password === DEFAULT_PASSWORD) {
-          return {
-            id: '00000000-0000-4000-8000-000000000001',
-            email,
-            name: DEFAULT_USER_NAME,
+        try {
+          // Проверка авторизации через таблицу users (так как регистрация создает пользователя там)
+          const { UserRepository } = await import('@/lib/repositories/users')
+          const { compare } = await import('bcryptjs')
+          
+          const user = await UserRepository.findUserByEmail(email)
+          
+          if (!user || !user.password_hash) {
+            return null
           }
-        }
 
-        return null
+          // Проверяем пароль
+          const isPasswordValid = await compare(password, user.password_hash)
+          
+          if (!isPasswordValid) {
+            return null
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.full_name || user.email?.split('@')[0] || 'User',
+          }
+        } catch (error) {
+          console.error('Auth error:', error)
+          return null
+        }
       },
     }),
   ],
