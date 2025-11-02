@@ -959,8 +959,19 @@ export const AgentEditForm = ({
           </div>
         </KwidTabsContent>
 
-        <KwidTabsContent value="chains" className="space-y-6">
-          <AgentSequencesManager agentId={agentId} />
+        <KwidTabsContent value="chains">
+          <div className="space-y-6">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Управление цепочками доступно на отдельной странице.
+            </p>
+            <Link
+              href={`/manage/${activeTenantId}/ai-agents/${agentId}/sequences`}
+              className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+            >
+              Перейти к цепочкам
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </KwidTabsContent>
 
         <KwidTabsContent value="integrations">

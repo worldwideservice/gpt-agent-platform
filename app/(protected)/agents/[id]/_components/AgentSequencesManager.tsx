@@ -443,6 +443,15 @@ export const AgentSequencesManager = ({
           >
             <Filter className="h-5 w-5" />
           </button>
+          <KwidButton
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            aria-label="Переключить столбцы"
+          >
+            Переключить столбцы
+            <Settings className="h-4 w-4" />
+          </KwidButton>
         </div>
       )}
 
