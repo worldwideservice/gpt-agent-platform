@@ -357,9 +357,14 @@ export const TriggerManager = ({ agentId }: TriggerManagerProps) => {
             <Filter className="h-5 w-5" />
           </KwidButton>
         </div>
-        <KwidButton onClick={handleCreate} variant="primary" size="sm" className="gap-2">
-          <Plus className="h-4 w-4" />
-          Создать
+        <KwidButton
+          variant="outline"
+          size="sm"
+          className="gap-2"
+          aria-label="Переключить столбцы"
+        >
+          Переключить столбцы
+          <Settings className="h-4 w-4" />
         </KwidButton>
       </div>
 
@@ -421,7 +426,12 @@ export const TriggerManager = ({ agentId }: TriggerManagerProps) => {
                         />
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-sm font-semibold text-gray-900 dark:text-white">{trigger.name}</span>
+                        <button
+                          onClick={() => handleEdit(trigger)}
+                          className="text-sm font-semibold text-gray-900 hover:text-primary-600 dark:text-white dark:hover:text-primary-400 text-left"
+                        >
+                          {trigger.name}
+                        </button>
                       </td>
                       <td className="px-4 py-3">
                         <KwidSwitch
@@ -430,7 +440,12 @@ export const TriggerManager = ({ agentId }: TriggerManagerProps) => {
                         />
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">{conditionText}</span>
+                        <button
+                          onClick={() => handleEdit(trigger)}
+                          className="text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 text-left"
+                        >
+                          {conditionText}
+                        </button>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-3">

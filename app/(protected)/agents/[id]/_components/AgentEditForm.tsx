@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useTenantId } from "@/hooks/useTenantId";
 import {
   ArrowLeft,
+  ArrowRight,
   BookOpen,
   Link2,
   Save,
@@ -944,7 +945,18 @@ export const AgentEditForm = ({
         </KwidTabsContent>
 
         <KwidTabsContent value="triggers">
-          <TriggerManager agentId={agentId} />
+          <div className="space-y-6">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Управление триггерами доступно на отдельной странице.
+            </p>
+            <Link
+              href={`/manage/${activeTenantId}/ai-agents/${agentId}/triggers`}
+              className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+            >
+              Перейти к триггерам
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </KwidTabsContent>
 
         <KwidTabsContent value="chains" className="space-y-6">
