@@ -188,9 +188,13 @@ export const AvailableIntegrationsTable = ({
                         </span>
                       </Link>
                     ) : (
-                      <span className="text-sm font-medium text-gray-950 dark:text-white">
+                      <button
+                        type="button"
+                        className="text-sm font-medium text-gray-950 dark:text-white cursor-default"
+                        disabled
+                      >
                         {integration.name}
-                      </span>
+                      </button>
                     )}
                   </TableCell>
 
@@ -204,9 +208,13 @@ export const AvailableIntegrationsTable = ({
                         <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
                       </Link>
                     ) : (
-                      <div className="fi-ta-icon flex items-center">
+                      <button
+                        type="button"
+                        className="fi-ta-icon flex items-center cursor-default"
+                        disabled
+                      >
                         <XCircle className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-                      </div>
+                      </button>
                     )}
                   </TableCell>
 
@@ -220,9 +228,13 @@ export const AvailableIntegrationsTable = ({
                         <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
                       </Link>
                     ) : (
-                      <div className="fi-ta-icon flex items-center">
+                      <button
+                        type="button"
+                        className="fi-ta-icon flex items-center cursor-default"
+                        disabled
+                      >
                         <XCircle className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-                      </div>
+                      </button>
                     )}
                   </TableCell>
 
