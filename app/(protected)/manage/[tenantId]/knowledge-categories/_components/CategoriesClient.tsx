@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
-import { Edit, Filter, FolderOpen, Plus, Trash2, ChevronRight, Columns } from "lucide-react";
+import { Edit, Filter, FolderOpen, Plus, Trash2, ChevronRight, Settings } from "lucide-react";
 
 import { KwidButton } from "@/components/kwid";
 import { useTenantId } from "@/hooks/useTenantId";
@@ -198,17 +198,18 @@ export const CategoriesClient = ({
           </button>
           <button
             type="button"
-            className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2 dark:text-gray-500 dark:hover:text-gray-400"
+            className="fi-link group/link relative inline-flex items-center justify-center outline-none fi-size-sm fi-link-size-sm gap-1 fi-color-custom fi-color-primary fi-ac-action fi-ac-link-action"
             title="Переключить столбцы"
+            aria-label="Переключить столбцы"
             style={{
-              '--c-300': 'var(--gray-300)',
-              '--c-400': 'var(--gray-400)',
-              '--c-500': 'var(--gray-500)',
-              '--c-600': 'var(--gray-600)',
+              '--c-400': 'var(--primary-400)',
+              '--c-600': 'var(--primary-600)',
             } as React.CSSProperties}
           >
-            <Columns className="h-5 w-5" />
-            <span className="sr-only">Переключить столбцы</span>
+            <span className="font-semibold text-sm text-custom-600 dark:text-custom-400 group-hover/link:underline group-focus-visible/link:underline">
+              Переключить столбцы
+            </span>
+            <Settings className="h-4 w-4" />
           </button>
         </div>
 
@@ -228,7 +229,12 @@ export const CategoriesClient = ({
                 />
               </TableHead>
               <TableHead className="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 fi-table-header-cell-title">
-                Заголовок
+                <button
+                  type="button"
+                  className="group flex w-full items-center gap-x-1 whitespace-nowrap justify-start text-sm font-semibold text-gray-950 dark:text-white hover:text-gray-700 dark:hover:text-gray-200"
+                >
+                  <span>Заголовок</span>
+                </button>
               </TableHead>
               <TableHead className="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6">
                 <span className="group flex w-full items-center gap-x-1 whitespace-nowrap justify-start">
@@ -282,17 +288,42 @@ export const CategoriesClient = ({
                     />
                   </TableCell>
                   <TableCell className="px-3 py-4">
-                    <div className="fi-ta-text grid w-full gap-y-1">
-                      <span className="fi-ta-text-item-label text-sm leading-6 text-gray-950 dark:text-white">
+                    <Link
+                      href={
+                        tenantId
+                          ? `/manage/${tenantId}/knowledge-categories?tableFilters[category_filter][parent_id]=${category.id}`
+                          : `/knowledge-base/categories?tableFilters[category_filter][parent_id]=${category.id}`
+                      }
+                      className="fi-ta-text grid w-full gap-y-1"
+                    >
+                      <span className="fi-ta-text-item-label text-sm leading-6 text-gray-950 dark:text-white hover:text-primary-600 dark:hover:text-primary-400">
                         {category.name}
                       </span>
-                    </div>
+                    </Link>
                   </TableCell>
                   <TableCell className="px-3 py-4">
-                    <div className="flex">{category.subcategoriesCount}</div>
+                    <Link
+                      href={
+                        tenantId
+                          ? `/manage/${tenantId}/knowledge-categories?tableFilters[category_filter][parent_id]=${category.id}`
+                          : `/knowledge-base/categories?tableFilters[category_filter][parent_id]=${category.id}`
+                      }
+                      className="text-sm text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400"
+                    >
+                      {category.subcategoriesCount}
+                    </Link>
                   </TableCell>
                   <TableCell className="px-3 py-4">
-                    <div className="flex">{category.articlesCount}</div>
+                    <Link
+                      href={
+                        tenantId
+                          ? `/manage/${tenantId}/knowledge-categories?tableFilters[category_filter][parent_id]=${category.id}`
+                          : `/knowledge-base/categories?tableFilters[category_filter][parent_id]=${category.id}`
+                      }
+                      className="text-sm text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400"
+                    >
+                      {category.articlesCount || 0}
+                    </Link>
                   </TableCell>
                   <TableCell className="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3 fi-ta-actions-cell">
                     <div className="whitespace-nowrap px-3 py-4">
@@ -304,17 +335,16 @@ export const CategoriesClient = ({
                                 ? `/manage/${tenantId}/knowledge-categories?tableFilters[category_filter][parent_id]=${category.id}`
                                 : `/knowledge-base/categories?tableFilters[category_filter][parent_id]=${category.id}`
                             }
-                            className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-1.5 h-8 w-8 fi-color-custom text-custom-500 hover:text-custom-600 focus-visible:ring-custom-600 focus-visible:ring-offset-2"
-                            title="Показать подкатегории"
+                            className="fi-link group/link relative inline-flex items-center justify-center outline-none fi-size-sm fi-link-size-sm gap-1 fi-color-custom fi-color-primary fi-ac-action fi-ac-link-action"
                             style={{
-                              '--c-300': 'var(--secondary-300)',
-                              '--c-400': 'var(--secondary-400)',
-                              '--c-500': 'var(--secondary-500)',
-                              '--c-600': 'var(--secondary-600)',
+                              '--c-400': 'var(--primary-400)',
+                              '--c-600': 'var(--primary-600)',
                             } as React.CSSProperties}
                           >
+                            <span className="font-semibold text-sm text-custom-600 dark:text-custom-400 group-hover/link:underline group-focus-visible/link:underline">
+                              Показать подкатегории
+                            </span>
                             <ChevronRight className="h-4 w-4" />
-                            <span className="sr-only">Показать подкатегории</span>
                           </Link>
                         )}
                         <Link
@@ -323,32 +353,30 @@ export const CategoriesClient = ({
                               ? `/manage/${tenantId}/knowledge-categories/${category.id}/edit`
                               : `/knowledge-base/categories/${category.id}/edit`
                           }
-                          className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-1.5 h-8 w-8 fi-color-custom text-custom-500 hover:text-custom-600 focus-visible:ring-custom-600 focus-visible:ring-offset-2"
-                          title="Редактировать"
+                          className="fi-link group/link relative inline-flex items-center justify-center outline-none fi-size-sm fi-link-size-sm gap-1 fi-color-custom fi-color-primary fi-ac-action fi-ac-link-action"
                           style={{
-                            '--c-300': 'var(--primary-300)',
                             '--c-400': 'var(--primary-400)',
-                            '--c-500': 'var(--primary-500)',
                             '--c-600': 'var(--primary-600)',
                           } as React.CSSProperties}
                         >
+                          <span className="font-semibold text-sm text-custom-600 dark:text-custom-400 group-hover/link:underline group-focus-visible/link:underline">
+                            Редактировать
+                          </span>
                           <Edit className="h-4 w-4" />
-                          <span className="sr-only">Редактировать</span>
                         </Link>
                         <button
                           type="button"
                           onClick={() => handleDelete(category.id)}
-                          className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-1.5 h-8 w-8 fi-color-custom text-custom-500 hover:text-custom-600 focus-visible:ring-custom-600 focus-visible:ring-offset-2"
-                          title="Удалить"
+                          className="fi-link group/link relative inline-flex items-center justify-center outline-none fi-size-sm fi-link-size-sm gap-1 fi-color-custom fi-ac-action fi-ac-link-action"
                           style={{
-                            '--c-300': 'var(--danger-300)',
                             '--c-400': 'var(--danger-400)',
-                            '--c-500': 'var(--danger-500)',
                             '--c-600': 'var(--danger-600)',
                           } as React.CSSProperties}
                         >
+                          <span className="font-semibold text-sm text-custom-600 dark:text-custom-400 group-hover/link:underline group-focus-visible/link:underline">
+                            Удалить
+                          </span>
                           <Trash2 className="h-4 w-4" />
-                          <span className="sr-only">Удалить</span>
                         </button>
                       </div>
                     </div>

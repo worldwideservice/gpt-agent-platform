@@ -227,17 +227,18 @@ export const ArticlesClient = ({
             </button>
             <button
               type="button"
-              className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2 dark:text-gray-500 dark:hover:text-gray-400"
+              className="fi-link group/link relative inline-flex items-center justify-center outline-none fi-size-sm fi-link-size-sm gap-1 fi-color-custom fi-color-primary fi-ac-action fi-ac-link-action"
               title="Переключить столбцы"
+              aria-label="Переключить столбцы"
               style={{
-                '--c-300': 'var(--gray-300)',
-                '--c-400': 'var(--gray-400)',
-                '--c-500': 'var(--gray-500)',
-                '--c-600': 'var(--gray-600)',
+                '--c-400': 'var(--primary-400)',
+                '--c-600': 'var(--primary-600)',
               } as React.CSSProperties}
             >
-              <Columns className="h-5 w-5" />
-              <span className="sr-only">Переключить столбцы</span>
+              <span className="font-semibold text-sm text-custom-600 dark:text-custom-400 group-hover/link:underline group-focus-visible/link:underline">
+                Переключить столбцы
+              </span>
+              <Settings className="h-4 w-4" />
             </button>
           </div>
         </div>
