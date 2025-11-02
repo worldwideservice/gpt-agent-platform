@@ -39,90 +39,76 @@ export const LoginClient = () => {
       setError(null)
 
       try {
-        const result = await signIn('credentials', {
-          email,
-          password,
-          redirect: false,
-          callbackUrl: '/agents',
+        // Простой подход: используем обычную HTML форму
+        // NextAuth сам обработает редирект через API
+        const form = event.currentTarget
+        const formData = new FormData(form)
+        const rawEmail = formData.get('email')
+        const rawPassword = formData.get('password')
+
+        if (typeof rawEmail !== 'string' || typeof rawPassword !== 'string') {
+          throw new Error('Не удалось получить данные формы')
+        }
+
+        const payload = new URLSearchParams()
+        payload.set('email', rawEmail)
+        payload.set('password', rawPassword)
+
+        console.log('🔐 Submitting login form...')
+
+        const response = await fetch('/api/auth/callback/credentials', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: payload.toString(),
+          redirect: 'follow',
         })
 
-        if (result?.error) {
-          throw new Error('Неверные email или пароль')
-        }
+        console.log('🔐 Form submission status:', response.status);
+        console.log('🔐 Final URL:', response.url);
 
-        if (result?.ok) {
-          // Ждем обновления сессии после signIn
-          await new Promise(resolve => setTimeout(resolve, 500))
-          
-          // Обновляем сессию на клиенте
-          router.refresh()
-          
-          // Ждем еще немного для синхронизации
-          await new Promise(resolve => setTimeout(resolve, 500))
+        const isSuccessful =
+          response.ok ||
+          response.status === 302 ||
+          response.type === 'opaqueredirect'
 
-          // Получаем tenant-id для редиректа
-          let tenantId: string | null = null
-          let retries = 0
-          const maxRetries = 3
+        if (isSuccessful) {
+          console.log('🔐 Login successful, checking session...');
 
-          while (!tenantId && retries < maxRetries) {
-            try {
-              const response = await fetch('/api/auth/get-tenant-redirect', {
-                method: 'GET',
-                credentials: 'include',
-                cache: 'no-store',
-              })
+          // Ждем немного для обновления сессии
+          await new Promise(resolve => setTimeout(resolve, 1000));
 
-              const payload = (await response.json()) as {
-                success: boolean
-                tenantId: string | null
-                error?: string
-              }
+          // Проверяем сессию
+          const sessionResponse = await fetch('/api/auth/session');
+          const sessionData = await sessionResponse.json();
 
-              if (payload.success && payload.tenantId) {
-                tenantId = payload.tenantId
-                break
-              } else {
-                console.warn(`Failed to get tenant-id (attempt ${retries + 1}/${maxRetries}):`, payload.error)
-                retries++
-                if (retries < maxRetries) {
-                  await new Promise(resolve => setTimeout(resolve, 1000))
-                }
-              }
-            } catch (fetchError) {
-              console.error(`Failed to fetch tenant redirect (attempt ${retries + 1}/${maxRetries}):`, fetchError)
-              retries++
-              if (retries < maxRetries) {
-                await new Promise(resolve => setTimeout(resolve, 1000))
-              }
+          if (sessionData?.user) {
+            console.log('🔐 Session confirmed, redirecting...');
+
+            // Получаем tenant-id
+            const redirectResponse = await fetch('/api/auth/get-tenant-redirect');
+            const redirectData = await redirectResponse.json();
+
+            if (redirectData.success && redirectData.tenantId) {
+              pushToast({
+                title: 'Вход выполнен! ✅',
+                description: `Добро пожаловать, ${email}!`,
+                variant: 'success',
+              });
+
+              window.location.href = `/manage/${redirectData.tenantId}`;
+              return;
             }
           }
-
-          if (tenantId) {
-            // Показываем уведомление об успешном входе
-            pushToast({
-              title: 'Вход выполнен! ✅',
-              description: `Добро пожаловать, ${email}!`,
-              variant: 'success',
-            })
-
-            // Используем window.location для полного редиректа (гарантирует обновление сессии)
-            window.location.href = `/manage/${tenantId}`
-          } else {
-            // Если tenant-id не получен после всех попыток - редирект на главную страницу
-            console.error('Failed to get tenant-id after all retries')
-            pushToast({
-              title: 'Ошибка входа',
-              description: 'Не удалось получить данные организации. Попробуйте еще раз.',
-              variant: 'error',
-            })
-            // Редирект на главную - там будет проверка и редирект на логин если нужно
-            window.location.href = '/'
-          }
         }
+
+        // Если дошли сюда, значит вход не удался
+        throw new Error('Неверные email или пароль');
+
       } catch (error) {
-        // Если произошла ошибка, показываем сообщение
-        setError(error instanceof Error ? error.message : 'Неверные email или пароль')
+        console.error('🔐 Login error:', error);
+        setError(error instanceof Error ? error.message : 'Неверные email или пароль');
       }
     })
   }
@@ -138,25 +124,37 @@ export const LoginClient = () => {
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <KwidInput
-          id="email"
-          label="Email"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          required
-        />
+        <div className="space-y-2">
+          <label htmlFor="email" className="text-sm font-medium text-gray-900 dark:text-white">
+            Email
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder-gray-400 shadow-sm focus:border-custom-500 focus:outline-none focus:ring-1 focus:ring-custom-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 dark:focus:border-custom-400 dark:focus:ring-custom-400"
+          />
+        </div>
 
-        <KwidInput
-          id="password"
-          label="Пароль"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          required
-        />
+        <div className="space-y-2">
+          <label htmlFor="password" className="text-sm font-medium text-gray-900 dark:text-white">
+            Пароль
+          </label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder-gray-400 shadow-sm focus:border-custom-500 focus:outline-none focus:ring-1 focus:ring-custom-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 dark:focus:border-custom-400 dark:focus:ring-custom-400"
+          />
+        </div>
 
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">

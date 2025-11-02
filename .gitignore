@@ -1,54 +1,103 @@
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
+# Dependencies
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env*.local
+# Production builds
+.next/
+out/
+build/
+dist/
+
+# Environment variables
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-env.production
+.env.production
 
-# secrets and tokens
-.cursor/mcp.json
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
 
-# vercel
-.vercel
+# OS
+.DS_Store
+Thumbs.db
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# Logs
+*.log
+logs/
 
-# playwright
-/test-results/
-/playwright-report/
-/playwright/.cache/
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
 
-# services build artifacts
-/services/api/dist
-/services/worker/dist
+# Coverage directory used by tools like istanbul
+coverage/
 
-*storybook.log
-storybook-static
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# next.js build output
+.next
+
+# nuxt.js build output
+.nuxt
+
+# vuepress build output
+.vuepress/dist
+
+# Serverless directories
+.serverless
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# Database
+dump.rdb
+
+# Test results and screenshots
+test-results/
+test-screenshots/
+playwright-report/
+
+# Temporary files
+*.tmp
+*.temp
