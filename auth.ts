@@ -230,13 +230,16 @@ export const {
             authPromise(),
             new Promise<null>((_, reject) =>
               setTimeout(() => {
-                console.error('NextAuth: Authentication timeout')
+                console.error('[NextAuth] Authentication timeout after 30 seconds')
                 reject(new Error('Authentication timeout'))
-              }, 15000) // 15 секунд общий таймаут
+              }, 30000) // 30 секунд общий таймаут (увеличено)
             )
           ])
         } catch (error) {
-          console.error('NextAuth: Authentication timeout or error:', error)
+          console.error('[NextAuth] Authentication timeout or error:', error)
+          if (error instanceof Error) {
+            console.error('[NextAuth] Error details:', error.message, error.stack)
+          }
           return null
         }
       },
