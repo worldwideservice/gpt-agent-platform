@@ -21,6 +21,7 @@ import {
   Clock,
   Plug,
   Settings2,
+  ChevronRight,
 } from "lucide-react";
 
 import { TriggerManager } from "@/components/agents/TriggerManager";
@@ -659,49 +660,42 @@ export const AgentEditForm = ({
 
   return (
     <div className="space-y-8">
-      <nav className="flex items-center gap-2 mb-4" aria-label="Хлебные крошки">
-        <Link
-          href={agentsPath}
-          className="fi-breadcrumbs-item-label text-sm font-medium text-gray-500 transition duration-75 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-        >
-          Агенты ИИ
-        </Link>
-        {!isNew && (
-          <>
+      <nav aria-label="Хлебные крошки">
+        <ul className="flex items-center gap-0">
+          <li>
             <Link
-              href={editPath}
+              href={agentsPath}
               className="fi-breadcrumbs-item-label text-sm font-medium text-gray-500 transition duration-75 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
-              {agentTitle}
+              Агенты ИИ
             </Link>
-            <span className="fi-breadcrumbs-item-label text-sm font-medium text-gray-500 dark:text-gray-400">
-              Основные
-            </span>
-          </>
-        )}
+          </li>
+          {!isNew && (
+            <>
+              <li className="flex items-center">
+                <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500 mx-1" />
+                <Link
+                  href={editPath}
+                  className="fi-breadcrumbs-item-label text-sm font-medium text-gray-500 transition duration-75 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  {agentTitle}
+                </Link>
+              </li>
+              <li className="flex items-center">
+                <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500 mx-1" />
+                <span className="fi-breadcrumbs-item-label text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Основные
+                </span>
+              </li>
+            </>
+          )}
+        </ul>
       </nav>
 
       <header className="fi-header flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Агенты ИИ
-            </span>
-            {!isNew && (
-              <>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {agentTitle}
-                </span>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Основные
-                </span>
-              </>
-            )}
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-950 dark:text-white sm:text-3xl">
-            {isNew ? "Создание агента" : "Редактирование АИ ассистент"}
-          </h1>
-        </div>
+        <h1 className="fi-header-heading text-2xl font-bold tracking-tight text-gray-950 dark:text-white sm:text-3xl">
+          {isNew ? "Создание агента" : `Редактирование ${agentTitle}`}
+        </h1>
         <div className="flex items-center gap-3">
           {!isNew && (
             <KwidButton
