@@ -24,6 +24,9 @@ dist/
 *.swp
 *.swo
 
+# Cursor IDE
+.cursor/
+
 # OS
 .DS_Store
 Thumbs.db

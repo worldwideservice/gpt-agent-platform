@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { signIn } from 'next-auth/react'
 
 export const LoginClient = () => {
@@ -34,7 +33,7 @@ export const LoginClient = () => {
     <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
       <h1 className="text-center text-2xl font-semibold text-slate-900">Вход</h1>
       <p className="mt-2 text-center text-sm text-slate-600">
-        Введите данные Supabase аккаунта, чтобы продолжить.
+        Используйте учётные данные, указанные в переменных окружения, чтобы продолжить.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -74,13 +73,6 @@ export const LoginClient = () => {
           {isSubmitting ? 'Входим...' : 'Войти'}
         </button>
       </form>
-
-      <div className="mt-4 text-center text-sm text-slate-600">
-        Нет аккаунта?{' '}
-        <Link href="/register" className="text-slate-900 underline">
-          Зарегистрируйтесь
-        </Link>
-      </div>
     </div>
   )
 }

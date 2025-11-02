@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ['latin', 'cyrillic'], display: 'swap' })
 
 export const metadata: Metadata = {
   title: 'AI Agent Platform',
-  description: 'Минимальная стартовая сборка с Supabase и Kommo.',
+  description: 'Минимальная стартовая сборка для нового проекта.',
 }
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => {
