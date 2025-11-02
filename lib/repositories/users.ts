@@ -291,16 +291,33 @@ export class UserRepository {
   // Find user by email (database user)
   static async findUserByEmail(email: string): Promise<DatabaseUser | null> {
     try {
-      const { data, error } = await getSupabaseClient()
+      console.log('[UserRepository] Finding user by email:', email)
+      const client = await getSupabaseClient()
+      console.log('[UserRepository] Client created, querying users table...')
+      
+      const { data, error } = await client
         .from('users')
         .select('*')
-        .eq('email', email)
+        .eq('email', email.toLowerCase().trim())
         .single()
 
-      if (error || !data) {
+      if (error) {
+        console.error('[UserRepository] Error finding user:', {
+          error: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+          email
+        })
         return null
       }
 
+      if (!data) {
+        console.log('[UserRepository] User not found for email:', email)
+        return null
+      }
+
+      console.log('[UserRepository] User found:', data.id, data.email)
       return {
         id: data.id,
         email: data.email,
@@ -315,7 +332,10 @@ export class UserRepository {
         updated_at: data.updated_at,
       }
     } catch (error) {
-      console.error('Error finding user by email:', error)
+      console.error('[UserRepository] Exception finding user by email:', error)
+      if (error instanceof Error) {
+        console.error('[UserRepository] Exception details:', error.message, error.stack)
+      }
       return null
     }
   }
