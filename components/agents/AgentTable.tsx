@@ -121,7 +121,7 @@ export const AgentTable = ({
                   </div>
                 </TableCell>
                 <TableCell className="whitespace-nowrap px-3 py-4 text-sm text-gray-600 dark:text-gray-400">
-                  {agent.default_model ?? agent.model ?? 'Не указана'}
+                  {agent.model ?? 'Не указана'}
                 </TableCell>
                 <TableCell className="whitespace-nowrap px-3 py-4">
                   <div className="flex items-center justify-end gap-3">
