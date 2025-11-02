@@ -60,9 +60,9 @@ const KwidSwitch = React.forwardRef<HTMLInputElement, KwidSwitchProps>(
             className
           )}
           style={
-            isChecked
+            (isChecked
               ? { '--c-600': 'var(--primary-600)' }
-              : { '--c-600': 'var(--gray-600)' }
+              : { '--c-600': 'var(--gray-600)' }) as React.CSSProperties
           }
           disabled={props.disabled}
         >
