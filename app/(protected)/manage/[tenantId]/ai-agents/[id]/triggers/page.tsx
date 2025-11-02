@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Settings, Users, Zap, Clock, Plug, Settings2, ArrowLeft } from 'lucide-react'
+import { Settings, Users, Zap, Clock, Plug, Settings2, ArrowLeft, ChevronRight } from 'lucide-react'
 
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
@@ -77,10 +77,8 @@ const TriggersPage = async ({ params }: TriggersPageProps) => {
                   Агенты ИИ
                 </Link>
               </li>
-              <li>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  &gt;
-                </span>
+              <li className="flex items-center">
+                <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500 mx-1" />
               </li>
               <li>
                 <Link
@@ -90,10 +88,8 @@ const TriggersPage = async ({ params }: TriggersPageProps) => {
                   {agent.name}
                 </Link>
               </li>
-              <li>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  &gt;
-                </span>
+              <li className="flex items-center">
+                <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500 mx-1" />
               </li>
               <li>
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">

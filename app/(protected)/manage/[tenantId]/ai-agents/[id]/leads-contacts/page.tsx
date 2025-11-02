@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Settings, Users, Zap, Clock, Plug, Settings2 } from 'lucide-react'
+import { Settings, Users, Zap, Clock, Plug, Settings2, ChevronRight } from 'lucide-react'
 
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
@@ -68,12 +68,7 @@ export default async function LeadsContactsPage({ params }: LeadsContactsPagePro
             </Link>
           </li>
           <li className="flex items-center">
-            <img
-              src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E"
-              alt=""
-              className="h-4 w-4 mx-1 opacity-50"
-              aria-hidden="true"
-            />
+            <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500 mx-1" />
             <Link
               href={editPath}
               className="fi-breadcrumbs-item-label text-sm font-medium text-gray-500 transition duration-75 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -82,12 +77,7 @@ export default async function LeadsContactsPage({ params }: LeadsContactsPagePro
             </Link>
           </li>
           <li className="flex items-center">
-            <img
-              src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E"
-              alt=""
-              className="h-4 w-4 mx-1 opacity-50"
-              aria-hidden="true"
-            />
+            <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500 mx-1" />
             <span className="fi-breadcrumbs-item-label text-sm font-medium text-gray-500 dark:text-gray-400">
               Данные сделок и контактов
             </span>
