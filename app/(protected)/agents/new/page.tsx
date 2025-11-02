@@ -1,8 +1,8 @@
-import { redirect } from "next/navigation";
+import { redirectToTenantPath } from "@/lib/utils/getTenantRedirect";
 
-const NewAgentPage = () => {
-  redirect("/agents/create");
-  return null;
-};
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
+const NewAgentPage = async () => redirectToTenantPath("/ai-agents/create");
 
 export default NewAgentPage;

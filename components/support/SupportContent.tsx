@@ -1,23 +1,37 @@
-"use client";
+'use client'
 
-import { KwidSection } from "@/components/kwid";
-import { Book, Video, FileText, HelpCircle } from "lucide-react";
+import Link from 'next/link'
+import { Book, FileText, HelpCircle, Video } from 'lucide-react'
 
-// Prevent static generation for client component
-export const dynamic = 'force-dynamic';
+import { KwidButton, KwidSection } from '@/components/kwid'
 
-const SupportPage = () => {
+interface SupportContentProps {
+  variant?: 'public' | 'internal'
+}
+
+export const SupportContent = ({ variant = 'internal' }: SupportContentProps) => {
+  const isPublic = variant === 'public'
+
   return (
     <div className="space-y-6">
-      <div>
-        {/* Kwid: Help Center / Getting Started */}
+      <header className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Getting Started
+          {isPublic ? 'Поддержка и обучение' : 'Getting Started'}
         </h1>
-        <p className="mt-1 text-gray-600 dark:text-gray-400">
-          Руководства и обучающие материалы для работы с платформой
+        <p className="text-gray-600 dark:text-gray-400">
+          Руководства, документация и ответы на вопросы, которые помогают работать с платформой
         </p>
-      </div>
+        {isPublic && (
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <KwidButton asChild size="sm" variant="primary">
+              <Link href="/register">Создать аккаунт</Link>
+            </KwidButton>
+            <KwidButton asChild size="sm" variant="outline">
+              <Link href="/login">Войти</Link>
+            </KwidButton>
+          </div>
+        )}
+      </header>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <KwidSection
@@ -31,7 +45,7 @@ const SupportPage = () => {
             </div>
             <div>
               <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                Узнайте, как создать и настроить вашего первого AI-агента
+                Узнайте, как создать организацию и настроить первого AI-агента за несколько шагов
               </p>
               <ul className="space-y-2 text-sm text-primary-600 dark:text-primary-400">
                 <li className="transition-colors hover:text-primary-700 dark:hover:text-primary-300">
@@ -59,7 +73,7 @@ const SupportPage = () => {
             </div>
             <div>
               <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                Пошаговые видеоинструкции по работе с платформой
+                Пошаговые видеоинструкции по работе с платформой и лучшим сценариям использования
               </p>
               <ul className="space-y-2 text-sm text-green-600 dark:text-green-400">
                 <li className="transition-colors hover:text-green-700 dark:hover:text-green-300">
@@ -87,7 +101,7 @@ const SupportPage = () => {
             </div>
             <div>
               <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                Полная техническая документация и API reference
+                Полная техническая документация, API reference и примеры интеграций
               </p>
               <ul className="space-y-2 text-sm text-purple-600 dark:text-purple-400">
                 <li className="transition-colors hover:text-purple-700 dark:hover:text-purple-300">
@@ -115,7 +129,7 @@ const SupportPage = () => {
             </div>
             <div>
               <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                Ответы на часто задаваемые вопросы
+                Ответы на популярные вопросы по настройке агентов, тарифам и интеграциям
               </p>
               <ul className="space-y-2 text-sm text-orange-600 dark:text-orange-400">
                 <li className="transition-colors hover:text-orange-700 dark:hover:text-orange-300">
@@ -135,7 +149,7 @@ const SupportPage = () => {
 
       <KwidSection title="Нужна помощь?">
         <p className="mb-4 text-gray-600 dark:text-gray-400">
-          Свяжитесь с нашей службой поддержки, и мы поможем решить любой вопрос.
+          Свяжитесь с нашей командой поддержки — ответим на вопросы и поможем настроить платформу для вашей команды.
         </p>
         <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
@@ -159,13 +173,12 @@ const SupportPage = () => {
               Время работы
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Пн-Пт, 9:00 - 18:00 МСК
+              Пн-Пт 09:00 – 19:00 (МСК)
             </p>
           </div>
         </div>
       </KwidSection>
     </div>
-  );
-};
+  )
+}
 
-export default SupportPage;

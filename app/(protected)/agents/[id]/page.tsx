@@ -1,40 +1,15 @@
-import { redirect } from "next/navigation";
+import { redirectToTenantPath } from "@/lib/utils/getTenantRedirect";
 
-import { AgentEditForm } from "./_components/AgentEditForm";
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
-import { auth } from "@/auth";
-import { getAgentById } from "@/lib/repositories/agents";
-
-interface AgentEditPageProps {
-  params: Promise<{
-    id: string;
-  }>;
+interface LegacyAgentPageProps {
+  params: Promise<{ id: string }>;
 }
 
-const AgentEditPage = async ({ params }: AgentEditPageProps) => {
+const LegacyAgentPage = async ({ params }: LegacyAgentPageProps) => {
   const { id } = await params;
-  const session = await auth();
-
-  if (!session?.user?.orgId) {
-    redirect("/login");
-  }
-
-  let agent = null;
-
-  if (id !== "new") {
-    try {
-      agent = await getAgentById(id, session.user.orgId);
-
-      if (!agent) {
-        redirect("/agents");
-      }
-    } catch (error) {
-      console.error("Failed to load agent", error);
-      redirect("/agents");
-    }
-  }
-
-  return <AgentEditForm agentId={id} initialAgent={agent} />;
+  return redirectToTenantPath(`/ai-agents/${id}/edit`);
 };
 
-export default AgentEditPage;
+export default LegacyAgentPage;

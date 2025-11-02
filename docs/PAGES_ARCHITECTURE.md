@@ -59,11 +59,20 @@
 
 ### 7. `/pricing` - Публичная страница тарифов
 **Назначение:** Просмотр тарифных планов без авторизации
-**Файл:** `app/(protected)/pricing/page.tsx` (возможно нужно сделать публичной)
+**Файл:** `app/pricing/page.tsx` (публичная) и `app/(protected)/manage/[tenantId]/pricing/page.tsx` (управление подпиской)
 **Описание:**
 - Список доступных тарифов
 - Описание возможностей каждого плана
 - Призыв к регистрации
+- Переключатель ежемесячной/годовой оплаты и выбор лимита ответов
+
+### 8. `/support` - Центр поддержки
+**Назначение:** Доступ к руководствам, FAQ и контактам поддержки
+**Файл:** `app/support/page.tsx`
+**Описание:**
+- Основные разделы: Начало работы, Видеоуроки, Документация, FAQ
+- CTA для регистрации и входа
+- Контактная информация службы поддержки
 
 ---
 
@@ -71,55 +80,54 @@
 
 ### СТАРЫЕ ПУТИ (редиректы на новые с tenant-id)
 
-#### 8. `/(protected)/page.tsx` - Главная защищенная страница (РЕДИРЕКТ)
+#### 9. `/(protected)/page.tsx` - Главная защищенная страница (РЕДИРЕКТ)
 **Назначение:** Редирект на `/manage/[tenantId]`
 **Файл:** `app/(protected)/page.tsx`
 **Логика:** Получает tenant-id из сессии и редиректит на дашборд
 
-#### 9. `/(protected)/agents/page.tsx` - Список агентов (РЕДИРЕКТ)
+#### 10. `/(protected)/agents/page.tsx` - Список агентов (РЕДИРЕКТ)
 **Назначение:** Редирект на `/manage/[tenantId]/ai-agents`
 **Файл:** `app/(protected)/agents/page.tsx`
 
-#### 10. `/(protected)/chat/page.tsx` - Тестовый чат (РЕДИРЕКТ)
+#### 11. `/(protected)/chat/page.tsx` - Тестовый чат (РЕДИРЕКТ)
 **Назначение:** Редирект на `/manage/[tenantId]/test-chat`
 **Файл:** `app/(protected)/chat/page.tsx`
 
-#### 11. `/(protected)/knowledge-base/page.tsx` - База знаний (РЕДИРЕКТ)
+#### 12. `/(protected)/knowledge-base/page.tsx` - База знаний (РЕДИРЕКТ)
 **Назначение:** Редирект на `/manage/[tenantId]/knowledge-categories`
 **Файл:** `app/(protected)/knowledge-base/page.tsx`
 
-#### 12. `/(protected)/knowledge-base/categories/page.tsx` - Категории (РЕДИРЕКТ)
+#### 13. `/(protected)/knowledge-base/categories/page.tsx` - Категории (РЕДИРЕКТ)
 **Назначение:** Редирект на `/manage/[tenantId]/knowledge-categories`
 **Файл:** `app/(protected)/knowledge-base/categories/page.tsx`
 
-#### 13. `/(protected)/knowledge-base/articles/page.tsx` - Статьи (РЕДИРЕКТ)
+#### 14. `/(protected)/knowledge-base/articles/page.tsx` - Статьи (РЕДИРЕКТ)
 **Назначение:** Редирект на `/manage/[tenantId]/knowledge-items`
 **Файл:** `app/(protected)/knowledge-base/articles/page.tsx`
 
-#### 14. `/(protected)/account/page.tsx` - Настройки аккаунта (РЕДИРЕКТ)
+#### 15. `/(protected)/account/page.tsx` - Настройки аккаунта (РЕДИРЕКТ)
 **Назначение:** Редирект на `/manage/[tenantId]/account-settings`
 **Файл:** `app/(protected)/account/page.tsx`
 
-#### 15. `/(protected)/pricing/page.tsx` - Тарифы (РЕДИРЕКТ)
+#### 16. `/(protected)/pricing/page.tsx` - Тарифы (РЕДИРЕКТ)
 **Назначение:** Редирект на `/manage/[tenantId]/pricing`
 **Файл:** `app/(protected)/pricing/page.tsx`
 
-#### 16. `/(protected)/support/page.tsx` - Поддержка
-**Назначение:** Страница поддержки и помощи
-**Файл:** `app/(protected)/support/page.tsx`
+#### 17. `/(protected)/support/page.tsx` - Поддержка
+**Назначение:** Редиректит на новый центр поддержки `/manage/[tenantId]/support`
+**Файл:** `app/(protected)/support/page.tsx` (редирект), `app/(protected)/manage/[tenantId]/support/page.tsx`
 **Описание:**
 - Разделы: Начало работы, Видеоуроки, Документация, FAQ
-- Контактная информация поддержки
+- Контактная информация поддержки и быстрые CTA
 
-#### 17. `/(protected)/integrations/page.tsx` - Интеграции
-**Назначение:** Управление интеграциями
-**Файл:** `app/(protected)/integrations/page.tsx`
+#### 18. `/(protected)/integrations/page.tsx` - Интеграции
+**Назначение:** Редиректит на `/manage/[tenantId]/integrations`
+**Файл:** `app/(protected)/integrations/page.tsx` (редирект), `app/(protected)/manage/[tenantId]/integrations/page.tsx`
 **Описание:**
-- Список доступных интеграций
-- Подключение/отключение интеграций
-- Настройка интеграций
+- Подключение Kommo CRM и проверка статуса синхронизации
+- Кнопки обновления статуса и управление подключением
 
-#### 18. `/(protected)/onboarding/page.tsx` - Онбординг
+#### 19. `/(protected)/onboarding/page.tsx` - Онбординг
 **Назначение:** Первичная настройка платформы для новой организации
 **Файл:** `app/(protected)/onboarding/page.tsx` + `OnboardingClient.tsx`
 **Описание:**
@@ -136,7 +144,7 @@
 
 ### ДАШБОРД
 
-#### 19. `/manage/[tenantId]` - Дашборд (Главная страница платформы)
+#### 20. `/manage/[tenantId]` - Дашборд (Главная страница платформы)
 **Назначение:** Центральная страница с метриками и статистикой
 **Файл:** `app/(protected)/manage/[tenantId]/page.tsx`
 **Описание:**
@@ -156,7 +164,7 @@
 
 ### УПРАВЛЕНИЕ АГЕНТАМИ
 
-#### 20. `/manage/[tenantId]/ai-agents` - Список агентов ИИ
+#### 21. `/manage/[tenantId]/ai-agents` - Список агентов ИИ
 **Назначение:** Просмотр и управление списком всех AI-агентов организации
 **Файл:** `app/(protected)/manage/[tenantId]/ai-agents/page.tsx`
 **Компоненты:** `AgentsClient.tsx`
@@ -173,14 +181,14 @@
 - **Пагинация:** Настройка количества элементов на странице
 - **Кнопка "Создать":** Создание нового агента
 
-#### 21. `/manage/[tenantId]/ai-agents/create` - Создание нового агента
+#### 22. `/manage/[tenantId]/ai-agents/create` - Создание нового агента
 **Назначение:** Форма создания нового AI-агента
 **Файл:** `app/(protected)/manage/[tenantId]/ai-agents/create/page.tsx`
 **Описание:**
 - Форма с минимальными полями для создания агента
 - После создания → редирект на страницу редактирования
 
-#### 22. `/manage/[tenantId]/ai-agents/[id]/edit` - Редактирование агента
+#### 23. `/manage/[tenantId]/ai-agents/[id]/edit` - Редактирование агента
 **Назначение:** Полная настройка и редактирование AI-агента
 **Файл:** `app/(protected)/manage/[tenantId]/ai-agents/[id]/edit/page.tsx`
 **Компоненты:** `AgentEditForm.tsx`
@@ -208,7 +216,7 @@
 - **Кнопка "Удалить":** Удаление агента с подтверждением
 - **Сохранение:** Кнопка сохранения изменений
 
-#### 23. `/manage/[tenantId]/ai-agents/[id]/pipelines` - Настройка воронок для агента
+#### 24. `/manage/[tenantId]/ai-agents/[id]/pipelines` - Настройка воронок для агента
 **Назначение:** Настройка работы агента с воронками продаж из CRM
 **Файл:** `app/(protected)/manage/[tenantId]/ai-agents/[id]/pipelines/page.tsx`
 **Компоненты:** `PipelinesClient.tsx`
@@ -218,7 +226,7 @@
 - Правила работы на каждом этапе
 - Настройка триггеров при переходе между этапами
 
-#### 24. `/manage/[tenantId]/ai-agents/[id]/training` - Обучение агента
+#### 25. `/manage/[tenantId]/ai-agents/[id]/training` - Обучение агента
 **Назначение:** Загрузка данных для обучения агента (база знаний, файлы)
 **Файл:** `app/(protected)/manage/[tenantId]/ai-agents/[id]/training/page.tsx`
 **Компоненты:** `AgentTrainingPage.tsx`, `FileUpload.tsx`
@@ -232,7 +240,7 @@
 
 ### БАЗА ЗНАНИЙ
 
-#### 25. `/manage/[tenantId]/knowledge-categories` - Категории базы знаний
+#### 26. `/manage/[tenantId]/knowledge-categories` - Категории базы знаний
 **Назначение:** Управление категориями для организации базы знаний
 **Файл:** `app/(protected)/manage/[tenantId]/knowledge-categories/page.tsx`
 **Компоненты:** `CategoriesClient.tsx`
@@ -247,7 +255,7 @@
   - Удалить категорию
 - **Счетчики:** Количество подкатегорий и статей в каждой категории
 
-#### 26. `/manage/[tenantId]/knowledge-items` - Статьи базы знаний
+#### 27. `/manage/[tenantId]/knowledge-items` - Статьи базы знаний
 **Назначение:** Управление статьями/материалами базы знаний
 **Файл:** `app/(protected)/manage/[tenantId]/knowledge-items/page.tsx`
 **Компоненты:** `ArticlesClient.tsx`
@@ -269,7 +277,7 @@
 
 ### ТЕСТИРОВАНИЕ
 
-#### 27. `/manage/[tenantId]/test-chat` - Тестовый чат
+#### 28. `/manage/[tenantId]/test-chat` - Тестовый чат
 **Назначение:** Тестирование работы агентов в реальном времени
 **Файл:** `app/(protected)/manage/[tenantId]/test-chat/page.tsx`
 **Функционал:**
@@ -291,7 +299,7 @@
 
 ### НАСТРОЙКИ АККАУНТА
 
-#### 28. `/manage/[tenantId]/account-settings` - Настройки аккаунта
+#### 29. `/manage/[tenantId]/account-settings` - Настройки аккаунта
 **Назначение:** Настройки пользователя и организации
 **Файл:** `app/(protected)/manage/[tenantId]/account-settings/page.tsx`
 **Функционал:**
@@ -308,7 +316,7 @@
 
 ### ТАРИФЫ И БИЛЛИНГ
 
-#### 29. `/manage/[tenantId]/pricing` - Тарифные планы
+#### 30. `/manage/[tenantId]/pricing` - Тарифные планы
 **Назначение:** Управление подпиской и выбором тарифного плана
 **Файл:** `app/(protected)/manage/[tenantId]/pricing/page.tsx`
 **Компоненты:** `PricingClient.tsx`
@@ -334,47 +342,47 @@
 
 ## СТАРЫЕ СТРАНИЦЫ (устаревшие, могут быть удалены или использоваться как fallback)
 
-### 30. `/(protected)/agents/[id]/edit` - Старая страница редактирования
+### 31. `/(protected)/agents/[id]/edit` - Старая страница редактирования
 **Файл:** `app/(protected)/agents/[id]/edit/page.tsx`
 **Статус:** Должна редиректить на `/manage/[tenantId]/ai-agents/[id]/edit`
 
-### 31. `/(protected)/agents/[id]/pipelines` - Старая страница воронок
+### 32. `/(protected)/agents/[id]/pipelines` - Старая страница воронок
 **Файл:** `app/(protected)/agents/[id]/pipelines/page.tsx`
 **Статус:** Должна редиректить на `/manage/[tenantId]/ai-agents/[id]/pipelines`
 
-### 32. `/(protected)/agents/[id]/training` - Старая страница обучения
+### 33. `/(protected)/agents/[id]/training` - Старая страница обучения
 **Файл:** `app/(protected)/agents/[id]/training/page.tsx`
 **Статус:** Должна редиректить на `/manage/[tenantId]/ai-agents/[id]/training`
 
-### 33. `/(protected)/agents/create` - Старая страница создания
+### 34. `/(protected)/agents/create` - Старая страница создания
 **Файл:** `app/(protected)/agents/create/page.tsx`
 **Статус:** Должна редиректить на `/manage/[tenantId]/ai-agents/create`
 
-### 34. `/(protected)/agents/new` - Дублирующая страница создания
+### 35. `/(protected)/agents/new` - Дублирующая страница создания
 **Файл:** `app/(protected)/agents/new/page.tsx`
 **Статус:** Должна редиректить на `/manage/[tenantId]/ai-agents/create`
 
-### 35. `/(protected)/agents/[id]/page.tsx` - Старая страница просмотра агента
+### 36. `/(protected)/agents/[id]/page.tsx` - Старая страница просмотра агента
 **Файл:** `app/(protected)/agents/[id]/page.tsx`
 **Статус:** Должна редиректить на редактирование
 
-### 36. `/(protected)/knowledge-base/categories/[id]/page.tsx` - Старая страница категории
+### 37. `/(protected)/knowledge-base/categories/[id]/page.tsx` - Старая страница категории
 **Статус:** Должна редиректить на новый формат
 
-### 37. `/(protected)/knowledge-base/categories/new/page.tsx` - Старая страница создания категории
+### 38. `/(protected)/knowledge-base/categories/new/page.tsx` - Старая страница создания категории
 **Статус:** Должна редиректить на новый формат
 
-### 38. `/(protected)/knowledge-base/articles/[id]/page.tsx` - Старая страница статьи
+### 39. `/(protected)/knowledge-base/articles/[id]/page.tsx` - Старая страница статьи
 **Статус:** Должна редиректить на новый формат
 
-### 39. `/(protected)/knowledge-base/articles/new/page.tsx` - Старая страница создания статьи
+### 40. `/(protected)/knowledge-base/articles/new/page.tsx` - Старая страница создания статьи
 **Статус:** Должна редиректить на новый формат
 
 ---
 
 ## СЛУЖЕБНЫЕ СТРАНИЦЫ
 
-### 40. `/admin` - Админ панель
+### 41. `/admin` - Админ панель
 **Назначение:** Административная панель для управления платформой
 **Файл:** `app/admin/page.tsx`
 **Доступ:** Только для администраторов
@@ -383,14 +391,14 @@
 - Управление пользователями и организациями
 - Системные настройки
 
-### 41. `/api-docs` - Документация API
+### 42. `/api-docs` - Документация API
 **Назначение:** Документация REST API платформы
 **Файл:** `app/api-docs/page.tsx`
 **Описание:**
 - Описание всех API endpoints
 - Примеры запросов и ответов
 
-### 42. `/graphql-playground` - GraphQL Playground
+### 43. `/graphql-playground` - GraphQL Playground
 **Назначение:** Интерактивная среда для тестирования GraphQL запросов
 **Файл:** `app/graphql-playground/page.tsx`
 **Описание:**
@@ -398,7 +406,7 @@
 - Выполнение запросов и мутаций
 - Документация типов
 
-### 43. `/test-kommo` - Тестовая страница Kommo интеграции
+### 44. `/test-kommo` - Тестовая страница Kommo интеграции
 **Назначение:** Тестирование интеграции с Kommo CRM
 **Файл:** `app/test-kommo/page.tsx`
 **Описание:**
@@ -406,7 +414,7 @@
 - Проверка подключения
 - Отладка синхронизации
 
-### 44. `/integrations/kommo/oauth/callback` - OAuth callback для Kommo
+### 45. `/integrations/kommo/oauth/callback` - OAuth callback для Kommo
 **Назначение:** Обработка OAuth редиректа от Kommo после авторизации
 **Файл:** `app/integrations/kommo/oauth/callback/page.tsx`
 **Описание:**
@@ -480,4 +488,3 @@
 2. **Все новые функции добавляются только в формат `/manage/[tenantId]/...`**
 3. **Landing page (`/`) всегда публичная, не редиректит авторизованных**
 4. **После входа пользователь всегда попадает на дашборд `/manage/[tenantId]`**
-

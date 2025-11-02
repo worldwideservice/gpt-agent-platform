@@ -4,108 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import { KwidButton } from "@/components/kwid";
-
-interface PlanFeature {
-  label: string;
-  value?: string;
-  isDisabled?: boolean;
-}
-
-interface Plan {
-  id: string;
-  name: string;
-  priceMonthly: number;
-  priceYearly: number;
-  features: PlanFeature[];
-  perConversation?: string;
-  availableModels?: string[];
-  unavailableForResponses?: number[];
-}
-
-const plans: Plan[] = [
-  {
-    id: "launch",
-    name: "Launch",
-    priceMonthly: 18,
-    priceYearly: 13,
-    features: [
-      { label: "1 агентов" },
-      { label: "500 статей базы знаний" },
-      { label: "Ответов / месяц", value: "select" },
-      { label: "Начальные инструкции агента: До 20,000 символов" },
-      { label: "Отправка изображений, аудио, видео и документов" },
-      { label: "Входящие сообщения с изображениями" },
-      { label: "Входящие голосовые сообщения" },
-      { label: "Обновление полей сделок и контактов", isDisabled: true },
-      { label: "Доступные модели ИИ:", value: "models", isDisabled: true },
-    ],
-    unavailableForResponses: [20000],
-    availableModels: ["OpenAI GPT-4.1", "OpenAI GPT-5"],
-  },
-  {
-    id: "scale",
-    name: "Scale",
-    priceMonthly: 578,
-    priceYearly: 499,
-    perConversation: "Около $0.13 за разговор",
-    features: [
-      { label: "10 агентов" },
-      { label: "100,000 статей базы знаний" },
-      { label: "Ответов / месяц", value: "select" },
-      { label: "Начальные инструкции агента: До 20,000 символов" },
-      { label: "Отправка изображений, аудио, видео и документов" },
-      { label: "Входящие сообщения с изображениями" },
-      { label: "Входящие голосовые сообщения" },
-      { label: "Обновление полей сделок и контактов" },
-      { label: "Доступные модели ИИ:", value: "models" },
-    ],
-    availableModels: ["OpenAI GPT-4.1", "OpenAI GPT-5", "Google Gemini 2.5 Flash", "Claude Sonnet 4"],
-  },
-  {
-    id: "max",
-    name: "Max",
-    priceMonthly: 973,
-    priceYearly: 799,
-    perConversation: "Около $0.23 за разговор",
-    features: [
-      { label: "Неограниченное количество агентов" },
-      { label: "Неограниченное количество статей базы знаний" },
-      { label: "Ответов / месяц", value: "select" },
-      { label: "Начальные инструкции агента: До 40,000 символов (20k для моделей Claude)" },
-      { label: "Отправка изображений, аудио, видео и документов" },
-      { label: "Входящие сообщения с изображениями" },
-      { label: "Входящие голосовые сообщения" },
-      { label: "Обновление полей сделок и контактов" },
-      { label: "Доступные модели ИИ:", value: "models" },
-    ],
-    availableModels: ["OpenAI GPT-4.1", "OpenAI GPT-5", "Google Gemini 2.5 Flash", "Claude Sonnet 4"],
-  },
-];
-
-const responseCounts = ["1,000", "2,500", "5,000", "10,000", "15,000", "20,000", "20,000+"];
-
-const faqItems = [
-  {
-    question: "Могу ли я изменить свой план позже?",
-    answer: 'Да, вы можете сменить план в любое время в разделе "Управление подпиской".',
-  },
-  {
-    question: "Предоставляете ли вы возврат средств?",
-    answer: "В течение 30 дней мы гарантируем возврат средств, если вас что-то не устроит.",
-  },
-  {
-    question: "Что произойдет, если я превышу лимиты моего плана?",
-    answer: "Мы уведомим вас и предложим активировать новый план или увеличить лимиты.",
-  },
-  {
-    question: "Нужны ли мне собственные API‑ключи OpenAI?",
-    answer: "Нет, все модели уже включены в подписку.",
-  },
-  {
-    question: "Есть ли дополнительные платежи за разговоры?",
-    answer: "Стоимость уже рассчитана исходя из лимитов. Дополнительные платежи не требуются.",
-  },
-];
+import {
+  PRICING_FAQ,
+  PRICING_PLANS,
+  PRICING_RESPONSE_COUNTS,
+  type PricingPlan,
+} from "@/components/pricing/pricingData";
 
 interface SubscriptionData {
   plan: string;
@@ -151,12 +55,12 @@ export const PricingClient = ({ tenantId }: PricingClientProps) => {
 
   const currentPlan = useMemo(() => {
     if (!subscription) {
-      return plans.find((plan) => plan.id === "scale");
+      return PRICING_PLANS.find((plan) => plan.id === "scale");
     }
-    return plans.find((plan) => plan.id === subscription.plan.toLowerCase());
+    return PRICING_PLANS.find((plan) => plan.id === subscription.plan.toLowerCase());
   }, [subscription]);
 
-  const formatPrice = (plan: Plan) => {
+  const formatPrice = (plan: PricingPlan) => {
     if (billingCycle === "monthly") {
       return plan.priceMonthly;
     }
@@ -195,7 +99,7 @@ export const PricingClient = ({ tenantId }: PricingClientProps) => {
     : formatResetDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString());
 
   const selectedResponsesNum = Number.parseInt(selectedResponses.replace(/,/g, ""), 10);
-  const isUnavailableForPlan = (plan: Plan) => {
+  const isUnavailableForPlan = (plan: PricingPlan) => {
     if (!plan.unavailableForResponses) return false;
     return plan.unavailableForResponses.includes(selectedResponsesNum);
   };
@@ -303,7 +207,7 @@ export const PricingClient = ({ tenantId }: PricingClientProps) => {
             onChange={(e) => setSelectedResponses(e.target.value)}
             className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-0 rounded-full pr-8 py-2 focus:ring-2 focus:ring-primary-500 focus:outline-none hover:cursor-pointer"
           >
-            {responseCounts.map((count) => (
+            {PRICING_RESPONSE_COUNTS.map((count) => (
               <option key={count} value={count}>
                 {count}
               </option>
@@ -337,7 +241,7 @@ export const PricingClient = ({ tenantId }: PricingClientProps) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {plans.map((plan) => {
+        {PRICING_PLANS.map((plan) => {
           const isCurrent = subscription && plan.id === subscription.plan.toLowerCase();
           const isUnavailable = isUnavailableForPlan(plan);
           const price = formatPrice(plan);
@@ -406,7 +310,7 @@ export const PricingClient = ({ tenantId }: PricingClientProps) => {
                               backgroundSize: "0.65rem",
                             }}
                           >
-                            {responseCounts.map((count) => (
+                            {PRICING_RESPONSE_COUNTS.map((count) => (
                               <option key={count} value={count}>
                                 {count}
                               </option>
@@ -480,7 +384,7 @@ export const PricingClient = ({ tenantId }: PricingClientProps) => {
         </div>
 
         <div className="space-y-4 max-w-4xl mx-auto">
-          {faqItems.map((item, index) => (
+          {PRICING_FAQ.map((item, index) => (
             <FAQItem key={index} question={item.question} answer={item.answer} />
           ))}
         </div>

@@ -1,42 +1,15 @@
-import { redirect } from "next/navigation";
+import { redirectToTenantPath } from "@/lib/utils/getTenantRedirect";
 
-import { AgentTrainingPage } from "./_components/AgentTrainingPage";
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
-import { auth } from "@/auth";
-import { getAgentById } from "@/lib/repositories/agents";
-
-interface TrainingPageProps {
-  params: Promise<{
-    id: string;
-  }>;
+interface LegacyTrainingPageProps {
+  params: Promise<{ id: string }>;
 }
 
-const TrainingPage = async ({ params }: TrainingPageProps) => {
+const LegacyTrainingPage = async ({ params }: LegacyTrainingPageProps) => {
   const { id } = await params;
-  const session = await auth();
-
-  if (!session?.user?.orgId) {
-    redirect("/login");
-  }
-
-  try {
-    const agent = await getAgentById(id, session.user.orgId);
-
-    if (!agent) {
-      redirect("/agents");
-    }
-
-    return (
-      <AgentTrainingPage
-        agentId={id}
-        agentName={agent.name}
-        tenantId={undefined}
-      />
-    );
-  } catch (error) {
-    console.error("Failed to load agent", error);
-    redirect("/agents");
-  }
+  return redirectToTenantPath(`/ai-agents/${id}/training`);
 };
 
-export default TrainingPage;
+export default LegacyTrainingPage;

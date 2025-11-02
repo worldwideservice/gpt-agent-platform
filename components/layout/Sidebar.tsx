@@ -16,9 +16,13 @@ const getTranslation = (key: string, fallback?: string): string => {
     'pricing': 'Тарифы',
     'account': 'Аккаунт',
     'support': 'Поддержка',
+    'integrations': 'Интеграции',
+    'resources': 'Ресурсы',
+    'documentation': 'Документация',
     'organization': 'Организация',
     'gettingStarted': 'Начало работы',
     'accountSection': 'Аккаунт',
+    'accountSettings': 'Настройки аккаунта',
     'whatsNew': 'Что нового',
     'facebook': 'Facebook',
     'instagram': 'Instagram',
@@ -38,6 +42,7 @@ import {
   Folder,
   LayoutDashboard,
   MessageSquare,
+  Plug,
   Sparkles,
   FileText,
   HelpCircle,
@@ -74,34 +79,48 @@ interface NavSection {
 
 const getNavigation = (tNav: any, tenantId?: string): NavSection[] => {
   const basePath = tenantId ? `/manage/${tenantId}` : ''
-  
+  const withTenant = (path: string) => (tenantId ? `${basePath}${path}` : path || '/')
+
   return [
     {
-      items: [{ label: tNav('dashboard'), href: basePath || '/', icon: LayoutDashboard }],
+      items: [
+        {
+          label: tNav('dashboard'),
+          href: tenantId ? basePath : '/',
+          icon: LayoutDashboard,
+        },
+      ],
     },
     {
       title: tNav('agents'),
       items: [
-        { label: tNav('agents'), href: `${basePath}/ai-agents`, icon: Bot },
-        { label: tNav('chat'), href: `${basePath}/test-chat`, icon: MessageSquare },
+        { label: tNav('agents'), href: withTenant('/ai-agents'), icon: Bot },
+        { label: tNav('chat'), href: withTenant('/test-chat'), icon: MessageSquare },
       ],
     },
     {
       title: tNav('knowledge'),
       items: [
-        { label: tNav('categories'), href: `${basePath}/knowledge-categories`, icon: Folder },
-        { label: tNav('articles'), href: `${basePath}/knowledge-items`, icon: FileText },
+        { label: tNav('categories'), href: withTenant('/knowledge-categories'), icon: Folder },
+        { label: tNav('articles'), href: withTenant('/knowledge-items'), icon: FileText },
       ],
     },
     {
-      title: tNav('support'),
-      items: [{ label: tNav('gettingStarted'), href: '/docs/ru/start-here/getting-started/', icon: HelpCircle }],
+      title: tNav('integrations'),
+      items: [{ label: tNav('integrations'), href: withTenant('/integrations'), icon: Plug }],
+    },
+    {
+      title: tNav('resources'),
+      items: [
+        { label: tNav('support'), href: withTenant('/support'), icon: HelpCircle },
+        { label: tNav('documentation'), href: '/api-docs', icon: FileText },
+      ],
     },
     {
       title: tNav('accountSection'),
       items: [
-        { label: 'Настройки аккаунта', href: `${basePath}/account-settings`, icon: Settings },
-        { label: 'Тарифные планы', href: `${basePath}/pricing`, icon: CreditCard },
+        { label: tNav('accountSettings'), href: withTenant('/account-settings'), icon: Settings },
+        { label: tNav('pricing'), href: withTenant('/pricing'), icon: CreditCard },
       ],
     },
     {
@@ -308,5 +327,3 @@ export const Sidebar = ({ organizations, activeOrganizationId, tenantId, isOpen 
     </>
   )
 }
-
-

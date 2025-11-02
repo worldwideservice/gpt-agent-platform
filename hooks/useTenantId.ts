@@ -39,10 +39,11 @@ export function useTenantPath(path: string): string {
     'knowledge-base/articles': 'knowledge-items',
     'account': 'account-settings',
     'pricing': 'pricing',
+    'support': 'support',
+    'integrations': 'integrations',
   }
   
   const mappedPath = pathMapping[cleanPath] || cleanPath
   
   return `/manage/${tenantId}${mappedPath ? `/${mappedPath}` : ''}`
 }
-

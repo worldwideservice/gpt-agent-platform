@@ -34,7 +34,7 @@ export default function LandingPage() {
                   Войти
                 </KwidButton>
               </Link>
-              <Link href="/login">
+              <Link href="/register">
                 <KwidButton variant="primary" size="sm" className="gap-2">
                   Начать <ArrowRight className="h-4 w-4" />
                 </KwidButton>
@@ -57,7 +57,7 @@ export default function LandingPage() {
               Обучайте их на ваших данных и интегрируйте с CRM-системами.
             </p>
             <div className="mt-10 flex items-center justify-center gap-4">
-              <Link href="/login">
+              <Link href="/register">
                 <KwidButton variant="primary" size="lg" className="gap-2">
                   Начать бесплатно <ArrowRight className="h-5 w-5" />
                 </KwidButton>
@@ -147,7 +147,7 @@ export default function LandingPage() {
               Начните с бесплатного плана и убедитесь в преимуществах ИИ-агентов
             </p>
             <div className="mt-10">
-              <Link href="/login">
+              <Link href="/register">
                 <KwidButton size="lg" variant="secondary" className="gap-2">
                   Создать аккаунт <ArrowRight className="h-5 w-5" />
                 </KwidButton>
