@@ -38,11 +38,17 @@ const parseEnv = <Schema extends z.ZodTypeAny>(
 }
 
 export const loadSupabaseServerEnv = (): SupabaseServerEnvSchema => {
+  const defaultOrgId =
+    process.env.SUPABASE_DEFAULT_ORGANIZATION_ID &&
+    process.env.SUPABASE_DEFAULT_ORGANIZATION_ID.trim().length > 0
+      ? process.env.SUPABASE_DEFAULT_ORGANIZATION_ID.trim()
+      : undefined
+
   return parseEnv(supabaseServerEnvSchema, {
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
-    SUPABASE_DEFAULT_ORGANIZATION_ID: process.env.SUPABASE_DEFAULT_ORGANIZATION_ID,
+    SUPABASE_DEFAULT_ORGANIZATION_ID: defaultOrgId,
   })
 }
 

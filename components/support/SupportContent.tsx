@@ -9,6 +9,87 @@ interface SupportContentProps {
   variant?: 'public' | 'internal'
 }
 
+type ArticleLink = {
+  label: string
+  href: string
+}
+
+const gettingStartedLinks: ArticleLink[] = [
+  {
+    label: 'Создание аккаунта и настройка рабочей организации',
+    href: '/support/articles/getting-started#account-setup',
+  },
+  {
+    label: 'Первый AI-агент: инструкции, каналы и приветствие',
+    href: '/support/articles/getting-started#first-agent',
+  },
+  {
+    label: 'Подключение Kommo CRM и синхронизация воронок',
+    href: '/support/articles/getting-started#connect-kommo',
+  },
+]
+
+const videoLibraryLinks: ArticleLink[] = [
+  {
+    label: 'Обзор интерфейса GPT Agent (8 минут)',
+    href: '/support/articles/video-library#overview',
+  },
+  {
+    label: 'Работа с базой знаний и обучением агента',
+    href: '/support/articles/video-library#knowledge',
+  },
+  {
+    label: 'Автоматизация и триггеры в CRM',
+    href: '/support/articles/video-library#automation',
+  },
+]
+
+const documentationLinks: ArticleLink[] = [
+  {
+    label: 'Структура базы знаний и FAQ по наполнению',
+    href: '/support/articles/documentation#knowledge-structure',
+  },
+  {
+    label: 'API и вебхуки: подключение новых каналов',
+    href: '/support/articles/documentation#api',
+  },
+  {
+    label: 'Контроль качества ответов и модерация',
+    href: '/support/articles/documentation#quality',
+  },
+]
+
+const faqLinks: ArticleLink[] = [
+  {
+    label: 'Тарифы, оплата и гранты для старта',
+    href: '/support/articles/billing-faq#plans',
+  },
+  {
+    label: 'Лимиты и квоты ответов ИИ',
+    href: '/support/articles/billing-faq#limits',
+  },
+  {
+    label: 'Управление пользователями и ролями',
+    href: '/support/articles/billing-faq#team',
+  },
+]
+
+const renderArticleLinks = (links: ArticleLink[]) => (
+  <ul className="space-y-2 text-sm text-primary-600 dark:text-primary-400">
+    {links.map((link) => (
+      <li key={link.href}>
+        <Link
+          href={link.href}
+          className="inline-flex items-center gap-2 transition-colors hover:text-primary-700 dark:hover:text-primary-300"
+        >
+          <span className="text-xs font-semibold uppercase text-primary-500 dark:text-primary-300">→</span>
+          <span>{link.label}</span>
+        </Link>
+      </li>
+    ))}
+  </ul>
+)
+
 export const SupportContent = ({ variant = 'internal' }: SupportContentProps) => {
   const isPublic = variant === 'public'
 
@@ -16,10 +97,11 @@ export const SupportContent = ({ variant = 'internal' }: SupportContentProps) =>
     <div className="space-y-6">
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          {isPublic ? 'Поддержка и обучение' : 'Getting Started'}
+          {isPublic ? 'Поддержка и обучение' : 'Центр поддержки'}
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
-          Руководства, документация и ответы на вопросы, которые помогают работать с платформой
+          Практические руководства, видео и ответы на вопросы, которые помогут вашей команде уверенно
+          работать с GPT Agent.
         </p>
         {isPublic && (
           <div className="mt-2 flex flex-wrap items-center gap-3">
@@ -45,19 +127,10 @@ export const SupportContent = ({ variant = 'internal' }: SupportContentProps) =>
             </div>
             <div>
               <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                Узнайте, как создать организацию и настроить первого AI-агента за несколько шагов
+                Чек-листы по запуску платформы: от регистрации до подключения CRM и настройки первых
+                автоматизаций.
               </p>
-              <ul className="space-y-2 text-sm text-primary-600 dark:text-primary-400">
-                <li className="transition-colors hover:text-primary-700 dark:hover:text-primary-300">
-                  → Создание аккаунта и базовая настройка
-                </li>
-                <li className="transition-colors hover:text-primary-700 dark:hover:text-primary-300">
-                  → Настройка первого агента
-                </li>
-                <li className="transition-colors hover:text-primary-700 dark:hover:text-primary-300">
-                  → Подключение интеграций
-                </li>
-              </ul>
+              {renderArticleLinks(gettingStartedLinks)}
             </div>
           </div>
         </KwidSection>
@@ -73,19 +146,9 @@ export const SupportContent = ({ variant = 'internal' }: SupportContentProps) =>
             </div>
             <div>
               <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                Пошаговые видеоинструкции по работе с платформой и лучшим сценариям использования
+                Короткие записи с пояснениями и таймкодами, чтобы быстро вернуться к нужной теме.
               </p>
-              <ul className="space-y-2 text-sm text-green-600 dark:text-green-400">
-                <li className="transition-colors hover:text-green-700 dark:hover:text-green-300">
-                  → Обзор интерфейса
-                </li>
-                <li className="transition-colors hover:text-green-700 dark:hover:text-green-300">
-                  → Продвинутые настройки агентов
-                </li>
-                <li className="transition-colors hover:text-green-700 dark:hover:text-green-300">
-                  → Работа с базой знаний
-                </li>
-              </ul>
+              {renderArticleLinks(videoLibraryLinks)}
             </div>
           </div>
         </KwidSection>
@@ -101,25 +164,15 @@ export const SupportContent = ({ variant = 'internal' }: SupportContentProps) =>
             </div>
             <div>
               <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                Полная техническая документация, API reference и примеры интеграций
+                Подробные инструкции по работе с базой знаний, API и контролем качества ответов агента.
               </p>
-              <ul className="space-y-2 text-sm text-purple-600 dark:text-purple-400">
-                <li className="transition-colors hover:text-purple-700 dark:hover:text-purple-300">
-                  → API документация
-                </li>
-                <li className="transition-colors hover:text-purple-700 dark:hover:text-purple-300">
-                  → Примеры интеграций
-                </li>
-                <li className="transition-colors hover:text-purple-700 dark:hover:text-purple-300">
-                  → Лучшие практики
-                </li>
-              </ul>
+              {renderArticleLinks(documentationLinks)}
             </div>
           </div>
         </KwidSection>
 
         <KwidSection
-          title="FAQ"
+          title="FAQ и биллинг"
           icon={HelpCircle}
           className="cursor-pointer transition-shadow hover:shadow-lg"
         >
@@ -129,51 +182,65 @@ export const SupportContent = ({ variant = 'internal' }: SupportContentProps) =>
             </div>
             <div>
               <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                Ответы на популярные вопросы по настройке агентов, тарифам и интеграциям
+                Правила изменения тарифов, расширения лимитов и управление доступами внутри команды.
               </p>
-              <ul className="space-y-2 text-sm text-orange-600 dark:text-orange-400">
-                <li className="transition-colors hover:text-orange-700 dark:hover:text-orange-300">
-                  → Как изменить модель ИИ?
-                </li>
-                <li className="transition-colors hover:text-orange-700 dark:hover:text-orange-300">
-                  → Настройка триггеров
-                </li>
-                <li className="transition-colors hover:text-orange-700 dark:hover:text-orange-300">
-                  → Проблемы с интеграциями
-                </li>
-              </ul>
+              {renderArticleLinks(faqLinks)}
             </div>
           </div>
         </KwidSection>
       </div>
 
       <KwidSection title="Нужна помощь?">
-        <p className="mb-4 text-gray-600 dark:text-gray-400">
-          Свяжитесь с нашей командой поддержки — ответим на вопросы и поможем настроить платформу для вашей команды.
-        </p>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-6 lg:grid-cols-3">
           <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
             <p className="mb-1 text-sm font-medium text-gray-900 dark:text-white">
-              Email
+              Email поддержки
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              support@gptagent.com
+              <Link className="underline-offset-2 hover:underline" href="mailto:support@gptagent.com">
+                support@gptagent.com
+              </Link>
+            </p>
+            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+              Ответим в течение рабочего дня и поможем с техническими вопросами.
             </p>
           </div>
+
           <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
             <p className="mb-1 text-sm font-medium text-gray-900 dark:text-white">
-              Телефон
+              Технический чат
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              +7 (800) 123-45-67
+              <Link
+                className="underline-offset-2 hover:underline"
+                href="https://t.me/gptagent_support_bot"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Telegram @gptagent_support_bot
+              </Link>
+            </p>
+            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+              Уведомления о статусе задач, быстрый обмен логами и рекомендациями.
             </p>
           </div>
+
           <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
             <p className="mb-1 text-sm font-medium text-gray-900 dark:text-white">
-              Время работы
+              Стратегическая сессия
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Пн-Пт 09:00 – 19:00 (МСК)
+              <Link
+                className="underline-offset-2 hover:underline"
+                href="https://cal.com/gpt-agent/implementation"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Забронировать встречу с менеджером
+              </Link>
+            </p>
+            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+              Обсудим roadmap внедрения, KPI и интеграции под вашу инфраструктуру.
             </p>
           </div>
         </div>
@@ -181,4 +248,3 @@ export const SupportContent = ({ variant = 'internal' }: SupportContentProps) =>
     </div>
   )
 }
-

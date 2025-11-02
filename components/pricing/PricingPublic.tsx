@@ -245,6 +245,19 @@ export const PricingPublic = () => {
               <li>• Управление базой знаний и сценариями</li>
               <li>• Безлимитные агенты-тестировщики</li>
             </ul>
+            <div className="rounded-lg border border-primary-100 bg-primary-50/60 p-4 text-sm text-primary-700 dark:border-primary-900/60 dark:bg-primary-900/20 dark:text-primary-200">
+              Подробности смотрите в{' '}
+              <Link
+                href="/support/articles/billing-faq#plans"
+                className="font-semibold underline-offset-2 hover:underline"
+              >
+                FAQ по тарифам
+              </Link>{' '}
+              — там собраны сценарии смены планов, лимиты и скидки.
+            </div>
+            <KwidButton asChild size="sm" variant="outline" className="mt-2">
+              <Link href="/support/articles/billing-faq">Открыть FAQ по биллингу</Link>
+            </KwidButton>
           </div>
         </div>
 
@@ -267,4 +280,3 @@ export const PricingPublic = () => {
     </div>
   )
 }
-

@@ -36,12 +36,25 @@ test.describe('Public navigation flow', () => {
     await expect(page.getByRole('heading', { name: 'Начало работы' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Видеоуроки' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Документация' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'FAQ' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'FAQ и биллинг' })).toBeVisible()
 
     const createAccountLink = page.getByRole('link', { name: 'Создать аккаунт' })
     const loginLink = page.getByRole('link', { name: 'Войти' })
     await expect(createAccountLink).toHaveAttribute('href', '/register')
     await expect(loginLink).toHaveAttribute('href', '/login')
+
+    await expect(
+      page.getByRole('link', { name: 'Создание аккаунта и настройка рабочей организации' })
+    ).toHaveAttribute('href', '/support/articles/getting-started#account-setup')
+    await expect(
+      page.getByRole('link', { name: 'Обзор интерфейса GPT Agent (8 минут)' })
+    ).toHaveAttribute('href', '/support/articles/video-library#overview')
+    await expect(
+      page.getByRole('link', { name: 'Структура базы знаний и FAQ по наполнению' })
+    ).toHaveAttribute('href', '/support/articles/documentation#knowledge-structure')
+    await expect(
+      page.getByRole('link', { name: 'Тарифы, оплата и гранты для старта' })
+    ).toHaveAttribute('href', '/support/articles/billing-faq#plans')
   })
 
   test('landing CTA directs to registration flow', async ({ page }) => {
