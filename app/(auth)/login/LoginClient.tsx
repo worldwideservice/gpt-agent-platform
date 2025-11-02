@@ -51,57 +51,73 @@ export const LoginClient = () => {
         }
 
         if (result?.ok) {
+          // Ждем обновления сессии после signIn
+          await new Promise(resolve => setTimeout(resolve, 500))
+          
+          // Обновляем сессию на клиенте
+          router.refresh()
+          
+          // Ждем еще немного для синхронизации
+          await new Promise(resolve => setTimeout(resolve, 500))
+
           // Получаем tenant-id для редиректа
-          try {
-            const response = await fetch('/api/auth/get-tenant-redirect', {
-              method: 'GET',
-              credentials: 'include',
-            })
+          let tenantId: string | null = null
+          let retries = 0
+          const maxRetries = 3
 
-            const payload = (await response.json()) as {
-              success: boolean
-              tenantId: string | null
-              error?: string
-            }
-
-            if (payload.success && payload.tenantId) {
-              // Показываем уведомление об успешном входе
-              pushToast({
-                title: 'Вход выполнен! ✅',
-                description: `Добро пожаловать, ${email}!`,
-                variant: 'success',
+          while (!tenantId && retries < maxRetries) {
+            try {
+              const response = await fetch('/api/auth/get-tenant-redirect', {
+                method: 'GET',
+                credentials: 'include',
+                cache: 'no-store',
               })
 
-              // Перенаправляем на dashboard с tenant-id
-              router.push(`/manage/${payload.tenantId}`)
-              router.refresh()
-            } else {
-              // Если tenant-id не получен, попробуем еще раз через небольшую задержку
-              console.warn('Failed to get tenant-id, retrying...', payload.error)
-              setTimeout(async () => {
-                const retryResponse = await fetch('/api/auth/get-tenant-redirect', {
-                  method: 'GET',
-                  credentials: 'include',
-                })
-                const retryPayload = (await retryResponse.json()) as {
-                  success: boolean
-                  tenantId: string | null
+              const payload = (await response.json()) as {
+                success: boolean
+                tenantId: string | null
+                error?: string
+              }
+
+              if (payload.success && payload.tenantId) {
+                tenantId = payload.tenantId
+                break
+              } else {
+                console.warn(`Failed to get tenant-id (attempt ${retries + 1}/${maxRetries}):`, payload.error)
+                retries++
+                if (retries < maxRetries) {
+                  await new Promise(resolve => setTimeout(resolve, 1000))
                 }
-                if (retryPayload.success && retryPayload.tenantId) {
-                  router.push(`/manage/${retryPayload.tenantId}`)
-                  router.refresh()
-                } else {
-                  // Fallback - редирект на главную страницу
-                  router.push('/')
-                  router.refresh()
-                }
-              }, 1000)
+              }
+            } catch (fetchError) {
+              console.error(`Failed to fetch tenant redirect (attempt ${retries + 1}/${maxRetries}):`, fetchError)
+              retries++
+              if (retries < maxRetries) {
+                await new Promise(resolve => setTimeout(resolve, 1000))
+              }
             }
-          } catch (fetchError) {
-            console.error('Failed to get tenant redirect:', fetchError)
-            // Fallback - редирект на главную страницу
-            router.push('/')
-            router.refresh()
+          }
+
+          if (tenantId) {
+            // Показываем уведомление об успешном входе
+            pushToast({
+              title: 'Вход выполнен! ✅',
+              description: `Добро пожаловать, ${email}!`,
+              variant: 'success',
+            })
+
+            // Используем window.location для полного редиректа (гарантирует обновление сессии)
+            window.location.href = `/manage/${tenantId}`
+          } else {
+            // Если tenant-id не получен после всех попыток - редирект на главную страницу
+            console.error('Failed to get tenant-id after all retries')
+            pushToast({
+              title: 'Ошибка входа',
+              description: 'Не удалось получить данные организации. Попробуйте еще раз.',
+              variant: 'error',
+            })
+            // Редирект на главную - там будет проверка и редирект на логин если нужно
+            window.location.href = '/'
           }
         }
       } catch (error) {

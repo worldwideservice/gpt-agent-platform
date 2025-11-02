@@ -11,9 +11,11 @@ export const runtime = "nodejs";
  */
 export async function GET() {
   try {
+    console.log("[get-tenant-redirect] API called");
     const tenantId = await getTenantIdFromSession();
 
     if (!tenantId) {
+      console.warn("[get-tenant-redirect] No tenant-id found in session");
       return NextResponse.json(
         {
           success: false,
@@ -24,12 +26,13 @@ export async function GET() {
       );
     }
 
+    console.log("[get-tenant-redirect] Successfully got tenant-id:", tenantId);
     return NextResponse.json({
       success: true,
       tenantId,
     });
   } catch (error) {
-    console.error("Failed to get tenant redirect:", error);
+    console.error("[get-tenant-redirect] Failed to get tenant redirect:", error);
     return NextResponse.json(
       {
         success: false,

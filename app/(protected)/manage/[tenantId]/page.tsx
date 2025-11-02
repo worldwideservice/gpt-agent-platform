@@ -34,9 +34,10 @@ const DashboardPage = async ({ params }: DashboardPageProps) => {
   const orgId = session.user.orgId;
 
   const onboardingState = await getOnboardingState(orgId);
-  if (!onboardingState.isCompleted) {
-    redirect("/onboarding");
-  }
+  // Временно отключаем редирект на онбординг для отладки
+  // if (!onboardingState.isCompleted) {
+  //   redirect("/onboarding");
+  // }
 
   const [stats, weeklyBarData, monthlyData, dailyData] = await Promise.all([
     getDashboardStats(orgId),
