@@ -50,3 +50,4 @@ const ArticlePage = async ({ params }: ArticlePageProps) => {
 
 export default ArticlePage;
 
+

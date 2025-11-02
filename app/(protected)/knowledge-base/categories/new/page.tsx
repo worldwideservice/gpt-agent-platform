@@ -6,3 +6,4 @@ const NewCategoryPage = () => {
 
 export default NewCategoryPage;
 
+
