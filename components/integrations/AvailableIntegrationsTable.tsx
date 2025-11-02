@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/Table'
+import { InstallIntegrationModal } from '@/components/integrations/InstallIntegrationModal'
 
 interface AgentIntegration {
   id: string
@@ -61,6 +62,15 @@ export const AvailableIntegrationsTable = ({
   isLoading = false,
 }: AvailableIntegrationsTableProps) => {
   const [searchTerm, setSearchTerm] = useState('')
+  const [installModal, setInstallModal] = useState<{
+    isOpen: boolean
+    integrationName: string
+    integrationType: string
+  }>({
+    isOpen: false,
+    integrationName: '',
+    integrationType: '',
+  })
   const tenantId = useTenantId()
 
   // Объединяем доступные интеграции с данными из БД
@@ -236,8 +246,15 @@ export const AvailableIntegrationsTable = ({
                           </span>
                         </Link>
                       ) : (
-                        <Link
-                          href={getInstallPath(integration.id)}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setInstallModal({
+                              isOpen: true,
+                              integrationName: integration.name,
+                              integrationType: integration.type,
+                            })
+                          }}
                           className="fi-link group/link relative inline-flex items-center justify-center outline-none fi-size-sm fi-link-size-sm gap-1 fi-color-custom fi-color-primary fi-ac-action fi-ac-link-action"
                           style={
                             {
@@ -250,7 +267,7 @@ export const AvailableIntegrationsTable = ({
                           <span className="font-semibold text-sm text-custom-600 dark:text-custom-400 group-hover/link:underline group-focus-visible/link:underline">
                             Установить
                           </span>
-                        </Link>
+                        </button>
                       )}
                     </div>
                   </TableCell>
@@ -260,6 +277,18 @@ export const AvailableIntegrationsTable = ({
           </TableBody>
         </Table>
       </div>
+
+      {/* Модалка установки интеграции */}
+      <InstallIntegrationModal
+        isOpen={installModal.isOpen}
+        onClose={() => {
+          setInstallModal({ isOpen: false, integrationName: '', integrationType: '' })
+        }}
+        integrationName={installModal.integrationName}
+        integrationType={installModal.integrationType}
+        agentId={agentId}
+        tenantId={tenantId || undefined}
+      />
     </div>
   )
 }
