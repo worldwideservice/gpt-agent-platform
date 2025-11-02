@@ -33,15 +33,51 @@ export async function getTenantIdFromSession(): Promise<string | null> {
       return null;
     }
 
-    const supabase = getSupabaseServiceRoleClient();
-    const { data: orgData } = await supabase
-      .from("organizations")
-      .select("id, slug")
-      .eq("id", activeOrganization.id)
-      .single();
+    // Проверяем, есть ли slug уже в организации
+    let slug = activeOrganization.slug;
+    
+    // Если slug нет, получаем его из базы
+    if (!slug) {
+      const supabase = getSupabaseServiceRoleClient();
+      const { data: orgData, error } = await supabase
+        .from("organizations")
+        .select("id, slug")
+        .eq("id", activeOrganization.id)
+        .single();
 
-    if (orgData && orgData.slug) {
-      return generateTenantId(orgData.id, orgData.slug);
+      if (error || !orgData) {
+        console.error("Failed to get organization slug:", error);
+        return null;
+      }
+
+      slug = orgData.slug;
+    }
+
+    // Если slug все еще отсутствует, создаем дефолтный на основе ID
+    if (!slug) {
+      // Генерируем slug на основе имени или ID
+      const defaultSlug = activeOrganization.name 
+        ? activeOrganization.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') || `org-${activeOrganization.id.substring(0, 8)}`
+        : `org-${activeOrganization.id.substring(0, 8)}`;
+      
+      // Пытаемся сохранить slug в базу для будущих запросов
+      try {
+        const supabase = getSupabaseServiceRoleClient();
+        await supabase
+          .from("organizations")
+          .update({ slug: defaultSlug })
+          .eq("id", activeOrganization.id);
+        
+        slug = defaultSlug;
+      } catch (error) {
+        console.error("Failed to update organization slug:", error);
+        // Используем временный slug даже если не удалось сохранить
+        slug = defaultSlug;
+      }
+    }
+
+    if (slug) {
+      return generateTenantId(activeOrganization.id, slug);
     }
 
     return null;
