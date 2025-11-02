@@ -172,7 +172,7 @@ export const Header = ({ user, subscriptionRenewsAt, tenantId, onSidebarToggle }
       <button
         type="button"
         onClick={onSidebarToggle}
-        className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-1.5 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2 dark:text-gray-500 dark:hover:text-gray-400"
+        className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-1.5 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2 dark:text-gray-500 dark:hover:text-gray-400 lg:hidden"
         title="Раскрыть боковую панель"
         aria-label="Раскрыть боковую панель"
         style={{
