@@ -305,6 +305,7 @@ export const Sidebar = ({ organizations, activeOrganizationId, tenantId, isOpen 
         </nav>
       </div>
     </aside>
+    </>
   )
 }
 
