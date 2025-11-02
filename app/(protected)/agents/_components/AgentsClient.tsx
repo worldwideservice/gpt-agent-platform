@@ -9,7 +9,7 @@ import {
   useTransition,
 } from "react";
 import Link from "next/link";
-import { Plus, Search, Filter, Settings } from "lucide-react";
+import { Plus, Search, Filter, Settings, ChevronRight } from "lucide-react";
 
 import { AgentTable } from "@/components/agents/AgentTable";
 import { KwidButton } from "@/components/kwid";
@@ -295,16 +295,23 @@ export const AgentsClient = ({
     <div className="space-y-8">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <nav className="mb-4 flex items-center gap-2" aria-label="Хлебные крошки">
-            <Link
-              href={activeTenantId ? `/manage/${activeTenantId}/ai-agents` : "/agents"}
-              className="fi-breadcrumbs-item-label text-sm font-medium text-gray-500 transition duration-75 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            >
-              Агенты ИИ
-            </Link>
-            <span className="fi-breadcrumbs-item-label text-sm font-medium text-gray-500 dark:text-gray-400">
-              Список
-            </span>
+          <nav aria-label="Хлебные крошки">
+            <ul className="flex items-center gap-0">
+              <li>
+                <Link
+                  href={activeTenantId ? `/manage/${activeTenantId}/ai-agents` : "/agents"}
+                  className="fi-breadcrumbs-item-label text-sm font-medium text-gray-500 transition duration-75 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  Агенты ИИ
+                </Link>
+              </li>
+              <li className="flex items-center">
+                <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500 mx-1" />
+                <span className="fi-breadcrumbs-item-label text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Список
+                </span>
+              </li>
+            </ul>
           </nav>
           <h1 className="fi-header-heading text-2xl font-bold tracking-tight text-gray-950 dark:text-white sm:text-3xl">
             Агенты ИИ
