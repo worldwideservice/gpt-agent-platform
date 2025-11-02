@@ -41,17 +41,14 @@ export const {
             const email = rawEmail?.toLowerCase().trim()
             const password = rawPassword?.trim()
 
-            // Специальная обработка для E2E тестирования, демо-пользователя и администратора
-            if (process.env.E2E_ONBOARDING_FAKE === '1' || email === 'founder@example.com' || email === 'admin@worldwideservice.eu') {
+            // Специальная обработка для E2E тестирования и демо-пользователя (НЕ для admin@worldwideservice.eu - он проверяется в базе)
+            if (process.env.E2E_ONBOARDING_FAKE === '1' || email === 'founder@example.com') {
               const fallbackOrgId = process.env.SUPABASE_DEFAULT_ORGANIZATION_ID || '550e8400-e29b-41d4-a716-446655440000'
 
-              const userName = email === 'admin@worldwideservice.eu' ? 'Administrator' : 'Demo Founder';
-              const userEmail = email || 'founder@example.com';
-
               return {
-                id: email === 'admin@worldwideservice.eu' ? 'admin-0000-0000-4000-8000-0000000000ff' : '00000000-0000-4000-8000-0000000000ff',
-                email: userEmail,
-                name: userName,
+                id: '00000000-0000-4000-8000-0000000000ff',
+                email: email || 'founder@example.com',
+                name: 'Demo Founder',
                 orgId: fallbackOrgId,
               }
             }
