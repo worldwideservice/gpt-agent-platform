@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
-import { Header } from "@/components/layout/Header";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { HeaderWithSidebar } from "@/components/layout/HeaderWithSidebar";
+import { SidebarProvider } from "@/components/layout/SidebarToggle";
 import { auth } from "@/auth";
 import { getOrganizationsForUser } from "@/lib/repositories/organizations";
 
@@ -41,24 +41,16 @@ const ProtectedLayout = async ({ children }: ProtectedLayoutProps) => {
     redirect("/login");
   }
 
-  // Редиректим на новый формат URL с tenant-id
-  // Это будет обрабатываться в middleware или в middleware перенаправлении
-
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="flex">
-        <Sidebar
-          organizations={organizations}
-          activeOrganizationId={activeOrganization?.id ?? session.user.orgId}
-        />
-        <div className="flex-1 lg:ml-72 xl:ml-80 flex flex-col">
-          <Header user={session.user} />
-          <main className="flex-1 bg-slate-50">
-            <div className="px-6 py-6 lg:px-8 lg:py-8">{children}</div>
-          </main>
-        </div>
-      </div>
-    </div>
+    <SidebarProvider>
+      <HeaderWithSidebar
+        session={session}
+        organizations={organizations}
+        activeOrganization={activeOrganization}
+      >
+        {children}
+      </HeaderWithSidebar>
+    </SidebarProvider>
   );
 };
 

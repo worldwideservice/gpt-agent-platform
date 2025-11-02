@@ -96,72 +96,58 @@ const AccountPage = ({ params }: ChatPageProps) => {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        {/* Kwid: "Account Settings" */}
-        <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
-          Account Settings
+    <section className="flex flex-col gap-y-8 py-8">
+      <header className="fi-header flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="fi-header-heading text-2xl font-bold tracking-tight text-gray-950 dark:text-white sm:text-3xl">
+          Настройки аккаунта
         </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Управляйте настройками вашего аккаунта и организации
-        </p>
+      </header>
+
+      <div className="fi-section rounded-lg border border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-800">
+        <header className="fi-section-header flex flex-col gap-3 px-6 py-4">
+          <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
+            Общие
+          </h3>
+        </header>
+        <div className="fi-section-content p-6">
+          <div className="fi-fo-field-wrp space-y-2">
+            <div className="flex items-center gap-x-3 justify-between">
+              <label className="fi-fo-field-wrp-label inline-flex items-center gap-x-3">
+                <span className="text-sm font-medium leading-6 text-gray-950 dark:text-white">
+                  Останавливать агентов ИИ при ответе человека
+                </span>
+              </label>
+              <KwidSwitch
+                checked={stopOnHumanReply}
+                onCheckedChange={setStopOnHumanReply}
+              />
+            </div>
+            <p className="fi-fo-field-wrp-helper-text break-words text-sm text-gray-500">
+              Если включено, агенты ИИ перестанут отвечать в этом чате после того, как человек отправит сообщение.
+            </p>
+          </div>
+        </div>
       </div>
 
-      <KwidSection
-        title="Профиль"
-        description="Основная информация о вашем аккаунте"
-      >
-        <div className="space-y-4">
-          <KwidInput
-            label="Имя"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            placeholder="Ваше имя"
-          />
-          <KwidInput
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled
-            hint="Email нельзя изменить"
-          />
-        </div>
-      </KwidSection>
-
-      <KwidSection
-        title="Общие настройки"
-        description="Если включить, агенты перестанут отвечать, как только человек отправит сообщение в этом чате."
-      >
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Останавливать агентов ИИ при ответе человека
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Агенты автоматически отключаются после сообщения менеджера.
-              </p>
-            </div>
-            <KwidSwitch
-              checked={stopOnHumanReply}
-              onCheckedChange={setStopOnHumanReply}
-            />
-          </div>
-
-          <div className="fi-form-actions pt-4">
-            <KwidButton
-              onClick={handleSave}
-              disabled={isSaving}
-              variant="primary"
-              size="md"
-            >
-              {isSaving ? "Сохранение…" : "Сохранить изменения"}
-            </KwidButton>
-          </div>
-        </div>
-      </KwidSection>
-    </div>
+      <div className="fi-ac gap-3 flex flex-wrap items-center justify-start">
+        <KwidButton
+          onClick={handleSave}
+          disabled={isSaving}
+          variant="primary"
+          size="md"
+          style={{
+            '--c-400': 'var(--primary-400)',
+            '--c-500': 'var(--primary-500)',
+            '--c-600': 'var(--primary-600)',
+          } as React.CSSProperties}
+          className="fi-color-custom"
+        >
+          <span className="fi-btn-label">
+            {isSaving ? "Сохранение…" : "Сохранить изменения"}
+          </span>
+        </KwidButton>
+      </div>
+    </section>
   );
 };
 

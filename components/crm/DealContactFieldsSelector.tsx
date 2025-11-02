@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Briefcase, Users, Eye, RefreshCw, Edit } from 'lucide-react'
+import { X, Briefcase, Users, Eye, RefreshCw, Edit, ChevronDown, ChevronUp, GripVertical, Trash2 } from 'lucide-react'
 import { KwidButton, KwidSelect, KwidBadge } from '@/components/kwid'
 
 interface Field {
@@ -118,6 +118,21 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
     }
   }
 
+  const [dealDataCollapsed, setDealDataCollapsed] = useState(false)
+  const [contactDataCollapsed, setContactDataCollapsed] = useState(false)
+  const [dealWriteFields, setDealWriteFields] = useState<string[]>([])
+  const [contactWriteFields, setContactWriteFields] = useState<string[]>([])
+  const [collapsedRepeaterItems, setCollapsedRepeaterItems] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    if (dealFields.length > 0) {
+      setDealWriteFields(dealFields.slice(0, 2))
+    }
+    if (contactFields.length > 0) {
+      setContactWriteFields(contactFields.slice(0, 1))
+    }
+  }, [dealFields, contactFields])
+
   if (isLoading) {
     return <div className="text-sm text-gray-500 dark:text-gray-400">Загрузка полей...</div>
   }
@@ -125,258 +140,408 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
   return (
     <div className="space-y-6">
       {/* Настройки доступа к данным */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6 dark:bg-gray-900 dark:border-gray-800">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-2">
-            <Eye className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Настройки доступа к данным</h2>
+      <div className="fi-section rounded-lg border border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-800">
+        <header className="fi-section-header flex flex-col gap-3 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
+              Настройки доступа к данным
+            </h3>
+            <div className="fi-ac gap-3 flex flex-wrap items-center justify-start">
+              <KwidButton 
+                variant="secondary" 
+                size="sm"
+                onClick={async () => {
+                  // TODO: Добавить логику синхронизации
+                  console.log('Синхронизация настроек CRM')
+                }}
+                className="fi-btn-color-gray fi-color-gray fi-size-sm"
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span className="fi-btn-label">Синхронизировать настройки CRM</span>
+              </KwidButton>
+            </div>
           </div>
-          <KwidButton 
-            variant="outline" 
-            size="sm"
-            onClick={async () => {
-              // TODO: Добавить логику синхронизации
-              console.log('Синхронизация настроек CRM')
-            }}
-            className="gap-2"
+          <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500 dark:text-gray-400">
+            Выберите, какие данные агент может читать и использовать в диалогах
+          </p>
+        </header>
+
+        <div className="fi-section-content p-6">
+          {/* Данные сделки */}
+          <header 
+            onClick={() => setDealDataCollapsed(!dealDataCollapsed)}
+            className="fi-section-header flex flex-col gap-3 cursor-pointer px-4 py-2.5 mb-4"
           >
-            <RefreshCw className="w-4 h-4" />
-            Синхронизировать настройки CRM
-          </KwidButton>
-        </div>
-        <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
-          Выберите, какие данные агент может читать и использовать в диалогах
-        </p>
+            <div className="flex items-center justify-between">
+              <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
+                Данные сделки
+              </h3>
+              <button
+                type="button"
+                className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2 dark:text-gray-500 dark:hover:text-gray-400"
+                style={{
+                  '--c-300': 'var(--gray-300)',
+                  '--c-400': 'var(--gray-400)',
+                  '--c-500': 'var(--gray-500)',
+                  '--c-600': 'var(--gray-600)',
+                } as React.CSSProperties}
+              >
+                <ChevronDown className={`h-5 w-5 transition-transform duration-200 ${dealDataCollapsed ? '' : 'rotate-180'}`} />
+              </button>
+            </div>
+            <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500 dark:text-gray-400">
+              Выберите поля сделки, которые агент может читать
+            </p>
+          </header>
 
-        {/* Данные сделки */}
-        <div className="mb-6">
-          <div className="flex items-center space-x-2 mb-3">
-            <Briefcase className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Данные сделки</h3>
-          </div>
-          <p className="text-sm text-gray-600 mb-3 dark:text-gray-400">
-            Выберите поля сделки, которые агент может читать
-          </p>
+          {!dealDataCollapsed && (
+            <div className="px-4 space-y-4">
+              <div className="flex items-center gap-x-3 justify-between">
+                <span className="text-sm font-medium leading-6 text-gray-950 dark:text-white">
+                  Выберите поля сделки
+                </span>
+              </div>
 
-          {/* Заголовок секции */}
-          <h4 className="text-sm font-medium text-gray-700 mb-3 dark:text-gray-300">Выберите поля сделки</h4>
+              {/* Выбранные поля в стиле Choices.js */}
+              {dealFields.length > 0 && (
+                <div className="choices__inner flex flex-wrap gap-2 mb-3">
+                  {dealFields.map((fieldId) => {
+                    const field = availableDealFields.find(f => f.id === fieldId)
+                    return field ? (
+                      <div 
+                        key={fieldId}
+                        className="choices__item choices__item--selectable inline-flex items-center gap-1 rounded bg-gray-100 px-3 py-1 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                        data-item
+                        data-id={fieldId}
+                        data-value={fieldId}
+                        aria-selected="true"
+                      >
+                        {field.name}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            removeDealField(fieldId)
+                          }}
+                          className="choices__button ml-1 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                          aria-label={`Remove item: '${field.name}'`}
+                          data-button
+                        >
+                          Remove item
+                        </button>
+                      </div>
+                    ) : null
+                  })}
+                </div>
+              )}
 
-          {/* Выбранные поля */}
-          {dealFields.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-3">
-              {dealFields.map((fieldId) => {
-                const field = availableDealFields.find(f => f.id === fieldId)
-                return field ? (
-                  <KwidBadge key={fieldId} variant="primary" className="inline-flex items-center gap-1">
-                    {field.name}
-                    <button
-                      onClick={() => removeDealField(fieldId)}
-                      className="ml-1 hover:text-red-600 dark:hover:text-red-400"
-                      type="button"
-                      aria-label={`Удалить ${field.name}`}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </KwidBadge>
-                ) : null
-              })}
+              {/* Выбор поля */}
+              <KwidSelect
+                options={[
+                  { value: '', label: 'Выберите поля, к которым агент сможет получить доступ...' },
+                  ...availableDealFields
+                    .filter(field => !dealFields.includes(field.id))
+                    .map((field) => ({ value: field.id, label: field.name })),
+                ]}
+                value=""
+                onChange={(value) => {
+                  if (value) {
+                    addDealField(value)
+                  }
+                }}
+                placeholder="Выберите поля, к которым агент сможет получить доступ..."
+              />
             </div>
           )}
-
-          {/* Выбор поля */}
-          <KwidSelect
-            options={[
-              { value: '', label: 'Выберите поля, к которым агент сможет получить доступ...' },
-              ...availableDealFields
-                .filter(field => !dealFields.includes(field.id))
-                .map((field) => ({ value: field.id, label: field.name })),
-            ]}
-            value=""
-            onChange={(value) => {
-              if (value) {
-                addDealField(value)
-              }
-            }}
-          />
-
-          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            Выбирайте только необходимые поля. Дополнительные поля добавляют лишний контекст и могут снизить точность ответов.
-          </p>
         </div>
 
-        {/* Данные контакта */}
-        <div>
-          <div className="flex items-center space-x-2 mb-3">
-            <Users className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Данные контакта</h3>
-          </div>
-          <p className="text-sm text-gray-600 mb-3 dark:text-gray-400">
-            Выберите, какие поля контакта агент сможет читать
-          </p>
+          {/* Данные контакта */}
+          <header 
+            onClick={() => setContactDataCollapsed(!contactDataCollapsed)}
+            className="fi-section-header flex flex-col gap-3 cursor-pointer px-4 py-2.5 mb-4"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
+                Данные контакта
+              </h3>
+              <button
+                type="button"
+                className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2 dark:text-gray-500 dark:hover:text-gray-400"
+                style={{
+                  '--c-300': 'var(--gray-300)',
+                  '--c-400': 'var(--gray-400)',
+                  '--c-500': 'var(--gray-500)',
+                  '--c-600': 'var(--gray-600)',
+                } as React.CSSProperties}
+              >
+                <ChevronDown className={`h-5 w-5 transition-transform duration-200 ${contactDataCollapsed ? '' : 'rotate-180'}`} />
+              </button>
+            </div>
+            <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500 dark:text-gray-400">
+              Выберите поля контакта, которые агент может читать
+            </p>
+          </header>
 
-          {/* Заголовок секции */}
-          <h4 className="text-sm font-medium text-gray-700 mb-3 dark:text-gray-300">Выберите поля контакта</h4>
+          {!contactDataCollapsed && (
+            <div className="px-4 space-y-4">
+              <div className="flex items-center gap-x-3 justify-between">
+                <span className="text-sm font-medium leading-6 text-gray-950 dark:text-white">
+                  Выберите поля контакта
+                </span>
+              </div>
 
-          {/* Выбранные поля */}
-          {contactFields.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-3">
-              {contactFields.map((fieldId) => {
-                const field = availableContactFields.find(f => f.id === fieldId)
-                return field ? (
-                  <KwidBadge key={fieldId} variant="primary" className="inline-flex items-center gap-1">
-                    {field.name}
-                    <button
-                      onClick={() => removeContactField(fieldId)}
-                      className="ml-1 hover:text-red-600 dark:hover:text-red-400"
-                      type="button"
-                      aria-label={`Удалить ${field.name}`}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </KwidBadge>
-                ) : null
-              })}
+              {/* Выбранные поля в стиле Choices.js */}
+              {contactFields.length > 0 && (
+                <div className="choices__inner flex flex-wrap gap-2 mb-3">
+                  {contactFields.map((fieldId) => {
+                    const field = availableContactFields.find(f => f.id === fieldId)
+                    return field ? (
+                      <div 
+                        key={fieldId}
+                        className="choices__item choices__item--selectable inline-flex items-center gap-1 rounded bg-gray-100 px-3 py-1 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                        data-item
+                        data-id={fieldId}
+                        data-value={fieldId}
+                        aria-selected="true"
+                      >
+                        {field.name}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            removeContactField(fieldId)
+                          }}
+                          className="choices__button ml-1 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                          aria-label={`Remove item: '${field.name}'`}
+                          data-button
+                        >
+                          Remove item
+                        </button>
+                      </div>
+                    ) : null
+                  })}
+                </div>
+              )}
+
+              {/* Выбор поля */}
+              <KwidSelect
+                options={[
+                  { value: '', label: 'Выберите поля, к которым агент сможет получить доступ...' },
+                  ...availableContactFields
+                    .filter(field => !contactFields.includes(field.id))
+                    .map((field) => ({ value: field.id, label: field.name })),
+                ]}
+                value=""
+                onChange={(value) => {
+                  if (value) {
+                    addContactField(value)
+                  }
+                }}
+                placeholder="Выберите поля, к которым агент сможет получить доступ..."
+              />
             </div>
           )}
-
-          {/* Выбор поля */}
-          <KwidSelect
-            options={[
-              { value: '', label: 'Выберите поля, к которым агент сможет получить доступ...' },
-              ...availableContactFields
-                .filter(field => !contactFields.includes(field.id))
-                .map((field) => ({ value: field.id, label: field.name })),
-            ]}
-            value=""
-            onChange={(value) => {
-              if (value) {
-                addContactField(value)
-              }
-            }}
-          />
-
-          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            Выбирайте только необходимые поля. Большее количество полей добавляет дополнительный контекст и может снизить точность ответов.
-          </p>
         </div>
       </div>
 
       {/* Настройки ввода данных */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6 dark:bg-gray-900 dark:border-gray-800">
-        <div className="flex items-center space-x-2 mb-4">
-          <Edit className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Настройки ввода данных</h2>
-        </div>
-        <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
-          Настройте, как агент может изменять данные сделок и контактов в зависимости от контекста разговора.
-        </p>
-
-        {/* Данные сделки - правила обновления */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              <Briefcase className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Данные сделки</h3>
-            </div>
-            <div className="flex items-center gap-2">
-              <button className="text-sm text-custom-600 hover:text-custom-700 dark:text-custom-400 dark:hover:text-custom-300">Свернуть все</button>
-              <span className="text-gray-300 dark:text-gray-600">|</span>
-              <button className="text-sm text-custom-600 hover:text-custom-700 dark:text-custom-400 dark:hover:text-custom-300">Развернуть все</button>
-            </div>
-          </div>
-          <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
-            Задайте правила автоматического обновления полей сделки во время разговора.
+      <div className="fi-section rounded-lg border border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-800">
+        <header className="fi-section-header flex flex-col gap-3 px-6 py-4">
+          <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
+            Настройки ввода данных
+          </h3>
+          <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500 dark:text-gray-400">
+            Настройте, как агент может изменять данные сделок и контактов в зависимости от контекста разговора.
           </p>
-          <div className="space-y-2">
-            {dealFields.slice(0, 2).map((fieldId, index) => {
-              const field = availableDealFields.find(f => f.id === fieldId)
-              return field ? (
-                <div key={fieldId} className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg dark:border-gray-800">
-                  <button className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400" type="button" aria-label="Переместить вверх">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                    </svg>
-                  </button>
-                  <button className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400" type="button" aria-label="Переместить вниз">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  <span className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300">{field.name}</span>
-                  <button 
-                    className="text-gray-400 hover:text-red-600 p-1 dark:text-gray-500 dark:hover:text-red-400" 
-                    type="button"
-                    onClick={() => removeDealField(fieldId)}
-                    aria-label={`Удалить ${field.name}`}
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                  <button 
-                    className="text-gray-400 hover:text-gray-600 p-1 dark:text-gray-500 dark:hover:text-gray-400" 
-                    type="button"
-                    aria-label="Развернуть"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                </div>
-              ) : null
-            })}
-            <KwidButton variant="outline" size="sm" type="button" className="mt-3">
-              Добавить поле
-            </KwidButton>
-          </div>
-        </div>
+        </header>
 
-        {/* Данные контакта - правила обновления */}
-        <div>
-          <div className="flex items-center space-x-2 mb-4">
-            <Users className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Данные контакта</h3>
+        <div className="fi-section-content p-6">
+          {/* Данные сделки - правила обновления */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
+                Данные сделки
+              </h3>
+              <div className="flex gap-x-3">
+                <button 
+                  type="button"
+                  className="text-sm text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                  onClick={() => setCollapsedRepeaterItems(new Set(dealWriteFields))}
+                >
+                  Свернуть все
+                </button>
+                <button 
+                  type="button"
+                  className="text-sm text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                  onClick={() => setCollapsedRepeaterItems(new Set())}
+                >
+                  Развернуть все
+                </button>
+              </div>
+            </div>
+            <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500 dark:text-gray-400 mb-4">
+              Задайте правила автоматического обновления полей сделки во время разговора.
+            </p>
+            <div className="space-y-2">
+              {dealWriteFields.map((fieldId) => {
+                const field = availableDealFields.find(f => f.id === fieldId)
+                const isCollapsed = collapsedRepeaterItems.has(fieldId)
+                if (!field) return null
+                return (
+                  <div key={fieldId} className="fi-fo-repeater-item border border-gray-200 rounded-lg dark:border-gray-800">
+                    <div 
+                      onClick={() => {
+                        const newSet = new Set(collapsedRepeaterItems)
+                        if (newSet.has(fieldId)) {
+                          newSet.delete(fieldId)
+                        } else {
+                          newSet.add(fieldId)
+                        }
+                        setCollapsedRepeaterItems(newSet)
+                      }}
+                      className="fi-fo-repeater-item-header flex items-center gap-x-3 overflow-hidden px-4 py-3 cursor-pointer select-none"
+                    >
+                      <GripVertical className="h-4 w-4 text-gray-400 dark:text-gray-500" aria-label="Переместить" />
+                      <span className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300">{field.name}</span>
+                      <button 
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setDealWriteFields(dealWriteFields.filter(id => id !== fieldId))
+                        }}
+                        className="text-gray-400 hover:text-red-600 p-1 dark:text-gray-500 dark:hover:text-red-400"
+                        aria-label="Удалить"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          const newSet = new Set(collapsedRepeaterItems)
+                          if (newSet.has(fieldId)) {
+                            newSet.delete(fieldId)
+                          } else {
+                            newSet.add(fieldId)
+                          }
+                          setCollapsedRepeaterItems(newSet)
+                        }}
+                        className="text-gray-400 hover:text-gray-600 p-1 dark:text-gray-500 dark:hover:text-gray-400"
+                        aria-label={isCollapsed ? "Развернуть" : "Свернуть"}
+                      >
+                        {isCollapsed ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronUp className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                    {!isCollapsed && (
+                      <div className="fi-section-content p-4 border-t border-gray-200 dark:border-gray-800">
+                        {/* Здесь будут настройки для этого поля */}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+              <KwidButton 
+                variant="secondary" 
+                size="sm" 
+                type="button" 
+                className="mt-3 fi-btn-color-gray fi-color-gray"
+                onClick={() => {
+                  // TODO: Логика добавления нового поля
+                  console.log('Добавить поле')
+                }}
+              >
+                <span className="fi-btn-label">Добавить поле</span>
+              </KwidButton>
+            </div>
           </div>
-          <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
-            Определите правила автоматического обновления полей контакта во время разговора.
-          </p>
-          <div className="space-y-2">
-            {contactFields.slice(0, 1).map((fieldId) => {
-              const field = availableContactFields.find(f => f.id === fieldId)
-              return field ? (
-                <div key={fieldId} className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg dark:border-gray-800">
-                  <button className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400" type="button" aria-label="Переместить вверх">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                    </svg>
-                  </button>
-                  <button className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400" type="button" aria-label="Переместить вниз">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  <span className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300">{field.name}</span>
-                  <button 
-                    className="text-gray-400 hover:text-red-600 p-1 dark:text-gray-500 dark:hover:text-red-400" 
-                    type="button"
-                    onClick={() => removeContactField(fieldId)}
-                    aria-label={`Удалить ${field.name}`}
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                  <button 
-                    className="text-gray-400 hover:text-gray-600 p-1 dark:text-gray-500 dark:hover:text-gray-400" 
-                    type="button"
-                    aria-label="Развернуть"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                </div>
-              ) : null
-            })}
-            <KwidButton variant="outline" size="sm" type="button" className="mt-3">
-              Добавить поле
-            </KwidButton>
+
+          {/* Данные контакта - правила обновления */}
+          <div>
+            <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white mb-4">
+              Данные контакта
+            </h3>
+            <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500 dark:text-gray-400 mb-4">
+              Определите правила автоматического обновления полей контакта во время разговора.
+            </p>
+            <div className="space-y-2">
+              {contactWriteFields.map((fieldId) => {
+                const field = availableContactFields.find(f => f.id === fieldId)
+                const isCollapsed = collapsedRepeaterItems.has(fieldId)
+                if (!field) return null
+                return (
+                  <div key={fieldId} className="fi-fo-repeater-item border border-gray-200 rounded-lg dark:border-gray-800">
+                    <div 
+                      onClick={() => {
+                        const newSet = new Set(collapsedRepeaterItems)
+                        if (newSet.has(fieldId)) {
+                          newSet.delete(fieldId)
+                        } else {
+                          newSet.add(fieldId)
+                        }
+                        setCollapsedRepeaterItems(newSet)
+                      }}
+                      className="fi-fo-repeater-item-header flex items-center gap-x-3 overflow-hidden px-4 py-3 cursor-pointer select-none"
+                    >
+                      <GripVertical className="h-4 w-4 text-gray-400 dark:text-gray-500" aria-label="Переместить" />
+                      <span className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300">{field.name}</span>
+                      <button 
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setContactWriteFields(contactWriteFields.filter(id => id !== fieldId))
+                        }}
+                        className="text-gray-400 hover:text-red-600 p-1 dark:text-gray-500 dark:hover:text-red-400"
+                        aria-label="Удалить"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          const newSet = new Set(collapsedRepeaterItems)
+                          if (newSet.has(fieldId)) {
+                            newSet.delete(fieldId)
+                          } else {
+                            newSet.add(fieldId)
+                          }
+                          setCollapsedRepeaterItems(newSet)
+                        }}
+                        className="text-gray-400 hover:text-gray-600 p-1 dark:text-gray-500 dark:hover:text-gray-400"
+                        aria-label={isCollapsed ? "Развернуть" : "Свернуть"}
+                      >
+                        {isCollapsed ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronUp className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                    {!isCollapsed && (
+                      <div className="fi-section-content p-4 border-t border-gray-200 dark:border-gray-800">
+                        {/* Здесь будут настройки для этого поля */}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+              <KwidButton 
+                variant="secondary" 
+                size="sm" 
+                type="button" 
+                className="mt-3 fi-btn-color-gray fi-color-gray"
+                onClick={() => {
+                  // TODO: Логика добавления нового поля
+                  console.log('Добавить поле')
+                }}
+              >
+                <span className="fi-btn-label">Добавить поле</span>
+              </KwidButton>
+            </div>
           </div>
         </div>
       </div>

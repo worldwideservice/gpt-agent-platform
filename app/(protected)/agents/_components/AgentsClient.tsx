@@ -13,7 +13,6 @@ import { Plus, Search, Filter } from "lucide-react";
 
 import { AgentTable } from "@/components/agents/AgentTable";
 import { KwidButton } from "@/components/kwid";
-import { KwidInput } from "@/components/kwid";
 import { useTenantId } from "@/hooks/useTenantId";
 
 import type { Agent } from "@/types";
@@ -296,45 +295,22 @@ export const AgentsClient = ({
     <div className="space-y-8">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <nav className="mb-4" aria-label="Хлебные крошки">
-            <ol className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-              <li>
-                <Link
-                  href={activeTenantId ? `/manage/${activeTenantId}/ai-agents` : "/agents"}
-                  className="hover:text-gray-700 dark:hover:text-gray-300"
-                >
-                  Агенты ИИ
-                </Link>
-              </li>
-              <li>/</li>
-              <li className="text-gray-900 dark:text-white">Список</li>
-            </ol>
+          <nav className="mb-4 flex items-center gap-2" aria-label="Хлебные крошки">
+            <Link
+              href={activeTenantId ? `/manage/${activeTenantId}/ai-agents` : "/agents"}
+              className="fi-breadcrumbs-item-label text-sm font-medium text-gray-500 transition duration-75 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              Агенты ИИ
+            </Link>
+            <span className="fi-breadcrumbs-item-label text-sm font-medium text-gray-500 dark:text-gray-400">
+              Список
+            </span>
           </nav>
-          <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
+          <h1 className="fi-header-heading text-2xl font-bold tracking-tight text-gray-950 dark:text-white sm:text-3xl">
             Агенты ИИ
           </h1>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-          <div className="relative flex items-center gap-2 w-full sm:w-72">
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-              <KwidInput
-                type="search"
-                placeholder="Поиск"
-                value={searchTerm}
-                onChange={handleSearchChange}
-                aria-label="Поиск агентов"
-                className="pl-10"
-              />
-            </div>
-            <button
-              type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-colors hover:border-custom-200 hover:text-custom-600 dark:border-gray-700 dark:text-gray-400 dark:hover:border-custom-700 dark:hover:text-custom-400"
-              aria-label="Переключить столбцы"
-            >
-              <Filter className="h-5 w-5" />
-            </button>
-          </div>
           <Link
             href={
               activeTenantId
@@ -342,14 +318,18 @@ export const AgentsClient = ({
                 : "/agents/create"
             }
             className="w-full sm:w-auto"
+            style={{
+              '--c-400': 'var(--primary-400)',
+              '--c-500': 'var(--primary-500)',
+              '--c-600': 'var(--primary-600)',
+            } as React.CSSProperties}
           >
             <KwidButton
               variant="primary"
               size="md"
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto fi-color-custom"
             >
-              <Plus className="mr-2 h-4 w-4" />
-              Создать
+              <span className="fi-btn-label">Создать</span>
             </KwidButton>
           </Link>
         </div>
@@ -364,6 +344,39 @@ export const AgentsClient = ({
         </div>
       )}
 
+      <div className="fi-ta-header-toolbar flex items-center justify-between gap-x-4 px-4 py-3 sm:px-6">
+        <div className="relative flex-1 max-w-md">
+          <div className="fi-input-wrp-prefix items-center gap-x-3 ps-3 flex pe-2 absolute left-0 top-0 bottom-0 pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+          </div>
+          <input
+            type="search"
+            className="fi-input block w-full border-none py-1.5 text-base text-gray-950 transition duration-75 placeholder:text-gray-400 focus:ring-0 disabled:text-gray-500 pl-10 pr-4"
+            placeholder="Поиск"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            autoComplete="off"
+            maxLength={1000}
+            aria-label="Поиск агентов"
+          />
+        </div>
+        <button
+          type="button"
+          className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2 dark:text-gray-500 dark:hover:text-gray-400"
+          title="Переключить столбцы"
+          aria-label="Переключить столбцы"
+          style={{
+            '--c-300': 'var(--gray-300)',
+            '--c-400': 'var(--gray-400)',
+            '--c-500': 'var(--gray-500)',
+            '--c-600': 'var(--gray-600)',
+          } as React.CSSProperties}
+        >
+          <Filter className="h-5 w-5" />
+          <span className="sr-only">Переключить столбцы</span>
+        </button>
+      </div>
+
       <AgentTable
         agents={agents}
         onDelete={handleDelete}
@@ -375,20 +388,31 @@ export const AgentsClient = ({
         onSelectAll={handleSelectAll}
       />
 
-      <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-        <p aria-live="polite">{resultLabel}</p>
-        <div className="flex items-center gap-4">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            на страницу
+      <nav
+        aria-label="Пагинация"
+        role="navigation"
+        className="fi-pagination grid grid-cols-[1fr_auto_1fr] items-center gap-x-3 fi-ta-pagination px-3 py-3 sm:px-6"
+      >
+        <div className="flex items-center justify-start">
+          <p className="text-sm text-gray-500 dark:text-gray-400" aria-live="polite">
+            {resultLabel}
           </p>
-          <select className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:border-custom-500 focus:outline-none focus:ring-2 focus:ring-custom-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-custom-400 dark:focus:ring-custom-900/20">
+        </div>
+        <div className="flex items-center justify-center gap-x-3">
+          <div className="fi-input-wrp-prefix items-center gap-x-3 ps-3 flex border-e border-gray-200 pe-3 dark:border-white/10">
+            <span className="fi-input-wrp-label whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+              на страницу
+            </span>
+          </div>
+          <select className="fi-select-input block w-full border-none bg-transparent py-1.5 pe-8 text-base text-gray-950 transition duration-75 focus:ring-0 disabled:text-gray-500">
             <option value="10">10</option>
             <option value="25">25</option>
             <option value="50">50</option>
             <option value="100">100</option>
           </select>
         </div>
-      </div>
+        <div className="flex items-center justify-end"></div>
+      </nav>
     </div>
   );
 };

@@ -15,29 +15,16 @@ export const LineChartCard = ({ title, subtitle, data, emptyMessage }: LineChart
   const hasData = data.length > 1 && data.some((point) => point.value > 0)
 
   return (
-    <article className="fi-section rounded-xl border border-gray-200 bg-white p-6 shadow-sm ring-1 ring-gray-950/5 transition-shadow hover:shadow-lg dark:bg-gray-900 dark:ring-white/10">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
-          {subtitle && <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>}
+    <article className="fi-section rounded-xl border border-gray-200 bg-white shadow-sm ring-1 ring-gray-950/5 transition-shadow hover:shadow-lg dark:bg-gray-900 dark:ring-white/10">
+      <header className="fi-section-header flex flex-col gap-3 px-6 py-4">
+        <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
+          {title}
+        </h3>
+      </header>
+      <div className="fi-section-content p-6">
+        <div className="h-52">
+          {hasData ? <Chart data={data} /> : <EmptyState message={emptyMessage} />}
         </div>
-        {hasData && (
-          <div className="text-sm font-semibold text-custom-600 dark:text-custom-400">
-            {formatValue(data[data.length - 1]?.value ?? 0)}
-          </div>
-        )}
-      </div>
-
-      <div className="mt-6 h-52">
-        {hasData ? <Chart data={data} /> : <EmptyState message={emptyMessage} />}
-      </div>
-
-      <div className="mt-4 grid grid-flow-col gap-2 text-xs font-medium text-gray-400 dark:text-gray-500">
-        {data.map((point) => (
-          <span key={point.label} className="truncate text-center">
-            {point.label}
-          </span>
-        ))}
       </div>
     </article>
   )

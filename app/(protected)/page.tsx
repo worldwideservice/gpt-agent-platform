@@ -1,10 +1,9 @@
 import { redirect } from "next/navigation";
-import { Bot, CalendarCheck2, MessageSquare, Sparkles } from "lucide-react";
 
 import { BarChartCard } from "@/components/dashboard/BarChartCard";
 import { LineChartCard } from "@/components/dashboard/LineChartCard";
 import { RecentUpdates } from "@/components/dashboard/RecentUpdates";
-import { KwidStatCard } from "@/components/kwid";
+import { SimpleDashboardStats } from "@/components/dashboard/SimpleDashboardStats";
 
 import { auth } from "@/auth";
 import { getOnboardingState } from "@/lib/onboarding/server";
@@ -14,6 +13,9 @@ import {
   getMonthlyResponsesSeries,
   getDailyResponsesSeries,
 } from "@/lib/repositories/agents";
+import { getOrganizationsForUser } from "@/lib/repositories/organizations";
+import { generateTenantId } from "@/lib/utils/tenant";
+import { getSupabaseServiceRoleClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +27,29 @@ const DashboardPage = async () => {
   }
 
   const orgId = session.user.orgId;
+
+  // Редиректим на формат с tenant-id
+  const organizations = await getOrganizationsForUser(session.user.id);
+  const activeOrganization =
+    organizations.find(
+      (organization) => organization.id === session.user.orgId,
+    ) ??
+    organizations[0] ??
+    null;
+
+  if (activeOrganization) {
+    const supabase = getSupabaseServiceRoleClient();
+    const { data: orgData } = await supabase
+      .from("organizations")
+      .select("id, slug")
+      .eq("id", activeOrganization.id)
+      .single();
+
+    if (orgData) {
+      const tenantId = generateTenantId(orgData.id, orgData.slug);
+      redirect(`/manage/${tenantId}`);
+    }
+  }
 
   const onboardingState = await getOnboardingState(orgId);
   if (!onboardingState.isCompleted) {
@@ -49,35 +74,7 @@ const DashboardPage = async () => {
 
   return (
     <div className="space-y-8">
-      <section className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <KwidStatCard
-          title="Ответы ИИ за этот месяц"
-          value={stats.monthlyResponses}
-          change={stats.monthlyChange}
-          subtitle="к прошлому месяцу"
-          icon={MessageSquare}
-        />
-
-        <KwidStatCard
-          title="Ответы ИИ за последние 7 дней"
-          value={stats.weeklyResponses}
-          subtitle="Последние 7 дней"
-          icon={CalendarCheck2}
-        />
-
-        <KwidStatCard
-          title="Ответы ИИ сегодня"
-          value={stats.todayResponses}
-          icon={Sparkles}
-        />
-
-        <KwidStatCard
-          title="Агенты"
-          value={stats.totalAgents}
-          subtitle="Всего агентов"
-          icon={Bot}
-        />
-      </section>
+      <SimpleDashboardStats stats={stats} />
 
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <LineChartCard title="Ответы ИИ за этот месяц" data={monthlyData} />

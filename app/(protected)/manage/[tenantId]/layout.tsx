@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
-import { Header } from "@/components/layout/Header";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { HeaderWithSidebar } from "@/components/layout/HeaderWithSidebar";
+import { SidebarProvider } from "@/components/layout/SidebarToggle";
 import { auth } from "@/auth";
 import { getOrganizationsForUser } from "@/lib/repositories/organizations";
 import { parseTenantId } from "@/lib/utils/tenant";
@@ -85,25 +85,16 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
   }
 
   return (
-    <div className="fi-layout min-h-screen bg-slate-50">
-      <div className="flex">
-        <Sidebar
-          organizations={organizations}
-          activeOrganizationId={activeOrganization?.id ?? session.user.orgId}
-          tenantId={tenantId}
-        />
-        <div className="fi-main-ctn flex-1 lg:ml-72 xl:ml-80 flex flex-col">
-          <Header
-            user={session.user}
-            subscriptionRenewsAt={subscriptionRenewsAt}
-            tenantId={tenantId}
-          />
-          <main className="flex-1 bg-slate-50">
-            <div className="px-6 py-6 lg:px-8 lg:py-8">{children}</div>
-          </main>
-        </div>
-      </div>
-    </div>
+    <SidebarProvider>
+      <HeaderWithSidebar
+        session={session}
+        organizations={organizations}
+        activeOrganization={activeOrganization}
+        tenantId={tenantId}
+      >
+        {children}
+      </HeaderWithSidebar>
+    </SidebarProvider>
   );
 };
 

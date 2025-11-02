@@ -17,44 +17,66 @@ const KwidSwitch = React.forwardRef<HTMLInputElement, KwidSwitchProps>(
   ({ className, label, description, id, onCheckedChange, ...props }, ref) => {
     const switchId = id || `switch-${Math.random().toString(36).substr(2, 9)}`
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const [isChecked, setIsChecked] = React.useState(props.checked || false)
+
+    React.useEffect(() => {
+      if (props.checked !== undefined) {
+        setIsChecked(props.checked)
+      }
+    }, [props.checked])
+
+    const handleClick = () => {
+      const newValue = !isChecked
+      setIsChecked(newValue)
       if (onCheckedChange) {
-        onCheckedChange(e.target.checked)
+        onCheckedChange(newValue)
       }
     }
 
     return (
-      <div className="fi-checkbox-input flex items-start gap-3">
-        <div className="flex h-5 items-center">
-          <input
-            id={switchId}
-            type="checkbox"
+      <div className="flex items-center gap-x-3 justify-between">
+        {label && (
+          <label
+            htmlFor={switchId}
+            className="fi-fo-field-wrp-label inline-flex items-center gap-x-3"
+          >
+            <span className="text-sm font-medium leading-6 text-gray-950 dark:text-white">
+              {label}
+            </span>
+          </label>
+        )}
+        <button
+          type="button"
+          id={switchId}
+          role="switch"
+          aria-checked={isChecked}
+          onClick={handleClick}
+          className={cn(
+            'fi-fo-toggle relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent outline-none transition-colors duration-200 ease-in-out focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2',
+            isChecked
+              ? 'fi-color-custom bg-custom-600 fi-color-primary'
+              : 'bg-gray-200 dark:bg-gray-700 fi-color-gray',
+            props.disabled && 'opacity-50 cursor-not-allowed',
+            className
+          )}
+          style={
+            isChecked
+              ? { '--c-600': 'var(--primary-600)' }
+              : { '--c-600': 'var(--gray-600)' }
+          }
+          disabled={props.disabled}
+        >
+          <span
             className={cn(
-              'fi-checkbox-input h-4 w-4 rounded border-gray-300',
-              'text-custom-600 focus:ring-custom-500',
-              'dark:border-gray-600 dark:bg-gray-800',
-              'disabled:bg-gray-100 disabled:text-gray-400',
-              className
+              'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+              isChecked ? 'translate-x-5' : 'translate-x-0'
             )}
-            ref={ref}
-            onChange={handleChange}
-            {...props}
           />
-        </div>
-        {(label || description) && (
-          <div className="flex-1">
-            {label && (
-              <label
-                htmlFor={switchId}
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
-              >
-                {label}
-              </label>
-            )}
-            {description && (
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{description}</p>
-            )}
-          </div>
+        </button>
+        {description && (
+          <p className="fi-fo-field-wrp-helper-text break-words text-sm text-gray-500">
+            {description}
+          </p>
         )}
       </div>
     )

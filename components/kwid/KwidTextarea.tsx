@@ -19,25 +19,25 @@ const KwidTextarea = React.forwardRef<HTMLTextAreaElement, KwidTextareaProps>(
     const textareaId = id || `textarea-${Math.random().toString(36).substr(2, 9)}`
 
     return (
-      <div className="fi-input-wrp space-y-2">
+      <div className="fi-fo-field-wrp space-y-2">
         {label && (
-          <label
-            htmlFor={textareaId}
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            {label}
-            {required && <span className="text-red-500 ml-1">*</span>}
-          </label>
+          <div className="flex items-center gap-x-3 justify-between">
+            <label
+              htmlFor={textareaId}
+              className="fi-fo-field-wrp-label inline-flex items-center gap-x-3"
+            >
+              <span className="text-sm font-medium leading-6 text-gray-950 dark:text-white">
+                {label}
+                {required && <span className="text-red-500 ml-1">*</span>}
+              </span>
+            </label>
+          </div>
         )}
         <textarea
           id={textareaId}
           rows={rows}
           className={cn(
-            'fi-input block w-full rounded-lg border-gray-300 shadow-sm resize-y',
-            'focus:border-custom-500 focus:ring-custom-500 dark:border-gray-600',
-            'bg-white dark:bg-gray-900 text-gray-900 dark:text-white',
-            'placeholder:text-gray-400 dark:placeholder:text-gray-500',
-            'disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed',
+            'block h-full w-full border-none bg-transparent px-3 py-1.5 text-base text-gray-950 placeholder:text-gray-400 focus:ring-0 disabled:text-gray-500',
             error && 'border-red-500 focus:border-red-500 focus:ring-red-500',
             className
           )}
@@ -45,7 +45,9 @@ const KwidTextarea = React.forwardRef<HTMLTextAreaElement, KwidTextareaProps>(
           {...props}
         />
         {hint && !error && (
-          <p className="text-sm text-gray-500 dark:text-gray-400">{hint}</p>
+          <p className="fi-fo-field-wrp-helper-text break-words text-sm text-gray-500">
+            {hint}
+          </p>
         )}
         {error && (
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>

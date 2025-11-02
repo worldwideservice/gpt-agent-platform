@@ -49,7 +49,7 @@ export const AgentTable = ({
       <Table>
         <TableHeader>
           <TableRow className="bg-gray-50 dark:bg-gray-800">
-            <TableHead className="w-12">
+            <TableHead className="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 w-12">
               {onSelectAll && (
                 <input
                   type="checkbox"
@@ -58,15 +58,25 @@ export const AgentTable = ({
                     if (input) input.indeterminate = someSelected
                   }}
                   onChange={onSelectAll}
-                  className="h-4 w-4 rounded border-gray-300 text-custom-600 focus:ring-custom-500 dark:border-gray-600 dark:text-custom-400 dark:focus:ring-custom-400"
-                  aria-label="Выбрать все агенты"
+                  className="fi-checkbox-input rounded border-none bg-white shadow-sm ring-1 transition duration-75 checked:ring-0 focus:ring-2 focus:ring-offset-0 disabled:pointer-events-none disabled:bg-gray-50 disabled:text-gray-500"
+                  aria-label="Выбрать/снять все элементы для массовых действий"
                 />
               )}
             </TableHead>
-            <TableHead>Название</TableHead>
-            <TableHead className="w-32">Активно</TableHead>
-            <TableHead>Модель ИИ</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead className="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 fi-table-header-cell-name">
+              Название
+            </TableHead>
+            <TableHead className="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 w-32">
+              <span className="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">
+                Активно
+              </span>
+            </TableHead>
+            <TableHead className="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 fi-table-header-cell-llm-model.name">
+              Модель ИИ
+            </TableHead>
+            <TableHead className="fi-ta-header-cell px-3 py-3.5 sm:last-of-type:pe-6 text-right">
+              Actions
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -85,52 +95,73 @@ export const AgentTable = ({
           ) : (
             agents.map((agent) => (
               <TableRow key={agent.id} className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800">
-                <TableCell>
+                <TableCell className="px-3 py-4">
                   {onSelectAgent && (
                     <input
                       type="checkbox"
                       checked={selectedAgents.includes(agent.id)}
                       onChange={() => onSelectAgent(agent.id)}
-                      className="h-4 w-4 rounded border-gray-300 text-custom-600 focus:ring-custom-500 dark:border-gray-600 dark:text-custom-400 dark:focus:ring-custom-400"
-                      aria-label={`Выбрать агента ${agent.name}`}
+                      className="fi-checkbox-input rounded border-none bg-white shadow-sm ring-1 transition duration-75 checked:ring-0 focus:ring-2 focus:ring-offset-0 disabled:pointer-events-none disabled:bg-gray-50 disabled:text-gray-500"
+                      aria-label={`Выбрать/отменить ${agent.id} для массовых действий`}
+                      value={agent.id}
                     />
                   )}
                 </TableCell>
-                <TableCell>
-                  <div className="flex flex-col">
-                    <Link
-                      href={getAgentPath(agent.id)}
-                      className="text-sm font-semibold text-gray-900 hover:text-custom-600 hover:underline dark:text-white dark:hover:text-custom-400"
-                    >
-                      {agent.name}
-                    </Link>
+                <TableCell className="px-3 py-4">
+                  <div className="fi-ta-text grid w-full gap-y-1">
+                    {agent.name}
                   </div>
                 </TableCell>
-                <TableCell>
-                  <KwidSwitch
-                    checked={agent.status === 'active'}
-                    onCheckedChange={(checked) => onStatusChange?.(agent.id, checked)}
-                  />
+                <TableCell className="px-3 py-4">
+                  <div className="fi-ta-toggle">
+                    <KwidSwitch
+                      checked={agent.status === 'active'}
+                      onCheckedChange={(checked) => onStatusChange?.(agent.id, checked)}
+                    />
+                  </div>
                 </TableCell>
-                <TableCell className="text-sm text-gray-600 dark:text-gray-400">{agent.model ?? 'Не указана'}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-3 text-sm font-medium">
-                    <Link href={getAgentPath(agent.id)} className="text-custom-600 hover:text-custom-700 dark:text-custom-400 dark:hover:text-custom-300">
-                      Изменить
+                <TableCell className="whitespace-nowrap px-3 py-4 text-sm text-gray-600 dark:text-gray-400">
+                  {agent.default_model ?? agent.model ?? 'Не указана'}
+                </TableCell>
+                <TableCell className="whitespace-nowrap px-3 py-4">
+                  <div className="flex items-center justify-end gap-3">
+                    <Link
+                      href={getAgentPath(agent.id)}
+                      className="fi-link group/link relative inline-flex items-center justify-center outline-none fi-size-sm fi-link-size-sm gap-1 fi-color-custom fi-color-primary fi-ac-action fi-ac-link-action"
+                      style={{
+                        '--c-400': 'var(--primary-400)',
+                        '--c-600': 'var(--primary-600)',
+                      } as React.CSSProperties}
+                    >
+                      <span className="font-semibold text-sm text-custom-600 dark:text-custom-400 group-hover/link:underline group-focus-visible/link:underline">
+                        Изменить
+                      </span>
                     </Link>
                     <button
                       type="button"
                       onClick={() => onDuplicate(agent.id)}
-                      className="text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                      className="fi-link group/link relative inline-flex items-center justify-center outline-none fi-size-sm fi-link-size-sm gap-1 fi-color-custom fi-color-primary fi-ac-action fi-ac-link-action"
+                      style={{
+                        '--c-400': 'var(--primary-400)',
+                        '--c-600': 'var(--primary-600)',
+                      } as React.CSSProperties}
                     >
-                      Копировать
+                      <span className="font-semibold text-sm text-custom-600 dark:text-custom-400 group-hover/link:underline group-focus-visible/link:underline">
+                        Копировать
+                      </span>
                     </button>
                     <button
                       type="button"
                       onClick={() => onDelete(agent.id)}
-                      className="text-red-600 transition-colors hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                      className="fi-link group/link relative inline-flex items-center justify-center outline-none fi-size-sm fi-link-size-sm gap-1 fi-color-custom fi-ac-action fi-ac-link-action"
+                      style={{
+                        '--c-400': 'var(--danger-400)',
+                        '--c-600': 'var(--danger-600)',
+                      } as React.CSSProperties}
                     >
-                      Удалить
+                      <span className="font-semibold text-sm text-custom-600 dark:text-custom-400 group-hover/link:underline group-focus-visible/link:underline">
+                        Удалить
+                      </span>
                     </button>
                   </div>
                 </TableCell>

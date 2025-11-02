@@ -31,43 +31,54 @@ export function KwidSection({
 
   return (
     <section className={cn('fi-section rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900', className)}>
-      <div
+      <header
         className={cn(
-          'fi-section-header flex items-center justify-between p-4',
-          collapsible && 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800',
-          !collapsible && 'border-b border-gray-200 dark:border-gray-800'
+          'fi-section-header flex flex-col gap-3 px-6 py-4',
+          collapsible && 'cursor-pointer'
         )}
         onClick={() => collapsible && setIsCollapsed(!isCollapsed)}
       >
-        <div className="flex items-center gap-3">
-          {Icon && (
-            <Icon className="fi-section-header-icon h-6 w-6 text-gray-400 dark:text-gray-500" />
-          )}
-          <div>
-            <h3 className="fi-section-header-heading text-base font-semibold text-gray-900 dark:text-white">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {Icon && (
+              <Icon className="fi-section-header-icon h-6 w-6 text-gray-400 dark:text-gray-500" />
+            )}
+            <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
               {title}
             </h3>
-            {description && (
-              <p className="fi-section-header-description mt-1 text-sm text-gray-500 dark:text-gray-400">
-                {description}
-              </p>
-            )}
           </div>
+          {collapsible && (
+            <button
+              type="button"
+              className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2 dark:text-gray-500 dark:hover:text-gray-400"
+              style={{
+                '--c-300': 'var(--gray-300)',
+                '--c-400': 'var(--gray-400)',
+                '--c-500': 'var(--gray-500)',
+                '--c-600': 'var(--gray-600)',
+              } as React.CSSProperties}
+              onClick={(e) => {
+                e.stopPropagation()
+                setIsCollapsed(!isCollapsed)
+              }}
+            >
+              <ChevronDown
+                className={cn(
+                  'h-5 w-5 transition-transform duration-200',
+                  !isCollapsed && 'rotate-180'
+                )}
+              />
+            </button>
+          )}
         </div>
-        {collapsible && (
-          <div className="text-gray-400">
-            {isCollapsed ? (
-              <ChevronDown className="h-5 w-5" />
-            ) : (
-              <ChevronUp className="h-5 w-5" />
-            )}
-          </div>
+        {description && (
+          <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500 dark:text-gray-400">
+            {description}
+          </p>
         )}
-      </div>
+      </header>
       {(!collapsible || !isCollapsed) && (
-        <div className="fi-section-content-ctn">
-          <div className="fi-section-content p-4 pt-0">{children}</div>
-        </div>
+        <div className="fi-section-content p-6">{children}</div>
       )}
     </section>
   )

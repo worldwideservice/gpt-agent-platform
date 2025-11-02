@@ -22,32 +22,51 @@ export interface KwidTabsProps extends React.ComponentPropsWithoutRef<typeof Tab
   listClassName?: string
 }
 
-const KwidTabs = ({ tabs, children, className, listClassName, ...props }: KwidTabsProps) => (
-  <TabsPrimitive.Root className={cn('fi-tabs', className)} {...props}>
-    <TabsPrimitive.List
-      className={cn(
-        'fi-tabs-list inline-flex h-10 items-center justify-center rounded-lg bg-slate-100 p-1 text-slate-500 dark:bg-gray-800 dark:text-gray-400',
-        listClassName
-      )}
-    >
-      {tabs.map((tab) => (
-        <TabsPrimitive.Trigger
-          key={tab.value}
-          value={tab.value}
-          disabled={tab.disabled}
-          className={cn(
-            'fi-tabs-item inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:fi-tabs-item-active data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:ring-offset-gray-950 dark:focus-visible:ring-custom-500 dark:data-[state=active]:bg-gray-950 dark:data-[state=active]:text-white',
-            tab.icon && 'gap-2'
-          )}
-        >
-          {tab.icon && <tab.icon className="h-4 w-4" />}
-          {tab.label}
-        </TabsPrimitive.Trigger>
-      ))}
-    </TabsPrimitive.List>
-    {children}
-  </TabsPrimitive.Root>
-)
+const KwidTabs = ({ tabs, children, className, listClassName, ...props }: KwidTabsProps) => {
+  const currentValue = props.value || tabs[0]?.value || ''
+
+  return (
+    <TabsPrimitive.Root className={cn('fi-tabs', className)} {...props}>
+      <nav
+        className={cn(
+          'fi-tabs flex max-w-full gap-x-1 overflow-x-auto mx-auto rounded-xl bg-white p-2 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10 fi-page-sub-navigation-tabs hidden md:flex',
+          listClassName
+        )}
+        role="tablist"
+      >
+        {tabs.map((tab) => {
+          const isActive = tab.value === currentValue
+          return (
+            <TabsPrimitive.Trigger
+              key={tab.value}
+              value={tab.value}
+              disabled={tab.disabled}
+              className={cn(
+                'fi-tabs-item group flex items-center justify-center gap-x-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium outline-none transition duration-75 hover:bg-gray-50 focus-visible:bg-gray-50 dark:hover:bg-white/5 dark:focus-visible:bg-white/5',
+                isActive && 'fi-active fi-tabs-item-active bg-gray-50 dark:bg-white/5',
+                tab.disabled && 'disabled:pointer-events-none disabled:opacity-50'
+              )}
+              role="tab"
+              aria-selected={isActive}
+            >
+              <span
+                className={cn(
+                  'fi-tabs-item-label transition duration-75',
+                  isActive
+                    ? 'text-primary-600 dark:text-primary-400'
+                    : 'text-gray-500 group-hover:text-gray-700 group-focus-visible:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-200 dark:group-focus-visible:text-gray-200'
+                )}
+              >
+                {tab.label}
+              </span>
+            </TabsPrimitive.Trigger>
+          )
+        })}
+      </nav>
+      {children}
+    </TabsPrimitive.Root>
+  )
+}
 
 const KwidTabsContent = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Content>,

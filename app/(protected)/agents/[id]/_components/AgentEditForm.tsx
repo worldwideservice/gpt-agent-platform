@@ -28,7 +28,9 @@ import { StageCard } from "./StageCard";
 import { KnowledgeBaseSettings } from "@/components/crm/KnowledgeBaseSettings";
 import { ChannelsSettings } from "@/components/crm/ChannelsSettings";
 import { InteractionSettings } from "@/components/crm/InteractionSettings";
+import { DealContactFieldsSelector } from "@/components/crm/DealContactFieldsSelector";
 import { AgentSequencesManager } from "./AgentSequencesManager";
+import { IntegrationsTable } from "@/components/integrations/IntegrationsTable";
 import {
   KwidButton,
   KwidInput,
@@ -646,119 +648,71 @@ export const AgentEditForm = ({
     ? "Новый AI-ассистент"
     : (agent?.name ?? "AI ассистент");
 
+  const agentsPath = activeTenantId
+    ? `/manage/${activeTenantId}/ai-agents`
+    : "/agents"
+  const editPath = activeTenantId
+    ? `/manage/${activeTenantId}/ai-agents/${agentId}/edit`
+    : `/agents/${agentId}/edit`
+
   return (
     <div className="space-y-8">
-      <KwidSection
-        title={isNew ? "Создание агента" : `Редактирование ${agentTitle}`}
-      >
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-4">
-            <button
-              type="button"
-              onClick={() => {
-                const redirectPath = activeTenantId
-                  ? `/manage/${activeTenantId}/ai-agents`
-                  : "/agents";
-                router.push(redirectPath);
-              }}
-              className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 transition-colors hover:text-custom-600 dark:text-gray-400 dark:hover:text-custom-400"
+      <nav className="flex items-center gap-2 mb-4" aria-label="Хлебные крошки">
+        <Link
+          href={agentsPath}
+          className="fi-breadcrumbs-item-label text-sm font-medium text-gray-500 transition duration-75 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+        >
+          Агенты ИИ
+        </Link>
+        {!isNew && (
+          <>
+            <Link
+              href={editPath}
+              className="fi-breadcrumbs-item-label text-sm font-medium text-gray-500 transition duration-75 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
-              <ArrowLeft className="h-4 w-4" /> Назад к списку
-            </button>
+              {agentTitle}
+            </Link>
+            <span className="fi-breadcrumbs-item-label text-sm font-medium text-gray-500 dark:text-gray-400">
+              Основные
+            </span>
+          </>
+        )}
+      </nav>
 
-            <div className="space-y-2">
-              <nav className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500">
-                <Link
-                  href={
-                    activeTenantId
-                      ? `/manage/${activeTenantId}/ai-agents`
-                      : "/agents"
-                  }
-                  className="font-semibold text-custom-600 hover:underline dark:text-custom-400"
-                >
-                  Агенты ИИ
-                </Link>
-                <span>/</span>
-                <span className="font-semibold text-gray-500 dark:text-gray-400">
+      <header className="fi-header flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Агенты ИИ
+            </span>
+            {!isNew && (
+              <>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {agentTitle}
                 </span>
-              </nav>
-              <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
-                {isNew ? "Создание агента" : `Редактирование ${agentTitle}`}
-              </h1>
-              <p className="max-w-2xl text-sm text-gray-500 dark:text-gray-400">
-                Управляйте настройками, сценариями и интеграциями, чтобы агент
-                работал в соответствии с вашими бизнес-процессами.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Статус
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {formData.status === "active"
-                      ? "Агент отвечает пользователям"
-                      : "Ответы временно отключены"}
-                  </p>
-                </div>
-                <KwidSwitch
-                  checked={formData.status === "active"}
-                  onCheckedChange={(checked) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      status: checked ? "active" : "inactive",
-                    }))
-                  }
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row">
-            {!isNew && (
-              <KwidButton
-                type="button"
-                variant="danger"
-                size="md"
-                onClick={handleDelete}
-              >
-                <Trash2 className="mr-2 h-4 w-4" /> Удалить
-              </KwidButton>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Основные
+                </span>
+              </>
             )}
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-950 dark:text-white sm:text-3xl">
+            {isNew ? "Создание агента" : "Редактирование АИ ассистент"}
+          </h1>
+        </div>
+        <div className="flex items-center gap-3">
+          {!isNew && (
             <KwidButton
               type="button"
-              onClick={handleSave}
-              disabled={isSaving}
-              variant="primary"
+              variant="danger"
               size="md"
+              onClick={handleDelete}
             >
-              <Save className="mr-2 h-4 w-4" />{" "}
-              {isSaving ? "Сохранение…" : "Сохранить изменения"}
+              <Trash2 className="mr-2 h-4 w-4" /> Удалить
             </KwidButton>
-          </div>
+          )}
         </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <SummaryCard
-            icon={Sparkles}
-            title="Персонализируйте опыт"
-            description="Настройте приветствия, сценарии и ответы, чтобы агент звучал как реальный сотрудник вашей компании."
-          />
-          <SummaryCard
-            icon={Workflow}
-            title="Согласуйте воронку"
-            description="Определите этапы сделок и триггеры, чтобы контролировать движение клиента по CRM."
-          />
-          <SummaryCard
-            icon={BookOpen}
-            title="Усилите знания"
-            description="Подключите статьи и категории базы знаний, чтобы ответы были точными и компетентными."
-          />
-        </div>
-      </KwidSection>
+      </header>
 
       {!isNew && <CalloutPipelines agentId={agentId} />}
 
@@ -779,100 +733,99 @@ export const AgentEditForm = ({
       >
         <KwidTabsContent value="basic" className="space-y-6">
           <div className="fi-fo-component-ctn">
-            <KwidSection title="Основные настройки">
-              <div className="grid gap-4 lg:grid-cols-[1fr,280px]">
-                <div className="space-y-4">
+            <KwidSection
+              title="Профиль агента"
+              description="Основные настройки агента"
+            >
+              <div className="fi-section-content p-6">
+                <div className="space-y-6">
                   <KwidInput
-                    label="Название агента*"
+                    label="Название*"
                     value={formData.name}
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, name: e.target.value }))
                     }
-                    placeholder="Например: Консультант по продажам"
+                    placeholder="Введите название агента"
                     required
                   />
 
-                  <KwidTextarea
-                    label="Инструкции для агента*"
-                    placeholder="Опишите роль, допускаемые и запрещенные действия"
-                    rows={6}
-                    value={formData.instructions}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        instructions: e.target.value,
-                      }))
-                    }
-                  />
+                  <div className="fi-fo-field-wrp">
+                    <div className="flex items-center gap-x-3 justify-between">
+                      <label className="fi-fo-field-wrp-label inline-flex items-center gap-x-3">
+                        <span className="text-sm font-medium leading-6 text-gray-950 dark:text-white">
+                          Активно
+                        </span>
+                      </label>
+                      <KwidSwitch
+                        checked={formData.status === "active"}
+                        onCheckedChange={(checked) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            status: checked ? "active" : "inactive",
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
 
-                  <KwidTextarea
-                    label="Приветственное сообщение"
-                    placeholder="Сообщение, которое увидит пользователь при первом обращении"
-                    rows={4}
-                    value={formData.welcomeMessage}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        welcomeMessage: e.target.value,
-                      }))
-                    }
-                  />
+                  <div className="fi-fo-field-wrp space-y-2">
+                    <div className="flex items-center gap-x-3 justify-between">
+                      <label className="fi-fo-field-wrp-label inline-flex items-center gap-x-3">
+                        <span className="text-sm font-medium leading-6 text-gray-950 dark:text-white">
+                          Инструкции для агента*
+                        </span>
+                      </label>
+                    </div>
+                    <textarea
+                      className="block h-full w-full border-none bg-transparent px-3 py-1.5 text-base text-gray-950 placeholder:text-gray-400 focus:ring-0 disabled:text-gray-500"
+                      rows={20}
+                      value={formData.instructions}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          instructions: e.target.value,
+                        }))
+                      }
+                      placeholder="Начальные инструкции по тону, стилю и ответам вашего агента. Вы также можете добавить общие сведения о компании, чтобы помочь агенту отвечать более точно."
+                      required
+                    />
+                    <p className="fi-fo-field-wrp-helper-text break-words text-sm text-gray-500">
+                      Начальные инструкции по тону, стилю и ответам вашего агента. Вы также можете добавить общие сведения о компании, чтобы помочь агенту отвечать более точно.
+                    </p>
+                  </div>
                 </div>
+              </div>
+            </KwidSection>
+          </div>
 
-                <div className="space-y-4 rounded-xl bg-gray-50 p-4 dark:bg-gray-800">
-                  <KwidSelect
-                    label="Модель ИИ"
-                    value={formData.model}
-                    onChange={(value: string) =>
-                      setFormData((prev) => ({ ...prev, model: value }))
-                    }
-                    options={[
-                      { value: "gpt-5", label: "OpenAI GPT-5" },
-                      { value: "gpt-4.1", label: "OpenAI GPT-4.1" },
-                      { value: "gpt-4", label: "OpenAI GPT-4" },
-                      { value: "gpt-3.5-turbo", label: "OpenAI GPT-3.5 Turbo" },
-                      {
-                        value: "claude-3-opus",
-                        label: "Anthropic Claude 3 Opus",
-                      },
-                      {
-                        value: "claude-3-sonnet",
-                        label: "Anthropic Claude 3 Sonnet",
-                      },
-                      {
-                        value: "claude-3-haiku",
-                        label: "Anthropic Claude 3 Haiku",
-                      },
-                      { value: "gemini-pro", label: "Google Gemini Pro" },
-                      { value: "gemini-ultra", label: "Google Gemini Ultra" },
-                    ]}
-                    placeholder="Выберите модель ИИ"
-                  />
-                  <KwidSelect
-                    label="Рабочий язык"
-                    value={formData.language}
-                    onChange={(value: string) =>
-                      setFormData((prev) => ({ ...prev, language: value }))
-                    }
-                    options={[
-                      { value: "auto", label: "Автоматически определять" },
-                      { value: "en", label: "English" },
-                      { value: "ru", label: "Русский" },
-                    ]}
-                    placeholder="Выберите язык"
-                  />
-                  <KwidTextarea
-                    label="Описание"
-                    placeholder="Опишите назначение агента"
-                    rows={3}
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        description: e.target.value,
-                      }))
-                    }
-                  />
+          <div className="fi-fo-component-ctn">
+            <KwidSection
+              title="Взаимодействие"
+              description="Настройки взаимодействия с пользователями"
+            >
+              <div className="space-y-6">
+                <div className="fi-fo-field-wrp">
+                  <div className="flex items-center gap-x-3 justify-between">
+                    <div className="flex-1">
+                      <label className="fi-fo-field-wrp-label inline-flex items-center gap-x-3">
+                        <span className="text-sm font-medium leading-6 text-gray-950 dark:text-white">
+                          Проверять перед отправкой
+                        </span>
+                      </label>
+                      <p className="fi-fo-field-wrp-helper-text break-words text-sm text-gray-500 mt-1">
+                        Сообщения не будут отправляться автоматически. Они появятся в поле ввода сообщения для вашего просмотра и ручной отправки.
+                      </p>
+                    </div>
+                    <KwidSwitch
+                      checked={formData.checkBeforeSending}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          checkBeforeSending: checked,
+                        }))
+                      }
+                    />
+                  </div>
                 </div>
               </div>
             </KwidSection>
@@ -934,76 +887,7 @@ export const AgentEditForm = ({
         </KwidTabsContent>
 
         <KwidTabsContent value="crm" className="space-y-6">
-          <div className="fi-fo-component-ctn">
-            <KwidSection title="Сделки и контакты">
-              <InteractionSettings
-                checkBeforeSending={formData.checkBeforeSending}
-                onCheckBeforeSendingToggle={(enabled: boolean) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    checkBeforeSending: enabled,
-                  }))
-                }
-              />
-
-              <KwidSelect
-                label="Рабочая воронка"
-                options={[
-                  { value: "generation", label: "Generation Lead" },
-                  { value: "sales", label: "Sales Pipeline" },
-                  { value: "support", label: "Customer Support" },
-                ]}
-                value={(formData as any).pipeline || "generation"}
-                onChange={(value: string) =>
-                  setFormData((prev) => ({ ...prev, pipeline: value }) as any)
-                }
-              />
-
-              <KwidTextarea
-                label="Инструкции по работе со стадией сделки"
-                placeholder="Опишите, как агент работает с каждой стадией"
-                rows={6}
-                defaultValue="На стадии 'Сделка распределена' агент уточняет услугу, определяет тип клиента и назначает следующую сессию."
-              />
-
-              <div className="grid gap-4 md:grid-cols-2">
-                {[
-                  "Generation lead",
-                  "Work Visa in Poland",
-                  "Seasonal Visa in Poland",
-                  "Product Vendors (Partnership)",
-                ].map((name) => (
-                  <StageCard key={name} name={name} />
-                ))}
-              </div>
-
-              <div className="rounded-xl border border-dashed border-gray-300 p-4 dark:border-gray-700">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                  Доступные данные сделки
-                </h3>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Агент сможет читать только выбранные поля. Это помогает
-                  исключить лишние личные данные и делает ответы более точными.
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2 text-xs font-medium text-gray-600 dark:text-gray-400">
-                  {[
-                    "Название сделки",
-                    "Ответственный",
-                    "Тип услуги",
-                    "Этап",
-                    "Email клиента",
-                  ].map((item) => (
-                    <span
-                      key={item}
-                      className="rounded-full bg-gray-100 px-3 py-1 dark:bg-gray-800"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </KwidSection>
-          </div>
+          <DealContactFieldsSelector agentId={agentId} />
         </KwidTabsContent>
 
         <KwidTabsContent value="triggers">
@@ -1015,22 +899,7 @@ export const AgentEditForm = ({
         </KwidTabsContent>
 
         <KwidTabsContent value="integrations">
-          <KwidSection
-            title="Каналы коммуникаций"
-            description="Управляйте подключенными каналами, где агент общается с клиентами."
-          >
-            <div className="space-y-4">
-              <ChannelsSettings
-                channels={channels}
-                allChannelsEnabled={allChannelsEnabled}
-                onAllChannelsToggle={handleAllChannelsToggle}
-                onChannelToggle={handleChannelToggle}
-                onSync={handleChannelSync}
-                isSyncing={channelsLoading}
-                disabled={isNew}
-              />
-            </div>
-          </KwidSection>
+          <IntegrationsTable agentId={agentId} />
         </KwidTabsContent>
 
         <KwidTabsContent value="training" className="space-y-6">
@@ -1061,178 +930,205 @@ export const AgentEditForm = ({
         </KwidTabsContent>
 
         <KwidTabsContent value="advanced">
-          <div className="fi-fo-component-ctn">
-            <KwidSection title="Расширенные настройки">
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-3">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Температура (creativity)
-                  </label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="2"
-                    step="0.1"
-                    value={formData.temperature}
-                    onChange={(event) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        temperature: Number.parseFloat(event.target.value),
-                      }))
-                    }
-                    className="w-full"
-                  />
-                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <span className="text-gray-400 dark:text-gray-500">
-                      Точный (0)
-                    </span>
-                    <span className="font-medium text-gray-600 dark:text-gray-300">
-                      {formData.temperature.toFixed(2)}
-                    </span>
-                    <span className="text-gray-400 dark:text-gray-500">
-                      Креативный (2)
-                    </span>
+          <div className="flex flex-col gap-8">
+            <div
+              style={{
+                '--cols-default': 'repeat(1, minmax(0, 1fr))',
+                '--cols-lg': 'repeat(2, minmax(0, 1fr))',
+              }}
+              className="grid grid-cols-[--cols-default] lg:grid-cols-[--cols-lg] fi-fo-component-ctn gap-6"
+            >
+              {/* Модель ИИ */}
+              <div className="fi-section rounded-lg border border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-800">
+                <header className="fi-section-header flex flex-col gap-3 px-6 py-4">
+                  <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
+                    Модель ИИ
+                  </h3>
+                </header>
+                <div className="fi-section-content p-6">
+                  <div className="fi-fo-field-wrp space-y-2">
+                    <div className="flex items-center gap-x-3 justify-between">
+                      <label className="fi-fo-field-wrp-label inline-flex items-center gap-x-3">
+                        <span className="text-sm font-medium leading-6 text-gray-950 dark:text-white">
+                          Выберите модель ИИ*
+                        </span>
+                      </label>
+                    </div>
+                    {formData.model && (
+                      <div className="choices__inner flex flex-wrap gap-2 mb-3">
+                        <div
+                          className="choices__item choices__item--selectable inline-flex items-center gap-1 rounded bg-gray-100 px-3 py-1 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                          data-item
+                          data-id={formData.model}
+                          data-value={formData.model}
+                          aria-selected="true"
+                        >
+                          {formData.model === 'gpt-5'
+                            ? 'OpenAI GPT-5 - Новейшая модель OpenAI с надёжными и естественными ответами'
+                            : formData.model}
+                          <button
+                            type="button"
+                            className="choices__button ml-1 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                            aria-label="Remove item"
+                            data-button
+                            onClick={() =>
+                              setFormData((prev) => ({ ...prev, model: '' }))
+                            }
+                          >
+                            Remove item
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    <KwidSelect
+                      options={[
+                        { value: 'gpt-5', label: 'OpenAI GPT-5 - Новейшая модель OpenAI с надёжными и естественными ответами' },
+                        { value: 'gpt-4.1', label: 'OpenAI GPT-4.1' },
+                        { value: 'gpt-4', label: 'OpenAI GPT-4' },
+                        { value: 'gpt-3.5-turbo', label: 'OpenAI GPT-3.5 Turbo' },
+                        { value: 'claude-3-opus', label: 'Anthropic Claude 3 Opus' },
+                        { value: 'claude-3-sonnet', label: 'Anthropic Claude 3 Sonnet' },
+                        { value: 'claude-3-haiku', label: 'Anthropic Claude 3 Haiku' },
+                        { value: 'gemini-pro', label: 'Google Gemini Pro' },
+                        { value: 'gemini-ultra', label: 'Google Gemini Ultra' },
+                      ]}
+                      value={formData.model || ''}
+                      onChange={(value: string) =>
+                        setFormData((prev) => ({ ...prev, model: value }))
+                      }
+                      placeholder="Выберите, насколько умным вы хотите сделать ИИ. Более продвинутые модели стоят дороже."
+                    />
+                    <p className="fi-fo-field-wrp-helper-text break-words text-sm text-gray-500">
+                      Выберите, насколько умным вы хотите сделать ИИ. Более продвинутые модели стоят дороже.
+                    </p>
                   </div>
-                  <KwidInput
-                    type="number"
-                    step={0.1}
-                    min={0}
-                    max={2}
-                    value={formData.temperature}
-                    onChange={(event) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        temperature: Number.parseFloat(event.target.value) || 0,
-                      }))
-                    }
-                    className="max-w-[140px]"
-                  />
                 </div>
+              </div>
 
-                <div className="space-y-3">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Задержка ответа (секунды)
-                  </label>
-                  <KwidInput
+              {/* Язык */}
+              <div className="fi-section rounded-lg border border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-800">
+                <header className="fi-section-header flex flex-col gap-3 px-6 py-4">
+                  <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
+                    Язык
+                  </h3>
+                </header>
+                <div className="fi-section-content p-6">
+                  <div className="fi-fo-field-wrp">
+                    <KwidSwitch
+                      checked={formData.language === 'auto'}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          language: checked ? 'auto' : 'ru',
+                        }))
+                      }
+                      label="Автоматически определять язык пользователя"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Настройки ответа */}
+            <div className="fi-section rounded-lg border border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-800">
+              <header className="fi-section-header flex flex-col gap-3 px-6 py-4">
+                <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
+                  Настройки ответа
+                </h3>
+              </header>
+              <div className="fi-section-content p-6">
+                <div className="fi-fo-field-wrp space-y-2">
+                  <div className="flex items-center gap-x-3 justify-between">
+                    <label className="fi-fo-field-wrp-label inline-flex items-center gap-x-3">
+                      <span className="text-sm font-medium leading-6 text-gray-950 dark:text-white">
+                        Задержка ответа (секунд)
+                      </span>
+                    </label>
+                  </div>
+                  <input
                     type="number"
+                    id="data.response_delay"
+                    inputMode="decimal"
+                    max={900}
                     min={0}
-                    max={86400}
+                    step="any"
+                    className="fi-input block w-full border-none py-1.5 text-base text-gray-950 transition duration-75 placeholder:text-gray-400 focus:ring-0 disabled:text-gray-500"
                     value={formData.responseDelaySeconds}
-                    onChange={(event) =>
+                    onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        responseDelaySeconds: Math.max(
-                          0,
-                          Number.parseInt(event.target.value, 10) || 0,
-                        ),
+                        responseDelaySeconds: Math.max(0, Number.parseFloat(e.target.value) || 0),
                       }))
                     }
                   />
-
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Максимальная длина ответа (токены)
-                  </label>
-                  <KwidInput
-                    type="number"
-                    min={128}
-                    max={8000}
-                    value={formData.maxTokens}
-                    onChange={(event) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        maxTokens: Math.min(
-                          8000,
-                          Math.max(
-                            128,
-                            Number.parseInt(event.target.value, 10) || 128,
-                          ),
-                        ),
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Presence Penalty
-                  </label>
-                  <KwidInput
-                    type="number"
-                    step={0.1}
-                    min={-2}
-                    max={2}
-                    value={formData.presencePenalty}
-                    onChange={(event) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        presencePenalty:
-                          Number.parseFloat(event.target.value) || 0,
-                      }))
-                    }
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Повышайте значение, чтобы модель реже повторялась и
-                    исследовала новые темы.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Frequency Penalty
-                  </label>
-                  <KwidInput
-                    type="number"
-                    step={0.1}
-                    min={-2}
-                    max={2}
-                    value={formData.frequencyPenalty}
-                    onChange={(event) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        frequencyPenalty:
-                          Number.parseFloat(event.target.value) || 0,
-                      }))
-                    }
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Контролируйте повторяемость слов в ответах агента.
+                  <p className="fi-fo-field-wrp-helper-text break-words text-sm text-gray-500">
+                    Сколько секунд ждать перед ответом. Рекомендуем установить задержку не менее 30 секунд, чтобы избежать дублирования ответов, если клиент отправит другое сообщение, пока агент отвечает.
                   </p>
                 </div>
               </div>
+            </div>
 
-              <KnowledgeBaseSettings
-                allCategoriesEnabled={formData.knowledgeBaseAllCategories}
-                createTaskOnNotFound={formData.createTaskOnNotFound}
-                notFoundMessage={formData.notFoundMessage}
-                onAllCategoriesToggle={(enabled) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    knowledgeBaseAllCategories: enabled,
-                  }))
-                }
-                onCreateTaskToggle={(enabled) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    createTaskOnNotFound: enabled,
-                  }))
-                }
-                onMessageChange={(message) =>
-                  setFormData((prev) => ({ ...prev, notFoundMessage: message }))
-                }
-                onOpenKnowledgeBase={() => {
-                  const redirectPath = activeTenantId
-                    ? `/manage/${activeTenantId}/knowledge-categories`
-                    : "/knowledge-base";
-                  router.push(redirectPath);
-                }}
-                disabled={isNew}
-              />
-            </KwidSection>
+            <KnowledgeBaseSettings
+              allCategoriesEnabled={formData.knowledgeBaseAllCategories}
+              createTaskOnNotFound={formData.createTaskOnNotFound}
+              notFoundMessage={formData.notFoundMessage}
+              onAllCategoriesToggle={(enabled) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  knowledgeBaseAllCategories: enabled,
+                }))
+              }
+              onCreateTaskToggle={(enabled) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  createTaskOnNotFound: enabled,
+                }))
+              }
+              onMessageChange={(message) =>
+                setFormData((prev) => ({ ...prev, notFoundMessage: message }))
+              }
+              onOpenKnowledgeBase={() => {
+                const redirectPath = activeTenantId
+                  ? `/manage/${activeTenantId}/knowledge-categories`
+                  : "/knowledge-base";
+                router.push(redirectPath);
+              }}
+              disabled={isNew}
+            />
           </div>
         </KwidTabsContent>
       </KwidTabs>
+
+      <div className="fi-ac gap-3 flex flex-wrap items-center justify-start mt-8">
+        <KwidButton
+          type="button"
+          onClick={handleSave}
+          disabled={isSaving}
+          variant="primary"
+          size="md"
+          style={{
+            '--c-400': 'var(--primary-400)',
+            '--c-500': 'var(--primary-500)',
+            '--c-600': 'var(--primary-600)',
+          } as React.CSSProperties}
+          className="fi-color-custom"
+        >
+          <span className="fi-btn-label">{isSaving ? "Сохранение…" : "Сохранить"}</span>
+        </KwidButton>
+        <KwidButton
+          type="button"
+          variant="secondary"
+          size="md"
+          onClick={() => {
+            const redirectPath = activeTenantId
+              ? `/manage/${activeTenantId}/ai-agents`
+              : "/agents";
+            router.push(redirectPath);
+          }}
+        >
+          <span className="fi-btn-label">Отмена</span>
+        </KwidButton>
+      </div>
     </div>
   );
 };

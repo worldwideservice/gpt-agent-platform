@@ -2,10 +2,18 @@
 
 import { useCallback, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
-import { Edit, FileText, Plus, Search, Trash2 } from "lucide-react";
+import { Edit, FileText, Plus, Search, Trash2, Filter, Columns, X } from "lucide-react";
 
-import { KwidButton, KwidInput, KwidTable } from "@/components/kwid";
+import { KwidButton } from "@/components/kwid";
 import { useTenantId } from "@/hooks/useTenantId";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/Table";
 
 import type { KnowledgeBaseArticle } from "@/types";
 
@@ -39,12 +47,17 @@ export const ArticlesClient = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [activeFilters, setActiveFilters] = useState<Array<{ key: string; label: string; value: string }>>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const fetchArticles = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (searchTerm) {
         params.set("search", searchTerm);
+      }
+      if (selectedCategory) {
+        params.set("categoryId", selectedCategory);
       }
 
       const response = await fetch(
@@ -54,6 +67,13 @@ export const ArticlesClient = ({
         const payload = (await response.json()) as ArticlesApiResponse;
         if (payload.success) {
           setArticles(payload.data);
+          // Обновляем активные фильтры
+          const filters: Array<{ key: string; label: string; value: string }> = [];
+          if (selectedCategory) {
+            const categoryName = categories.find(c => c.id === selectedCategory)?.name || 'Неизвестная категория';
+            filters.push({ key: 'category', label: 'Категория', value: categoryName });
+          }
+          setActiveFilters(filters);
         } else {
           setError(payload.error || "Ошибка загрузки статей");
         }
@@ -64,7 +84,7 @@ export const ArticlesClient = ({
       console.error("Failed to fetch articles", err);
       setError("Не удалось загрузить статьи");
     }
-  }, [searchTerm]);
+  }, [searchTerm, selectedCategory, categories]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -76,7 +96,7 @@ export const ArticlesClient = ({
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [fetchArticles, searchTerm]);
+  }, [searchTerm, selectedCategory]);
 
   const handleDelete = useCallback(
     async (id: string) => {
@@ -110,50 +130,55 @@ export const ArticlesClient = ({
     return category?.name || "Неизвестная категория";
   };
 
+  const removeFilter = (key: string) => {
+    if (key === 'category') {
+      setSelectedCategory(null);
+    }
+  };
+
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <section className="flex flex-col gap-y-8 py-8">
+      <header className="fi-header flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
-            Статьи базы знаний
+          <nav className="mb-4 flex items-center gap-2" aria-label="Хлебные крошки">
+            <Link
+              href={tenantId ? `/manage/${tenantId}/knowledge-items` : "/knowledge-base/articles"}
+              className="fi-breadcrumbs-item-label text-sm font-medium text-gray-500 transition duration-75 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              Статьи
+            </Link>
+            <span className="fi-breadcrumbs-item-label text-sm font-medium text-gray-500 dark:text-gray-400">
+              Список
+            </span>
+          </nav>
+          <h1 className="fi-header-heading text-2xl font-bold tracking-tight text-gray-950 dark:text-white sm:text-3xl">
+            Статьи
           </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Управляйте статьями базы знаний
-          </p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-          <div className="relative flex items-center gap-2 w-full sm:w-72">
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-              <KwidInput
-                type="search"
-                placeholder="Поиск статей"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                aria-label="Поиск статей"
-                className="pl-10"
-              />
-            </div>
-          </div>
           <Link
             href={
               tenantId
-                ? `/manage/${tenantId}/knowledge-items/new`
+                ? `/manage/${tenantId}/knowledge-items/create`
                 : "/knowledge-base/articles/new"
             }
             className="w-full sm:w-auto"
+            style={{
+              '--c-400': 'var(--primary-400)',
+              '--c-500': 'var(--primary-500)',
+              '--c-600': 'var(--primary-600)',
+            } as React.CSSProperties}
           >
             <KwidButton
               variant="primary"
               size="md"
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto fi-color-custom"
             >
-              <Plus className="mr-2 h-4 w-4" />
-              Создать статью
+              <span className="fi-btn-label">Создать</span>
             </KwidButton>
           </Link>
         </div>
-      </div>
+      </header>
 
       {error && (
         <div
@@ -164,77 +189,214 @@ export const ArticlesClient = ({
         </div>
       )}
 
-      <div className="fi-ta-table overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+        <div className="fi-ta-header-toolbar flex items-center justify-between gap-x-4 px-4 py-3 sm:px-6">
+          <div className="relative flex-1 max-w-md">
+            <div className="fi-input-wrp-prefix items-center gap-x-3 ps-3 flex pe-2 absolute left-0 top-0 bottom-0 pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+            </div>
+            <input
+              type="search"
+              className="fi-input block w-full border-none py-1.5 text-base text-gray-950 transition duration-75 placeholder:text-gray-400 focus:ring-0 disabled:text-gray-500 pl-10 pr-4"
+              placeholder="Поиск"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              autoComplete="off"
+              maxLength={1000}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2 dark:text-gray-500 dark:hover:text-gray-400"
+              title="Фильтр"
+              style={{
+                '--c-300': 'var(--gray-300)',
+                '--c-400': 'var(--gray-400)',
+                '--c-500': 'var(--gray-500)',
+                '--c-600': 'var(--gray-600)',
+              } as React.CSSProperties}
+            >
+              <Filter className="h-5 w-5" />
+              <span className="sr-only">Фильтр</span>
+              {activeFilters.length > 0 && (
+                <span className="absolute right-1 top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+                  {activeFilters.length}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2 dark:text-gray-500 dark:hover:text-gray-400"
+              title="Переключить столбцы"
+              style={{
+                '--c-300': 'var(--gray-300)',
+                '--c-400': 'var(--gray-400)',
+                '--c-500': 'var(--gray-500)',
+                '--c-600': 'var(--gray-600)',
+              } as React.CSSProperties}
+            >
+              <Columns className="h-5 w-5" />
+              <span className="sr-only">Переключить столбцы</span>
+            </button>
+          </div>
+        </div>
+
+        {activeFilters.length > 0 && (
+          <div className="fi-ta-filter-indicators flex items-start justify-between gap-x-3 bg-gray-50 px-3 py-1.5 dark:bg-white/5 sm:px-6">
+            <span className="whitespace-nowrap text-sm font-medium leading-6 text-gray-700 dark:text-gray-200">
+              Активные фильтры
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {activeFilters.map((filter) => (
+                <span
+                  key={filter.key}
+                  className="fi-badge flex items-center justify-center gap-x-1 rounded-md text-xs font-medium ring-1 ring-inset px-2 min-w-[theme(spacing.6)] py-1 fi-color-custom bg-custom-50 text-custom-600 ring-custom-600/10 dark:bg-custom-400/10 dark:text-custom-400 dark:ring-custom-400/30"
+                  style={{
+                    '--c-50': 'var(--primary-50)',
+                    '--c-400': 'var(--primary-400)',
+                    '--c-600': 'var(--primary-600)',
+                  } as React.CSSProperties}
+                >
+                  {filter.label}: {filter.value}
+                  <button
+                    type="button"
+                    onClick={() => removeFilter(filter.key)}
+                    className="ml-1 -mr-1.5 -my-0.5 rounded-md p-0.5 hover:bg-custom-600/20 dark:hover:bg-custom-400/20"
+                    aria-label="Удалить фильтр"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {isPending ? (
           <div className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">
             Загрузка...
           </div>
+        ) : articles.length === 0 ? (
+          <div className="fi-ta-empty-state px-6 py-12">
+            <div className="fi-ta-empty-state-icon-ctn mb-4 rounded-full bg-gray-100 p-3 dark:bg-gray-500/20">
+              <FileText className="h-6 w-6 text-gray-400 dark:text-gray-500" />
+            </div>
+            <h4 className="fi-ta-empty-state-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
+              Не найдено Статьи
+            </h4>
+            {!searchTerm && activeFilters.length === 0 && (
+              <div className="mt-4">
+                <Link
+                  href={
+                    tenantId
+                      ? `/manage/${tenantId}/knowledge-items/create`
+                      : "/knowledge-base/articles/new"
+                  }
+                  style={{
+                    '--c-400': 'var(--primary-400)',
+                    '--c-500': 'var(--primary-500)',
+                    '--c-600': 'var(--primary-600)',
+                  } as React.CSSProperties}
+                >
+                  <KwidButton
+                    variant="primary"
+                    size="md"
+                    className="fi-color-custom"
+                  >
+                    <span className="fi-btn-label">Создать</span>
+                  </KwidButton>
+                </Link>
+              </div>
+            )}
+          </div>
         ) : (
-          <KwidTable
-            data={articles}
-            columns={[
-              {
-                key: "title",
-                header: "Название",
-                accessor: (article) => (
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-gray-400" />
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      {article.title}
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50 dark:bg-gray-800">
+                <TableHead className="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6">
+                  Название
+                </TableHead>
+                <TableHead className="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6">
+                  Категория
+                </TableHead>
+                <TableHead className="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6">
+                  Дата обновления
+                </TableHead>
+                <TableHead
+                  aria-label="Actions"
+                  className="fi-ta-actions-header-cell w-1"
+                ></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {articles.map((article) => (
+                <TableRow
+                  key={article.id}
+                  className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800"
+                >
+                  <TableCell className="px-3 py-4">
+                    <div className="fi-ta-text grid w-full gap-y-1">
+                      <span className="fi-ta-text-item-label text-sm leading-6 text-gray-950 dark:text-white">
+                        {article.title}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-3 py-4">
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      {getCategoryName(article.categoryId)}
                     </span>
-                  </div>
-                ),
-              },
-              {
-                key: "category",
-                header: "Категория",
-                accessor: (article) => (
-                  <span className="text-gray-500 dark:text-gray-400">
-                    {getCategoryName(article.categoryId)}
-                  </span>
-                ),
-              },
-              {
-                key: "createdAt",
-                header: "Дата создания",
-                accessor: (article) => (
-                  <span className="text-gray-500 dark:text-gray-400">
-                    {formatDate(article.createdAt)}
-                  </span>
-                ),
-              },
-              {
-                key: "actions",
-                header: "Действия",
-                className: "text-right",
-                accessor: (article) => (
-                  <div className="flex items-center justify-end gap-2">
-                    <Link
-                      href={
-                        tenantId
-                          ? `/manage/${tenantId}/knowledge-items/${article.id}`
-                          : `/knowledge-base/articles/${article.id}`
-                      }
-                    >
-                      <KwidButton variant="outline" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </KwidButton>
-                    </Link>
-                    <KwidButton
-                      variant="danger"
-                      size="sm"
-                      onClick={() => handleDelete(article.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </KwidButton>
-                  </div>
-                ),
-              },
-            ]}
-            emptyMessage="Нет статей. Создайте первую статью, чтобы начать работу."
-          />
+                  </TableCell>
+                  <TableCell className="px-3 py-4">
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      {formatDate(article.updatedAt)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3 fi-ta-actions-cell">
+                    <div className="whitespace-nowrap px-3 py-4">
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={
+                            tenantId
+                              ? `/manage/${tenantId}/knowledge-items/${article.id}/edit`
+                              : `/knowledge-base/articles/${article.id}/edit`
+                          }
+                          className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-1.5 h-8 w-8 fi-color-custom text-custom-500 hover:text-custom-600 focus-visible:ring-custom-600 focus-visible:ring-offset-2"
+                          title="Редактировать"
+                          style={{
+                            '--c-300': 'var(--primary-300)',
+                            '--c-400': 'var(--primary-400)',
+                            '--c-500': 'var(--primary-500)',
+                            '--c-600': 'var(--primary-600)',
+                          } as React.CSSProperties}
+                        >
+                          <Edit className="h-4 w-4" />
+                          <span className="sr-only">Редактировать</span>
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(article.id)}
+                          className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-1.5 h-8 w-8 fi-color-custom text-custom-500 hover:text-custom-600 focus-visible:ring-custom-600 focus-visible:ring-offset-2"
+                          title="Удалить"
+                          style={{
+                            '--c-300': 'var(--danger-300)',
+                            '--c-400': 'var(--danger-400)',
+                            '--c-500': 'var(--danger-500)',
+                            '--c-600': 'var(--danger-600)',
+                          } as React.CSSProperties}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Удалить</span>
+                        </button>
+                      </div>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </div>
-    </div>
+    </section>
   );
 };

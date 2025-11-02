@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useSidebar } from './SidebarToggle'
 
 // Простые fallback переводы (так как next-intl временно отключен)
 const getTranslation = (key: string, fallback?: string): string => {
@@ -56,6 +57,7 @@ interface SidebarProps {
   organizations: SidebarOrganization[]
   activeOrganizationId?: string
   tenantId?: string
+  isOpen?: boolean
 }
 
 interface NavItem {
@@ -141,8 +143,9 @@ const getInitials = (value: string): string => {
   return normalized.slice(0, 2).toUpperCase()
 }
 
-export const Sidebar = ({ organizations, activeOrganizationId, tenantId }: SidebarProps) => {
+export const Sidebar = ({ organizations, activeOrganizationId, tenantId, isOpen = false }: SidebarProps) => {
   const pathname = usePathname()
+  const { close, groupIsCollapsed, toggleCollapsedGroup } = useSidebar()
   // Используем fallback переводы (next-intl временно отключен)
   const t = getTranslation
   const tNav = getTranslation
@@ -150,10 +153,34 @@ export const Sidebar = ({ organizations, activeOrganizationId, tenantId }: Sideb
     organizations.find((organization) => organization.id === activeOrganizationId) ?? organizations.at(0)
   const navigation = getNavigation(tNav, tenantId)
 
+  const handleItemClick = () => {
+    if (window.matchMedia('(max-width: 1024px)').matches) {
+      close()
+    }
+  }
+
   return (
-    <aside className="fi-sidebar fixed inset-y-0 left-0 z-30 hidden w-72 flex-col border-r border-slate-200 bg-white/95 shadow-sm backdrop-blur lg:flex xl:w-80">
-      <div className="flex h-full flex-col overflow-y-auto px-6 py-8">
-        <div className="mb-8 flex flex-col gap-4">
+    <>
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-gray-900/50 lg:hidden"
+          onClick={close}
+          aria-hidden="true"
+        />
+      )}
+      <aside
+        className={`fi-sidebar fixed inset-y-0 left-0 z-30 w-72 flex-col border-r border-slate-200 bg-white/95 shadow-sm backdrop-blur transition-transform duration-300 xl:w-80 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        } lg:translate-x-0 lg:flex`}
+      >
+      <div className="flex h-full flex-col">
+        <header className="fi-sidebar-header flex h-16 items-center bg-white px-6 ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10 lg:shadow-sm">
+          <div className="fi-logo flex text-xl font-bold leading-5 tracking-tight text-gray-950 dark:text-white">
+            GPT Агент
+          </div>
+        </header>
+
+        <div className="flex flex-col gap-4 px-6 pt-8">
           <Link href={tenantId ? `/manage/${tenantId}` : '/'} className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-600 text-lg font-semibold text-white">
               {activeOrganization ? getInitials(activeOrganization.name) : 'GA'}
@@ -167,73 +194,114 @@ export const Sidebar = ({ organizations, activeOrganizationId, tenantId }: Sideb
           {activeOrganization && (
             <button
               type="button"
-              className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm font-medium text-slate-700 transition-colors hover:border-primary-200 hover:bg-primary-50 hover:text-primary-700"
+              className="fi-tenant-menu-trigger group flex w-full items-center justify-center gap-x-3 rounded-lg p-2 text-sm font-medium outline-none transition duration-75 hover:bg-gray-100 focus-visible:bg-gray-100 dark:hover:bg-white/5 dark:focus-visible:bg-white/5"
               aria-label={t('selectOrganization') || 'Select organization'}
             >
-              <div className="flex flex-col">
-                <span className="text-xs uppercase tracking-wide text-slate-400">{tNav('organization')}</span>
-                <span className="mt-1 text-sm font-semibold text-slate-900">{activeOrganization.name}</span>
-              </div>
-              <ChevronDown className="h-4 w-4 text-slate-400" />
+              <span className="flex-1 truncate text-left">{activeOrganization.name}</span>
             </button>
           )}
         </div>
 
-        <nav aria-label="Главная навигация" className="flex-1 space-y-8">
-          {navigation.map((section, sectionIndex) => (
-            <div key={sectionIndex} className="space-y-3">
-              {section.title && (
-                <p className="px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  {section.title}
-                </p>
-              )}
-              <ul className="space-y-1.5">
-                {section.items.map((item) => {
-                  const Icon = item.icon
-                  const isActive = item.href === '/'
-                    ? pathname === '/'
-                    : pathname?.startsWith(item.href) ?? false
+        <nav
+          aria-label="Главная навигация"
+          className="fi-sidebar-nav flex-grow flex flex-col gap-y-7 overflow-y-auto overflow-x-hidden px-6 py-8"
+          style={{ scrollbarGutter: 'stable' }}
+        >
+          <ul className="flex flex-col gap-y-7">
+          {navigation.map((section, sectionIndex) => {
+            const hasTitle = !!section.title
+            const isCollapsed = hasTitle ? groupIsCollapsed(section.title || '') : false
 
-                  const className = cn(
-                    'fi-sidebar-item-button group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-                    isActive
-                      ? 'fi-active bg-primary-50 text-primary-700 shadow-sm'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
-                  )
+            return (
+              <li
+                key={sectionIndex}
+                data-group-label={hasTitle ? section.title : undefined}
+                className="fi-sidebar-group flex flex-col gap-y-1"
+              >
+                {hasTitle ? (
+                  <div className="flex items-center gap-x-3">
+                    <span className="fi-sidebar-group-label flex-1 text-sm font-medium leading-6 text-gray-500 dark:text-gray-400">
+                      {section.title}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleCollapsedGroup(section.title || '')
+                      }}
+                      className={cn(
+                        'fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2 dark:text-gray-500 dark:hover:text-gray-400',
+                        isCollapsed && '-rotate-180',
+                      )}
+                      title={section.title}
+                      aria-expanded={!isCollapsed}
+                      style={{
+                        '--c-300': 'var(--gray-300)',
+                        '--c-400': 'var(--gray-400)',
+                        '--c-500': 'var(--gray-500)',
+                        '--c-600': 'var(--gray-600)',
+                      } as React.CSSProperties}
+                    >
+                      <ChevronDown className="h-5 w-5 transition-transform duration-200" />
+                      <span className="sr-only">{section.title}</span>
+                    </button>
+                  </div>
+                ) : null}
 
-                  const content = (
-                    <>
-                      <Icon className="h-5 w-5 text-slate-400 group-hover:text-primary-600" />
-                      <span className="flex-1">{item.label}</span>
-                    </>
-                  )
+                {(!hasTitle || !isCollapsed) && (
+                  <div className="mt-2 flex flex-col">
+                    {section.items.map((item) => {
+                      const Icon = item.icon
+                      const isActive = item.href === '/'
+                        ? pathname === '/'
+                        : pathname?.startsWith(item.href) ?? false
 
-                  if (item.external) {
-                    return (
-                      <li key={item.href}>
-                        <a
+                      const baseClassName = cn(
+                        'fi-sidebar-item-button relative flex items-center justify-center gap-x-3 rounded-lg px-2 py-2 outline-none transition duration-75 hover:bg-gray-100 focus-visible:bg-gray-100 dark:hover:bg-white/5 dark:focus-visible:bg-white/5',
+                        isActive && 'bg-primary-50 dark:bg-primary-900/20',
+                      )
+
+                      const labelClassName = cn(
+                        'fi-sidebar-item-label flex-1 truncate text-sm font-medium',
+                        isActive
+                          ? 'text-primary-600 dark:text-primary-400'
+                          : 'text-gray-700 dark:text-gray-200',
+                      )
+
+                      if (item.external) {
+                        return (
+                          <a
+                            key={item.href}
+                            href={item.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={baseClassName}
+                            onClick={handleItemClick}
+                          >
+                            <Icon className="h-5 w-5 shrink-0" />
+                            <span className={labelClassName}>{item.label}</span>
+                          </a>
+                        )
+                      }
+
+                      return (
+                        <Link
+                          key={item.href}
                           href={item.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={className}
+                          className={baseClassName}
+                          onClick={handleItemClick}
                         >
-                          {content}
-                        </a>
-                      </li>
-                    )
-                  }
-
-                  return (
-                    <li key={item.href}>
-                      <Link href={item.href} className={className}>
-                        {content}
-                      </Link>
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
-          ))}
+                          <Icon className="h-5 w-5 shrink-0" />
+                          <span className={labelClassName}>{item.label}</span>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
+              </li>
+            )
+          })}
+          </ul>
         </nav>
       </div>
     </aside>
