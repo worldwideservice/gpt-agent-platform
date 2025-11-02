@@ -220,8 +220,9 @@ export const GET = async (request: NextRequest) => {
   }
 
   // Демо-режим: возвращаем mock-данные
-  // Временно всегда используем демо-режим для продакшена
-  const isDemoMode = true; // Временно всегда true
+  const isDemoMode = process.env.NODE_ENV === 'development' ||
+    process.env.DEMO_MODE === 'true' ||
+    process.env.E2E_ONBOARDING_FAKE === '1'
 
   if (isDemoMode) {
     const mockAgents = [
@@ -345,8 +346,9 @@ const createAgentSchema = z.object({
 
 export const POST = async (request: NextRequest) => {
   // Демо-режим: создаем mock-агента
-  // Временно всегда используем демо-режим для продакшена
-  const isDemoMode = true; // Временно всегда true
+  const isDemoMode = process.env.NODE_ENV === 'development' ||
+    process.env.DEMO_MODE === 'true' ||
+    process.env.E2E_ONBOARDING_FAKE === '1'
 
   if (isDemoMode) {
     try {

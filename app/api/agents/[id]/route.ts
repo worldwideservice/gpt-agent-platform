@@ -37,8 +37,9 @@ export const GET = async (
   const { id } = await params
   
   // Демо-режим: возвращаем mock-данные
-  // Временно всегда используем демо-режим для продакшена
-  const isDemoMode = true; // Временно всегда true
+  const isDemoMode = process.env.NODE_ENV === 'development' ||
+    process.env.DEMO_MODE === 'true' ||
+    process.env.E2E_ONBOARDING_FAKE === '1'
 
   if (isDemoMode) {
     // Возвращаем mock-агента
@@ -100,8 +101,9 @@ export const PATCH = async (
   const { id } = await params
   
   // Демо-режим: возвращаем mock-агента
-  // Временно всегда используем демо-режим для продакшена
-  const isDemoMode = true; // Временно всегда true
+  const isDemoMode = process.env.NODE_ENV === 'development' ||
+    process.env.DEMO_MODE === 'true' ||
+    process.env.E2E_ONBOARDING_FAKE === '1'
 
   if (isDemoMode) {
     try {
@@ -208,8 +210,9 @@ export const DELETE = async (
   const { id } = await params
   
   // Демо-режим: просто возвращаем успех
-  // Временно всегда используем демо-режим для продакшена
-  const isDemoMode = true; // Временно всегда true
+  const isDemoMode = process.env.NODE_ENV === 'development' ||
+    process.env.DEMO_MODE === 'true' ||
+    process.env.E2E_ONBOARDING_FAKE === '1'
 
   if (isDemoMode) {
     // В демо-режиме просто возвращаем успех

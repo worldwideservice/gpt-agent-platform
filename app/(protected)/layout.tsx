@@ -14,56 +14,31 @@ interface ProtectedLayoutProps {
 }
 
 const ProtectedLayout = async ({ children }: ProtectedLayoutProps) => {
-  // Демо режим для локального тестирования и продакшена
-  // Временное решение - всегда используем демо-режим
-  const isDemoMode = true; // Временно всегда true для продакшена
-
   let session: any;
   let organizations: any[] = [];
   let activeOrganization: any = null;
 
-  if (isDemoMode) {
-    // В демо режиме создаем фиктивные данные
-    session = {
-      user: {
-        id: "demo-user-123",
-        name: "Demo Founder",
-        email: "founder@example.com",
-        orgId: "demo-org-123",
-      },
-    };
-    organizations = [
-      {
-        id: "demo-org-123",
-        name: "World Wide Services",
-        slug: "worldwideservices",
-        createdAt: new Date().toISOString(),
-      },
-    ];
-    activeOrganization = organizations[0];
-  } else {
-    try {
-      session = await auth();
+  try {
+    session = await auth();
 
-      if (!session?.user?.orgId) {
-        redirect("/login");
-      }
-
-      try {
-        organizations = await getOrganizationsForUser(session.user.id);
-        activeOrganization =
-          organizations.find(
-            (organization) => organization.id === session.user.orgId,
-          ) ??
-          organizations[0] ??
-          null;
-      } catch (orgError) {
-        organizations = [];
-        activeOrganization = null;
-      }
-    } catch (authError) {
+    if (!session?.user?.orgId) {
       redirect("/login");
     }
+
+    try {
+      organizations = await getOrganizationsForUser(session.user.id);
+      activeOrganization =
+        organizations.find(
+          (organization) => organization.id === session.user.orgId,
+        ) ??
+        organizations[0] ??
+        null;
+    } catch (orgError) {
+      organizations = [];
+      activeOrganization = null;
+    }
+  } catch (authError) {
+    redirect("/login");
   }
 
   // Редиректим на новый формат URL с tenant-id
