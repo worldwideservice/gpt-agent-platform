@@ -31,6 +31,7 @@ import { InteractionSettings } from "@/components/crm/InteractionSettings";
 import { DealContactFieldsSelector } from "@/components/crm/DealContactFieldsSelector";
 import { AgentSequencesManager } from "./AgentSequencesManager";
 import { IntegrationsTable } from "@/components/integrations/IntegrationsTable";
+import { PipelinesSettingsSection } from "./PipelinesSettingsSection";
 import {
   KwidButton,
   KwidInput,
@@ -831,7 +832,11 @@ export const AgentEditForm = ({
             </KwidSection>
           </div>
 
-          {/* Настройки воронок - будет добавлено позже с полной логикой */}
+          {/* Настройки воронок */}
+          {!isNew && activeTenantId && (
+            <PipelinesSettingsSection agentId={agentId} orgId={activeTenantId} />
+          )}
+
           {/* Каналы */}
           {!isNew && (
             <ChannelsSettings

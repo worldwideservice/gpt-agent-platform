@@ -95,30 +95,20 @@ export const CRMSync = ({ connection, pipelineSettings, onPipelineUpdate }: CRMS
 
   return (
     <div className="space-y-6">
-      {/* Настройки воронок */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6 dark:bg-gray-900 dark:border-gray-800">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-2">
-            <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-            </svg>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Настройки воронок</h2>
-          </div>
-          <KwidButton 
-            onClick={handleSync} 
-            disabled={isLoading}
-            variant="outline"
-            size="sm"
-            className="gap-2"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-            Синхронизировать настройки CRM
-          </KwidButton>
-        </div>
-        
-        <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
-          Выберите воронки и этапы сделок, в которых агент должен работать
-        </p>
+      {/* Кнопка синхронизации и описание */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex-1"></div>
+        <KwidButton 
+          onClick={handleSync} 
+          disabled={isLoading}
+          variant="outline"
+          size="sm"
+          className="gap-2"
+        >
+          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+          Синхронизировать настройки CRM
+        </KwidButton>
+      </div>
 
         <div className="space-y-4">
           {pipelines.map((pipeline) => {
