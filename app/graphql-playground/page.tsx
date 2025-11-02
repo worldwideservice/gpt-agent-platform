@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
-import { KwidButton, KwidTextarea, KwidTabs, KwidTabsContent } from '@/components/kwid'
+import nextDynamic from 'next/dynamic'
+import { KwidButton, KwidTextarea } from '@/components/kwid'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/shadcn/card'
 import { Badge } from '@/components/ui/shadcn/badge'
 import { Loader2, Play, Code, FileText } from 'lucide-react'
@@ -9,6 +10,16 @@ import { Loader2, Play, Code, FileText } from 'lucide-react'
 // Отключаем статическую генерацию для этой страницы
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
+
+// Динамический импорт табов только на клиенте (SSR disabled)
+const KwidTabs = nextDynamic(() => import('@/components/kwid').then(mod => ({ default: mod.KwidTabs })), {
+  ssr: false,
+  loading: () => <div className="h-12 animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg" />
+})
+
+const KwidTabsContent = nextDynamic(() => import('@/components/kwid').then(mod => ({ default: mod.KwidTabsContent })), {
+  ssr: false,
+})
 
 function GraphQLPlaygroundContent() {
   const [query, setQuery] = useState(`# Welcome to GraphQL Playground
