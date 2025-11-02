@@ -50,33 +50,44 @@ export const AgentTable = ({
       <Table>
         <TableHeader>
           <TableRow className="bg-gray-50 dark:bg-gray-800">
-            <TableHead className="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 w-12">
+            <TableHead className="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6">
               {onSelectAll && (
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  ref={(input) => {
-                    if (input) input.indeterminate = someSelected
-                  }}
-                  onChange={onSelectAll}
-                  className="fi-checkbox-input rounded border-none bg-white shadow-sm ring-1 transition duration-75 checked:ring-0 focus:ring-2 focus:ring-offset-0 disabled:pointer-events-none disabled:bg-gray-50 disabled:text-gray-500"
-                  aria-label="Выбрать/снять все элементы для массовых действий"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    ref={(input) => {
+                      if (input) input.indeterminate = someSelected
+                    }}
+                    onChange={onSelectAll}
+                    className="fi-checkbox-input rounded border-none bg-white shadow-sm ring-1 transition duration-75 checked:ring-0 focus:ring-2 focus:ring-offset-0 disabled:pointer-events-none disabled:bg-gray-50 disabled:text-gray-500"
+                    aria-label="Выбрать/снять все элементы для массовых действий"
+                  />
+                  <span className="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white sr-only sm:not-sr-only">
+                    Выбрать/снять все элементы для массовых действий
+                  </span>
+                </div>
               )}
             </TableHead>
             <TableHead className="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 fi-table-header-cell-name">
-              Название
+              <span className="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">
+                Название
+              </span>
             </TableHead>
-            <TableHead className="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 w-32">
+            <TableHead className="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6">
               <span className="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">
                 Активно
               </span>
             </TableHead>
             <TableHead className="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 fi-table-header-cell-llm-model.name">
-              Модель ИИ
+              <span className="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">
+                Модель ИИ
+              </span>
             </TableHead>
             <TableHead className="fi-ta-header-cell px-3 py-3.5 sm:last-of-type:pe-6 text-right">
-              Actions
+              <span className="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">
+                Actions
+              </span>
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -98,14 +109,19 @@ export const AgentTable = ({
               <TableRow key={agent.id} className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800">
                 <TableCell className="px-3 py-4">
                   {onSelectAgent && (
-                    <input
-                      type="checkbox"
-                      checked={selectedAgents.includes(agent.id)}
-                      onChange={() => onSelectAgent(agent.id)}
-                      className="fi-checkbox-input rounded border-none bg-white shadow-sm ring-1 transition duration-75 checked:ring-0 focus:ring-2 focus:ring-offset-0 disabled:pointer-events-none disabled:bg-gray-50 disabled:text-gray-500"
-                      aria-label={`Выбрать/отменить ${agent.id} для массовых действий`}
-                      value={agent.id}
-                    />
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedAgents.includes(agent.id)}
+                        onChange={() => onSelectAgent(agent.id)}
+                        className="fi-checkbox-input rounded border-none bg-white shadow-sm ring-1 transition duration-75 checked:ring-0 focus:ring-2 focus:ring-offset-0 disabled:pointer-events-none disabled:bg-gray-50 disabled:text-gray-500"
+                        aria-label={`Выбрать/отменить ${agent.id} для массовых действий`}
+                        value={agent.id}
+                      />
+                      <span className="sr-only">
+                        Выбрать/отменить {agent.id} для массовых действий
+                      </span>
+                    </div>
                   )}
                 </TableCell>
                 <TableCell className="px-3 py-4">
