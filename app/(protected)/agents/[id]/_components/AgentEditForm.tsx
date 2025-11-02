@@ -830,6 +830,54 @@ export const AgentEditForm = ({
               </div>
             </KwidSection>
           </div>
+
+          {/* Настройки воронок - будет добавлено позже с полной логикой */}
+          {/* Каналы */}
+          {!isNew && (
+            <ChannelsSettings
+              channels={channels.map((ch) => ({
+                id: ch.id,
+                name: ch.name,
+                type: ch.type || "unknown",
+                isActive: ch.isActive,
+              }))}
+              allChannelsEnabled={allChannelsEnabled}
+              onAllChannelsToggle={handleAllChannelsToggle}
+              onChannelToggle={handleChannelToggle}
+              onSync={handleChannelSync}
+              isSyncing={channelsLoading}
+              disabled={isSaving}
+            />
+          )}
+
+          {/* База знаний */}
+          <KnowledgeBaseSettings
+            allCategoriesEnabled={formData.knowledgeBaseAllCategories}
+            createTaskOnNotFound={formData.createTaskOnNotFound}
+            notFoundMessage={formData.notFoundMessage}
+            onAllCategoriesToggle={(enabled) =>
+              setFormData((prev) => ({
+                ...prev,
+                knowledgeBaseAllCategories: enabled,
+              }))
+            }
+            onCreateTaskToggle={(enabled) =>
+              setFormData((prev) => ({
+                ...prev,
+                createTaskOnNotFound: enabled,
+              }))
+            }
+            onMessageChange={(message) =>
+              setFormData((prev) => ({ ...prev, notFoundMessage: message }))
+            }
+            onOpenKnowledgeBase={() => {
+              const redirectPath = activeTenantId
+                ? `/manage/${activeTenantId}/knowledge-items`
+                : "/knowledge-items";
+              router.push(redirectPath);
+            }}
+            disabled={isNew}
+          />
         </KwidTabsContent>
 
         <KwidTabsContent value="instructions" className="space-y-6">
@@ -1068,33 +1116,6 @@ export const AgentEditForm = ({
               </div>
             </div>
 
-            <KnowledgeBaseSettings
-              allCategoriesEnabled={formData.knowledgeBaseAllCategories}
-              createTaskOnNotFound={formData.createTaskOnNotFound}
-              notFoundMessage={formData.notFoundMessage}
-              onAllCategoriesToggle={(enabled) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  knowledgeBaseAllCategories: enabled,
-                }))
-              }
-              onCreateTaskToggle={(enabled) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  createTaskOnNotFound: enabled,
-                }))
-              }
-              onMessageChange={(message) =>
-                setFormData((prev) => ({ ...prev, notFoundMessage: message }))
-              }
-              onOpenKnowledgeBase={() => {
-                const redirectPath = activeTenantId
-                  ? `/manage/${activeTenantId}/knowledge-categories`
-                  : "/knowledge-base";
-                router.push(redirectPath);
-              }}
-              disabled={isNew}
-            />
           </div>
         </KwidTabsContent>
       </KwidTabs>
