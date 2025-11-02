@@ -8,6 +8,7 @@ import { Loader2, Play, Code, FileText } from 'lucide-react'
 
 // Отключаем статическую генерацию для этой страницы
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 export default function GraphQLPlayground() {
   const [query, setQuery] = useState(`# Welcome to GraphQL Playground
