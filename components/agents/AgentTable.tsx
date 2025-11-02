@@ -108,9 +108,12 @@ export const AgentTable = ({
                   )}
                 </TableCell>
                 <TableCell className="px-3 py-4">
-                  <div className="fi-ta-text grid w-full gap-y-1">
+                  <Link
+                    href={getAgentPath(agent.id)}
+                    className="fi-ta-text grid w-full gap-y-1 text-gray-900 hover:text-primary-600 dark:text-white dark:hover:text-primary-400"
+                  >
                     {agent.name}
-                  </div>
+                  </Link>
                 </TableCell>
                 <TableCell className="px-3 py-4">
                   <div className="fi-ta-toggle">
@@ -120,8 +123,13 @@ export const AgentTable = ({
                     />
                   </div>
                 </TableCell>
-                <TableCell className="whitespace-nowrap px-3 py-4 text-sm text-gray-600 dark:text-gray-400">
-                  {agent.model ?? 'Не указана'}
+                <TableCell className="whitespace-nowrap px-3 py-4 text-sm">
+                  <Link
+                    href={getAgentPath(agent.id)}
+                    className="text-gray-900 hover:text-primary-600 dark:text-white dark:hover:text-primary-400"
+                  >
+                    {agent.model ?? 'Не указана'}
+                  </Link>
                 </TableCell>
                 <TableCell className="whitespace-nowrap px-3 py-4">
                   <div className="flex items-center justify-end gap-3">

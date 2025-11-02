@@ -9,7 +9,7 @@ import {
   useTransition,
 } from "react";
 import Link from "next/link";
-import { Plus, Search, Filter } from "lucide-react";
+import { Plus, Search, Filter, Settings } from "lucide-react";
 
 import { AgentTable } from "@/components/agents/AgentTable";
 import { KwidButton } from "@/components/kwid";
@@ -344,7 +344,7 @@ export const AgentsClient = ({
         </div>
       )}
 
-      <div className="fi-ta-header-toolbar flex items-center justify-between gap-x-4 px-4 py-3 sm:px-6">
+      <div className="flex items-center justify-between gap-4">
         <div className="relative flex-1 max-w-md">
           <div className="fi-input-wrp-prefix items-center gap-x-3 ps-3 flex pe-2 absolute left-0 top-0 bottom-0 pointer-events-none">
             <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
@@ -362,18 +362,18 @@ export const AgentsClient = ({
         </div>
         <button
           type="button"
-          className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2 dark:text-gray-500 dark:hover:text-gray-400"
+          className="fi-link group/link relative inline-flex items-center justify-center outline-none fi-size-sm fi-link-size-sm gap-1 fi-color-custom fi-color-primary fi-ac-action fi-ac-link-action"
           title="Переключить столбцы"
           aria-label="Переключить столбцы"
           style={{
-            '--c-300': 'var(--gray-300)',
-            '--c-400': 'var(--gray-400)',
-            '--c-500': 'var(--gray-500)',
-            '--c-600': 'var(--gray-600)',
+            '--c-400': 'var(--primary-400)',
+            '--c-600': 'var(--primary-600)',
           } as React.CSSProperties}
         >
-          <Filter className="h-5 w-5" />
-          <span className="sr-only">Переключить столбцы</span>
+          <span className="font-semibold text-sm text-custom-600 dark:text-custom-400 group-hover/link:underline group-focus-visible/link:underline">
+            Переключить столбцы
+          </span>
+          <Settings className="h-4 w-4" />
         </button>
       </div>
 
