@@ -110,11 +110,11 @@ export const CRMSync = ({ connection, pipelineSettings, onPipelineUpdate }: CRMS
         </KwidButton>
       </div>
 
-        <div className="space-y-4">
-          {pipelines.map((pipeline) => {
-            const settings = getPipelineSettings(pipeline.id)
-            return (
-              <div key={pipeline.id} className="border border-gray-200 rounded-lg dark:border-gray-800">
+      <div className="space-y-4">
+        {pipelines.map((pipeline) => {
+          const settings = getPipelineSettings(pipeline.id)
+          return (
+            <div key={pipeline.id} className="border border-gray-200 rounded-lg dark:border-gray-800">
                 {/* Pipeline Header */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800">
                   <div className="flex items-center space-x-3 flex-1">
@@ -251,10 +251,10 @@ export const CRMSync = ({ connection, pipelineSettings, onPipelineUpdate }: CRMS
                     )}
                   </div>
                 )}
-              </div>
-            )
-          })}
-        </div>
+            </div>
+          )
+        })}
+      </div>
       </div>
     </div>
   )
