@@ -5,12 +5,12 @@
 1. Создать файл .env.local в корне проекта со следующим содержимым:
 
 ```
-# === KOMMO CRM TESTING (DEV ONLY) ===
+# === KOMMO CRM (DEV ONLY) ===
 KOMMO_TEST_ENABLED=1
 KOMMO_TEST_DOMAIN=ваш-домен-kommo
 KOMMO_TEST_CLIENT_ID=ваш-client-id
 KOMMO_TEST_CLIENT_SECRET=ваш-client-secret
-KOMMO_TEST_REDIRECT_URI=http://localhost:3000/api/auth/kommo/callback
+KOMMO_TEST_REDIRECT_URI=http://localhost:3000/integrations/kommo/oauth/callback
 KOMMO_TEST_ACCESS_TOKEN=ваш-access-token
 KOMMO_TEST_REFRESH_TOKEN=ваш-refresh-token
 ```
@@ -34,10 +34,7 @@ KOMMO_TEST_REFRESH_TOKEN=ваш-refresh-token
 - Используйте OAuth 2.0 flow для получения ACCESS_TOKEN и REFRESH_TOKEN
 - Или используйте existing токены из вашего аккаунта
 
-## Шаг 5: Тестирование
-После настройки переменных запустите:
-```
-npx tsx test-kommo.ts
-```
-
-Это проверит подключение к Kommo API.
+## Шаг 5: Проверка подключения
+- Перезапустите dev-сервер (`npm run dev`)
+- Авторизуйтесь в приложении
+- Откройте раздел интеграций и запустите подключение Kommo
