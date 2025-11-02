@@ -168,14 +168,17 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
 
         <div className="fi-section-content p-6">
           {/* Данные сделки */}
-          <header 
+          <div 
             onClick={() => setDealDataCollapsed(!dealDataCollapsed)}
             className="fi-section-header flex flex-col gap-3 cursor-pointer px-4 py-2.5 mb-4"
           >
             <div className="flex items-center justify-between">
-              <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
-                Данные сделки
-              </h3>
+              <div className="flex items-center gap-x-3">
+                <Briefcase className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+                <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
+                  Данные сделки
+                </h3>
+              </div>
               <button
                 type="button"
                 className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2 dark:text-gray-500 dark:hover:text-gray-400"
@@ -192,7 +195,7 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
             <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500 dark:text-gray-400">
               Выберите поля сделки, которые агент может читать
             </p>
-          </header>
+          </div>
 
           {!dealDataCollapsed && (
             <div className="px-4 space-y-4">
@@ -236,33 +239,41 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
               )}
 
               {/* Выбор поля */}
-              <KwidSelect
-                options={[
-                  { value: '', label: 'Выберите поля, к которым агент сможет получить доступ...' },
-                  ...availableDealFields
-                    .filter(field => !dealFields.includes(field.id))
-                    .map((field) => ({ value: field.id, label: field.name })),
-                ]}
-                value=""
-                onChange={(value) => {
-                  if (value) {
-                    addDealField(value)
-                  }
-                }}
-                placeholder="Выберите поля, к которым агент сможет получить доступ..."
-              />
+              <div className="relative">
+                <KwidSelect
+                  options={[
+                    { value: '', label: 'Выберите поля, к которым агент сможет получить доступ...' },
+                    ...availableDealFields
+                      .filter(field => !dealFields.includes(field.id))
+                      .map((field) => ({ value: field.id, label: field.name })),
+                  ]}
+                  value=""
+                  onChange={(value) => {
+                    if (value) {
+                      addDealField(value)
+                    }
+                  }}
+                  placeholder="Выберите поля, к которым агент сможет получить доступ..."
+                />
+              </div>
+              <p className="fi-fo-field-wrp-helper-text break-words text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Выбирайте только необходимые поля. Дополнительные поля добавляют лишний контекст и могут снизить точность ответов
+              </p>
             </div>
           )}
 
           {/* Данные контакта */}
-          <header 
+          <div 
             onClick={() => setContactDataCollapsed(!contactDataCollapsed)}
             className="fi-section-header flex flex-col gap-3 cursor-pointer px-4 py-2.5 mb-4"
           >
             <div className="flex items-center justify-between">
-              <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
-                Данные контакта
-              </h3>
+              <div className="flex items-center gap-x-3">
+                <Users className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+                <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
+                  Данные контакта
+                </h3>
+              </div>
               <button
                 type="button"
                 className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2 dark:text-gray-500 dark:hover:text-gray-400"
@@ -277,9 +288,9 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
               </button>
             </div>
             <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500 dark:text-gray-400">
-              Выберите поля контакта, которые агент может читать
+              Выберите, какие поля контакта агент сможет читать
             </p>
-          </header>
+          </div>
 
           {!contactDataCollapsed && (
             <div className="px-4 space-y-4">
@@ -323,21 +334,26 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
               )}
 
               {/* Выбор поля */}
-              <KwidSelect
-                options={[
-                  { value: '', label: 'Выберите поля, к которым агент сможет получить доступ...' },
-                  ...availableContactFields
-                    .filter(field => !contactFields.includes(field.id))
-                    .map((field) => ({ value: field.id, label: field.name })),
-                ]}
-                value=""
-                onChange={(value) => {
-                  if (value) {
-                    addContactField(value)
-                  }
-                }}
-                placeholder="Выберите поля, к которым агент сможет получить доступ..."
-              />
+              <div className="relative">
+                <KwidSelect
+                  options={[
+                    { value: '', label: 'Выберите поля, к которым агент сможет получить доступ...' },
+                    ...availableContactFields
+                      .filter(field => !contactFields.includes(field.id))
+                      .map((field) => ({ value: field.id, label: field.name })),
+                  ]}
+                  value=""
+                  onChange={(value) => {
+                    if (value) {
+                      addContactField(value)
+                    }
+                  }}
+                  placeholder="Выберите поля, к которым агент сможет получить доступ..."
+                />
+              </div>
+              <p className="fi-fo-field-wrp-helper-text break-words text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Выбирайте только необходимые поля. Большее количество полей добавляет дополнительный контекст и может снизить точность ответов.
+              </p>
             </div>
           )}
         </div>
@@ -357,10 +373,28 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
         <div className="fi-section-content p-6">
           {/* Данные сделки - правила обновления */}
           <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
-                Данные сделки
-              </h3>
+            <div 
+              className="fi-section-header flex flex-col gap-3 cursor-pointer px-4 py-2.5 mb-4"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-x-3">
+                  <Edit className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+                  <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
+                    Данные сделки
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2 dark:text-gray-500 dark:hover:text-gray-400"
+                >
+                  <ChevronDown className="h-5 w-5" />
+                </button>
+              </div>
+              <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500 dark:text-gray-400">
+                Задайте правила автоматического обновления полей сделки во время разговора
+              </p>
+            </div>
+            <div className="flex items-center justify-end mb-4 px-4">
               <div className="flex gap-x-3">
                 <button 
                   type="button"
@@ -378,9 +412,6 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
                 </button>
               </div>
             </div>
-            <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Задайте правила автоматического обновления полей сделки во время разговора.
-            </p>
             <div className="space-y-2">
               {dealWriteFields.map((fieldId) => {
                 const field = availableDealFields.find(f => f.id === fieldId)
@@ -460,12 +491,27 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
 
           {/* Данные контакта - правила обновления */}
           <div>
-            <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white mb-4">
-              Данные контакта
-            </h3>
-            <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Определите правила автоматического обновления полей контакта во время разговора.
-            </p>
+            <div 
+              className="fi-section-header flex flex-col gap-3 cursor-pointer px-4 py-2.5 mb-4"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-x-3">
+                  <Edit className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+                  <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
+                    Данные контакта
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2 dark:text-gray-500 dark:hover:text-gray-400"
+                >
+                  <ChevronDown className="h-5 w-5" />
+                </button>
+              </div>
+              <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500 dark:text-gray-400">
+                Определите правила автоматического обновления полей контакта во время разговора
+              </p>
+            </div>
             <div className="space-y-2">
               {contactWriteFields.map((fieldId) => {
                 const field = availableContactFields.find(f => f.id === fieldId)
