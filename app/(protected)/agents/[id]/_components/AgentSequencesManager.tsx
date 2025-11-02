@@ -13,6 +13,7 @@ import {
   X,
   Search,
   Filter,
+  Settings,
 } from "lucide-react";
 
 import {
@@ -403,24 +404,24 @@ export const AgentSequencesManager = ({
         </div>
       ) : null}
 
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h3 className="text-base font-semibold leading-6 text-gray-950 dark:text-white">
             Цепочки
-          </h2>
+          </h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Автоматизируйте отправку последующих сообщений и выполнение действий
-            по расписанию.
+            Автоматизируйте отправку последующих сообщений и выполнение действий по расписанию.
           </p>
         </div>
         <KwidButton
           onClick={openCreateEditor}
-          className="w-full gap-2 sm:w-auto"
+          className="gap-2"
           disabled={isDraft}
           variant="primary"
-          size="md"
+          size="sm"
         >
-          <Plus className="h-4 w-4" /> Создать
+          <Plus className="h-4 w-4" />
+          Создать
         </KwidButton>
       </div>
 
