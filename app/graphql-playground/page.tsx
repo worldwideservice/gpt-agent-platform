@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { KwidButton, KwidTextarea, KwidTabs, KwidTabsContent } from '@/components/kwid'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/shadcn/card'
 import { Badge } from '@/components/ui/shadcn/badge'
@@ -10,7 +10,7 @@ import { Loader2, Play, Code, FileText } from 'lucide-react'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-export default function GraphQLPlayground() {
+function GraphQLPlaygroundContent() {
   const [query, setQuery] = useState(`# Welcome to GraphQL Playground
 # Try some queries:
 
@@ -426,5 +426,13 @@ query GetAnalytics {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function GraphQLPlayground() {
+  return (
+    <Suspense fallback={<div className="flex h-screen items-center justify-center">Загрузка...</div>}>
+      <GraphQLPlaygroundContent />
+    </Suspense>
   )
 }

@@ -35,10 +35,6 @@ const nextConfig = {
     swcPlugins: [],
   },
 
-  // Исключаем проблемные страницы из статической генерации
-  generateBuildId: async () => {
-    return 'build-' + Date.now()
-  },
 
   // Заголовки безопасности
   async headers() {
