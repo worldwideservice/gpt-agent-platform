@@ -33,18 +33,11 @@ COPY services/worker/package.json services/worker/package-lock.json ./services/w
 # Копируем собранное приложение Worker
 COPY --from=base /app/services/worker/dist ./services/worker/dist
 
-# Копируем lib директорию из корня (нужна для импортов во время выполнения)
+# Копируем lib и types директории из корня (нужны для импортов во время выполнения)
 COPY --from=base /app/lib ./lib
-# Копируем lib/ в services/worker/lib/ для динамических импортов (используют ../lib/)
-RUN mkdir -p ./services/worker/lib && \
-    if [ -d ./lib ] && [ "$(ls -A ./lib 2>/dev/null)" ]; then \
-      cp -r ./lib/* ./services/worker/lib/ && \
-      echo "✅ lib/ скопирован в services/worker/lib/"; \
-    else \
-      echo "⚠️ lib/ директория пуста или не существует"; \
-    fi && \
-    ls -la ./lib/services/ 2>/dev/null || echo "lib/services/ не найден" && \
-    ls -la ./services/worker/lib/services/ 2>/dev/null || echo "services/worker/lib/services/ не найден"
+COPY --from=base /app/types ./types
+# Копируем tsconfig.json для правильного резолва path aliases
+COPY --from=base /app/tsconfig.json ./tsconfig.json
 
 # Переходим в директорию Worker для установки production зависимостей
 WORKDIR /app/services/worker

@@ -10,11 +10,14 @@
     "resolveJsonModule": true,
     "types": ["node"],
     "outDir": "dist",
-    "baseUrl": "./",
+    "baseUrl": "../../",
     "paths": {
+      "@/*": ["./*"],
+      "@/lib/*": ["./lib/*"],
+      "@/types/*": ["./types/*"],
       "../lib/*": ["../lib/*", "lib/*"]
     }
   },
-  "include": ["src", "lib"],
+  "include": ["src", "../lib", "../types"],
   "exclude": ["dist", "node_modules"]
 }
