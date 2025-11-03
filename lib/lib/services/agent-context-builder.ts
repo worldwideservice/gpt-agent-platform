@@ -63,12 +63,12 @@ export const buildAgentContext = async (options: ContextOptions): Promise<AgentC
  }),
  ])
 
- // Извлекаем сущности из сообщения для Knowledge Graph (если есть сообщение)
- // Базовая реализация: извлекаем слова с заглавной буквы как потенциальные имена
- let knowledgeGraphContext = ''
- if (message) {
-   // Простое извлечение потенциальных имен собственных (слова с заглавной буквы)
-   const potentialEntities = message.match(/\b[A-ZА-Я][a-zа-я]+\b/g) || []
+// Извлекаем сущности из сообщения для Knowledge Graph (если есть сообщение)
+// Базовая реализация: извлекаем слова с заглавной буквы как потенциальные имена
+let knowledgeGraphContext = ''
+if (userMessage) {
+  // Простое извлечение потенциальных имен собственных (слова с заглавной буквы)
+  const potentialEntities = userMessage.match(/\b[A-ZА-Я][a-zа-я]+\b/g) || []
    if (potentialEntities.length > 0) {
      // Можно использовать для поиска связанных сущностей в Knowledge Graph
      // Пока просто сохраняем как контекст
