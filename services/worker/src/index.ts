@@ -1,9 +1,17 @@
 import { Worker } from 'bullmq'
 import Redis from 'ioredis'
 
+console.log('[worker] Starting Worker service...')
+console.log('[worker] Node version:', process.version)
+console.log('[worker] Working directory:', process.cwd())
+
 import { getTaskHandlers } from './tasks'
 import { env } from './lib/env'
 import { startHealthServer } from './health'
+
+console.log('[worker] Environment variables loaded successfully')
+console.log('[worker] Redis URL:', env.REDIS_URL ? '***configured***' : 'MISSING')
+console.log('[worker] Supabase URL:', env.SUPABASE_URL ? '***configured***' : 'MISSING')
 
 // Запускаем health check сервер
 startHealthServer()
