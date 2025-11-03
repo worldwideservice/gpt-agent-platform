@@ -56,16 +56,19 @@ export const LoginClient = () => {
  const redirectResponse = await fetch('/api/auth/get-tenant-redirect')
  const redirectData = await redirectResponse.json()
 
+ if (redirectData.success && redirectData.tenantId) {
  pushToast({
  title: 'Вход выполнен! ✅',
  description: `Добро пожаловать, ${email}!`,
  variant: 'success',
  })
-
- if (redirectData.success && redirectData.tenantId) {
  window.location.href = `/manage/${redirectData.tenantId}`
  } else {
- window.location.href = '/platform'
+ pushToast({
+ title: 'Ошибка входа',
+ description: 'Не удалось определить вашу организацию. Попробуйте войти заново.',
+ variant: 'error',
+ })
  }
  return
  }
@@ -75,12 +78,25 @@ export const LoginClient = () => {
  const redirectData = await redirectResponse.json()
  
  if (redirectData.success && redirectData.tenantId) {
+ pushToast({
+ title: 'Вход выполнен! ✅',
+ description: `Добро пожаловать, ${email}!`,
+ variant: 'success',
+ })
  window.location.href = `/manage/${redirectData.tenantId}`
  } else {
- window.location.href = '/platform'
+ pushToast({
+ title: 'Ошибка входа',
+ description: 'Не удалось определить вашу организацию. Попробуйте войти заново.',
+ variant: 'error',
+ })
  }
  } catch {
- window.location.href = '/platform'
+ pushToast({
+ title: 'Ошибка входа',
+ description: 'Не удалось определить вашу организацию. Попробуйте войти заново.',
+ variant: 'error',
+ })
  }
  return
  }

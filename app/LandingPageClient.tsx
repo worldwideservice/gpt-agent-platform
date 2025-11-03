@@ -24,14 +24,14 @@ export function LandingPageClient() {
  console.log('Tenant-id received, redirecting to /manage/' + data.tenantId)
  router.replace(`/manage/${data.tenantId}`)
  } else {
- // Fallback на /platform
- console.log('No tenant-id, redirecting to /platform')
- router.replace('/platform')
+ // Если не удалось получить tenant-id, редиректим на вход
+ console.log('No tenant-id, redirecting to /login')
+ router.replace('/login')
  }
  })
  .catch(error => {
  console.error('Error getting tenant-id:', error)
- router.replace('/platform')
+ router.replace('/login')
  })
  }
  }, [session, status, router])

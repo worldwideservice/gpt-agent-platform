@@ -19,12 +19,12 @@ export default async function LandingPage() {
  if (tenantId) {
  redirect(`/manage/${tenantId}`)
  } else {
- // Fallback на /platform если tenant-id не получен
- redirect('/platform')
+ // Если не удалось получить tenant-id, редиректим на вход
+ redirect('/login')
  }
  } catch (error) {
  console.error('[LandingPage] Error getting tenant-id', error)
- redirect('/platform')
+ redirect('/login')
  }
  }
 
