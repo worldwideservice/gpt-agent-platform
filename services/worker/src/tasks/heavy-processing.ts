@@ -9,7 +9,11 @@ type UserTier = 'free' | 'pro' | 'enterprise' // Временное опреде
 // Хелпер для получения UserTier через динамический импорт
 async function getUserTier(userId: string, organizationId: string): Promise<UserTier> {
   try {
-    const { UserRepository } = await import('../lib/repositories/users')
+    // Динамически определяем путь к lib/ в зависимости от контекста выполнения
+    const libPath = process.cwd().includes('services/worker')
+      ? '../lib/repositories/users'
+      : '../../lib/repositories/users'
+    const { UserRepository } = await import(libPath)
     return await UserRepository.getUserTier(userId, organizationId)
   } catch (error) {
     console.error('Failed to import UserRepository:', error)

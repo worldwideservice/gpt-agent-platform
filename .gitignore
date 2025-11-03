@@ -112,3 +112,4 @@ kwid-extraction/node_modules/
 
 # GitHub Secrets (содержит токены)
 GITHUB_SECRETS_COMMANDS.txt
+services/worker/lib
