@@ -4,7 +4,7 @@ export default defineConfig({
   entry: ['src/index.ts'],
   format: ['esm'],
   splitting: true,
-  dts: true,
+  dts: false, // Отключаем DTS сборку, так как TypeScript не может резолвить ../../lib/ пути
   outDir: 'dist',
   clean: true,
   // Разрешаем динамические импорты из lib/ как внешние (резолвятся во время выполнения)
