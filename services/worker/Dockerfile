@@ -63,6 +63,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 # Запускаем worker через npm start (который использует tsx) для поддержки TypeScript импортов из lib/
 # tsx позволяет динамически импортировать .ts файлы во время выполнения
 # tsx автоматически резолвит path aliases из tsconfig.json при использовании tsImport
-# Запускаем из директории worker, чтобы tsx правильно нашел все пути
-WORKDIR /app/services/worker
-CMD ["npm", "start"]
+# Запускаем из корня /app, чтобы пути ../../../lib/env правильно резолвились
+WORKDIR /app
+CMD ["npm", "--prefix", "services/worker", "start"]
