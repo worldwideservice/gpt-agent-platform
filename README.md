@@ -277,6 +277,7 @@
 ### Основные документы
 - [`docs/PLATFORM_OVERVIEW.md`](./docs/PLATFORM_OVERVIEW.md) — **Полное руководство по архитектуре и функционалу** ⭐
 - [`docs/DEVOPS_PLAN.md`](./docs/DEVOPS_PLAN.md) — **План DevOps развития и инфраструктура** 🚀
+- [`docs/BROWSER_AUTOMATION_FOR_TEAM.md`](./docs/BROWSER_AUTOMATION_FOR_TEAM.md) — **🤖 Автоматизация через браузер для команды** 🌐
 - [`docs/IN_PROGRESS.md`](./docs/IN_PROGRESS.md) — **Что в разработке и не реализовано** 🚧
 - [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — Целевая архитектура
 - [`docs/INFRASTRUCTURE.md`](./docs/INFRASTRUCTURE.md) — **Описание инфраструктуры и сервисов** 🏗️

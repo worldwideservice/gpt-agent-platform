@@ -74,5 +74,5 @@ Worker теперь обрабатывает:
 
 ---
 
-**Railway Token:** `5cd06a89-c580-450d-958c-6b1553bb1428` (для CLI если нужно)
+**Railway Token:** `b2d35fc1-afcf-4589-8b24-da667437cf26` ✅ (работает, для API/CLI)
 

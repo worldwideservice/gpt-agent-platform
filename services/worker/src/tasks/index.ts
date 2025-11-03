@@ -541,8 +541,8 @@ export const getTaskHandlers = () => {
  await recordWebhookEvent(payload.orgId, payload.payload)
  },
  'webhook:retry': async (payload: { eventId: string; retryCount: number }) => {
- // Импортируем процессор webhook
- const { processWebhookEvent } = await import('../../../lib/services/webhook-processor')
+ // Импортируем процессор webhook через symlink
+ const { processWebhookEvent } = await import('../lib/services/webhook-processor')
  await processWebhookEvent(payload.eventId)
  },
  'kommo:send-message': async (payload: {

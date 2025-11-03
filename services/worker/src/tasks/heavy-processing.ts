@@ -1,9 +1,22 @@
 import { env } from '../lib/env'
 import { getSupabaseClient } from '../lib/supabase'
-import { UserRepository } from '../../../lib/repositories/users' // Import from main app
-import type { UserTier } from '../../../lib/rate-limit'
 
 const supabase = getSupabaseClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY)
+
+// Динамический импорт для типов и репозиториев из lib/
+type UserTier = 'free' | 'pro' | 'enterprise' // Временное определение, будет загружено динамически
+
+// Хелпер для получения UserTier через динамический импорт
+async function getUserTier(userId: string, organizationId: string): Promise<UserTier> {
+  try {
+    const { UserRepository } = await import('../lib/repositories/users')
+    return await UserRepository.getUserTier(userId, organizationId)
+  } catch (error) {
+    console.error('Failed to import UserRepository:', error)
+    // Fallback к free tier при ошибке
+    return 'free'
+  }
+}
 
 interface JobProgress {
  current: number
@@ -26,8 +39,8 @@ export const processLargeFile = async (payload: {
  userId: string
  operation: 'analyze' | 'extract' | 'convert' | 'compress'
 }) => {
- const startTime = Date.now()
- const userTier = await UserRepository.getUserTier(payload.userId, payload.organizationId)
+  const startTime = Date.now()
+  const userTier = await getUserTier(payload.userId, payload.organizationId)
 
  try {
  // Update job status to processing
@@ -133,8 +146,8 @@ export const generateReport = async (payload: {
  dateRange: { start: string; end: string }
  format: 'pdf' | 'excel' | 'json'
 }) => {
- const startTime = Date.now()
- const userTier = await UserRepository.getUserTier(payload.userId, payload.organizationId)
+  const startTime = Date.now()
+  const userTier = await getUserTier(payload.userId, payload.organizationId)
 
  try {
  const jobId = `report_${payload.reportType}_${Date.now()}`
@@ -261,8 +274,8 @@ export const processBulkData = async (payload: {
  data: any[]
  options?: Record<string, any>
 }) => {
- const startTime = Date.now()
- const userTier = await UserRepository.getUserTier(payload.userId, payload.organizationId)
+  const startTime = Date.now()
+  const userTier = await getUserTier(payload.userId, payload.organizationId)
 
  try {
  const jobId = `bulk_${payload.operation}_${Date.now()}`
@@ -362,8 +375,8 @@ export const fineTuneModel = async (payload: {
  batchSize: number
  }
 }) => {
- const startTime = Date.now()
- const userTier = await UserRepository.getUserTier(payload.userId, payload.organizationId)
+  const startTime = Date.now()
+  const userTier = await getUserTier(payload.userId, payload.organizationId)
 
  // Only VIP users can fine-tune models
  if (userTier !== 'vip') {

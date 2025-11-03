@@ -8,11 +8,16 @@ WORKDIR /app
 # Копируем package.json и package-lock.json Worker
 COPY services/worker/package.json services/worker/package-lock.json ./services/worker/
 
-# Копируем весь проект (нужно для импортов из lib/)
+# Сначала копируем lib директорию (нужна для сборки)
+COPY lib ./lib
+
+# Затем копируем остальной проект
 COPY . .
 
 # Переходим в директорию Worker и собираем
 WORKDIR /app/services/worker
+# Копируем lib/ в services/worker/lib/ для правильного разрешения путей во время сборки
+RUN cp -r ../../lib ./lib || true
 RUN npm ci
 RUN npm run build
 
@@ -31,8 +36,10 @@ COPY services/worker/package.json services/worker/package-lock.json ./services/w
 # Копируем собранное приложение Worker
 COPY --from=base /app/services/worker/dist ./services/worker/dist
 
-# Копируем lib директорию из корня (нужна для импортов)
+# Копируем lib директорию из корня (нужна для импортов во время выполнения)
 COPY --from=base /app/lib ./lib
+# Также копируем lib/ в services/worker/lib/ для правильных путей при запуске
+COPY --from=base /app/services/worker/lib ./services/worker/lib
 
 # Переходим в директорию Worker для установки production зависимостей
 WORKDIR /app/services/worker

@@ -81,7 +81,7 @@ curl https://worker-production.up.railway.app/health
 ### Авторизация:
 
 ```bash
-export RAILWAY_TOKEN="5cd06a89-c580-450d-958c-6b1553bb1428"
+export RAILWAY_TOKEN="b2d35fc1-afcf-4589-8b24-da667437cf26"
 cd services/worker
 railway login  # Используйте токен когда попросит
 ```

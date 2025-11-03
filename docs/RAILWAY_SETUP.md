@@ -4,7 +4,7 @@
 
 ## 🔑 Railway Token
 
-Ваш Railway токен: `5cd06a89-c580-450d-958c-6b1553bb1428`
+Ваш Railway токен: `b2d35fc1-afcf-4589-8b24-da667437cf26` ✅ (работает!)
 
 ---
 
@@ -21,7 +21,7 @@ npm install -g @railway/cli
 ### Вариант A: Через переменную окружения
 
 ```bash
-export RAILWAY_TOKEN="5cd06a89-c580-450d-958c-6b1553bb1428"
+export RAILWAY_TOKEN="b2d35fc1-afcf-4589-8b24-da667437cf26"
 railway login
 ```
 
