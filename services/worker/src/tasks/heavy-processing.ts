@@ -31,12 +31,31 @@ async function getUserTier(userId: string, organizationId: string): Promise<User
     
     for (const libPath of paths) {
       try {
-        // Конвертируем в file:// URL для import
-        const moduleUrl = pathToFileURL(libPath + '.js').href
-        const module = await import(moduleUrl)
-        UserRepository = module.UserRepository
-        console.log(`✅ Successfully imported UserRepository from: ${libPath}`)
-        break
+        // Пробуем разные расширения файлов (.js, .ts, без расширения)
+        const extensions = ['', '.js', '.ts', '/index.js', '/index.ts']
+        let moduleImported = false
+        
+        for (const ext of extensions) {
+          try {
+            const fullPath = libPath + ext
+            // Конвертируем в file:// URL для import
+            const moduleUrl = pathToFileURL(fullPath).href
+            const module = await import(moduleUrl)
+            if (module && module.UserRepository) {
+              UserRepository = module.UserRepository
+              console.log(`✅ Successfully imported UserRepository from: ${fullPath}`)
+              moduleImported = true
+              break
+            }
+          } catch (extError) {
+            // Пробуем следующее расширение
+            continue
+          }
+        }
+        
+        if (moduleImported) {
+          break
+        }
       } catch (error) {
         lastError = error as Error
         // Продолжаем пробовать следующие пути
