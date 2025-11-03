@@ -10,9 +10,19 @@ echo "==========================================="
 
 # Проверка наличия env.production
 if [ ! -f "env.production" ]; then
-    echo "❌ Файл env.production не найден!"
-    echo "Запустите сначала: npm run setup:production"
-    exit 1
+    if [ -f "env.production.example" ]; then
+        echo "⚠️  Файл env.production не найден!"
+        echo "📋 Создаю env.production из шаблона..."
+        cp env.production.example env.production
+        echo "✅ Файл env.production создан из шаблона!"
+        echo "⚠️  ВАЖНО: Заполните реальными значениями перед использованием!"
+        echo "📝 Отредактируйте env.production и запустите скрипт снова"
+        exit 1
+    else
+        echo "❌ Файл env.production не найден и шаблон env.production.example отсутствует!"
+        echo "Запустите сначала: npm run setup:production"
+        exit 1
+    fi
 fi
 
 # Проверка Vercel CLI

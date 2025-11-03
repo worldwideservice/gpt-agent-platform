@@ -5,12 +5,12 @@ export { Button } from './button'
 export type { ButtonProps } from './button'
 
 export {
-  Card,
-  CardHeader,
-  CardFooter,
-  CardTitle,
-  CardDescription,
-  CardContent
+ Card,
+ CardHeader,
+ CardFooter,
+ CardTitle,
+ CardDescription,
+ CardContent
 } from './card'
 export type { CardProps } from './card'
 
@@ -26,32 +26,32 @@ export type { BadgeProps } from './badge'
 export { Select } from './select'
 
 export {
-  Table,
-  TableHeader,
-  TableBody,
-  TableFooter,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableCaption,
+ Table,
+ TableHeader,
+ TableBody,
+ TableFooter,
+ TableHead,
+ TableRow,
+ TableCell,
+ TableCaption,
 } from './table'
 export type { TableProps } from './table'
 
 export {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent
+ Tabs,
+ TabsList,
+ TabsTrigger,
+ TabsContent
 } from './tabs'
 export type { TabsProps, TabsListProps, TabsTriggerProps, TabsContentProps } from './tabs'
 
 export {
-  Modal,
-  ModalTrigger,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalTitle,
-  ModalDescription
+ Modal,
+ ModalTrigger,
+ ModalContent,
+ ModalHeader,
+ ModalFooter,
+ ModalTitle,
+ ModalDescription
 } from './modal'
 export type { ModalProps } from './modal'

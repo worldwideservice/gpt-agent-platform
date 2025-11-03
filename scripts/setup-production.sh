@@ -29,16 +29,38 @@ echo "🔐 ШАГ 1: ГЕНЕРАЦИЯ ПРОДАКШЕН СЕКРЕТОВ"
 echo "======================================"
 
 if [ ! -f "env.production" ]; then
-    node -e "
-    const crypto = require('crypto');
-    console.log('Создание базового env.production файла...');
-    const fs = require('fs');
-    const baseConfig = \`# === ПРОДАКШЕН КОНФИГУРАЦИЯ ===
+    if [ -f "env.production.example" ]; then
+        echo "📋 Копирую env.production.example в env.production..."
+        cp env.production.example env.production
+        
+        # Генерируем случайные секреты
+        node -e "
+        const crypto = require('crypto');
+        const fs = require('fs');
+        let content = fs.readFileSync('env.production', 'utf8');
+        
+        // Заменяем placeholder-значения на сгенерированные
+        content = content.replace(/NEXTAUTH_SECRET=your_secure_random_secret_32_chars_minimum/, 
+            'NEXTAUTH_SECRET=' + crypto.randomBytes(32).toString('hex'));
+        content = content.replace(/JWT_SECRET=your_secure_random_secret_32_chars_minimum/, 
+            'JWT_SECRET=' + crypto.randomBytes(32).toString('hex'));
+        content = content.replace(/ENCRYPTION_KEY=your_32_char_encryption_key/, 
+            'ENCRYPTION_KEY=' + crypto.randomBytes(32).toString('base64').substring(0, 32));
+        
+        fs.writeFileSync('env.production', content);
+        console.log('✅ env.production создан из шаблона с автоматически сгенерированными секретами!');
+        "
+    else
+        echo "❌ env.production.example не найден, создаю базовый файл..."
+        node -e "
+        const crypto = require('crypto');
+        const fs = require('fs');
+        const baseConfig = \`# === ПРОДАКШЕН КОНФИГУРАЦИЯ ===
 # 🔐 СКОПИРУЙТЕ ЭТИ ЗНАЧЕНИЯ В VERCEL DASHBOARD
 
 # === АУТЕНТИФИКАЦИЯ ===
 NEXTAUTH_SECRET=\${crypto.randomBytes(32).toString('hex')}
-NEXTAUTH_URL=https://gpt-agent-kwid-1i1j7zlgl-world-wide-services-62780b79.vercel.app
+NEXTAUTH_URL=https://your-production-domain.vercel.app
 
 # === ПРОДАКШЕН НАСТРОЙКИ ===
 NODE_ENV=production
@@ -47,7 +69,7 @@ E2E_ONBOARDING_FAKE=false
 
 # === ДОПОЛНИТЕЛЬНЫЕ СЕКРЕТЫ ===
 JWT_SECRET=\${crypto.randomBytes(32).toString('hex')}
-ENCRYPTION_KEY=\${crypto.randomBytes(32).toString('hex')}
+ENCRYPTION_KEY=\${crypto.randomBytes(32).toString('base64').substring(0, 32)}
 
 # === ЗАПОЛНИТЕ СЛЕДУЮЩИЕ ЗНАЧЕНИЯ ===
 # SUPABASE_URL=https://your-project-ref.supabase.co
@@ -57,9 +79,10 @@ ENCRYPTION_KEY=\${crypto.randomBytes(32).toString('hex')}
 # UPSTASH_REDIS_REST_TOKEN=your_upstash_token
 # OPENROUTER_API_KEY=sk-or-v1-your-openrouter-api-key
 \`;
-    fs.writeFileSync('env.production', baseConfig);
-    console.log('✅ env.production создан!');
-    "
+        fs.writeFileSync('env.production', baseConfig);
+        console.log('✅ env.production создан!');
+        "
+    fi
 else
     echo "⚠️  env.production уже существует, пропускаем генерацию секретов"
 fi

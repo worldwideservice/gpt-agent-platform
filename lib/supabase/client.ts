@@ -10,18 +10,18 @@ import type { Database } from '@/types/supabase'
 let supabaseBrowserClient: SupabaseClient<Database> | undefined
 
 export const getSupabaseBrowserClient = (): SupabaseClient<Database> => {
-  if (supabaseBrowserClient) {
-    return supabaseBrowserClient
-  }
+ if (supabaseBrowserClient) {
+ return supabaseBrowserClient
+ }
 
-  const env = loadSupabaseClientEnv()
+ const env = loadSupabaseClientEnv()
 
-  supabaseBrowserClient = createBrowserClient<Database>(
-    env.NEXT_PUBLIC_SUPABASE_URL,
-    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  )
+ supabaseBrowserClient = createBrowserClient<Database>(
+ env.NEXT_PUBLIC_SUPABASE_URL,
+ env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+ )
 
-  return supabaseBrowserClient
+ return supabaseBrowserClient
 }
 
 // Export supabase for backward compatibility

@@ -6,31 +6,31 @@ import type { Server as IOServer } from 'socket.io'
 import { initializeWebSocketServer } from '@/lib/websocket/server'
 
 type NextApiResponseWithSocket = NextApiResponse & {
-  socket: Socket & {
-    server: HTTPServer & {
-      io?: IOServer
-    }
-  }
+ socket: Socket & {
+ server: HTTPServer & {
+ io?: IOServer
+ }
+ }
 }
 
 export const config = {
-  api: {
-    bodyParser: false,
-  },
+ api: {
+ bodyParser: false,
+ },
 }
 
 export default function handler(
-  _req: NextApiRequest,
-  res: NextApiResponseWithSocket
+ _req: NextApiRequest,
+ res: NextApiResponseWithSocket
 ) {
-  if (!res.socket) {
-    res.status(500).json({ error: 'Socket not available' })
-    return
-  }
+ if (!res.socket) {
+ res.status(500).json({ error: 'Socket not available' })
+ return
+ }
 
-  if (!res.socket.server.io) {
-    initializeWebSocketServer(res.socket.server)
-  }
+ if (!res.socket.server.io) {
+ initializeWebSocketServer(res.socket.server)
+ }
 
-  res.end()
+ res.end()
 }

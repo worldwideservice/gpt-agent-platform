@@ -13,6 +13,8 @@ let envVars = {};
 
 try {
   const envFile = path.join(process.cwd(), 'env.production');
+  const exampleFile = path.join(process.cwd(), 'env.production.example');
+  
   if (fs.existsSync(envFile)) {
     const envContent = fs.readFileSync(envFile, 'utf8');
     const lines = envContent.split('\n');
@@ -25,9 +27,23 @@ try {
         envVars[key.trim()] = value.trim();
       }
     });
+  } else if (fs.existsSync(exampleFile)) {
+    console.log('⚠️  env.production не найден, используется env.production.example для проверки структуры');
+    console.log('📝 Скопируйте env.production.example в env.production и заполните реальными значениями\n');
+    const envContent = fs.readFileSync(exampleFile, 'utf8');
+    const lines = envContent.split('\n');
+
+    lines.forEach(line => {
+      line = line.trim();
+      if (line && !line.startsWith('#') && line.includes('=')) {
+        const [key, ...valueParts] = line.split('=');
+        const value = valueParts.join('=').replace(/^["']|["']$/g, '');
+        envVars[key.trim()] = value.trim();
+      }
+    });
   }
 } catch (error) {
-  console.log('⚠️  Не удалось прочитать env.production файл');
+  console.log('⚠️  Не удалось прочитать env.production или env.production.example файл');
 }
 
 const requiredVars = [

@@ -6,15 +6,15 @@ import type { JobPayload } from './types'
 let queueInstance: Queue<JobPayload> | null = null
 
 export const getJobQueue = (options: { redisUrl: string; queueName: string }) => {
-  if (queueInstance) {
-    return queueInstance
-  }
+ if (queueInstance) {
+ return queueInstance
+ }
 
-  const connection = new Redis(options.redisUrl)
+ const connection = new Redis(options.redisUrl)
 
-  queueInstance = new Queue<JobPayload>(options.queueName, {
-    connection,
-  })
+ queueInstance = new Queue<JobPayload>(options.queueName, {
+ connection,
+ })
 
-  return queueInstance
+ return queueInstance
 }

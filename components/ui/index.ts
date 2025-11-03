@@ -18,6 +18,28 @@ export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableC
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './shadcn'
 export { Modal, ModalTrigger, ModalContent, ModalHeader, ModalFooter, ModalTitle, ModalDescription } from './shadcn'
 
+// Dialog компоненты
+export {
+ Dialog,
+ DialogPortal,
+ DialogOverlay,
+ DialogTrigger,
+ DialogClose,
+ DialogContent,
+ DialogHeader,
+ DialogFooter,
+ DialogTitle,
+ DialogDescription,
+} from './dialog'
+
+// Popover компоненты
+export {
+ Popover,
+ PopoverTrigger,
+ PopoverContent,
+ PopoverAnchor,
+} from './popover'
+
 // Layout компоненты
 export { Sidebar } from '../layout/Sidebar'
 export { Header } from '../layout/Header'

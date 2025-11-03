@@ -6,12 +6,12 @@ import { LoginClient } from './LoginClient'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Вход в GPT Agent',
-  description: 'Авторизуйтесь, чтобы управлять AI-агентами и интеграциями',
+ title: 'Вход в GPT Agent',
+ description: 'Авторизуйтесь, чтобы управлять AI-агентами и интеграциями',
 }
 
 const LoginPage = () => {
-  return <LoginClient />
+ return <LoginClient />
 }
 
 export default LoginPage

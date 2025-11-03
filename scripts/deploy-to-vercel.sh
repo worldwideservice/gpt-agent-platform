@@ -24,9 +24,19 @@ fi
 
 # Проверяем наличие env.production
 if [ ! -f "env.production" ]; then
-    echo "❌ Файл env.production не найден!"
-    echo "Запустите настройку: npm run setup:production"
-    exit 1
+    if [ -f "env.production.example" ]; then
+        echo "⚠️  Файл env.production не найден!"
+        echo "📋 Создаю env.production из шаблона..."
+        cp env.production.example env.production
+        echo "✅ Файл env.production создан из шаблона!"
+        echo "⚠️  ВАЖНО: Заполните реальными значениями перед деплоем!"
+        echo "📝 Отредактируйте env.production и запустите скрипт снова"
+        exit 1
+    else
+        echo "❌ Файл env.production не найден и шаблон env.production.example отсутствует!"
+        echo "Запустите настройку: npm run setup:production"
+        exit 1
+    fi
 fi
 
 echo "🔍 Проверяем переменные окружения..."

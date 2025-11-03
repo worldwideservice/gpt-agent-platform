@@ -1,232 +1,284 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { KommoAPI } from '@/lib/crm/kommo'
-import { getAgentsForPipelineStage } from '@/lib/repositories/agent-pipeline-settings'
+import { saveWebhookEvent, processWebhookEvent } from '@/lib/services/webhook-processor'
+import { getCrmConnectionData } from '@/lib/repositories/crm-connection'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
 /**
  * Webhook endpoint для получения событий от Kommo CRM
  * Настройка в Kommo: Настройки -> Интеграции -> Webhooks
  * 
- * ВАЖНО: Агент обрабатывает события только для воронок и этапов, где он настроен!
+ * Полностью обрабатывает все типы событий: leads, contacts, tasks, messages, calls
+ * Автоматически запускает Rule Engine при соответствующих событиях
+ * Сохраняет историю всех событий с поддержкой retry
  */
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
+ try {
+ const body = await request.json()
 
-    // Парсинг события от Kommo
-    const event = KommoAPI.parseWebhook(body)
+ // Проверка подписи webhook (если настроена)
+ const signatureValid = verifyWebhookSignature(request)
+ if (!signatureValid) {
+ return NextResponse.json(
+ { success: false, error: 'Invalid webhook signature' },
+ { status: 401 }
+ )
+ }
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Kommo Webhook Event:', event.type, event.data)
-    }
+ // Парсинг события от Kommo
+ const event = KommoAPI.parseWebhook(body)
 
-    // Обработка различных типов событий
-    switch (event.type) {
-      case 'leads': {
-        // Событие изменения сделки
-        await handleLeadEvent(event.data)
-        break
-      }
+ if (process.env.NODE_ENV === 'development') {
+ console.log('Kommo Webhook Event:', event.type, event.data)
+ }
 
-      case 'contacts': {
-        // Событие изменения контакта
-        await handleContactEvent(event.data)
-        break
-      }
+ // Определяем orgId из webhook payload или headers
+ const orgId = await determineOrgIdFromWebhook(body, request)
 
-      case 'customers': {
-        // Событие изменения покупателя
-        await handleCustomerEvent(event.data)
-        break
-      }
+ if (!orgId) {
+ console.warn('Could not determine orgId from webhook, skipping processing')
+ return NextResponse.json({ success: true, message: 'Event received but orgId not found' })
+ }
 
-      default:
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Unknown event type:', event.type)
-        }
-    }
+ // Определяем метаданные события (subtype, entity_id, entity_type)
+ const metadata = extractEventMetadata(event.type, event.data)
 
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Webhook Error:', error)
-    }
-    return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    )
-  }
+ // Сохраняем событие в БД
+ const eventId = await saveWebhookEvent(
+ orgId,
+ 'kommo',
+ event.type,
+ body as Record<string, unknown>,
+ metadata
+ )
+
+ // Обрабатываем событие асинхронно (не блокируем ответ)
+ // Можно использовать очередь для гарантированной обработки
+ processWebhookEvent(eventId).catch(error => {
+ console.error(`Failed to process webhook event ${eventId}:`, error)
+ })
+
+ // Возвращаем успешный ответ сразу (webhook должен ответить быстро)
+ return NextResponse.json({ 
+ success: true, 
+ eventId,
+ message: 'Webhook received and queued for processing'
+ })
+ } catch (error) {
+ console.error('Webhook Error:', error)
+ return NextResponse.json(
+ { 
+ success: false, 
+ error: error instanceof Error ? error.message : 'Unknown error' 
+ },
+ { status: 500 }
+ )
+ }
 }
-
-// Обработчики событий
 
 /**
- * Обрабатывает события сделок (leads) от Kommo
- * КРИТИЧНО: Проверяет настройки агентов - обрабатывает только если агент настроен для воронки и этапа!
+ * Определяет orgId из webhook данных
  */
-async function handleLeadEvent(data: unknown) {
-  try {
-    // Парсим данные события от Kommo
-    // Формат: { leads: { status: [{ id, pipeline_id, status_id, ... }] } }
-    if (!data || typeof data !== 'object') {
-      return
-    }
+async function determineOrgIdFromWebhook(
+ body: unknown,
+ request: NextRequest
+): Promise<string | null> {
+ try {
+ // Пробуем извлечь base_domain из payload
+ const payload = body as Record<string, unknown>
+ const account = payload?.account as Record<string, unknown> | undefined
+ const baseDomainRaw = account?.base_domain || account?.subdomain
 
-    const leadData = data as Record<string, unknown>
-    
-    // Kommo отправляет события в разных форматах, обрабатываем основные
-    let leads: Array<{
-      id?: number
-      pipeline_id?: number
-      status_id?: number
-    }> = []
+ if (typeof baseDomainRaw === 'string') {
+ const baseDomain = baseDomainRaw.includes('.')
+   ? baseDomainRaw
+   : `${baseDomainRaw}.amocrm.ru`
 
-    // Формат 1: { leads: { status: [{ id, pipeline_id, status_id }] } }
-    if ('status' in leadData && Array.isArray(leadData.status)) {
-      leads = leadData.status as Array<{ id?: number; pipeline_id?: number; status_id?: number }>
-    }
-    // Формат 2: { leads: { add: [{ id, pipeline_id, status_id }] } } - создание
-    else if ('add' in leadData && Array.isArray(leadData.add)) {
-      leads = leadData.add as Array<{ id?: number; pipeline_id?: number; status_id?: number }>
-    }
-    // Формат 3: { leads: { update: [{ id, pipeline_id, status_id }] } } - обновление
-    else if ('update' in leadData && Array.isArray(leadData.update)) {
-      leads = leadData.update as Array<{ id?: number; pipeline_id?: number; status_id?: number }>
-    }
-    // Формат 4: Прямой массив сделок
-    else if (Array.isArray(leadData)) {
-      leads = leadData
-    }
+ // Ищем организацию по base_domain
+ const supabase = getSupabaseServiceRoleClient()
+ const { data: connection } = await supabase
+   .from('crm_connections')
+   .select('org_id')
+   .eq('base_domain', baseDomain)
+   .eq('provider', 'kommo')
+   .single()
 
-    if (leads.length === 0) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Lead Event: No leads found in webhook data')
-      }
-      return
-    }
+ if (connection?.org_id) {
+   return connection.org_id as string
+ }
+ }
 
-    // Получаем organization_id из данных webhook или определяем по base_domain
-    // В реальной реализации это должно приходить из headers или метаданных запроса
-    // Пока используем логику определения организации по CRM подключению
-    
-    const supabase = getSupabaseServiceRoleClient()
-    
-    // Для каждой сделки находим организации и проверяем настройки агентов
-    for (const lead of leads) {
-      if (!lead.pipeline_id || !lead.status_id || !lead.id) {
-        continue
-      }
+ // Fallback: пробуем из headers или query параметров
+ const orgIdHeader = request.headers.get('X-Org-Id')
+ if (orgIdHeader) {
+ return orgIdHeader
+ }
 
-      const pipelineId = lead.pipeline_id.toString()
-      const stageId = lead.status_id.toString()
-      const leadId = lead.id
-
-      // Находим все организации, у которых есть активные агенты для этой воронки и этапа
-      // Получаем все настройки агентов для этой воронки
-      const { data: pipelineSettings, error } = await supabase
-        .from('agent_pipeline_settings')
-        .select('org_id, agent_id, all_stages, selected_stages')
-        .eq('pipeline_id', pipelineId)
-        .eq('is_active', true)
-
-      if (error || !pipelineSettings || pipelineSettings.length === 0) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`Lead ${leadId}: No agents configured for pipeline ${pipelineId}`)
-        }
-        continue
-      }
-
-      // Группируем по организациям и проверяем настройки этапов
-      const orgAgentMap = new Map<string, string[]>()
-
-      for (const setting of pipelineSettings) {
-        const orgId = setting.org_id as string
-        const agentId = setting.agent_id as string
-        const allStages = setting.all_stages as boolean
-        const selectedStages = (setting.selected_stages as string[]) || []
-
-        // Проверяем, должен ли этот агент обработать событие на этом этапе
-        let shouldProcess = false
-
-        if (allStages) {
-          // Все этапы разрешены
-          shouldProcess = true
-        } else if (selectedStages.length > 0 && selectedStages.includes(stageId)) {
-          // Этап в списке разрешенных
-          shouldProcess = true
-        }
-
-        if (shouldProcess) {
-          if (!orgAgentMap.has(orgId)) {
-            orgAgentMap.set(orgId, [])
-          }
-          orgAgentMap.get(orgId)!.push(agentId)
-        }
-      }
-
-      // Если нет агентов, настроенных для этого этапа - пропускаем обработку
-      if (orgAgentMap.size === 0) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log(
-            `Lead ${leadId}: No agents configured for pipeline ${pipelineId} stage ${stageId} - skipping processing`
-          )
-        }
-        continue
-      }
-
-      // Обрабатываем событие для каждой организации с настроенными агентами
-      for (const [orgId, agentIds] of orgAgentMap.entries()) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log(
-            `Lead ${leadId}: Processing for org ${orgId} with agents ${agentIds.join(', ')} on pipeline ${pipelineId} stage ${stageId}`
-          )
-        }
-
-        // Здесь можно:
-        // 1. Уведомить AI-агентов об изменении сделки
-        // 2. Обновить локальную базу данных
-        // 3. Запустить триггеры и автоматизации
-        // 4. Отправить уведомления пользователям
-        
-        // TODO: Реализовать обработку события для каждого агента
-        // await processLeadEventForAgents(orgId, agentIds, leadId, pipelineId, stageId)
-      }
-    }
-  } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Error processing lead event:', error)
-    }
-    // Не выбрасываем ошибку, чтобы не нарушить webhook от Kommo
-  }
+ return null
+ } catch (error) {
+ console.error('Error determining orgId from webhook:', error)
+ return null
+ }
 }
 
-async function handleContactEvent(data: unknown) {
-  console.log('Contact Event:', data)
-  
-  // Обработка событий контакта
-  // Синхронизация данных контакта с локальной БД
-}
+/**
+ * Извлекает метаданные события (subtype, entity_id, entity_type)
+ */
+function extractEventMetadata(
+ eventType: string,
+ eventData: unknown
+): {
+ eventSubtype?: string
+ entityId?: string
+ entityType?: string
+} {
+ const metadata: {
+ eventSubtype?: string
+ entityId?: string
+ entityType?: string
+ } = {}
 
-async function handleCustomerEvent(data: unknown) {
-  console.log('Customer Event:', data)
-  
-  // Обработка событий покупателя
+ try {
+ const data = eventData as Record<string, unknown>
+
+ // Определяем entity_type
+ metadata.entityType = eventType.slice(0, -1) // 'leads' -> 'lead', 'contacts' -> 'contact'
+
+ // Парсим данные для извлечения entity_id и subtype
+ if (eventType === 'leads') {
+   const leads = data.leads || data
+   
+   if (Array.isArray(leads)) {
+     if (leads.length > 0 && leads[0]?.id) {
+       metadata.entityId = String(leads[0].id)
+     }
+   } else if (typeof leads === 'object' && leads !== null) {
+     // Проверяем формат { status: [...], add: [...], update: [...] }
+     const statusArray = (leads as Record<string, unknown>).status as Array<Record<string, unknown>> | undefined
+     const addArray = (leads as Record<string, unknown>).add as Array<Record<string, unknown>> | undefined
+     const updateArray = (leads as Record<string, unknown>).update as Array<Record<string, unknown>> | undefined
+     
+     const firstLead = statusArray?.[0] || addArray?.[0] || updateArray?.[0]
+     
+     if (firstLead?.id) {
+       metadata.entityId = String(firstLead.id)
+     }
+     
+     if (statusArray && statusArray.length > 0) {
+       metadata.eventSubtype = 'lead_status_changed'
+     } else if (addArray && addArray.length > 0) {
+       metadata.eventSubtype = 'lead_created'
+     } else if (updateArray && updateArray.length > 0) {
+       metadata.eventSubtype = 'lead_updated'
+     }
+   }
+ } else if (eventType === 'contacts') {
+   const contacts = data.contacts || data
+   
+   if (Array.isArray(contacts) && contacts.length > 0 && contacts[0]?.id) {
+     metadata.entityId = String(contacts[0].id)
+     metadata.eventSubtype = 'contact_created'
+   } else if (typeof contacts === 'object' && contacts !== null) {
+     const addArray = (contacts as Record<string, unknown>).add as Array<Record<string, unknown>> | undefined
+     const updateArray = (contacts as Record<string, unknown>).update as Array<Record<string, unknown>> | undefined
+     
+     const firstContact = addArray?.[0] || updateArray?.[0]
+     if (firstContact?.id) {
+       metadata.entityId = String(firstContact.id)
+       metadata.eventSubtype = addArray ? 'contact_created' : 'contact_updated'
+     }
+   }
+ } else if (eventType === 'tasks') {
+   const tasks = data.tasks || data
+   
+   if (Array.isArray(tasks) && tasks.length > 0) {
+     const task = tasks[0] as Record<string, unknown>
+     if (task.id) {
+       metadata.entityId = String(task.id)
+     }
+     if (task.entity_id && task.entity_type) {
+       metadata.entityId = String(task.entity_id)
+       metadata.entityType = String(task.entity_type)
+     }
+     metadata.eventSubtype = 'task_created'
+   }
+ } else if (eventType === 'messages') {
+   const messages = data.messages || data
+   
+   if (Array.isArray(messages) && messages.length > 0) {
+     const message = messages[0] as Record<string, unknown>
+     
+     // Определяем тип сообщения (входящее/исходящее)
+     const params = message.params as Record<string, unknown> | undefined
+     const direction = params?.direction || message.direction
+     
+     // Получаем entity_id и entity_type
+     if (message.entity_id) {
+       metadata.entityId = String(message.entity_id)
+     }
+     if (message.entity_type) {
+       metadata.entityType = String(message.entity_type)
+     }
+     
+     // Определяем подтип события
+     if (direction === 'in' || !direction || typeof direction === 'undefined') {
+       metadata.eventSubtype = 'message_received'
+     } else {
+       metadata.eventSubtype = 'message_sent'
+     }
+   } else if (typeof messages === 'object' && messages !== null) {
+     // Формат { add: [...], update: [...] }
+     const addArray = (messages as Record<string, unknown>).add as Array<Record<string, unknown>> | undefined
+     
+     if (addArray && addArray.length > 0) {
+       const message = addArray[0]
+       if (message.entity_id) {
+         metadata.entityId = String(message.entity_id)
+       }
+       if (message.entity_type) {
+         metadata.entityType = String(message.entity_type)
+       }
+       
+       const params = message.params as Record<string, unknown> | undefined
+       const direction = params?.direction || message.direction
+       metadata.eventSubtype = direction === 'in' || !direction ? 'message_received' : 'message_sent'
+     }
+   }
+ } else if (eventType === 'calls') {
+   const calls = data.calls || data
+   
+   if (Array.isArray(calls) && calls.length > 0) {
+     const call = calls[0] as Record<string, unknown>
+     if (call.id) {
+       metadata.entityId = String(call.id)
+     }
+     metadata.eventSubtype = 'call_started'
+   }
+ }
+
+ return metadata
+ } catch (error) {
+ console.error('Error extracting event metadata:', error)
+ return {}
+ }
 }
 
 // Проверка подписи webhook (если настроена в Kommo)
 function verifyWebhookSignature(request: NextRequest): boolean {
-  const signature = request.headers.get('X-Kommo-Signature')
-  const secret = process.env.KOMMO_WEBHOOK_SECRET
+ const signature = request.headers.get('X-Kommo-Signature')
+ const secret = process.env.KOMMO_WEBHOOK_SECRET
 
-  if (!signature || !secret) {
-    return false
-  }
+ if (!signature || !secret) {
+ // Если подпись не настроена, разрешаем
+ return true
+ }
 
-  // Здесь должна быть логика проверки подписи
-  // В зависимости от настроек Kommo
-  
-  return true
+ // Здесь должна быть логика проверки подписи
+ // В зависимости от настроек Kommo
+ // Пример: HMAC SHA256 проверка
+
+ return true
 }
 

@@ -10,48 +10,48 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 interface ProtectedLayoutProps {
-  children: React.ReactNode;
+ children: React.ReactNode;
 }
 
 const ProtectedLayout = async ({ children }: ProtectedLayoutProps) => {
-  let session: any;
-  let organizations: any[] = [];
-  let activeOrganization: any = null;
+ let session: any;
+ let organizations: any[] = [];
+ let activeOrganization: any = null;
 
-  try {
-    session = await auth();
+ try {
+ session = await auth();
 
-    if (!session?.user?.orgId) {
-      redirect("/login");
-    }
+ if (!session?.user?.orgId) {
+ redirect("/login");
+ }
 
-    try {
-      organizations = await getOrganizationsForUser(session.user.id);
-      activeOrganization =
-        organizations.find(
-          (organization) => organization.id === session.user.orgId,
-        ) ??
-        organizations[0] ??
-        null;
-    } catch (orgError) {
-      organizations = [];
-      activeOrganization = null;
-    }
-  } catch (authError) {
-    redirect("/login");
-  }
+ try {
+ organizations = await getOrganizationsForUser(session.user.id);
+ activeOrganization =
+ organizations.find(
+ (organization) => organization.id === session.user.orgId,
+ ) ??
+ organizations[0] ??
+ null;
+ } catch (orgError) {
+ organizations = [];
+ activeOrganization = null;
+ }
+ } catch (authError) {
+ redirect("/login");
+ }
 
-  return (
-    <SidebarProvider>
-      <HeaderWithSidebar
-        session={session}
-        organizations={organizations}
-        activeOrganization={activeOrganization}
-      >
-        {children}
-      </HeaderWithSidebar>
-    </SidebarProvider>
-  );
+ return (
+ <SidebarProvider>
+ <HeaderWithSidebar
+ session={session}
+ organizations={organizations}
+ activeOrganization={activeOrganization}
+ >
+ {children}
+ </HeaderWithSidebar>
+ </SidebarProvider>
+ );
 };
 
 export default ProtectedLayout;

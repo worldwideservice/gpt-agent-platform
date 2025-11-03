@@ -4,200 +4,152 @@ import { useState, useTransition, useEffect } from 'react'
 import Link from 'next/link'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Lock } from 'lucide-react'
 
-import { KwidButton, KwidInput } from '@/components/kwid'
-import { Card } from '@/components/ui/Card'
+import { Button, Input } from '@/components/ui'
 import { useToast } from '@/components/ui/toast-context'
 
 export const LoginClient = () => {
-  const router = useRouter()
-  const { push: pushToast } = useToast()
-  const [email, setEmail] = useState('founder@example.com')
-  const [password, setPassword] = useState('Demo1234!')
-  const [error, setError] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
+ const router = useRouter()
+ const { push: pushToast } = useToast()
+ const [email, setEmail] = useState('founder@example.com')
+ const [password, setPassword] = useState('Demo1234!')
+ const [error, setError] = useState<string | null>(null)
+ const [isPending, startTransition] = useTransition()
 
-  // Проверяем параметр registered из URL
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    if (params.get('registered') === 'true') {
-      pushToast({
-        title: 'Регистрация завершена! ✅',
-        description: 'Войдите в систему используя ваш email и пароль.',
-        variant: 'success',
-      })
-      // Удаляем параметр из URL
-      router.replace('/login')
-    }
-  }, [pushToast, router])
+ useEffect(() => {
+ const params = new URLSearchParams(window.location.search)
+ if (params.get('registered') === 'true') {
+ pushToast({
+ title: 'Регистрация завершена! ✅',
+ description: 'Войдите в систему используя ваш email и пароль.',
+ variant: 'success',
+ })
+ router.replace('/login')
+ }
+ }, [pushToast, router])
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+ event.preventDefault()
 
-    startTransition(async () => {
-      setError(null)
+ startTransition(async () => {
+ setError(null)
 
-      try {
-        console.log('🔐 Submitting login form...')
+ try {
+ const result = await signIn('credentials', {
+ email,
+ password,
+ redirect: false,
+ })
 
-        const result = await signIn('credentials', {
-          email,
-          password,
-          redirect: false,
-        })
+ if (result?.error) {
+ setError('Неверные email или пароль')
+ return
+ }
 
-        console.log('🔐 SignIn result:', result)
+ if (result?.ok) {
+ await new Promise(resolve => setTimeout(resolve, 1000))
 
-        if (result?.error) {
-          console.error('🔐 Login error:', result.error)
-          setError('Неверные email или пароль')
-          return
-        }
+ const sessionResponse = await fetch('/api/auth/session')
+ const sessionData = await sessionResponse.json()
 
-        if (result?.ok) {
-          console.log('🔐 Login successful, checking session...')
+ if (sessionData?.user) {
+ const redirectResponse = await fetch('/api/auth/get-tenant-redirect')
+ const redirectData = await redirectResponse.json()
 
-          // Ждем немного для обновления сессии
-          await new Promise(resolve => setTimeout(resolve, 1000))
+ pushToast({
+ title: 'Вход выполнен! ✅',
+ description: `Добро пожаловать, ${email}!`,
+ variant: 'success',
+ })
 
-          // Проверяем сессию
-          const sessionResponse = await fetch('/api/auth/session')
-          const sessionData = await sessionResponse.json()
+ if (redirectData.success && redirectData.tenantId) {
+ window.location.href = `/manage/${redirectData.tenantId}`
+ } else {
+ window.location.href = '/platform'
+ }
+ return
+ }
 
-          console.log('🔐 Session data:', sessionData)
+ try {
+ const redirectResponse = await fetch('/api/auth/get-tenant-redirect')
+ const redirectData = await redirectResponse.json()
+ 
+ if (redirectData.success && redirectData.tenantId) {
+ window.location.href = `/manage/${redirectData.tenantId}`
+ } else {
+ window.location.href = '/platform'
+ }
+ } catch {
+ window.location.href = '/platform'
+ }
+ return
+ }
 
-          if (sessionData?.user) {
-            console.log('🔐 Session confirmed, redirecting...')
+ setError('Неверные email или пароль')
 
-            // Получаем tenant-id
-            const redirectResponse = await fetch('/api/auth/get-tenant-redirect')
-            const redirectData = await redirectResponse.json()
+ } catch (error) {
+ setError(error instanceof Error ? error.message : 'Неверные email или пароль')
+ }
+ })
+ }
 
-            console.log('🔐 Redirect data:', redirectData)
+ return (
+ <div className="min-h-screen flex items-center justify-center p-4">
+ <div className="w-full max-w-md">
+ <h1 className="text-2xl font-bold mb-6 text-center">Вход</h1>
 
-            if (redirectData.success && redirectData.tenantId) {
-              pushToast({
-                title: 'Вход выполнен! ✅',
-                description: `Добро пожаловать, ${email}!`,
-                variant: 'success',
-              })
+ <form className="space-y-4" onSubmit={handleSubmit}>
+ <Input
+ id="email"
+ name="email"
+ type="email"
+ label="Email"
+ autoComplete="email"
+ value={email}
+ onChange={(event) => setEmail(event.target.value)}
+ required
+ />
 
-              window.location.href = `/manage/${redirectData.tenantId}`
-              return
-            } else {
-              // Если нет tenantId, пробуем получить из сессии
-              const orgId = sessionData.user.orgId || sessionData.user.id
-              if (orgId) {
-                pushToast({
-                  title: 'Вход выполнен! ✅',
-                  description: `Добро пожаловать, ${email}!`,
-                  variant: 'success',
-                })
-                window.location.href = `/manage/${orgId}`
-                return
-              }
-            }
-          }
+ <Input
+ id="password"
+ name="password"
+ type="password"
+ label="Пароль"
+ autoComplete="current-password"
+ value={password}
+ onChange={(event) => setPassword(event.target.value)}
+ required
+ />
 
-          // Если нет сессии, но signIn вернул ok, пробуем редирект на dashboard
-          console.log('🔐 No session found, redirecting to dashboard')
-          window.location.href = '/dashboard'
-          return
-        }
+ {error && (
+ <div className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+ {error}
+ </div>
+ )}
 
-        // Если дошли сюда, значит вход не удался
-        setError('Неверные email или пароль')
+ <Button type="submit" className="w-full" disabled={isPending}>
+ {isPending ? 'Входим...' : 'Войти'}
+ </Button>
+ </form>
 
-      } catch (error) {
-        console.error('🔐 Login error:', error)
-        setError(error instanceof Error ? error.message : 'Неверные email или пароль')
-      }
-    })
-  }
+ <div className="mt-4 flex items-center justify-between text-sm">
+ <Link href="/reset-password/request" className="text-blue-600 hover:underline">
+ Забыли пароль?
+ </Link>
+ <Link href="/register" className="text-blue-600 hover:underline">
+ Зарегистрироваться
+ </Link>
+ </div>
 
-  return (
-    <Card className="w-full max-w-md p-8 dark:bg-gray-900 dark:border-gray-800">
-      <div className="mb-6 text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-custom-100 text-custom-700 dark:bg-custom-900/30 dark:text-custom-400">
-          <Lock className="h-6 w-6" />
-        </div>
-        <h1 className="mt-4 text-2xl font-semibold text-gray-900 dark:text-white">Вход в GPT Agent</h1>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Введите учетные данные для входа в систему</p>
-      </div>
-
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium text-gray-900 dark:text-white">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder-gray-400 shadow-sm focus:border-custom-500 focus:outline-none focus:ring-1 focus:ring-custom-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 dark:focus:border-custom-400 dark:focus:ring-custom-400"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium text-gray-900 dark:text-white">
-            Пароль
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder-gray-400 shadow-sm focus:border-custom-500 focus:outline-none focus:ring-1 focus:ring-custom-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 dark:focus:border-custom-400 dark:focus:ring-custom-400"
-          />
-        </div>
-
-        {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-            {error}
-          </div>
-        )}
-
-        <KwidButton type="submit" variant="primary" className="w-full gap-2" disabled={isPending}>
-          {isPending ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" /> Входим...
-            </>
-          ) : (
-            <>
-              <Lock className="h-4 w-4" /> Войти
-            </>
-          )}
-        </KwidButton>
-      </form>
-
-      <div className="mt-4 flex items-center justify-between text-sm">
-        <Link href="/reset-password/request" className="text-custom-600 hover:text-custom-700 dark:text-custom-400 dark:hover:text-custom-300">
-          Забыли пароль?
-        </Link>
-        <span className="text-gray-600 dark:text-gray-400">Нет аккаунта? </span>
-        <Link href="/register" className="text-custom-600 hover:text-custom-700 dark:text-custom-400 dark:hover:text-custom-300">
-          Зарегистрироваться
-        </Link>
-      </div>
-
-      {process.env.NODE_ENV === 'development' && (
-        <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-400">
-          <p className="mb-2 font-medium dark:text-gray-300">Демо-учётные данные (только для разработки)</p>
-          <div className="space-y-1">
-            <p>Email: <span className="font-mono">founder@example.com</span></p>
-            <p>Пароль: <span className="font-mono">Demo1234!</span></p>
-          </div>
-        </div>
-      )}
-    </Card>
-  )
+ {process.env.NODE_ENV === 'development' && (
+ <div className="mt-6 rounded border border-gray-300 bg-gray-50 p-4 text-xs">
+ <p className="mb-2 font-medium">Демо данные:</p>
+ <p>Email: <span className="font-mono">founder@example.com</span></p>
+ <p>Пароль: <span className="font-mono">Demo1234!</span></p>
+ </div>
+ )}
+ </div>
+ </div>
+ )
 }
 

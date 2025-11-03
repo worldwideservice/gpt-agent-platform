@@ -9,501 +9,501 @@ import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 let stripe: Stripe | null = null
 
 const getStripe = (): Stripe => {
-  if (!stripe) {
-    const secretKey = process.env.STRIPE_SECRET_KEY
-    if (!secretKey) {
-      throw new Error('STRIPE_SECRET_KEY is not configured')
-    }
-    stripe = new Stripe(secretKey, {
-      apiVersion: '2025-10-29.clover',
-    })
-  }
-  return stripe
+ if (!stripe) {
+ const secretKey = process.env.STRIPE_SECRET_KEY
+ if (!secretKey) {
+ throw new Error('STRIPE_SECRET_KEY is not configured')
+ }
+ stripe = new Stripe(secretKey, {
+ apiVersion: '2025-10-29.clover',
+ })
+ }
+ return stripe
 }
 
 export interface BillingPlan {
-  id: string
-  name: string
-  description?: string
-  stripe_price_id: string
-  price_cents: number
-  currency: string
-  interval: 'month' | 'year'
-  features: Record<string, any>
-  limits: {
-    agents: number
-    tokens_per_month: number
-    messages_per_month: number
-    storage_gb: number
-  }
-  is_active: boolean
+ id: string
+ name: string
+ description?: string
+ stripe_price_id: string
+ price_cents: number
+ currency: string
+ interval: 'month' | 'year'
+ features: Record<string, any>
+ limits: {
+ agents: number
+ tokens_per_month: number
+ messages_per_month: number
+ storage_gb: number
+ }
+ is_active: boolean
 }
 
 export interface Subscription {
-  id: string
-  org_id: string
-  stripe_subscription_id: string
-  stripe_customer_id: string
-  plan_id: string
-  status: 'active' | 'canceled' | 'past_due' | 'incomplete'
-  current_period_start: string
-  current_period_end: string
-  cancel_at_period_end: boolean
-  usage_limits: Record<string, number>
-  metadata: Record<string, any>
-  created_at: string
-  updated_at: string
+ id: string
+ org_id: string
+ stripe_subscription_id: string
+ stripe_customer_id: string
+ plan_id: string
+ status: 'active' | 'canceled' | 'past_due' | 'incomplete'
+ current_period_start: string
+ current_period_end: string
+ cancel_at_period_end: boolean
+ usage_limits: Record<string, number>
+ metadata: Record<string, any>
+ created_at: string
+ updated_at: string
 }
 
 export interface UsageRecord {
-  id: string
-  org_id: string
-  subscription_id?: string
-  resource_type: 'tokens' | 'messages' | 'storage' | 'agents'
-  amount: number
-  cost_cents?: number
-  description?: string
-  recorded_at: string
-  metadata: Record<string, any>
+ id: string
+ org_id: string
+ subscription_id?: string
+ resource_type: 'tokens' | 'messages' | 'storage' | 'agents'
+ amount: number
+ cost_cents?: number
+ description?: string
+ recorded_at: string
+ metadata: Record<string, any>
 }
 
 /**
  * Создает клиента Stripe для организации
  */
 export const createStripeCustomer = async (
-  orgId: string,
-  email: string,
-  name?: string,
+ orgId: string,
+ email: string,
+ name?: string,
 ): Promise<string | null> => {
-  try {
-    const customer = await getStripe().customers.create({
-      email,
-      name,
-      metadata: {
-        org_id: orgId,
-      },
-    })
+ try {
+ const customer = await getStripe().customers.create({
+ email,
+ name,
+ metadata: {
+ org_id: orgId,
+ },
+ })
 
-    // Сохраняем customer_id в базе данных
-    const supabase = getSupabaseServiceRoleClient()
-    await supabase
-      .from('organizations')
-      .update({ stripe_customer_id: customer.id })
-      .eq('id', orgId)
+ // Сохраняем customer_id в базе данных
+ const supabase = getSupabaseServiceRoleClient()
+ await supabase
+ .from('organizations')
+ .update({ stripe_customer_id: customer.id })
+ .eq('id', orgId)
 
-    return customer.id
-  } catch (error) {
-    console.error('Error creating Stripe customer', error)
-    return null
-  }
+ return customer.id
+ } catch (error) {
+ console.error('Error creating Stripe customer', error)
+ return null
+ }
 }
 
 /**
  * Создает сессию подписки для клиента
  */
 export const createSubscriptionSession = async (
-  orgId: string,
-  planId: string,
-  successUrl: string,
-  cancelUrl: string,
+ orgId: string,
+ planId: string,
+ successUrl: string,
+ cancelUrl: string,
 ): Promise<string | null> => {
-  try {
-    const supabase = getSupabaseServiceRoleClient()
+ try {
+ const supabase = getSupabaseServiceRoleClient()
 
-    // Получаем информацию об организации
-    const { data: org } = await supabase
-      .from('organizations')
-      .select('stripe_customer_id, name')
-      .eq('id', orgId)
-      .single()
+ // Получаем информацию об организации
+ const { data: org } = await supabase
+ .from('organizations')
+ .select('stripe_customer_id, name')
+ .eq('id', orgId)
+ .single()
 
-    if (!org) {
-      throw new Error('Organization not found')
-    }
+ if (!org) {
+ throw new Error('Organization not found')
+ }
 
-    // Получаем план
-    const { data: plan } = await supabase
-      .from('billing_plans')
-      .select('*')
-      .eq('id', planId)
-      .eq('is_active', true)
-      .single()
+ // Получаем план
+ const { data: plan } = await supabase
+ .from('billing_plans')
+ .select('*')
+ .eq('id', planId)
+ .eq('is_active', true)
+ .single()
 
-    if (!plan) {
-      throw new Error('Plan not found')
-    }
+ if (!plan) {
+ throw new Error('Plan not found')
+ }
 
-    let customerId = org.stripe_customer_id
+ let customerId = org.stripe_customer_id
 
-    // Создаем клиента если его нет
-    if (!customerId) {
-      customerId = await createStripeCustomer(orgId, '', org.name || 'Organization')
-      if (!customerId) {
-        throw new Error('Failed to create Stripe customer')
-      }
-    }
+ // Создаем клиента если его нет
+ if (!customerId) {
+ customerId = await createStripeCustomer(orgId, '', org.name || 'Organization')
+ if (!customerId) {
+ throw new Error('Failed to create Stripe customer')
+ }
+ }
 
-    // Создаем сессию подписки
-    const session = await getStripe().checkout.sessions.create({
-      customer: customerId,
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price: plan.stripe_price_id,
-          quantity: 1,
-        },
-      ],
-      mode: 'subscription',
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      metadata: {
-        org_id: orgId,
-        plan_id: planId,
-      },
-    })
+ // Создаем сессию подписки
+ const session = await getStripe().checkout.sessions.create({
+ customer: customerId,
+ payment_method_types: ['card'],
+ line_items: [
+ {
+ price: plan.stripe_price_id,
+ quantity: 1,
+ },
+ ],
+ mode: 'subscription',
+ success_url: successUrl,
+ cancel_url: cancelUrl,
+ metadata: {
+ org_id: orgId,
+ plan_id: planId,
+ },
+ })
 
-    return session.url || null
-  } catch (error) {
-    console.error('Error creating subscription session', error)
-    return null
-  }
+ return session.url || null
+ } catch (error) {
+ console.error('Error creating subscription session', error)
+ return null
+ }
 }
 
 /**
  * Обрабатывает webhook от Stripe
  */
 export const handleStripeWebhook = async (
-  event: Stripe.Event,
+ event: Stripe.Event,
 ): Promise<boolean> => {
-  try {
-    switch (event.type) {
-      case 'checkout.session.completed':
-        return await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session)
+ try {
+ switch (event.type) {
+ case 'checkout.session.completed':
+ return await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session)
 
-      case 'invoice.payment_succeeded':
-        return await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice)
+ case 'invoice.payment_succeeded':
+ return await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice)
 
-      case 'invoice.payment_failed':
-        return await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice)
+ case 'invoice.payment_failed':
+ return await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice)
 
-      case 'customer.subscription.updated':
-        return await handleSubscriptionUpdated(event.data.object as Stripe.Subscription)
+ case 'customer.subscription.updated':
+ return await handleSubscriptionUpdated(event.data.object as Stripe.Subscription)
 
-      case 'customer.subscription.deleted':
-        return await handleSubscriptionDeleted(event.data.object as Stripe.Subscription)
+ case 'customer.subscription.deleted':
+ return await handleSubscriptionDeleted(event.data.object as Stripe.Subscription)
 
-      default:
-        console.log('Unhandled webhook event:', event.type)
-        return true
-    }
-  } catch (error) {
-    console.error('Error handling Stripe webhook', error)
-    return false
-  }
+ default:
+ console.log('Unhandled webhook event:', event.type)
+ return true
+ }
+ } catch (error) {
+ console.error('Error handling Stripe webhook', error)
+ return false
+ }
 }
 
 /**
  * Обрабатывает завершение checkout сессии
  */
 const handleCheckoutCompleted = async (session: Stripe.Checkout.Session): Promise<boolean> => {
-  const supabase = getSupabaseServiceRoleClient()
-  const orgId = session.metadata?.org_id
-  const planId = session.metadata?.plan_id
+ const supabase = getSupabaseServiceRoleClient()
+ const orgId = session.metadata?.org_id
+ const planId = session.metadata?.plan_id
 
-  if (!orgId || !planId) {
-    console.error('Missing org_id or plan_id in session metadata')
-    return false
-  }
+ if (!orgId || !planId) {
+ console.error('Missing org_id or plan_id in session metadata')
+ return false
+ }
 
-  try {
-    // Получаем подписку из Stripe
-    const subscription = await getStripe().subscriptions.retrieve(session.subscription as string)
+ try {
+ // Получаем подписку из Stripe
+ const subscription = await getStripe().subscriptions.retrieve(session.subscription as string)
 
-    // Создаем запись о подписке в базе данных
-    const { error } = await supabase
-      .from('subscriptions')
-      .insert({
-        org_id: orgId,
-        stripe_subscription_id: subscription.id,
-        stripe_customer_id: subscription.customer as string,
-        plan_id: planId,
-        status: subscription.status,
-        current_period_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
-        current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
-        cancel_at_period_end: subscription.cancel_at_period_end,
-      })
+ // Создаем запись о подписке в базе данных
+ const { error } = await supabase
+ .from('subscriptions')
+ .insert({
+ org_id: orgId,
+ stripe_subscription_id: subscription.id,
+ stripe_customer_id: subscription.customer as string,
+ plan_id: planId,
+ status: subscription.status,
+ current_period_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
+ current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
+ cancel_at_period_end: subscription.cancel_at_period_end,
+ })
 
-    if (error) {
-      console.error('Error saving subscription', error)
-      return false
-    }
+ if (error) {
+ console.error('Error saving subscription', error)
+ return false
+ }
 
-    return true
-  } catch (error) {
-    console.error('Error handling checkout completed', error)
-    return false
-  }
+ return true
+ } catch (error) {
+ console.error('Error handling checkout completed', error)
+ return false
+ }
 }
 
 /**
  * Обрабатывает успешную оплату счета
  */
 const handleInvoicePaymentSucceeded = async (invoice: Stripe.Invoice): Promise<boolean> => {
-  // Логика обработки успешной оплаты
-  console.log('Invoice payment succeeded:', invoice.id)
-  return true
+ // Логика обработки успешной оплаты
+ console.log('Invoice payment succeeded:', invoice.id)
+ return true
 }
 
 /**
  * Обрабатывает неудачную оплату счета
  */
 const handleInvoicePaymentFailed = async (invoice: Stripe.Invoice): Promise<boolean> => {
-  // Логика обработки неудачной оплаты
-  console.log('Invoice payment failed:', invoice.id)
-  return true
+ // Логика обработки неудачной оплаты
+ console.log('Invoice payment failed:', invoice.id)
+ return true
 }
 
 /**
  * Обрабатывает обновление подписки
  */
 const handleSubscriptionUpdated = async (subscription: Stripe.Subscription): Promise<boolean> => {
-  const supabase = getSupabaseServiceRoleClient()
+ const supabase = getSupabaseServiceRoleClient()
 
-  try {
-    const { error } = await supabase
-      .from('subscriptions')
-      .update({
-        status: subscription.status,
-        current_period_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
-        current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
-        cancel_at_period_end: subscription.cancel_at_period_end,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('stripe_subscription_id', subscription.id)
+ try {
+ const { error } = await supabase
+ .from('subscriptions')
+ .update({
+ status: subscription.status,
+ current_period_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
+ current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
+ cancel_at_period_end: subscription.cancel_at_period_end,
+ updated_at: new Date().toISOString(),
+ })
+ .eq('stripe_subscription_id', subscription.id)
 
-    return !error
-  } catch (error) {
-    console.error('Error updating subscription', error)
-    return false
-  }
+ return !error
+ } catch (error) {
+ console.error('Error updating subscription', error)
+ return false
+ }
 }
 
 /**
  * Обрабатывает удаление подписки
  */
 const handleSubscriptionDeleted = async (subscription: Stripe.Subscription): Promise<boolean> => {
-  const supabase = getSupabaseServiceRoleClient()
+ const supabase = getSupabaseServiceRoleClient()
 
-  try {
-    const { error } = await supabase
-      .from('subscriptions')
-      .update({
-        status: 'canceled',
-        cancel_at_period_end: true,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('stripe_subscription_id', subscription.id)
+ try {
+ const { error } = await supabase
+ .from('subscriptions')
+ .update({
+ status: 'canceled',
+ cancel_at_period_end: true,
+ updated_at: new Date().toISOString(),
+ })
+ .eq('stripe_subscription_id', subscription.id)
 
-    return !error
-  } catch (error) {
-    console.error('Error deleting subscription', error)
-    return false
-  }
+ return !error
+ } catch (error) {
+ console.error('Error deleting subscription', error)
+ return false
+ }
 }
 
 /**
  * Получает текущую подписку организации
  */
 export const getOrganizationSubscription = async (
-  orgId: string,
+ orgId: string,
 ): Promise<Subscription | null> => {
-  const supabase = getSupabaseServiceRoleClient()
+ const supabase = getSupabaseServiceRoleClient()
 
-  const { data, error } = await supabase
-    .from('subscriptions')
-    .select('*')
-    .eq('org_id', orgId)
-    .eq('status', 'active')
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single()
+ const { data, error } = await supabase
+ .from('subscriptions')
+ .select('*')
+ .eq('org_id', orgId)
+ .eq('status', 'active')
+ .order('created_at', { ascending: false })
+ .limit(1)
+ .single()
 
-  if (error || !data) {
-    return null
-  }
+ if (error || !data) {
+ return null
+ }
 
-  return data
+ return data
 }
 
 /**
  * Получает доступные планы подписки
  */
 export const getBillingPlans = async (): Promise<BillingPlan[]> => {
-  const supabase = getSupabaseServiceRoleClient()
+ const supabase = getSupabaseServiceRoleClient()
 
-  const { data, error } = await supabase
-    .from('billing_plans')
-    .select('*')
-    .eq('is_active', true)
-    .order('price_cents', { ascending: true })
+ const { data, error } = await supabase
+ .from('billing_plans')
+ .select('*')
+ .eq('is_active', true)
+ .order('price_cents', { ascending: true })
 
-  if (error) {
-    console.error('Error getting billing plans', error)
-    return []
-  }
+ if (error) {
+ console.error('Error getting billing plans', error)
+ return []
+ }
 
-  return data ?? []
+ return data ?? []
 }
 
 /**
  * Записывает использование ресурса
  */
 export const recordUsage = async (
-  orgId: string,
-  resourceType: UsageRecord['resource_type'],
-  amount: number,
-  description?: string,
-  metadata: Record<string, any> = {},
+ orgId: string,
+ resourceType: UsageRecord['resource_type'],
+ amount: number,
+ description?: string,
+ metadata: Record<string, any> = {},
 ): Promise<boolean> => {
-  const supabase = getSupabaseServiceRoleClient()
+ const supabase = getSupabaseServiceRoleClient()
 
-  try {
-    // Получаем текущую подписку
-    const subscription = await getOrganizationSubscription(orgId)
+ try {
+ // Получаем текущую подписку
+ const subscription = await getOrganizationSubscription(orgId)
 
-    const { error } = await supabase
-      .from('usage_records')
-      .insert({
-        org_id: orgId,
-        subscription_id: subscription?.id,
-        resource_type: resourceType,
-        amount,
-        description,
-        metadata,
-      })
+ const { error } = await supabase
+ .from('usage_records')
+ .insert({
+ org_id: orgId,
+ subscription_id: subscription?.id,
+ resource_type: resourceType,
+ amount,
+ description,
+ metadata,
+ })
 
-    if (error) {
-      console.error('Error recording usage', error)
-      return false
-    }
+ if (error) {
+ console.error('Error recording usage', error)
+ return false
+ }
 
-    // Проверяем лимиты
-    await checkUsageLimits(orgId, resourceType)
+ // Проверяем лимиты
+ await checkUsageLimits(orgId, resourceType)
 
-    return true
-  } catch (error) {
-    console.error('Error recording usage', error)
-    return false
-  }
+ return true
+ } catch (error) {
+ console.error('Error recording usage', error)
+ return false
+ }
 }
 
 /**
  * Получает использование ресурсов за период
  */
 export const getUsageStats = async (
-  orgId: string,
-  startDate: Date,
-  endDate: Date,
+ orgId: string,
+ startDate: Date,
+ endDate: Date,
 ): Promise<Record<string, number>> => {
-  const supabase = getSupabaseServiceRoleClient()
+ const supabase = getSupabaseServiceRoleClient()
 
-  const { data, error } = await supabase
-    .from('usage_records')
-    .select('resource_type, amount')
-    .eq('org_id', orgId)
-    .gte('recorded_at', startDate.toISOString())
-    .lte('recorded_at', endDate.toISOString())
+ const { data, error } = await supabase
+ .from('usage_records')
+ .select('resource_type, amount')
+ .eq('org_id', orgId)
+ .gte('recorded_at', startDate.toISOString())
+ .lte('recorded_at', endDate.toISOString())
 
-  if (error) {
-    console.error('Error getting usage stats', error)
-    return {}
-  }
+ if (error) {
+ console.error('Error getting usage stats', error)
+ return {}
+ }
 
-  const stats: Record<string, number> = {}
-  for (const record of data ?? []) {
-    stats[record.resource_type] = (stats[record.resource_type] || 0) + record.amount
-  }
+ const stats: Record<string, number> = {}
+ for (const record of data ?? []) {
+ stats[record.resource_type] = (stats[record.resource_type] || 0) + record.amount
+ }
 
-  return stats
+ return stats
 }
 
 /**
  * Проверяет лимиты использования
  */
 const checkUsageLimits = async (
-  orgId: string,
-  resourceType: UsageRecord['resource_type'],
+ orgId: string,
+ resourceType: UsageRecord['resource_type'],
 ): Promise<void> => {
-  const subscription = await getOrganizationSubscription(orgId)
-  if (!subscription) return
+ const subscription = await getOrganizationSubscription(orgId)
+ if (!subscription) return
 
-  const currentUsage = await getUsageStats(
-    orgId,
-    new Date(subscription.current_period_start),
-    new Date(subscription.current_period_end),
-  )
+ const currentUsage = await getUsageStats(
+ orgId,
+ new Date(subscription.current_period_start),
+ new Date(subscription.current_period_end),
+ )
 
-  const limit = subscription.usage_limits[resourceType]
-  const current = currentUsage[resourceType] || 0
+ const limit = subscription.usage_limits[resourceType]
+ const current = currentUsage[resourceType] || 0
 
-  if (limit && current >= limit * 0.9) { // 90% от лимита
-    // Отправляем предупреждение (можно реализовать позже)
-    console.warn(`Usage limit warning for ${resourceType}: ${current}/${limit}`)
-  }
+ if (limit && current >= limit * 0.9) { // 90% от лимита
+ // Отправляем предупреждение (можно реализовать позже)
+ console.warn(`Usage limit warning for ${resourceType}: ${current}/${limit}`)
+ }
 
-  if (limit && current >= limit) {
-    // Превышен лимит - можно заблокировать или отправить уведомление
-    console.error(`Usage limit exceeded for ${resourceType}: ${current}/${limit}`)
-  }
+ if (limit && current >= limit) {
+ // Превышен лимит - можно заблокировать или отправить уведомление
+ console.error(`Usage limit exceeded for ${resourceType}: ${current}/${limit}`)
+ }
 }
 
 /**
  * Отменяет подписку
  */
 export const cancelSubscription = async (
-  orgId: string,
-  cancelAtPeriodEnd = true,
+ orgId: string,
+ cancelAtPeriodEnd = true,
 ): Promise<boolean> => {
-  const subscription = await getOrganizationSubscription(orgId)
-  if (!subscription) {
-    return false
-  }
+ const subscription = await getOrganizationSubscription(orgId)
+ if (!subscription) {
+ return false
+ }
 
-  try {
-    if (cancelAtPeriodEnd) {
-      await getStripe().subscriptions.update(subscription.stripe_subscription_id, {
-        cancel_at_period_end: true,
-      })
-    } else {
-      await getStripe().subscriptions.cancel(subscription.stripe_subscription_id)
-    }
+ try {
+ if (cancelAtPeriodEnd) {
+ await getStripe().subscriptions.update(subscription.stripe_subscription_id, {
+ cancel_at_period_end: true,
+ })
+ } else {
+ await getStripe().subscriptions.cancel(subscription.stripe_subscription_id)
+ }
 
-    return true
-  } catch (error) {
-    console.error('Error canceling subscription', error)
-    return false
-  }
+ return true
+ } catch (error) {
+ console.error('Error canceling subscription', error)
+ return false
+ }
 }
 
 /**
  * Возобновляет подписку
  */
 export const resumeSubscription = async (orgId: string): Promise<boolean> => {
-  const subscription = await getOrganizationSubscription(orgId)
-  if (!subscription) {
-    return false
-  }
+ const subscription = await getOrganizationSubscription(orgId)
+ if (!subscription) {
+ return false
+ }
 
-  try {
-    await getStripe().subscriptions.update(subscription.stripe_subscription_id, {
-      cancel_at_period_end: false,
-    })
+ try {
+ await getStripe().subscriptions.update(subscription.stripe_subscription_id, {
+ cancel_at_period_end: false,
+ })
 
-    return true
-  } catch (error) {
-    console.error('Error resuming subscription', error)
-    return false
-  }
+ return true
+ } catch (error) {
+ console.error('Error resuming subscription', error)
+ return false
+ }
 }
 
 

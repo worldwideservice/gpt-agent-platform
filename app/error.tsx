@@ -3,34 +3,34 @@
 import { useEffect } from 'react'
 
 export default function Error({
-  error,
-  reset,
+ error,
+ reset,
 }: {
-  error: Error & { digest?: string }
-  reset: () => void
+ error: Error & { digest?: string }
+ reset: () => void
 }) {
-  useEffect(() => {
-    console.error('Application error', error)
-  }, [error])
+ useEffect(() => {
+ console.error('Application error', error)
+ }, [error])
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50">
-      <div className="space-y-4 rounded-lg border border-red-200 bg-white p-8 shadow-lg">
-        <div>
-          <h2 className="text-lg font-semibold text-red-700">Произошла ошибка</h2>
-          <p className="mt-2 text-sm text-slate-600">
-            {error.message || 'Произошла непредвиденная ошибка'}
-          </p>
-        </div>
-        <button
-          onClick={reset}
-          className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
-        >
-          Попробовать снова
-        </button>
-      </div>
-    </div>
-  )
+ return (
+ <div className="flex min-h-screen items-center justify-center bg-slate-50">
+ <div className="space-y-4 rounded-lg border border-red-200 bg-white p-8 shadow-lg">
+ <div>
+ <h2 className="text-lg font-semibold text-red-700">Произошла ошибка</h2>
+ <p className="mt-2 text-sm text-slate-600">
+ {error.message || 'Произошла непредвиденная ошибка'}
+ </p>
+ </div>
+ <button
+ onClick={reset}
+ className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+ >
+ Попробовать снова
+ </button>
+ </div>
+ </div>
+ )
 }
 
 
