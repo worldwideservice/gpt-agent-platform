@@ -72,25 +72,30 @@ echo "3️⃣ Проверка алертов..."
 ALERTS=$(curl -s -H "Authorization: Bearer $SENTRY_TOKEN" \
   "https://sentry.io/api/0/projects/$SENTRY_ORG/$SENTRY_PROJECT/alert-rules/" 2>&1)
 
+ALERT_COUNT=0
 if echo "$ALERTS" | grep -q '"id"'; then
   ALERT_COUNT=$(echo "$ALERTS" | python3 -c "
 import sys, json
 try:
     data = json.load(sys.stdin)
-    print(len(data) if isinstance(data, list) else 0)
+    if isinstance(data, list):
+        print(len(data))
+    else:
+        print(0)
 except:
     print(0)
 " 2>/dev/null || echo "0")
   
-  echo "✅ Найдено алертов: $ALERT_COUNT"
-  
-  if [ "$ALERT_COUNT" -ge 4 ]; then
-    echo "✅ Все критичные алерты созданы!"
-  else
-    echo "⚠️  Недостаточно алертов (ожидается: 4, найдено: $ALERT_COUNT)"
-    echo ""
-    echo "📋 Список созданных алертов:"
-    echo "$ALERTS" | python3 -c "
+  if [ -n "$ALERT_COUNT" ] && [ "$ALERT_COUNT" != "" ]; then
+    echo "✅ Найдено алертов: $ALERT_COUNT"
+    
+    if [ "$ALERT_COUNT" -ge 4 ] 2>/dev/null; then
+      echo "✅ Все критичные алерты созданы!"
+    else
+      echo "⚠️  Недостаточно алертов (ожидается: 4, найдено: $ALERT_COUNT)"
+      echo ""
+      echo "📋 Список созданных алертов:"
+      echo "$ALERTS" | python3 -c "
 import sys, json
 try:
     data = json.load(sys.stdin)
@@ -100,8 +105,13 @@ try:
 except:
     pass
 " 2>/dev/null || echo "   (не удалось распарсить)"
+    fi
+  else
+    ALERT_COUNT=0
+    echo "⚠️  Не удалось подсчитать алерты"
   fi
 else
+  ALERT_COUNT=0
   echo "⚠️  Алерты не найдены"
   echo "   Создайте алерты через Dashboard"
 fi
