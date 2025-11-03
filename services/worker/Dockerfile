@@ -43,9 +43,6 @@ COPY --from=base /app/tsconfig.json ./tsconfig.json
 WORKDIR /app/services/worker
 RUN npm ci --only=production
 
-# Возвращаемся в корень для правильных путей импорта
-WORKDIR /app
-
 # Создаем пользователя для безопасности
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 worker
@@ -60,9 +57,9 @@ USER worker
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3001}/health || exit 1
 
-# Запускаем worker через npm start (который использует tsx) для поддержки TypeScript импортов из lib/
+# Запускаем worker напрямую через tsx из node_modules для поддержки TypeScript импортов из lib/
 # tsx позволяет динамически импортировать .ts файлы во время выполнения
 # tsx автоматически резолвит path aliases из tsconfig.json при использовании tsImport
 # Запускаем из корня /app, чтобы пути ../../../lib/env правильно резолвились
 WORKDIR /app
-CMD ["npm", "--prefix", "services/worker", "start"]
+CMD ["node", "/app/services/worker/node_modules/.bin/tsx", "--tsconfig", "/app/tsconfig.json", "/app/services/worker/dist/index.js"]
