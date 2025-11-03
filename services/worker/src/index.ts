@@ -1,3 +1,7 @@
+// Регистрируем tsx для поддержки динамических импортов TypeScript файлов
+// Это необходимо для работы tsImport из tsx/esm/api
+import 'tsx/esm'
+
 import { Worker } from 'bullmq'
 import Redis from 'ioredis'
 
