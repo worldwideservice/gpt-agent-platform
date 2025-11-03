@@ -24,6 +24,7 @@ import { Switch } from "@/components/ui";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui";
 import { useToast } from "@/components/ui";
 import { ConfirmDialog } from "@/components/ui";
+import { DealContactFieldsSelector } from "@/components/crm/DealContactFieldsSelector";
 
 // Доступные модели ИИ
 const AI_MODELS = [
@@ -175,7 +176,7 @@ export default function EditAIAgentPage() {
               Редактирование {agentData?.name || "агента"}
             </h1>
             <nav className="text-sm text-gray-500 mt-1">
-              Агенты ИИ → {agentData?.name || "Агент"} → Основные
+              Агенты ИИ → {agentData?.name || "Агент"}
             </nav>
           </div>
         </div>
@@ -190,11 +191,15 @@ export default function EditAIAgentPage() {
         </Button>
       </div>
 
-      {/* Вкладки - пока только "Основные" */}
+      {/* Вкладки */}
       <Tabs defaultValue="basic" className="max-w-4xl">
         <TabsList>
           <TabsTrigger value="basic">Основные</TabsTrigger>
-          {/* Остальные вкладки будут добавлены позже */}
+          <TabsTrigger value="deals">Сделки и контакты</TabsTrigger>
+          <TabsTrigger value="triggers">Триггеры</TabsTrigger>
+          <TabsTrigger value="chains">Цепочки</TabsTrigger>
+          <TabsTrigger value="integrations">Интеграции</TabsTrigger>
+          <TabsTrigger value="advanced">Дополнительно</TabsTrigger>
         </TabsList>
 
         <TabsContent value="basic">
@@ -403,6 +408,59 @@ export default function EditAIAgentPage() {
               </Button>
             </div>
           </form>
+        </TabsContent>
+
+        {/* Вкладка "Сделки и контакты" */}
+        <TabsContent value="deals">
+          <div className="mt-6">
+            <DealContactFieldsSelector
+              agentId={agentId}
+              onFieldsChange={(dealFields, contactFields) => {
+                // Поля автоматически сохраняются через компонент
+                console.log('Fields changed:', { dealFields, contactFields })
+              }}
+            />
+          </div>
+        </TabsContent>
+
+        {/* Вкладка "Триггеры" */}
+        <TabsContent value="triggers">
+          <div className="mt-6">
+            <div className="text-center py-12 text-gray-500">
+              <p className="text-lg font-medium mb-2">Триггеры</p>
+              <p className="text-sm">Раздел в разработке</p>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Вкладка "Цепочки" */}
+        <TabsContent value="chains">
+          <div className="mt-6">
+            <div className="text-center py-12 text-gray-500">
+              <p className="text-lg font-medium mb-2">Цепочки</p>
+              <p className="text-sm">Раздел в разработке</p>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Вкладка "Интеграции" */}
+        <TabsContent value="integrations">
+          <div className="mt-6">
+            <div className="text-center py-12 text-gray-500">
+              <p className="text-lg font-medium mb-2">Интеграции</p>
+              <p className="text-sm">Раздел в разработке</p>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Вкладка "Дополнительно" */}
+        <TabsContent value="advanced">
+          <div className="mt-6">
+            <div className="text-center py-12 text-gray-500">
+              <p className="text-lg font-medium mb-2">Дополнительно</p>
+              <p className="text-sm">Раздел в разработке</p>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
 
