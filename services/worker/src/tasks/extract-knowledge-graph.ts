@@ -4,7 +4,7 @@
  */
 
 import { getSupabaseClient } from '../../../lib/supabase'
-import { env } from '../lib/env'
+import { env } from '../lib/env.ts'
 
 interface ExtractKGJob {
  assetId?: string
