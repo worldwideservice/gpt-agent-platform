@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 
 import { auth } from '@/auth'
-import { getSupabaseServiceRoleClient } from '@/lib/supabase/server'
+import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
 interface UpdateItem {
   id: string
