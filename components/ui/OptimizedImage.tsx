@@ -60,11 +60,11 @@ export const OptimizedImage = ({
  return (
  <div className={cn('relative overflow-hidden', className)}>
  {isLoading && !hasError && (
- <div
- className={cn(
- 'absolute inset-0 animate-pulse bg-gray-200
- fill ? 'absolute inset-0' : ''
- )}
+        <div
+          className={cn(
+            'absolute inset-0 animate-pulse bg-gray-200',
+            fill ? 'absolute inset-0' : ''
+          )}
  style={fill ? undefined : { width, height }}
  aria-hidden="true"
  />

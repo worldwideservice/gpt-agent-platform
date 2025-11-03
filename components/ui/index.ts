@@ -14,6 +14,7 @@ export { Input } from './shadcn'
 export { Textarea } from './shadcn'
 export { Badge } from './shadcn'
 export { Select } from './shadcn'
+export { Switch } from './switch'
 export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption } from './shadcn'
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './shadcn'
 export { Modal, ModalTrigger, ModalContent, ModalHeader, ModalFooter, ModalTitle, ModalDescription } from './shadcn'
@@ -43,10 +44,6 @@ export {
 // Layout компоненты
 export { Sidebar } from '../layout/Sidebar'
 export { Header } from '../layout/Header'
-
-// Agent компоненты
-export { AgentTable } from '../agents/AgentTable'
-export { TriggerManager } from '../agents/TriggerManager'
 
 // CRM компоненты
 export { CRMSync } from '../crm/CRMSync'

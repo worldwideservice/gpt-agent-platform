@@ -15,9 +15,9 @@ export const LineChartCard = ({ title, subtitle, data, emptyMessage }: LineChart
  const hasData = data.length > 1 && data.some((point) => point.value > 0)
 
  return (
- <article className="fi-section rounded-xl border border-gray-200 bg-white shadow-sm ring-1 ring-gray-950/5 transition-shadow hover:shadow-lg
+ <article className="fi-section rounded-xl border border-gray-200 bg-white shadow-sm ring-1 ring-gray-950/5 transition-shadow hover:shadow-lg">
  <header className="fi-section-header flex flex-col gap-3 px-6 py-4">
- <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950
+ <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950">
  {title}
  </h3>
  </header>
@@ -85,7 +85,7 @@ const Chart = ({ data }: { data: ActivitySeriesPoint[] }) => {
 }
 
 const EmptyState = ({ message }: { message?: string }) => (
- <div className="flex h-full items-center justify-center rounded-xl bg-gray-50 text-sm text-gray-500
+ <div className="flex h-full items-center justify-center rounded-xl bg-gray-50 text-sm text-gray-500">
  {message ?? 'Недостаточно данных для отображения графика'}
  </div>
 )

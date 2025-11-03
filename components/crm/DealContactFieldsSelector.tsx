@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { X, Briefcase, Users, Eye, RefreshCw, Edit, ChevronDown, ChevronUp, GripVertical, Trash2 } from 'lucide-react'
-import { KwidButton, KwidSelect, KwidBadge } from '@/components/kwid'
+import { Button } from '@/components/ui'
+import { Select } from '@/components/ui/Select'
+import { Badge } from '@/components/ui/shadcn/badge'
 
 interface Field {
  id: string
@@ -134,20 +136,20 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  }, [dealFields, contactFields])
 
  if (isLoading) {
- return <div className="text-sm text-gray-500 полей...</div>
+ return <div className="text-sm text-gray-500">Загрузка полей...</div>
  }
 
  return (
  <div className="space-y-6">
  {/* Настройки доступа к данным */}
- <div className="fi-section rounded-lg border border-gray-200 bg-white
+ <div className="fi-section rounded-lg border border-gray-200 bg-white">
  <header className="fi-section-header flex flex-col gap-3 px-6 py-4">
  <div className="flex items-center justify-between">
- <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950
+ <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950">
  Настройки доступа к данным
  </h3>
  <div className="fi-ac gap-3 flex flex-wrap items-center justify-start">
- <KwidButton 
+ <Button 
  variant="secondary" 
  size="sm"
  onClick={async () => {
@@ -158,10 +160,10 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  >
  <RefreshCw className="w-4 h-4" />
  <span className="fi-btn-label">Синхронизировать настройки CRM</span>
- </KwidButton>
+ </Button>
  </div>
  </div>
- <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500
+ <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500">
  Выберите, какие данные агент может читать и использовать в диалогах
  </p>
  </header>
@@ -174,14 +176,14 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  >
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-x-3">
- <Briefcase className="h-5 w-5 text-gray-400 />
- <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950
+ <Briefcase className="h-5 w-5 text-gray-400" />
+ <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950">
  Данные сделки
  </h3>
  </div>
  <button
  type="button"
- className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2
+ className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
  style={{
  '--c-300': 'var(--gray-300)',
  '--c-400': 'var(--gray-400)',
@@ -192,7 +194,7 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  <ChevronDown className={`h-5 w-5 transition-transform duration-200 ${dealDataCollapsed ? '' : 'rotate-180'}`} />
  </button>
  </div>
- <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500
+ <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500">
  Выберите поля сделки, которые агент может читать
  </p>
  </div>
@@ -200,7 +202,7 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  {!dealDataCollapsed && (
  <div className="px-4 space-y-4">
  <div className="flex items-center gap-x-3 justify-between">
- <span className="text-sm font-medium leading-6 text-gray-950
+ <span className="text-sm font-medium leading-6 text-gray-950">
  Выберите поля сделки
  </span>
  </div>
@@ -213,7 +215,7 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  return field ? (
  <div 
  key={fieldId}
- className="choices__item choices__item--selectable inline-flex items-center gap-1 rounded bg-gray-100 px-3 py-1 text-sm text-gray-700
+ className="choices__item choices__item--selectable inline-flex items-center gap-1 rounded bg-gray-100 px-3 py-1 text-sm text-gray-700"
  data-item
  data-id={fieldId}
  data-value={fieldId}
@@ -226,7 +228,7 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  e.stopPropagation()
  removeDealField(fieldId)
  }}
- className="choices__button ml-1 text-gray-500 hover:text-red-600
+ className="choices__button ml-1 text-gray-500 hover:text-red-600"
  aria-label={`Remove item: '${field.name}'`}
  data-button
  >
@@ -240,7 +242,7 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
 
  {/* Выбор поля */}
  <div className="relative">
- <KwidSelect
+ <Select
  options={[
  { value: '', label: 'Выберите поля, к которым агент сможет получить доступ...' },
  ...availableDealFields
@@ -269,14 +271,14 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  >
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-x-3">
- <Users className="h-5 w-5 text-gray-400 />
- <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950
+ <Users className="h-5 w-5 text-gray-400" />
+ <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950">
  Данные контакта
  </h3>
  </div>
  <button
  type="button"
- className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2
+ className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
  style={{
  '--c-300': 'var(--gray-300)',
  '--c-400': 'var(--gray-400)',
@@ -287,7 +289,7 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  <ChevronDown className={`h-5 w-5 transition-transform duration-200 ${contactDataCollapsed ? '' : 'rotate-180'}`} />
  </button>
  </div>
- <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500
+ <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500">
  Выберите, какие поля контакта агент сможет читать
  </p>
  </div>
@@ -295,7 +297,7 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  {!contactDataCollapsed && (
  <div className="px-4 space-y-4">
  <div className="flex items-center gap-x-3 justify-between">
- <span className="text-sm font-medium leading-6 text-gray-950
+ <span className="text-sm font-medium leading-6 text-gray-950">
  Выберите поля контакта
  </span>
  </div>
@@ -308,7 +310,7 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  return field ? (
  <div 
  key={fieldId}
- className="choices__item choices__item--selectable inline-flex items-center gap-1 rounded bg-gray-100 px-3 py-1 text-sm text-gray-700
+ className="choices__item choices__item--selectable inline-flex items-center gap-1 rounded bg-gray-100 px-3 py-1 text-sm text-gray-700"
  data-item
  data-id={fieldId}
  data-value={fieldId}
@@ -321,7 +323,7 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  e.stopPropagation()
  removeContactField(fieldId)
  }}
- className="choices__button ml-1 text-gray-500 hover:text-red-600
+ className="choices__button ml-1 text-gray-500 hover:text-red-600"
  aria-label={`Remove item: '${field.name}'`}
  data-button
  >
@@ -335,7 +337,7 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
 
  {/* Выбор поля */}
  <div className="relative">
- <KwidSelect
+ <Select
  options={[
  { value: '', label: 'Выберите поля, к которым агент сможет получить доступ...' },
  ...availableContactFields
@@ -360,12 +362,12 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  </div>
 
  {/* Настройки ввода данных */}
- <div className="fi-section rounded-lg border border-gray-200 bg-white
+ <div className="fi-section rounded-lg border border-gray-200 bg-white">
  <header className="fi-section-header flex flex-col gap-3 px-6 py-4">
- <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950
+ <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950">
  Настройки ввода данных
  </h3>
- <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500
+ <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500">
  Настройте, как агент может изменять данные сделок и контактов в зависимости от контекста разговора.
  </p>
  </header>
@@ -378,19 +380,19 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  >
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-x-3">
- <Edit className="h-5 w-5 text-gray-400 />
- <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950
+ <Edit className="h-5 w-5 text-gray-400" />
+ <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950">
  Данные сделки
  </h3>
  </div>
  <button
  type="button"
- className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2
+ className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
  >
  <ChevronDown className="h-5 w-5" />
  </button>
  </div>
- <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500
+ <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500">
  Задайте правила автоматического обновления полей сделки во время разговора
  </p>
  </div>
@@ -398,14 +400,14 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  <div className="flex gap-x-3">
  <button 
  type="button"
- className="text-sm text-gray-600 hover:text-gray-700
+ className="text-sm text-gray-600 hover:text-gray-700"
  onClick={() => setCollapsedRepeaterItems(new Set(dealWriteFields))}
  >
  Свернуть все
  </button>
  <button 
  type="button"
- className="text-sm text-gray-600 hover:text-gray-700
+ className="text-sm text-gray-600 hover:text-gray-700"
  onClick={() => setCollapsedRepeaterItems(new Set())}
  >
  Развернуть все
@@ -418,7 +420,7 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  const isCollapsed = collapsedRepeaterItems.has(fieldId)
  if (!field) return null
  return (
- <div key={fieldId} className="fi-fo-repeater-item border border-gray-200 rounded-lg
+ <div key={fieldId} className="fi-fo-repeater-item border border-gray-200 rounded-lg">
  <div 
  onClick={() => {
  const newSet = new Set(collapsedRepeaterItems)
@@ -431,15 +433,15 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  }}
  className="fi-fo-repeater-item-header flex items-center gap-x-3 overflow-hidden px-4 py-3 cursor-pointer select-none"
  >
- <GripVertical className="h-4 w-4 text-gray-400 aria-label="Переместить" />
- <span className="flex-1 text-sm font-medium text-gray-700
+ <GripVertical className="h-4 w-4 text-gray-400" aria-label="Переместить" />
+ <span className="flex-1 text-sm font-medium text-gray-700">{field.name}</span>
  <button 
  type="button"
  onClick={(e) => {
  e.stopPropagation()
  setDealWriteFields(dealWriteFields.filter(id => id !== fieldId))
  }}
- className="text-gray-400 hover:text-red-600 p-1
+ className="text-gray-400 hover:text-red-600 p-1"
  aria-label="Удалить"
  >
  <Trash2 className="h-4 w-4" />
@@ -456,7 +458,7 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  }
  setCollapsedRepeaterItems(newSet)
  }}
- className="text-gray-400 hover:text-gray-600 p-1
+ className="text-gray-400 hover:text-gray-600 p-1"
  aria-label={isCollapsed ? "Развернуть" : "Свернуть"}
  >
  {isCollapsed ? (
@@ -467,14 +469,14 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  </button>
  </div>
  {!isCollapsed && (
- <div className="fi-section-content p-4 border-t border-gray-200
+ <div className="fi-section-content p-4 border-t border-gray-200">
  {/* Здесь будут настройки для этого поля */}
  </div>
  )}
  </div>
  )
  })}
- <KwidButton 
+ <Button 
  variant="secondary" 
  size="sm" 
  type="button" 
@@ -485,7 +487,7 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  }}
  >
  <span className="fi-btn-label">Добавить поле</span>
- </KwidButton>
+ </Button>
  </div>
  </div>
 
@@ -496,19 +498,19 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  >
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-x-3">
- <Edit className="h-5 w-5 text-gray-400 />
- <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950
+ <Edit className="h-5 w-5 text-gray-400" />
+ <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950">
  Данные контакта
  </h3>
  </div>
  <button
  type="button"
- className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2
+ className="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 -m-2 h-9 w-9 text-gray-400 hover:text-gray-500 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
  >
  <ChevronDown className="h-5 w-5" />
  </button>
  </div>
- <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500
+ <p className="fi-section-header-description overflow-hidden break-words text-sm text-gray-500">
  Определите правила автоматического обновления полей контакта во время разговора
  </p>
  </div>
@@ -518,7 +520,7 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  const isCollapsed = collapsedRepeaterItems.has(fieldId)
  if (!field) return null
  return (
- <div key={fieldId} className="fi-fo-repeater-item border border-gray-200 rounded-lg
+ <div key={fieldId} className="fi-fo-repeater-item border border-gray-200 rounded-lg">
  <div 
  onClick={() => {
  const newSet = new Set(collapsedRepeaterItems)
@@ -531,15 +533,15 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  }}
  className="fi-fo-repeater-item-header flex items-center gap-x-3 overflow-hidden px-4 py-3 cursor-pointer select-none"
  >
- <GripVertical className="h-4 w-4 text-gray-400 aria-label="Переместить" />
- <span className="flex-1 text-sm font-medium text-gray-700
+ <GripVertical className="h-4 w-4 text-gray-400" aria-label="Переместить" />
+ <span className="flex-1 text-sm font-medium text-gray-700">{field.name}</span>
  <button 
  type="button"
  onClick={(e) => {
  e.stopPropagation()
  setContactWriteFields(contactWriteFields.filter(id => id !== fieldId))
  }}
- className="text-gray-400 hover:text-red-600 p-1
+ className="text-gray-400 hover:text-red-600 p-1"
  aria-label="Удалить"
  >
  <Trash2 className="h-4 w-4" />
@@ -556,7 +558,7 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  }
  setCollapsedRepeaterItems(newSet)
  }}
- className="text-gray-400 hover:text-gray-600 p-1
+ className="text-gray-400 hover:text-gray-600 p-1"
  aria-label={isCollapsed ? "Развернуть" : "Свернуть"}
  >
  {isCollapsed ? (
@@ -567,14 +569,14 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  </button>
  </div>
  {!isCollapsed && (
- <div className="fi-section-content p-4 border-t border-gray-200
+ <div className="fi-section-content p-4 border-t border-gray-200">
  {/* Здесь будут настройки для этого поля */}
  </div>
  )}
  </div>
  )
  })}
- <KwidButton 
+ <Button 
  variant="secondary" 
  size="sm" 
  type="button" 
@@ -585,7 +587,7 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  }}
  >
  <span className="fi-btn-label">Добавить поле</span>
- </KwidButton>
+ </Button>
  </div>
  </div>
  </div>

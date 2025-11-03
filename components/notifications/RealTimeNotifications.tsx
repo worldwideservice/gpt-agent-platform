@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useWebSocket } from '@/lib/websocket/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
-import { KwidButton } from '@/components/kwid'
+import { Button } from '@/components/ui'
 import { Badge } from '@/components/ui/Badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
@@ -177,18 +177,18 @@ export const RealTimeNotifications = ({
  }
  }
 
- const getNotificationColor = (level?: string) => {
- switch (level) {
- case 'error':
- return 'border-red-200 bg-red-50
- case 'warning':
- return 'border-yellow-200 bg-yellow-50
- case 'success':
- return 'border-green-200 bg-green-50
- default:
- return 'border-blue-200 bg-blue-50
- }
- }
+  const getNotificationColor = (level?: string) => {
+    switch (level) {
+      case 'error':
+        return 'border-red-200 bg-red-50'
+      case 'warning':
+        return 'border-yellow-200 bg-yellow-50'
+      case 'success':
+        return 'border-green-200 bg-green-50'
+      default:
+        return 'border-blue-200 bg-blue-50'
+    }
+  }
 
  const filteredNotifications = showUnreadOnly
  ? notifications.filter(n => !n.read)
@@ -216,14 +216,14 @@ export const RealTimeNotifications = ({
  {isConnected ? 'Онлайн' : 'Оффлайн'}
  </span>
  {unreadCount > 0 && (
- <KwidButton
+ <Button
  size="sm"
  variant="outline"
  onClick={markAllAsRead}
  className="text-xs"
  >
  Отметить все
- </KwidButton>
+ </Button>
  )}
  </div>
  </div>
@@ -265,14 +265,14 @@ export const RealTimeNotifications = ({
  {!notification.read && (
  <div className="w-2 h-2 bg-blue-500 rounded-full" />
  )}
- <KwidButton
+ <Button
  size="sm"
  variant="outline"
  onClick={() => deleteNotification(notification.id)}
- className="h-6 w-6 p-0 hover:bg-red-100
- >
+              className="h-6 w-6 p-0 hover:bg-red-100"
+            >
  <X className="h-3 w-3" />
- </KwidButton>
+ </Button>
  </div>
  </div>
 
@@ -286,7 +286,7 @@ export const RealTimeNotifications = ({
  </span>
 
  {notification.actionUrl && notification.actionText && (
- <KwidButton
+ <Button
  size="sm"
  variant="outline"
  asChild
@@ -295,11 +295,11 @@ export const RealTimeNotifications = ({
  <a href={notification.actionUrl}>
  {notification.actionText}
  </a>
- </KwidButton>
+ </Button>
  )}
 
  {!notification.read && (
- <KwidButton
+ <Button
  size="sm"
  variant="outline"
  onClick={() => markAsRead(notification.id)}
@@ -307,7 +307,7 @@ export const RealTimeNotifications = ({
  >
  <Check className="h-3 w-3" />
  Прочитано
- </KwidButton>
+ </Button>
  )}
  </div>
  </div>

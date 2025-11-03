@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { RefreshCw, Loader2 } from 'lucide-react'
 
-import { KwidSwitch, KwidButton } from '@/components/kwid'
+import { Switch, Button } from '@/components/ui'
 import { useTenantId } from '@/hooks/useTenantId'
 
 interface AgentIntegration {
@@ -103,7 +103,7 @@ export const KommoIntegrationSettings = ({
  return (
  <div className="space-y-6">
  {/* Общие настройки */}
- <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm ring-1 ring-gray-950/5
+ <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm ring-1 ring-gray-950/5">
  <div className="fi-section-content-ctn p-6">
  <h3 className="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 mb-4">
  Общие настройки
@@ -115,7 +115,7 @@ export const KommoIntegrationSettings = ({
  <div className="flex items-center justify-between">
  <div className="flex flex-col">
  <label className="fi-fo-field-wrp-label inline-flex items-center gap-x-3">
- <span className="text-sm font-medium leading-6 text-gray-950
+ <span className="text-sm font-medium leading-6 text-gray-950">
  Активно
  </span>
  </label>
@@ -123,7 +123,7 @@ export const KommoIntegrationSettings = ({
  Включить или отключить эту интеграцию
  </p>
  </div>
- <KwidSwitch
+ <Switch
  checked={isActive}
  onCheckedChange={handleToggleActive}
  disabled={isSaving}
@@ -133,9 +133,9 @@ export const KommoIntegrationSettings = ({
 
  {/* Кнопка синхронизации */}
  <div className="flex items-center justify-start">
- <KwidButton
- variant="primary"
- size="md"
+ <Button
+ variant="default"
+ size="default"
  onClick={handleSync}
  disabled={isSyncing}
  className="fi-color-custom"
@@ -151,7 +151,7 @@ export const KommoIntegrationSettings = ({
  Синхронизировать настройки CRM
  </>
  )}
- </KwidButton>
+ </Button>
  </div>
  </div>
  </div>
@@ -159,30 +159,30 @@ export const KommoIntegrationSettings = ({
 
  {/* Ошибка */}
  {error && (
- <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700
+ <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
  {error}
  </div>
  )}
 
  {/* Кнопки действий */}
  <div className="flex items-center justify-start gap-3">
- <KwidButton
- variant="primary"
- size="md"
+ <Button
+ variant="default"
+ size="default"
  onClick={() => router.refresh()}
  disabled={isSaving || isSyncing}
  className="fi-color-custom"
  >
  Сохранить изменения
- </KwidButton>
+ </Button>
  <Link href={cancelPath}>
- <KwidButton
+ <Button
  variant="outline"
- size="md"
+ size="default"
  type="button"
  >
  Отменить
- </KwidButton>
+ </Button>
  </Link>
  </div>
  </div>

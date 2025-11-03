@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { AlertTriangle, Plug } from 'lucide-react'
 
 import { KommoSetup } from '@/components/crm/KommoSetup'
-import { KwidButton, KwidSection } from '@/components/kwid'
+import { Button } from '@/components/ui'
 
 import type { CrmConnectionRow } from '@/types/supabase'
 
@@ -86,31 +86,34 @@ export const IntegrationsContent = () => {
  <div className="space-y-6">
  <header className="flex items-center justify-between">
  <div>
- <h1 className="text-2xl font-bold text-gray-900
+ <h1 className="text-2xl font-bold text-gray-900">
  Интеграции
  </h1>
- <p className="mt-1 text-sm text-gray-600
+ <p className="mt-1 text-sm text-gray-600">
  Подключите CRM и внешние каналы для автоматической работы AI-агента
  </p>
  </div>
  </header>
 
  <section className="grid gap-6 lg:grid-cols-2">
- <KwidSection
- title="Kommo CRM"
- description="OAuth 2.0 подключение и автоматическая синхронизация"
- icon={Plug}
- >
+ <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+ <div className="mb-4 flex items-center gap-3">
+ <Plug className="h-6 w-6 text-primary-600" />
+ <div>
+ <h3 className="text-lg font-semibold text-gray-900">Kommo CRM</h3>
+ <p className="text-sm text-gray-500">OAuth 2.0 подключение и автоматическая синхронизация</p>
+ </div>
+ </div>
  <div className="space-y-4">
  <div className="flex items-center justify-end">
- <KwidButton
+ <Button
  variant="outline"
  size="sm"
  onClick={() => void fetchStatus()}
  disabled={isLoading}
  >
  Обновить
- </KwidButton>
+ </Button>
  </div>
 
  <KommoSetup
@@ -119,15 +122,16 @@ export const IntegrationsContent = () => {
  onError={handleError}
  />
  </div>
- </KwidSection>
+ </div>
 
- <KwidSection title="Статус подключения">
+ <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+ <h3 className="mb-4 text-lg font-semibold text-gray-900">Статус подключения</h3>
  {isLoading ? (
- <p className="text-sm text-gray-500
+ <p className="text-sm text-gray-500">
  Загрузка статуса...
  </p>
  ) : error ? (
- <div className="flex items-start space-x-3 rounded-lg border border-orange-200 bg-orange-50 p-4 text-orange-800
+ <div className="flex items-start space-x-3 rounded-lg border border-orange-200 bg-orange-50 p-4 text-orange-800">
  <AlertTriangle className="mt-0.5 h-5 w-5" />
  <div>
  <p className="text-sm font-medium">
@@ -137,40 +141,40 @@ export const IntegrationsContent = () => {
  </div>
  </div>
  ) : connection ? (
- <div className="space-y-3 text-sm text-gray-700
+ <div className="space-y-3 text-sm text-gray-700">
  <div>
- <span className="font-medium text-gray-900
+ <span className="font-medium text-gray-900">
  Домен:
  </span>{' '}
  {connection.base_domain}
  </div>
  <div>
- <span className="font-medium text-gray-900
+ <span className="font-medium text-gray-900">
  Последняя синхронизация:
  </span>{' '}
  {syncedAt ?? '—'}
  </div>
  <div>
- <span className="font-medium text-gray-900
+ <span className="font-medium text-gray-900">
  Воронок синхронизировано:
  </span>{' '}
  {pipelinesCount}
  </div>
  <div>
- <span className="font-medium text-gray-900
+ <span className="font-medium text-gray-900">
  Статус:
  </span>{' '}
- <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700
+ <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
  подключено
  </span>
  </div>
  </div>
  ) : (
- <p className="text-sm text-gray-500
+ <p className="text-sm text-gray-500">
  Интеграция с Kommo ещё не настроена.
  </p>
  )}
- </KwidSection>
+ </div>
  </section>
  </div>
  )

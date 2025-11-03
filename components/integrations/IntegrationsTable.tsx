@@ -12,7 +12,7 @@ import {
  TableHeader,
  TableRow,
 } from '@/components/ui/Table'
-import { KwidSwitch } from '@/components/kwid'
+import { Switch } from '@/components/ui'
 
 interface Integration {
  id: string
@@ -80,11 +80,11 @@ export const IntegrationsTable = ({ agentId }: IntegrationsTableProps) => {
 
  return (
  <div className="flex flex-col gap-8">
- <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm ring-1 ring-gray-950/5
+ <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm ring-1 ring-gray-950/5">
  <div className="fi-ta-header-toolbar flex items-center justify-between gap-x-4 px-4 py-3 sm:px-6">
  <div className="relative flex-1 max-w-md">
  <div className="fi-input-wrp-prefix items-center gap-x-3 ps-3 flex pe-2 absolute left-0 top-0 bottom-0 pointer-events-none">
- <Search className="h-5 w-5 text-gray-400 />
+ <Search className="h-5 w-5 text-gray-400" />
  </div>
  <input
  type="search"
@@ -100,7 +100,7 @@ export const IntegrationsTable = ({ agentId }: IntegrationsTableProps) => {
 
  <Table>
  <TableHeader>
- <TableRow className="bg-gray-50
+ <TableRow className="bg-gray-50">
  <TableHead className="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 fi-table-header-cell-name">
  Интеграция
  </TableHead>
@@ -108,7 +108,7 @@ export const IntegrationsTable = ({ agentId }: IntegrationsTableProps) => {
  Установлено
  </TableHead>
  <TableHead className="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 fi-table-header-cell-active">
- <span className="fi-ta-header-cell-label text-sm font-semibold text-gray-950
+ <span className="fi-ta-header-cell-label text-sm font-semibold text-gray-950">
  Активно
  </span>
  </TableHead>
@@ -122,7 +122,7 @@ export const IntegrationsTable = ({ agentId }: IntegrationsTableProps) => {
  {filteredIntegrations.map((integration) => (
  <TableRow
  key={integration.id}
- className="border-b border-gray-200 hover:bg-gray-50
+ className="border-b border-gray-200 hover:bg-gray-50"
  >
  <TableCell className="px-3 py-4">
  <div className="fi-ta-text grid w-full gap-y-1">{integration.name}</div>
@@ -130,18 +130,18 @@ export const IntegrationsTable = ({ agentId }: IntegrationsTableProps) => {
  <TableCell className="px-3 py-4">
  <div className="fi-ta-icon flex gap-1.5">
  {integration.isInstalled ? (
- <CheckCircle2 className="h-5 w-5 text-green-600 />
+ <CheckCircle2 className="h-5 w-5 text-green-600" />
  ) : (
- <Circle className="h-5 w-5 text-gray-400 />
+ <Circle className="h-5 w-5 text-gray-400" />
  )}
- <span className="text-sm text-gray-700
+ <span className="text-sm text-gray-700">
  {integration.isInstalled ? 'Установлено' : 'Не установлено'}
  </span>
  </div>
  </TableCell>
  <TableCell className="px-3 py-4">
  <div className="fi-ta-toggle">
- <KwidSwitch
+ <Switch
  checked={integration.isActive}
  onCheckedChange={(checked) =>
  handleToggleActive(integration.id, checked)

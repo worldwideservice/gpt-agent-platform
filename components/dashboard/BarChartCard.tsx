@@ -16,10 +16,10 @@ export const BarChartCard = ({ title, subtitle, data, emptyMessage }: BarChartCa
  const maxValue = hasData ? Math.max(...data.map((point) => point.value)) : 1
 
  return (
- <article className="fi-section rounded-xl border border-gray-200 bg-white p-6 shadow-sm ring-1 ring-gray-950/5 transition-shadow hover:shadow-lg
+ <article className="fi-section rounded-xl border border-gray-200 bg-white p-6 shadow-sm ring-1 ring-gray-950/5 transition-shadow hover:shadow-lg">
  <div className="mb-6">
- <h3 className="text-lg font-semibold text-gray-900
- {subtitle && <p className="mt-1 text-sm text-gray-500
+ <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+ {subtitle && <p className="mt-1 text-sm text-gray-500">{subtitle}</p>}
  </div>
 
  {hasData ? (
@@ -29,14 +29,14 @@ export const BarChartCard = ({ title, subtitle, data, emptyMessage }: BarChartCa
 
  return (
  <div key={point.label} className="flex items-center gap-4">
- <div className="w-24 text-sm font-medium text-gray-600
+ <div className="w-24 text-sm font-medium text-gray-600">{point.label}</div>
  <div className="flex-1">
  <div className="relative h-8 rounded-lg bg-gray-100 overflow-hidden">
  <div
  className="h-full rounded-lg bg-custom-600 transition-all"
  style={{ width: `${percentage}%` }}
  />
- <div className="absolute inset-y-0 right-3 flex items-center text-sm font-semibold text-gray-700
+ <div className="absolute inset-y-0 right-3 flex items-center text-sm font-semibold text-gray-700">
  {formatValue(point.value)}
  </div>
  </div>
@@ -46,7 +46,7 @@ export const BarChartCard = ({ title, subtitle, data, emptyMessage }: BarChartCa
  })}
  </div>
  ) : (
- <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 text-sm text-gray-500
+ <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 text-sm text-gray-500">
  {emptyMessage ?? 'Недостаточно данных для отображения'}
  </div>
  )}

@@ -560,7 +560,7 @@ export const getEventsForRetry = async (limit = 10): Promise<WebhookEvent[]> => 
     .from('webhook_events')
     .select('*')
     .in('status', ['retrying', 'failed'])
-    .lt('retry_count', supabase.raw('max_retries'))
+    .lt('retry_count', 5) // максимальное количество попыток
     .lte('next_retry_at', now)
     .order('next_retry_at', { ascending: true })
     .limit(limit)

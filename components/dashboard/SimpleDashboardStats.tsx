@@ -21,14 +21,14 @@ export const SimpleDashboardStats = ({ stats }: SimpleDashboardStatsProps) => {
  <section className="flex flex-col gap-y-8 py-8">
  <div className="fi-wi-stats-overview-stats-ctn grid gap-6 md:grid-cols-2 xl:grid-cols-4">
  {/* Ответы ИИ за этот месяц */}
- <div className="fi-wi-stats-overview-stat relative rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5
+ <div className="fi-wi-stats-overview-stat relative rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5">
  <div className="grid gap-y-2">
  <div className="flex items-center gap-x-2">
- <span className="text-sm font-medium text-gray-700
+ <span className="text-sm font-medium text-gray-700">
  Ответы ИИ за этот месяц
  </span>
  </div>
- <div className="fi-wi-stats-overview-stat-value text-3xl font-semibold tracking-tight text-gray-950
+ <div className="fi-wi-stats-overview-stat-value text-3xl font-semibold tracking-tight text-gray-950">
  {formatNumber(stats.monthlyResponses)}
  </div>
  {typeof stats.monthlyChange === 'number' && (
@@ -36,8 +36,8 @@ export const SimpleDashboardStats = ({ stats }: SimpleDashboardStatsProps) => {
  <span
  className={`fi-wi-stats-overview-stat-description text-sm fi-color-custom ${
  stats.monthlyChange >= 0
- ? 'text-custom-600
- : 'text-red-600
+ ? 'text-custom-600'
+ : 'text-red-600'
  }`}
  style={
  stats.monthlyChange >= 0
@@ -60,18 +60,18 @@ export const SimpleDashboardStats = ({ stats }: SimpleDashboardStatsProps) => {
  </div>
 
  {/* Ответы ИИ за последние 7 дней */}
- <div className="fi-wi-stats-overview-stat relative rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5
+ <div className="fi-wi-stats-overview-stat relative rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5">
  <div className="grid gap-y-2">
  <div className="flex items-center gap-x-2">
- <span className="text-sm font-medium text-gray-700
+ <span className="text-sm font-medium text-gray-700">
  Ответы ИИ за последние 7 дней
  </span>
  </div>
- <div className="fi-wi-stats-overview-stat-value text-3xl font-semibold tracking-tight text-gray-950
+ <div className="fi-wi-stats-overview-stat-value text-3xl font-semibold tracking-tight text-gray-950">
  {formatNumber(stats.weeklyResponses)}
  </div>
  <div className="flex items-center gap-x-1">
- <span className="text-sm text-gray-500
+ <span className="text-sm text-gray-500">
  Последние 7 дней
  </span>
  </div>
@@ -79,14 +79,14 @@ export const SimpleDashboardStats = ({ stats }: SimpleDashboardStatsProps) => {
  </div>
 
  {/* Ответы ИИ сегодня */}
- <div className="fi-wi-stats-overview-stat relative rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5
+ <div className="fi-wi-stats-overview-stat relative rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5">
  <div className="grid gap-y-2">
  <div className="flex items-center gap-x-2">
- <span className="text-sm font-medium text-gray-700
+ <span className="text-sm font-medium text-gray-700">
  Ответы ИИ сегодня
  </span>
  </div>
- <div className="fi-wi-stats-overview-stat-value text-3xl font-semibold tracking-tight text-gray-950
+ <div className="fi-wi-stats-overview-stat-value text-3xl font-semibold tracking-tight text-gray-950">
  {formatNumber(stats.todayResponses)}
  </div>
  {typeof stats.todayChange === 'number' && (
@@ -94,8 +94,8 @@ export const SimpleDashboardStats = ({ stats }: SimpleDashboardStatsProps) => {
  <span
  className={`fi-wi-stats-overview-stat-description text-sm fi-color-custom ${
  stats.todayChange >= 0
- ? 'text-custom-600
- : 'text-red-600
+ ? 'text-custom-600'
+ : 'text-red-600'
  }`}
  style={
  stats.todayChange >= 0
@@ -118,18 +118,18 @@ export const SimpleDashboardStats = ({ stats }: SimpleDashboardStatsProps) => {
  </div>
 
  {/* Агенты */}
- <div className="fi-wi-stats-overview-stat relative rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5
+ <div className="fi-wi-stats-overview-stat relative rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5">
  <div className="grid gap-y-2">
  <div className="flex items-center gap-x-2">
- <span className="text-sm font-medium text-gray-700
+ <span className="text-sm font-medium text-gray-700">
  Агенты
  </span>
  </div>
- <div className="fi-wi-stats-overview-stat-value text-3xl font-semibold tracking-tight text-gray-950
+ <div className="fi-wi-stats-overview-stat-value text-3xl font-semibold tracking-tight text-gray-950">
  {formatNumber(stats.totalAgents)}
  </div>
  <div className="flex items-center gap-x-1">
- <span className="text-sm text-gray-500
+ <span className="text-sm text-gray-500">
  Всего агентов
  </span>
  </div>

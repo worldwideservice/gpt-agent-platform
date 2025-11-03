@@ -104,11 +104,11 @@ export const handleIncomingEmailForAgent = async (
 
     // Получаем историю писем из заметок сделки (последние 10)
     const notes = await kommoApi.getNotesByEntity(leadId, 'leads')
-    const emailNotes = notes
+    const emailNotes: Array<{ role: 'user' | 'assistant'; content: string }> = notes
       .filter(note => note.note_type === 'mail_message')
       .slice(-10) // последние 10 писем
       .map(note => ({
-        role: note.params?.from === emailData.from ? 'user' : 'assistant',
+        role: (note.params?.from === emailData.from ? 'user' : 'assistant') as 'user' | 'assistant',
         content: (typeof note.params?.text === 'string' ? note.params.text : '') || 
                  (typeof note.params?.html === 'string' ? stripHtml(note.params.html) : '') || '',
       }))

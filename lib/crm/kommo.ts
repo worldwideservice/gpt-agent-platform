@@ -274,13 +274,6 @@ export class KommoAPI {
  }
 
  /**
- * Получение сделки
- */
- async getLead(leadId: number): Promise<KommoLead> {
- return this.request<KommoLead>(`/leads/${leadId}?with=contacts,companies`)
- }
-
- /**
  * Поиск сделок
  */
  async searchLeads(query: string): Promise<KommoLead[]> {

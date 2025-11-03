@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { RefreshCw, ChevronDown, ChevronUp, X, Plus } from 'lucide-react'
-import { KwidButton, KwidSwitch, KwidTextarea, KwidSelect } from '@/components/kwid'
+import { Button } from '@/components/ui'
+import { Switch } from '@/components/ui/switch'
+import { Textarea } from '@/components/ui/shadcn/textarea'
+import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/shadcn/badge'
 import { useCRMData } from '@/hooks/useCRMData'
 import type { UniversalPipeline, UniversalStage, CRMConnection } from '@/types/crm'
@@ -98,75 +101,76 @@ export const CRMSync = ({ connection, pipelineSettings, onPipelineUpdate }: CRMS
  {/* Кнопка синхронизации и описание */}
  <div className="flex items-center justify-between mb-4">
  <div className="flex-1"></div>
- <KwidButton 
- onClick={handleSync} 
- disabled={isLoading}
- variant="outline"
- size="sm"
- className="gap-2"
- >
+        <Button 
+          onClick={handleSync} 
+          disabled={isLoading}
+          variant="outline"
+          className="gap-2"
+        >
  <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
  Синхронизировать настройки CRM
- </KwidButton>
+ </Button>
  </div>
 
  <div className="space-y-4">
  {pipelines.map((pipeline) => {
  const settings = getPipelineSettings(pipeline.id)
  return (
- <div key={pipeline.id} className="border border-gray-200 rounded-lg
- {/* Pipeline Header */}
- <div className="flex items-center justify-between p-4 bg-gray-50
- <div className="flex items-center space-x-3 flex-1">
- <button
- onClick={() => togglePipeline(pipeline.id)}
- className="text-gray-400 hover:text-gray-600 transition-colors
- aria-label={expandedPipelines.has(pipeline.id) ? 'Свернуть' : 'Развернуть'}
- >
- {expandedPipelines.has(pipeline.id) ? (
- <ChevronUp className="w-5 h-5" />
- ) : (
- <ChevronDown className="w-5 h-5" />
- )}
- </button>
- <h3 className="font-medium text-gray-900 uppercase
- </div>
+      <div key={pipeline.id} className="rounded-lg border border-gray-200">
+        {/* Pipeline Header */}
+        <div className="flex items-center justify-between bg-gray-50 p-4">
+          <div className="flex flex-1 items-center space-x-3">
+            <button
+              onClick={() => togglePipeline(pipeline.id)}
+              className="text-gray-400 transition-colors hover:text-gray-600"
+              aria-label={expandedPipelines.has(pipeline.id) ? 'Свернуть' : 'Развернуть'}
+            >
+              {expandedPipelines.has(pipeline.id) ? (
+                <ChevronUp className="w-5 h-5" />
+              ) : (
+                <ChevronDown className="w-5 h-5" />
+              )}
+            </button>
+            <h3 className="font-medium uppercase text-gray-900">{pipeline.name}</h3>
+          </div>
  
- <KwidSwitch
+ <Switch
  checked={settings.isActive}
  onCheckedChange={(checked) => onPipelineUpdate(pipeline.id, { isActive: checked })}
  />
  </div>
 
- {/* Pipeline Content */}
- {expandedPipelines.has(pipeline.id) && (
- <div className="px-4 pb-4 space-y-4 border-t border-gray-100
+        {/* Pipeline Content */}
+        {expandedPipelines.has(pipeline.id) && (
+          <div className="space-y-4 border-t border-gray-100 px-4 pb-4">
  {/* All Stages Toggle */}
  <div className="flex items-center justify-between">
- <KwidSwitch
- checked={settings.allStages}
- onCheckedChange={(checked) => onPipelineUpdate(pipeline.id, { 
- allStages: checked,
- selectedStages: checked ? pipeline.stages.map(s => s.id) : []
- })}
- label="Все этапы сделок"
- />
+ <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+   <Switch
+     checked={settings.allStages}
+     onCheckedChange={(checked) => onPipelineUpdate(pipeline.id, { 
+       allStages: checked,
+       selectedStages: checked ? pipeline.stages.map(s => s.id) : []
+     })}
+   />
+   Все этапы сделок
+ </label>
  </div>
 
  {/* Selected Stages */}
  {!settings.allStages && (
  <div>
- <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-2
- Выберите этапы сделок
- <span className="text-red-500">*</span>
- <button
- type="button"
- className="w-4 h-4 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100
- title="Информация о выборе этапов сделок"
- >
- <span className="text-xs">i</span>
- </button>
- </label>
+            <label className="mb-2 flex items-center gap-1 text-sm font-medium text-gray-700">
+              Выберите этапы сделок
+              <span className="text-red-500">*</span>
+              <button
+                type="button"
+                className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-300 text-gray-500 hover:bg-gray-100"
+                title="Информация о выборе этапов сделок"
+              >
+                <span className="text-xs">i</span>
+              </button>
+            </label>
  
  {/* Selected Stages Tags */}
  <div className="flex flex-wrap gap-2 mb-3">
@@ -187,7 +191,7 @@ export const CRMSync = ({ connection, pipelineSettings, onPipelineUpdate }: CRMS
  </div>
 
  {/* Available Stages Dropdown */}
- <KwidSelect
+ <Select
  options={[
  { value: '', label: 'Выбрать вариант' },
  ...pipeline.stages
@@ -222,30 +226,30 @@ export const CRMSync = ({ connection, pipelineSettings, onPipelineUpdate }: CRMS
  const instructions = (settings.stageInstructions as Record<string, string>) || {}
  const currentInstruction = instructions[stageId] || ''
 
- return (
- <div key={stageId} className="border border-gray-200 rounded-lg p-3
- <label className="block text-sm font-medium text-gray-700 mb-2
- {stage.name}
- </label>
- <KwidTextarea
- placeholder="Введите инструкции для этого этапа..."
- value={currentInstruction}
- onChange={(e) => {
- const newInstructions = {
- ...instructions,
- [stageId]: e.target.value,
- }
- onPipelineUpdate(pipeline.id, {
- stageInstructions: newInstructions,
- })
- }}
- rows={3}
- />
- <p className="mt-1 text-xs text-gray-500
- Эти инструкции будут использоваться агентом при работе с этой стадией сделки
- </p>
- </div>
- )
+            return (
+              <div key={stageId} className="rounded-lg border border-gray-200 p-3">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  {stage.name}
+                </label>
+                <Textarea
+                  placeholder="Введите инструкции для этого этапа..."
+                  value={currentInstruction}
+                  onChange={(e) => {
+                    const newInstructions = {
+                      ...instructions,
+                      [stageId]: e.target.value,
+                    }
+                    onPipelineUpdate(pipeline.id, {
+                      stageInstructions: newInstructions,
+                    })
+                  }}
+                  className="min-h-[80px]"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Эти инструкции будут использоваться агентом при работе с этой стадией сделки
+                </p>
+              </div>
+            )
  })}
  </div>
  )}

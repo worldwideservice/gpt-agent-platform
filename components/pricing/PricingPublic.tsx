@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 
-import { KwidButton } from '@/components/kwid'
+import { Button } from '@/components/ui'
 import {
  PRICING_FAQ,
  PRICING_PLANS,
@@ -109,111 +109,111 @@ export const PricingPublic = () => {
  )}
 
  <div className="mb-6">
- <h3 className="text-lg font-semibold text-slate-900
- {plan.name}
- </h3>
- <div className="mt-4 flex items-baseline gap-1">
- <span className="text-4xl font-extrabold text-slate-900
- ${price}
- </span>
+            <h3 className="text-lg font-semibold text-slate-900">
+              {plan.name}
+            </h3>
+            <div className="mt-4 flex items-baseline gap-1">
+              <span className="text-4xl font-extrabold text-slate-900">
+                {price}
+              </span>
  <span className="text-sm text-slate-500">/мес</span>
  </div>
  {plan.perConversation && (
- <p className="mt-2 inline-flex items-center rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700
- {plan.perConversation}
+ <p className="mt-2 inline-flex items-center rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
+   {plan.perConversation}
  </p>
  )}
- {isUnavailable && (
- <p className="mt-2 text-sm text-red-500
- Недоступно для выбранного количества ответов
- </p>
- )}
+            {isUnavailable && (
+              <p className="mt-2 text-sm text-red-500">
+                Недоступно для выбранного количества ответов
+              </p>
+            )}
  </div>
 
- <div className="flex flex-1 flex-col rounded-xl bg-slate-50 p-5
- <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500
- Что включено
- </h4>
- <ul className="space-y-3">
- {plan.features.map((feature, index) => {
- if (feature.value === 'select') {
- return (
- <li key={index} className="flex items-center justify-between gap-3">
- <span className="text-sm text-slate-600
- {feature.label}
- </span>
- <select
- value={selectedResponses}
- onChange={(event) => setSelectedResponses(event.target.value)}
- className="rounded border border-slate-200 bg-white px-2 py-1 text-sm font-medium text-primary-600 focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-500
- >
- {PRICING_RESPONSE_COUNTS.map((count) => (
- <option key={count} value={count}>
- {count}
- </option>
- ))}
- </select>
- </li>
- )
- }
+ <div className="flex flex-1 flex-col rounded-xl bg-slate-50 p-5">
+   <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
+     Что включено
+   </h4>
+   <ul className="space-y-3">
+     {plan.features.map((feature, index) => {
+       if (feature.value === 'select') {
+         return (
+           <li key={index} className="flex items-center justify-between gap-3">
+             <span className="text-sm text-slate-600">
+               {feature.label}
+             </span>
+             <select
+               value={selectedResponses}
+               onChange={(event) => setSelectedResponses(event.target.value)}
+               className="rounded border border-slate-200 bg-white px-2 py-1 text-sm font-medium text-primary-600 focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-500"
+             >
+               {PRICING_RESPONSE_COUNTS.map((count) => (
+                 <option key={count} value={count}>
+                   {count}
+                 </option>
+               ))}
+             </select>
+           </li>
+         )
+       }
 
- if (feature.value === 'models' && plan.availableModels) {
- return (
- <li key={index} className="text-sm text-slate-600
- <span className="block text-sm text-slate-500
- {feature.label}
- </span>
- <ul className="mt-2 space-y-1 text-xs text-slate-500
- {plan.availableModels.map((model) => (
- <li key={model}>{model}</li>
- ))}
- </ul>
- </li>
- )
- }
+       if (feature.value === 'models' && plan.availableModels) {
+         return (
+           <li key={index} className="text-sm text-slate-600">
+             <span className="block text-sm text-slate-500">
+               {feature.label}
+             </span>
+             <ul className="mt-2 space-y-1 text-xs text-slate-500">
+               {plan.availableModels.map((model) => (
+                 <li key={model}>{model}</li>
+               ))}
+             </ul>
+           </li>
+         )
+       }
 
- return (
- <li
- key={index}
- className={`flex items-start gap-3 text-sm ${
- feature.isDisabled
- ? 'text-slate-400 line-through
- : 'text-slate-600
- }`}
- >
- <span className="mt-1 grid h-5 w-5 place-items-center rounded-full bg-primary-100 text-primary-600
- <svg
- xmlns="http://www.w3.org/2000/svg"
- viewBox="0 0 20 20"
- fill="currentColor"
- className="h-3 w-3"
- >
- <path
- fillRule="evenodd"
- d="M16.704 5.288a1 1 0 0 1 0 1.414l-7.49 7.49a1 1 0 0 1-1.414 0l-3.004-3.004a1 1 0 1 1 1.414-1.414l2.297 2.297 6.783-6.783a1 1 0 0 1 1.414 0Z"
- clipRule="evenodd"
- />
- </svg>
- </span>
- <span>{feature.label}</span>
- </li>
- )
- })}
- </ul>
+       return (
+         <li
+           key={index}
+           className={`flex items-start gap-3 text-sm ${
+             feature.isDisabled
+               ? 'text-slate-400 line-through'
+               : 'text-slate-600'
+           }`}
+         >
+           <span className="mt-1 grid h-5 w-5 place-items-center rounded-full bg-primary-100 text-primary-600">
+             <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 20 20"
+               fill="currentColor"
+               className="h-3 w-3"
+             >
+               <path
+                 fillRule="evenodd"
+                 d="M16.704 5.288a1 1 0 0 1 0 1.414l-7.49 7.49a1 1 0 0 1-1.414 0l-3.004-3.004a1 1 0 1 1 1.414-1.414l2.297 2.297 6.783-6.783a1 1 0 0 1 1.414 0Z"
+                 clipRule="evenodd"
+               />
+             </svg>
+           </span>
+           <span>{feature.label}</span>
+         </li>
+       )
+     })}
+   </ul>
  </div>
 
  <div className="mt-6">
- <KwidButton
+ <Button
  asChild
- size="md"
- variant={isUnavailable ? 'outline' : isRecommended ? 'primary' : 'secondary'}
+ size="default"
+ variant={isUnavailable ? 'outline' : isRecommended ? 'default' : 'secondary'}
  disabled={isUnavailable}
  className="w-full justify-center"
  >
  <Link href="/register">
  {isUnavailable ? 'Недоступно' : 'Выбрать план'}
  </Link>
- </KwidButton>
+ </Button>
  <p className="mt-3 text-center text-xs text-slate-500">
  Нет скрытых платежей. Отмена в один клик.
  </p>
@@ -224,58 +224,58 @@ export const PricingPublic = () => {
  </section>
 
  <section className="grid gap-8 md:grid-cols-2">
- <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm
- <h2 className="text-xl font-semibold text-slate-900
- Остались вопросы?
- </h2>
- <p className="mt-2 text-sm text-slate-600
- Напишите на{' '}
- <a
- className="font-medium text-primary-600 hover:underline
- href="mailto:sales@gptagent.com"
- >
- sales@gptagent.com
- </a>{' '}
- — подберем план и поможем с запуском.
- </p>
- <div className="mt-6 space-y-4 text-sm text-slate-600
- <p>Всем тарифам доступны:</p>
- <ul className="space-y-2">
- <li>• Подключение Kommo CRM и вебхуков</li>
- <li>• Управление базой знаний и сценариями</li>
- <li>• Безлимитные агенты-тестировщики</li>
- </ul>
- <div className="rounded-lg border border-primary-100 bg-primary-50/60 p-4 text-sm text-primary-700
- Подробности смотрите в{' '}
- <Link
- href="/support/articles/billing-faq#plans"
- className="font-semibold underline-offset-2 hover:underline"
- >
- FAQ по тарифам
- </Link>{' '}
- — там собраны сценарии смены планов, лимиты и скидки.
- </div>
- <KwidButton asChild size="sm" variant="outline" className="mt-2">
- <Link href="/support/articles/billing-faq">Открыть FAQ по биллингу</Link>
- </KwidButton>
- </div>
- </div>
+   <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+     <h2 className="text-xl font-semibold text-slate-900">
+       Остались вопросы?
+     </h2>
+     <p className="mt-2 text-sm text-slate-600">
+       Напишите на{' '}
+       <a
+         className="font-medium text-primary-600 hover:underline"
+         href="mailto:sales@gptagent.com"
+       >
+         sales@gptagent.com
+       </a>{' '}
+       — подберем план и поможем с запуском.
+     </p>
+     <div className="mt-6 space-y-4 text-sm text-slate-600">
+       <p>Всем тарифам доступны:</p>
+       <ul className="space-y-2">
+         <li>• Подключение Kommo CRM и вебхуков</li>
+         <li>• Управление базой знаний и сценариями</li>
+         <li>• Безлимитные агенты-тестировщики</li>
+       </ul>
+       <div className="rounded-lg border border-primary-100 bg-primary-50/60 p-4 text-sm text-primary-700">
+         Подробности смотрите в{' '}
+         <Link
+           href="/support/articles/billing-faq#plans"
+           className="font-semibold underline-offset-2 hover:underline"
+         >
+           FAQ по тарифам
+         </Link>{' '}
+         — там собраны сценарии смены планов, лимиты и скидки.
+       </div>
+       <Button asChild size="sm" variant="outline" className="mt-2">
+         <Link href="/support/articles/billing-faq">Открыть FAQ по биллингу</Link>
+       </Button>
+     </div>
+   </div>
 
- <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm
- <h2 className="text-xl font-semibold text-slate-900
- <dl className="space-y-4">
- {PRICING_FAQ.map((item, index) => (
- <div key={index} className="rounded-xl bg-slate-50 p-4
- <dt className="text-sm font-semibold text-slate-900
- {item.question}
- </dt>
- <dd className="mt-2 text-sm text-slate-600
- {item.answer}
- </dd>
- </div>
- ))}
- </dl>
- </div>
+   <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+     <h2 className="text-xl font-semibold text-slate-900">Частые вопросы</h2>
+     <dl className="space-y-4">
+       {PRICING_FAQ.map((item, index) => (
+         <div key={index} className="rounded-xl bg-slate-50 p-4">
+           <dt className="text-sm font-semibold text-slate-900">
+             {item.question}
+           </dt>
+           <dd className="mt-2 text-sm text-slate-600">
+             {item.answer}
+           </dd>
+         </div>
+       ))}
+     </dl>
+   </div>
  </section>
  </div>
  )
