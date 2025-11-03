@@ -7,8 +7,8 @@
  * - Сохраняет chunks в БД
  */
 
-import { getSupabaseClient } from '../../lib/supabase'
-import { env } from '../../lib/env'
+import { getSupabaseClient } from '../../../lib/supabase'
+import { env } from '../../../lib/env'
 
 // Прямая реализация функций, так как worker не имеет доступа к lib корневого проекта
 // TODO: Вынести общие функции в отдельный пакет или использовать одинаковые функции

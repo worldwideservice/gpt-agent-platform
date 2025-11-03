@@ -6,7 +6,7 @@ console.log('[worker] Node version:', process.version)
 console.log('[worker] Working directory:', process.cwd())
 
 import { getTaskHandlers } from './tasks'
-import { env } from '../../lib/env'
+import { env } from '../../../lib/env'
 import { startHealthServer } from './health'
 
 console.log('[worker] Environment variables loaded successfully')

@@ -3,8 +3,8 @@
  * Автоматически извлекает сущности и связи для долгосрочной памяти агента
  */
 
-import { getSupabaseClient } from '../../lib/supabase'
-import { env } from '../../lib/env'
+import { getSupabaseClient } from '../../../lib/supabase'
+import { env } from '../../../lib/env'
 
 interface ExtractKGJob {
  assetId?: string
