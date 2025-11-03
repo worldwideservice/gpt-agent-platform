@@ -109,3 +109,6 @@ playwright-report/
 services/**/node_modules/
 kwid-extraction/node_modules/
 .cursor/
+
+# GitHub Secrets (содержит токены)
+GITHUB_SECRETS_COMMANDS.txt

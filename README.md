@@ -276,8 +276,13 @@
 
 ### Основные документы
 - [`docs/PLATFORM_OVERVIEW.md`](./docs/PLATFORM_OVERVIEW.md) — **Полное руководство по архитектуре и функционалу** ⭐
+- [`docs/DEVOPS_PLAN.md`](./docs/DEVOPS_PLAN.md) — **План DevOps развития и инфраструктура** 🚀
 - [`docs/IN_PROGRESS.md`](./docs/IN_PROGRESS.md) — **Что в разработке и не реализовано** 🚧
 - [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — Целевая архитектура
+- [`docs/INFRASTRUCTURE.md`](./docs/INFRASTRUCTURE.md) — **Описание инфраструктуры и сервисов** 🏗️
+- [`docs/SECRETS.md`](./docs/SECRETS.md) — **Управление секретами и безопасность** 🔐
+- [`docs/WORKER_DEPLOYMENT.md`](./docs/WORKER_DEPLOYMENT.md) — **Деплой Worker сервиса** 🚂
+- [`docs/GITHUB_SECRETS_SETUP.md`](./docs/GITHUB_SECRETS_SETUP.md) — **Настройка GitHub Secrets для CI/CD** 🔑
 - [`docs/SETUP.md`](./docs/SETUP.md) — Шаги развёртывания
 - [`docs/OPENROUTER_SETUP.md`](./docs/OPENROUTER_SETUP.md) — Настройка OpenRouter
 - [`docs/TOKENS.md`](./docs/TOKENS.md) — Переменные окружения

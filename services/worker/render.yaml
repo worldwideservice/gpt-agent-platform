@@ -1,0 +1,25 @@
+services:
+  - type: worker
+    name: gpt-agent-worker
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: REDIS_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: JOB_QUEUE_NAME
+        value: agent-jobs
+      - key: JOB_CONCURRENCY
+        value: 5
+    healthCheckPath: /health
+
