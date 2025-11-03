@@ -64,10 +64,17 @@ export const buildAgentContext = async (options: ContextOptions): Promise<AgentC
  ])
 
  // Извлекаем сущности из сообщения для Knowledge Graph (если есть сообщение)
- // TODO: Реализовать извлечение имен сущностей из сообщения для поиска связанных
+ // Базовая реализация: извлекаем слова с заглавной буквы как потенциальные имена
  let knowledgeGraphContext = ''
- // Пока пропускаем - требует дополнительную логику извлечения имен сущностей из текста
- // Можно добавить позже для улучшения контекста
+ if (message) {
+   // Простое извлечение потенциальных имен собственных (слова с заглавной буквы)
+   const potentialEntities = message.match(/\b[A-ZА-Я][a-zа-я]+\b/g) || []
+   if (potentialEntities.length > 0) {
+     // Можно использовать для поиска связанных сущностей в Knowledge Graph
+     // Пока просто сохраняем как контекст
+     knowledgeGraphContext = `Упомянутые сущности: ${potentialEntities.slice(0, 5).join(', ')}`
+   }
+ }
 
  // Форматируем знания компании
  const companyKnowledgeText = formatCompanyKnowledge(companyKnowledge)

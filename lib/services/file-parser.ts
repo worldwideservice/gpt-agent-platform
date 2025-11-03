@@ -86,14 +86,31 @@ export const parseTXT = async (fileBuffer: Buffer): Promise<ParsedDocument> => {
  * Парсит HTML файл
  */
 export const parseHTML = async (fileBuffer: Buffer): Promise<ParsedDocument> => {
- // TODO: Установить cheerio: npm install cheerio
- // const cheerio = require('cheerio')
- // const $ = cheerio.load(fileBuffer.toString('utf-8'))
- // const text = $('body').text()
- 
- // Временная заглушка - простое извлечение текста
+ // Улучшенное извлечение текста из HTML
+ // Удаляем script и style теги перед извлечением текста
  const html = fileBuffer.toString('utf-8')
- const text = html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
+ 
+ // Удаляем script и style теги с содержимым
+ const cleanedHtml = html
+   .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+   .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+   .replace(/<!--[\s\S]*?-->/g, '') // Удаляем комментарии
+   
+ // Извлекаем текст из body или всего документа
+ const bodyMatch = cleanedHtml.match(/<body[^>]*>([\s\S]*)<\/body>/i)
+ const contentToParse = bodyMatch ? bodyMatch[1] : cleanedHtml
+ 
+ // Удаляем все HTML теги и нормализуем пробелы
+ const text = contentToParse
+   .replace(/<[^>]*>/g, ' ') // Удаляем все теги
+   .replace(/&nbsp;/g, ' ')
+   .replace(/&amp;/g, '&')
+   .replace(/&lt;/g, '<')
+   .replace(/&gt;/g, '>')
+   .replace(/&quot;/g, '"')
+   .replace(/&#39;/g, "'")
+   .replace(/\s+/g, ' ')
+   .trim()
  
  return {
  text,

@@ -1,13 +1,10 @@
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic'
+
+import { DashboardClient } from './_components/DashboardClient'
 
 const ManagePage = async () => {
- return (
- <div className="p-8">
- <h1 className="text-2xl font-bold mb-4">Платформа</h1>
- <p className="text-gray-600">Готова к разработке</p>
- </div>
- );
-};
+  return <DashboardClient />
+}
 
-export default ManagePage;
+export default ManagePage
 
