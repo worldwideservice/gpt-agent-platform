@@ -547,14 +547,16 @@ export const getTaskHandlers = () => {
  const { fileURLToPath } = await import('url')
  const { dirname, resolve } = await import('path')
  
- // Определяем путь к текущему файлу
+ // Определяем путь к текущему файлу и корню проекта
  const currentFile = fileURLToPath(import.meta.url)
  const currentDir = dirname(currentFile)
+ const projectRoot = resolve(process.cwd())
+ const tsconfigPath = resolve(projectRoot, 'tsconfig.json')
  
  // Пробуем разные пути к webhook-processor
  const paths = [
    resolve(currentDir, '../../lib/services/webhook-processor.ts'),
-   resolve(process.cwd(), 'lib/services/webhook-processor.ts'),
+   resolve(projectRoot, 'lib/services/webhook-processor.ts'),
  ]
  
  let processWebhookEvent
@@ -562,8 +564,11 @@ export const getTaskHandlers = () => {
  
  for (const libPath of paths) {
    try {
-     // Используем tsImport для резолва path aliases
-     const module = await tsImport(libPath, import.meta.url)
+     // Используем tsImport с указанием tsconfig для резолва path aliases
+     const module = await tsImport(libPath, {
+       parentURL: import.meta.url,
+       tsconfig: tsconfigPath,
+     })
      if (module && module.processWebhookEvent) {
        processWebhookEvent = module.processWebhookEvent
        console.log(`✅ Successfully imported webhook-processor from: ${libPath}`)
@@ -571,6 +576,7 @@ export const getTaskHandlers = () => {
      }
    } catch (error) {
      lastError = error as Error
+     console.error(`⚠️ Failed to import from ${libPath}:`, error)
      continue
    }
  }

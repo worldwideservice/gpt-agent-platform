@@ -14,14 +14,16 @@ async function getUserTier(userId: string, organizationId: string): Promise<User
     const { fileURLToPath } = await import('url')
     const { dirname, resolve } = await import('path')
     
-    // Определяем путь к текущему файлу
+    // Определяем путь к текущему файлу и корню проекта
     const currentFile = fileURLToPath(import.meta.url)
     const currentDir = dirname(currentFile)
+    const projectRoot = resolve(process.cwd())
+    const tsconfigPath = resolve(projectRoot, 'tsconfig.json')
     
     // Пробуем разные пути к users repository
     const paths = [
       resolve(currentDir, '../../lib/repositories/users.ts'),
-      resolve(process.cwd(), 'lib/repositories/users.ts'),
+      resolve(projectRoot, 'lib/repositories/users.ts'),
     ]
     
     let UserRepository
@@ -29,8 +31,11 @@ async function getUserTier(userId: string, organizationId: string): Promise<User
     
     for (const libPath of paths) {
       try {
-        // Используем tsImport для резолва path aliases
-        const module = await tsImport(libPath, import.meta.url)
+        // Используем tsImport с указанием tsconfig для резолва path aliases
+        const module = await tsImport(libPath, {
+          parentURL: import.meta.url,
+          tsconfig: tsconfigPath,
+        })
         if (module && module.UserRepository) {
           UserRepository = module.UserRepository
           console.log(`✅ Successfully imported UserRepository from: ${libPath}`)
@@ -38,6 +43,7 @@ async function getUserTier(userId: string, organizationId: string): Promise<User
         }
       } catch (error) {
         lastError = error as Error
+        console.error(`⚠️ Failed to import from ${libPath}:`, error)
         continue
       }
     }
