@@ -5,16 +5,16 @@ FROM node:20-alpine AS base
 # Устанавливаем рабочую директорию в корень проекта
 WORKDIR /app
 
-# Копируем package.json и package-lock.json Worker
+# Копируем package.json Worker для установки зависимостей
 COPY services/worker/package.json services/worker/package-lock.json ./services/worker/
 
-# Копируем весь проект
+# Копируем весь проект (включая lib/)
 COPY . .
 
 # Переходим в директорию Worker и собираем
 WORKDIR /app/services/worker
-# Копируем lib/ в services/worker/lib/ для правильного разрешения путей во время сборки
-RUN cp -r ../lib ./lib || mkdir -p ./lib && cp -r ../lib/* ./lib/
+
+# Устанавливаем зависимости и собираем
 RUN npm ci
 RUN npm run build
 
@@ -35,7 +35,7 @@ COPY --from=base /app/services/worker/dist ./services/worker/dist
 
 # Копируем lib директорию из корня (нужна для импортов во время выполнения)
 COPY --from=base /app/lib ./lib
-# Создаем services/worker/lib/ и копируем туда lib/ для правильных путей при запуске
+# Копируем lib/ в services/worker/lib/ для динамических импортов (используют ../lib/)
 RUN mkdir -p ./services/worker/lib && cp -r ./lib/* ./services/worker/lib/
 
 # Переходим в директорию Worker для установки production зависимостей
@@ -61,4 +61,3 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 
 # Запускаем worker из services/worker/dist/index.js
 CMD ["node", "services/worker/dist/index.js"]
-
