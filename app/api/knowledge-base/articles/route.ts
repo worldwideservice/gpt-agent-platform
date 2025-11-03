@@ -5,7 +5,8 @@ import { auth } from '@/auth'
 import { getKnowledgeBaseArticles, createKnowledgeBaseArticle } from '@/lib/repositories/knowledge-base'
 
 const querySchema = z.object({
- categoryId: z.string().uuid().optional(),
+  categoryId: z.string().uuid().optional(),
+  search: z.string().optional(), // Добавляем поддержку поиска
 })
 
 export const GET = async (request: NextRequest) => {
@@ -30,13 +31,17 @@ export const GET = async (request: NextRequest) => {
  return NextResponse.json({ success: false, error: 'Не авторизовано' }, { status: 401 })
  }
 
- try {
- const articles = await getKnowledgeBaseArticles(session.user.orgId, parsedParams.data.categoryId)
+  try {
+    const articles = await getKnowledgeBaseArticles(
+      session.user.orgId,
+      parsedParams.data.categoryId,
+      parsedParams.data.search,
+    )
 
- return NextResponse.json({
- success: true,
- data: articles,
- })
+    return NextResponse.json({
+      success: true,
+      data: articles,
+    })
  } catch (error) {
  console.error('Articles API error', error)
 

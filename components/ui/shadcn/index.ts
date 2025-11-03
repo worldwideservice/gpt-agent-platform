@@ -23,7 +23,18 @@ export type { TextareaProps } from './textarea'
 export { Badge } from './badge'
 export type { BadgeProps } from './badge'
 
-export { Select } from './select'
+export {
+  Select,
+  SelectGroup,
+  SelectValue,
+  SelectTrigger,
+  SelectContent,
+  SelectLabel,
+  SelectItem,
+  SelectSeparator,
+  SelectScrollUpButton,
+  SelectScrollDownButton,
+} from './select'
 
 export {
  Table,

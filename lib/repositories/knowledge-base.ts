@@ -250,29 +250,35 @@ export const deleteKnowledgeBaseCategory = async (categoryId: string, organizati
 }
 
 export const getKnowledgeBaseArticles = async (
- organizationId: string,
- categoryId?: string,
+  organizationId: string,
+  categoryId?: string,
+  search?: string,
 ): Promise<KnowledgeBaseArticle[]> => {
- const supabase = getSupabaseServiceRoleClient()
+  const supabase = getSupabaseServiceRoleClient()
 
- let query = supabase
- .from('knowledge_base_articles')
- .select('*')
- .eq('org_id', organizationId)
- .order('created_at', { ascending: false })
+  let query = supabase
+    .from('knowledge_base_articles')
+    .select('*')
+    .eq('org_id', organizationId)
+    .order('created_at', { ascending: false })
 
- if (categoryId) {
- query = query.eq('category_id', categoryId)
- }
+  if (categoryId) {
+    query = query.eq('category_id', categoryId)
+  }
 
- const { data, error } = await query
+  if (search) {
+    // Поиск по заголовку и содержимому
+    query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%`)
+  }
 
- if (error) {
- console.error('Failed to fetch knowledge base articles', error)
- throw new Error('Не удалось загрузить статьи')
- }
+  const { data, error } = await query
 
- return ((data as ArticleRow[] | null) ?? []).map(mapArticleRowToDomain)
+  if (error) {
+    console.error('Failed to fetch knowledge base articles', error)
+    throw new Error('Не удалось загрузить статьи')
+  }
+
+  return ((data as ArticleRow[] | null) ?? []).map(mapArticleRowToDomain)
 }
 
 export const getKnowledgeBaseArticleById = async (

@@ -13,24 +13,34 @@ export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
 export { Input } from './shadcn'
 export { Textarea } from './shadcn'
 export { Badge } from './shadcn'
-export { Select } from './shadcn'
+export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel, SelectSeparator } from './shadcn'
 export { Switch } from './switch'
 export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption } from './shadcn'
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './shadcn'
 export { Modal, ModalTrigger, ModalContent, ModalHeader, ModalFooter, ModalTitle, ModalDescription } from './shadcn'
 
+// Label компонент
+export { Label } from './label'
+
+// Toast компоненты
+export { ToastProvider, useToast } from './toast-context'
+export { ToastViewport } from './toast-viewport'
+
+// Confirm Dialog компонент
+export { ConfirmDialog } from './ConfirmDialog'
+
 // Dialog компоненты
 export {
- Dialog,
- DialogPortal,
- DialogOverlay,
- DialogTrigger,
- DialogClose,
- DialogContent,
- DialogHeader,
- DialogFooter,
- DialogTitle,
- DialogDescription,
+  Dialog,
+  DialogPortal,
+  DialogOverlay,
+  DialogTrigger,
+  DialogClose,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
 } from './dialog'
 
 // Popover компоненты

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { HeaderWithSidebar } from "@/components/layout/HeaderWithSidebar";
 import { SidebarProvider } from "@/components/layout/SidebarToggle";
+import { RefineProvider } from "@/components/refine/providers";
 import { auth } from "@/auth";
 import { getOrganizationsForUser } from "@/lib/repositories/organizations";
 import { validateTenantIdAccess } from "@/lib/utils/tenant-validation";
@@ -97,15 +98,17 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
  }
 
  return (
- <SidebarProvider>
- <HeaderWithSidebar
- session={session}
- organizations={organizations}
- activeOrganization={activeOrganization}
- >
- {children}
- </HeaderWithSidebar>
- </SidebarProvider>
+   <RefineProvider>
+     <SidebarProvider>
+       <HeaderWithSidebar
+         session={session}
+         organizations={organizations}
+         activeOrganization={activeOrganization}
+       >
+         {children}
+       </HeaderWithSidebar>
+     </SidebarProvider>
+   </RefineProvider>
  );
 };
 
