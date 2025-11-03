@@ -62,7 +62,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 
 # Запускаем worker через tsx для поддержки TypeScript импортов из lib/
 # tsx позволяет динамически импортировать .ts файлы во время выполнения
-# tsx автоматически резолвит path aliases из tsconfig.json в корне проекта
-# Используем переменную окружения для указания пути к tsconfig.json
-ENV TSX_TSCONFIG_PATH=/app/tsconfig.json
+# tsx автоматически резолвит path aliases из tsconfig.json при использовании tsImport
 CMD ["tsx", "services/worker/dist/index.js"]

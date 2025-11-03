@@ -541,23 +541,46 @@ export const getTaskHandlers = () => {
  await recordWebhookEvent(payload.orgId, payload.payload)
  },
  'webhook:retry': async (payload: { eventId: string; retryCount: number }) => {
- // Импортируем процессор webhook динамически
- // Используем tsx для поддержки TypeScript импортов - можно импортировать .ts файлы напрямую
+ // Импортируем процессор webhook динамически через tsx для поддержки path aliases
+ // Используем tsImport для правильного резолва @/ импортов внутри файла
+ const { tsImport } = await import('tsx/esm/api')
+ const { fileURLToPath } = await import('url')
+ const { dirname, resolve } = await import('path')
+ 
+ // Определяем путь к текущему файлу
+ const currentFile = fileURLToPath(import.meta.url)
+ const currentDir = dirname(currentFile)
+ 
+ // Пробуем разные пути к webhook-processor
+ const paths = [
+   resolve(currentDir, '../../lib/services/webhook-processor.ts'),
+   resolve(process.cwd(), 'lib/services/webhook-processor.ts'),
+ ]
+ 
  let processWebhookEvent
- try {
-   // Пробуем импорт из корня проекта (lib/ находится в /app/lib/)
-   const module = await import('../../lib/services/webhook-processor')
-   processWebhookEvent = module.processWebhookEvent
- } catch (error) {
-   // Fallback к альтернативному пути
+ let lastError: Error | null = null
+ 
+ for (const libPath of paths) {
    try {
-     const module = await import('../../../lib/services/webhook-processor')
-     processWebhookEvent = module.processWebhookEvent
-   } catch (fallbackError) {
-     console.error('❌ Failed to import webhook-processor:', { error, fallbackError })
-     throw new Error(`Failed to import webhook-processor: ${error instanceof Error ? error.message : String(error)}`)
+     // Используем tsImport для резолва path aliases
+     const module = await tsImport(libPath, import.meta.url)
+     if (module && module.processWebhookEvent) {
+       processWebhookEvent = module.processWebhookEvent
+       console.log(`✅ Successfully imported webhook-processor from: ${libPath}`)
+       break
+     }
+   } catch (error) {
+     lastError = error as Error
+     continue
    }
  }
+ 
+ if (!processWebhookEvent) {
+   console.error('❌ Failed to import webhook-processor from all paths:', paths)
+   console.error('Last error:', lastError)
+   throw new Error(`Failed to import webhook-processor: ${lastError?.message || 'Unknown error'}`)
+ }
+ 
  await processWebhookEvent(payload.eventId)
  },
  'kommo:send-message': async (payload: {
