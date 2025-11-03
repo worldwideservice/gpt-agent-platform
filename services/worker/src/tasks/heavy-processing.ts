@@ -9,23 +9,50 @@ type UserTier = 'free' | 'pro' | 'enterprise' // Временное опреде
 // Хелпер для получения UserTier через динамический импорт
 async function getUserTier(userId: string, organizationId: string): Promise<UserTier> {
   try {
-    // Используем переменные для обхода проверки esbuild во время сборки
-    const libPath1 = '../lib/repositories/users'
-    const libPath2 = '../../lib/repositories/users'
+    // Используем абсолютные пути через import.meta.url для правильного разрешения
+    const { pathToFileURL } = await import('url')
+    const { dirname, resolve } = await import('path')
+    const { fileURLToPath } = await import('url')
     
-    // Пробуем сначала ../lib/ (services/worker/lib/)
+    // Определяем путь к текущему файлу
+    const currentFile = fileURLToPath(import.meta.url)
+    const currentDir = dirname(currentFile)
+    
+    // Пробуем разные варианты путей
+    const paths = [
+      resolve(currentDir, '../lib/repositories/users'), // services/worker/dist/lib/repositories/users
+      resolve(currentDir, '../../lib/repositories/users'), // services/worker/lib/repositories/users
+      resolve(process.cwd(), 'lib/repositories/users'), // /app/lib/repositories/users
+      resolve(process.cwd(), 'services/worker/lib/repositories/users'), // /app/services/worker/lib/repositories/users
+    ]
+    
     let UserRepository
-    try {
-      const module = await import(libPath1 as any)
-      UserRepository = module.UserRepository
-    } catch {
-      // Fallback к ../../lib/ (корень/lib/)
-      const module = await import(libPath2 as any)
-      UserRepository = module.UserRepository
+    let lastError: Error | null = null
+    
+    for (const libPath of paths) {
+      try {
+        // Конвертируем в file:// URL для import
+        const moduleUrl = pathToFileURL(libPath + '.js').href
+        const module = await import(moduleUrl)
+        UserRepository = module.UserRepository
+        console.log(`✅ Successfully imported UserRepository from: ${libPath}`)
+        break
+      } catch (error) {
+        lastError = error as Error
+        // Продолжаем пробовать следующие пути
+      }
     }
+    
+    if (!UserRepository) {
+      console.error('❌ Failed to import UserRepository from all paths:', paths)
+      console.error('Last error:', lastError)
+      // Fallback к free tier при ошибке
+      return 'free'
+    }
+    
     return await UserRepository.getUserTier(userId, organizationId)
   } catch (error) {
-    console.error('Failed to import UserRepository:', error)
+    console.error('Failed to get user tier:', error)
     // Fallback к free tier при ошибке
     return 'free'
   }
