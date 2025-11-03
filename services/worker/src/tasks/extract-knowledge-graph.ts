@@ -3,8 +3,8 @@
  * Автоматически извлекает сущности и связи для долгосрочной памяти агента
  */
 
-import { getSupabaseClient } from '../lib/supabase'
-import { env } from '../lib/env'
+import { getSupabaseClient } from '../../lib/supabase'
+import { env } from '../../lib/env'
 
 interface ExtractKGJob {
  assetId?: string
@@ -330,6 +330,7 @@ export const extractKnowledgeGraph = async (payload: ExtractKGJob): Promise<void
  // Не выбрасываем ошибку - это не критично для работы системы
  }
 }
+
 
 
 

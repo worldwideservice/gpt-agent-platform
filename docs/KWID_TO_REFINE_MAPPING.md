@@ -688,3 +688,4 @@ const { mutate: syncCRM } = useCustom();
 - Фильтры требуют настройки в data provider для корректной работы с API
 
 
+
