@@ -541,11 +541,18 @@ export const getTaskHandlers = () => {
  await recordWebhookEvent(payload.orgId, payload.payload)
  },
  'webhook:retry': async (payload: { eventId: string; retryCount: number }) => {
- // Импортируем процессор webhook динамически (путь разрешится во время выполнения)
- const libPath = process.cwd().includes('services/worker') 
-   ? '../lib/services/webhook-processor'
-   : '../../lib/services/webhook-processor'
- const { processWebhookEvent } = await import(libPath)
+ // Импортируем процессор webhook динамически
+ // Путь относительно services/worker/dist/ -> ../lib/ (services/worker/lib/)
+ let processWebhookEvent
+ try {
+   const module = await import('../lib/services/webhook-processor')
+   processWebhookEvent = module.processWebhookEvent
+ } catch (error) {
+   // Fallback к корню проекта
+   console.error('Failed to import from ../lib/, trying ../../lib/:', error)
+   const module = await import('../../lib/services/webhook-processor')
+   processWebhookEvent = module.processWebhookEvent
+ }
  await processWebhookEvent(payload.eventId)
  },
  'kommo:send-message': async (payload: {
