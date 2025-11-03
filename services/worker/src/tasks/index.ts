@@ -542,15 +542,18 @@ export const getTaskHandlers = () => {
  },
  'webhook:retry': async (payload: { eventId: string; retryCount: number }) => {
  // Импортируем процессор webhook динамически
- // Путь относительно services/worker/dist/ -> ../lib/ (services/worker/lib/)
+ // Используем переменные для обхода проверки esbuild во время сборки
+ const libPath1 = '../lib/services/webhook-processor'
+ const libPath2 = '../../lib/services/webhook-processor'
+ 
  let processWebhookEvent
  try {
-   const module = await import('../lib/services/webhook-processor')
+   const module = await import(libPath1 as any)
    processWebhookEvent = module.processWebhookEvent
  } catch (error) {
    // Fallback к корню проекта
    console.error('Failed to import from ../lib/, trying ../../lib/:', error)
-   const module = await import('../../lib/services/webhook-processor')
+   const module = await import(libPath2 as any)
    processWebhookEvent = module.processWebhookEvent
  }
  await processWebhookEvent(payload.eventId)

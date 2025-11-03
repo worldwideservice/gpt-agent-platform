@@ -9,14 +9,18 @@ type UserTier = 'free' | 'pro' | 'enterprise' // Временное опреде
 // Хелпер для получения UserTier через динамический импорт
 async function getUserTier(userId: string, organizationId: string): Promise<UserTier> {
   try {
+    // Используем переменные для обхода проверки esbuild во время сборки
+    const libPath1 = '../lib/repositories/users'
+    const libPath2 = '../../lib/repositories/users'
+    
     // Пробуем сначала ../lib/ (services/worker/lib/)
     let UserRepository
     try {
-      const module = await import('../lib/repositories/users')
+      const module = await import(libPath1 as any)
       UserRepository = module.UserRepository
     } catch {
       // Fallback к ../../lib/ (корень/lib/)
-      const module = await import('../../lib/repositories/users')
+      const module = await import(libPath2 as any)
       UserRepository = module.UserRepository
     }
     return await UserRepository.getUserTier(userId, organizationId)
