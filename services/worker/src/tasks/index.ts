@@ -1,4 +1,4 @@
-import { env } from '../../../lib/env'
+import { env } from '../lib/env'
 import { decryptSecret } from '../../../lib/crypto'
 import { getSupabaseClient } from '../../../lib/supabase'
 import { kommoApiRequest, refreshKommoToken } from '../providers/kommo'
