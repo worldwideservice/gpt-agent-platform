@@ -33,6 +33,9 @@ COPY services/worker/package.json services/worker/package-lock.json ./services/w
 # Копируем собранное приложение Worker
 COPY --from=base /app/services/worker/dist ./services/worker/dist
 
+# Копируем src/lib директорию Worker (нужна для импортов .ts файлов через tsx)
+COPY --from=base /app/services/worker/src/lib ./services/worker/src/lib
+
 # Копируем lib и types директории из корня (нужны для импортов во время выполнения)
 COPY --from=base /app/lib ./lib
 COPY --from=base /app/types ./types
