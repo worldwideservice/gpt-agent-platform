@@ -4,7 +4,9 @@
 
 ## 🎯 Шаг 1: Задеплоить Worker (15 минут)
 
-### Через Railway Dashboard (Рекомендуется):
+👉 **📖 ДЕТАЛЬНАЯ ИНСТРУКЦИЯ:** `docs/WORKER_DEPLOY_STEP_BY_STEP.md`
+
+### Быстро:
 
 1. **Откройте:** https://railway.app
 2. **Войдите** через GitHub
@@ -20,24 +22,20 @@
 curl https://your-worker.up.railway.app/health
 ```
 
-**📋 Детальная инструкция:** `docs/RAILWAY_DEPLOY_NOW.md`
+**📋 Готовые значения:** `docs/RAILWAY_DEPLOY_NOW.md`
 
 ---
 
 ## 🎯 Шаг 2: Настроить Sentry DSN (10 минут)
 
-### Вариант A: Через Dashboard (Проще)
+👉 **📖 ДЕТАЛЬНАЯ ИНСТРУКЦИЯ:** `docs/SENTRY_DSN_STEP_BY_STEP.md`
+
+### Быстро:
 
 1. **Откройте:** https://sentry.io
 2. Войдите в ваш проект
 3. **Settings** → **Client Keys (DSN)**
 4. Скопируйте DSN (выглядит как: `https://xxx@sentry.io/xxx`)
-
-### Вариант B: Через скрипт
-
-```bash
-bash scripts/get-sentry-dsn.sh <org-slug> <project-slug>
-```
 
 ### Добавить в Vercel:
 
@@ -47,9 +45,8 @@ bash scripts/get-sentry-dsn.sh <org-slug> <project-slug>
    - `NEXT_PUBLIC_SENTRY_DSN` = `<ваш-dsn>`
 3. Выберите: **Production**, **Preview**, **Development**
 4. **Save**
-5. Перезапустите деплой (если нужно)
 
-**📋 Детальная инструкция:** `docs/SENTRY_SETUP_COMPLETE.md`
+**💡 Альтернатива:** `bash scripts/get-sentry-dsn.sh <org-slug> <project-slug>`
 
 ---
 
