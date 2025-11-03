@@ -36,7 +36,15 @@ COPY --from=base /app/services/worker/dist ./services/worker/dist
 # Копируем lib директорию из корня (нужна для импортов во время выполнения)
 COPY --from=base /app/lib ./lib
 # Копируем lib/ в services/worker/lib/ для динамических импортов (используют ../lib/)
-RUN mkdir -p ./services/worker/lib && cp -r ./lib/* ./services/worker/lib/
+RUN mkdir -p ./services/worker/lib && \
+    if [ -d ./lib ] && [ "$(ls -A ./lib 2>/dev/null)" ]; then \
+      cp -r ./lib/* ./services/worker/lib/ && \
+      echo "✅ lib/ скопирован в services/worker/lib/"; \
+    else \
+      echo "⚠️ lib/ директория пуста или не существует"; \
+    fi && \
+    ls -la ./lib/services/ 2>/dev/null || echo "lib/services/ не найден" && \
+    ls -la ./services/worker/lib/services/ 2>/dev/null || echo "services/worker/lib/services/ не найден"
 
 # Переходим в директорию Worker для установки production зависимостей
 WORKDIR /app/services/worker
@@ -60,4 +68,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3001}/health || exit 1
 
 # Запускаем worker из services/worker/dist/index.js
+# Важно: запускаем из корня /app, чтобы пути ../lib/ и ../../lib/ работали правильно
 CMD ["node", "services/worker/dist/index.js"]
