@@ -35,8 +35,8 @@ COPY --from=base /app/services/worker/dist ./services/worker/dist
 
 # Копируем lib директорию из корня (нужна для импортов во время выполнения)
 COPY --from=base /app/lib ./lib
-# Копируем lib/ из base stage в services/worker/lib/ для правильных путей при запуске
-COPY --from=base /app/services/worker/lib ./services/worker/lib
+# Создаем services/worker/lib/ и копируем туда lib/ для правильных путей при запуске
+RUN mkdir -p ./services/worker/lib && cp -r ./lib/* ./services/worker/lib/
 
 # Переходим в директорию Worker для установки production зависимостей
 WORKDIR /app/services/worker

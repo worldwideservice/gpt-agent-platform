@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
-    "build": "tsup src/index.ts --format esm --splitting --dts --out-dir dist --clean",
+    "build": "tsup",
     "lint": "eslint 'src/**/*.ts'"
   },
   "dependencies": {
