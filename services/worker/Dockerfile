@@ -1,17 +1,19 @@
 # Multi-stage build для Worker сервиса
+# Этот Dockerfile запускается из корня проекта (Root Directory = /)
 FROM node:20-alpine AS base
 
-# Устанавливаем рабочую директорию
+# Устанавливаем рабочую директорию в корень проекта
 WORKDIR /app
 
-# Устанавливаем зависимости для сборки
-COPY package.json package-lock.json ./
-RUN npm ci
+# Копируем package.json и package-lock.json Worker
+COPY services/worker/package.json services/worker/package-lock.json ./services/worker/
 
-# Копируем исходный код
+# Копируем весь проект (нужно для импортов из lib/)
 COPY . .
 
-# Собираем приложение
+# Переходим в директорию Worker и собираем
+WORKDIR /app/services/worker
+RUN npm ci
 RUN npm run build
 
 # Production stage
@@ -23,17 +25,21 @@ RUN apk add --no-cache wget
 # Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем package.json для production зависимостей
-COPY package.json package-lock.json ./
+# Копируем package.json Worker для production зависимостей
+COPY services/worker/package.json services/worker/package-lock.json ./services/worker/
 
-# Устанавливаем только production зависимости
+# Копируем собранное приложение Worker
+COPY --from=base /app/services/worker/dist ./services/worker/dist
+
+# Копируем lib директорию из корня (нужна для импортов)
+COPY --from=base /app/lib ./lib
+
+# Переходим в директорию Worker для установки production зависимостей
+WORKDIR /app/services/worker
 RUN npm ci --only=production
 
-# Копируем собранное приложение из предыдущего этапа
-COPY --from=base /app/dist ./dist
-
-# Копируем tsconfig и другие необходимые файлы
-COPY --from=base /app/tsconfig.json ./
+# Возвращаемся в корень для правильных путей импорта
+WORKDIR /app
 
 # Создаем пользователя для безопасности
 RUN addgroup --system --gid 1001 nodejs && \
@@ -49,6 +55,6 @@ USER worker
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3001}/health || exit 1
 
-# Запускаем worker
-CMD ["node", "dist/index.js"]
+# Запускаем worker из services/worker/dist/index.js
+CMD ["node", "services/worker/dist/index.js"]
 
