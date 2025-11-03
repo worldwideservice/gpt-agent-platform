@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "start": "node dist/index.js",
+    "start": "tsx dist/index.js",
     "build": "tsup",
     "lint": "eslint 'src/**/*.ts'"
   },
@@ -15,6 +15,7 @@
     "dotenv": "^16.4.5",
     "ioredis": "^5.8.2",
     "node-fetch": "^3.3.2",
+    "tsx": "^4.15.5",
     "zod": "^4.1.12"
   },
   "devDependencies": {

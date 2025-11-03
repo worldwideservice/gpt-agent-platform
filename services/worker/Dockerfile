@@ -67,6 +67,6 @@ USER worker
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3001}/health || exit 1
 
-# Запускаем worker из services/worker/dist/index.js
-# Важно: запускаем из корня /app, чтобы пути ../lib/ и ../../lib/ работали правильно
-CMD ["node", "services/worker/dist/index.js"]
+# Запускаем worker через tsx для поддержки TypeScript импортов из lib/
+# tsx позволяет динамически импортировать .ts файлы во время выполнения
+CMD ["tsx", "services/worker/dist/index.js"]

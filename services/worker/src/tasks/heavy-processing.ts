@@ -9,64 +9,22 @@ type UserTier = 'free' | 'pro' | 'enterprise' // Временное опреде
 // Хелпер для получения UserTier через динамический импорт
 async function getUserTier(userId: string, organizationId: string): Promise<UserTier> {
   try {
-    // Используем абсолютные пути через import.meta.url для правильного разрешения
-    const { pathToFileURL } = await import('url')
-    const { dirname, resolve } = await import('path')
-    const { fileURLToPath } = await import('url')
-    
-    // Определяем путь к текущему файлу
-    const currentFile = fileURLToPath(import.meta.url)
-    const currentDir = dirname(currentFile)
-    
-    // Пробуем разные варианты путей
-    const paths = [
-      resolve(currentDir, '../lib/repositories/users'), // services/worker/dist/lib/repositories/users
-      resolve(currentDir, '../../lib/repositories/users'), // services/worker/lib/repositories/users
-      resolve(process.cwd(), 'lib/repositories/users'), // /app/lib/repositories/users
-      resolve(process.cwd(), 'services/worker/lib/repositories/users'), // /app/services/worker/lib/repositories/users
-    ]
-    
+    // Используем tsx для поддержки TypeScript импортов - можно импортировать .ts файлы напрямую
     let UserRepository
-    let lastError: Error | null = null
-    
-    for (const libPath of paths) {
+    try {
+      // Пробуем импорт из корня проекта (lib/ находится в /app/lib/)
+      const module = await import('../../lib/repositories/users')
+      UserRepository = module.UserRepository
+    } catch (error) {
+      // Fallback к альтернативному пути
       try {
-        // Пробуем разные расширения файлов (.js, .ts, без расширения)
-        const extensions = ['', '.js', '.ts', '/index.js', '/index.ts']
-        let moduleImported = false
-        
-        for (const ext of extensions) {
-          try {
-            const fullPath = libPath + ext
-            // Конвертируем в file:// URL для import
-            const moduleUrl = pathToFileURL(fullPath).href
-            const module = await import(moduleUrl)
-            if (module && module.UserRepository) {
-              UserRepository = module.UserRepository
-              console.log(`✅ Successfully imported UserRepository from: ${fullPath}`)
-              moduleImported = true
-              break
-            }
-          } catch (extError) {
-            // Пробуем следующее расширение
-            continue
-          }
-        }
-        
-        if (moduleImported) {
-          break
-        }
-      } catch (error) {
-        lastError = error as Error
-        // Продолжаем пробовать следующие пути
+        const module = await import('../../../lib/repositories/users')
+        UserRepository = module.UserRepository
+      } catch (fallbackError) {
+        console.error('❌ Failed to import UserRepository:', { error, fallbackError })
+        // Fallback к free tier при ошибке
+        return 'free'
       }
-    }
-    
-    if (!UserRepository) {
-      console.error('❌ Failed to import UserRepository from all paths:', paths)
-      console.error('Last error:', lastError)
-      // Fallback к free tier при ошибке
-      return 'free'
     }
     
     return await UserRepository.getUserTier(userId, organizationId)

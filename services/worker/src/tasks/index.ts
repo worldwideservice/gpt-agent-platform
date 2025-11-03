@@ -542,65 +542,22 @@ export const getTaskHandlers = () => {
  },
  'webhook:retry': async (payload: { eventId: string; retryCount: number }) => {
  // Импортируем процессор webhook динамически
- // Используем абсолютные пути через import.meta.url для правильного разрешения
- const { pathToFileURL } = await import('url')
- const { dirname, resolve, join } = await import('path')
- const { fileURLToPath } = await import('url')
- 
- // Определяем путь к текущему файлу (dist/tasks/index.js)
- const currentFile = fileURLToPath(import.meta.url)
- const currentDir = dirname(currentFile)
- 
- // Пробуем разные варианты путей
- const paths = [
-   resolve(currentDir, '../lib/services/webhook-processor'), // services/worker/dist/lib/services/webhook-processor
-   resolve(currentDir, '../../lib/services/webhook-processor'), // services/worker/lib/services/webhook-processor
-   resolve(process.cwd(), 'lib/services/webhook-processor'), // /app/lib/services/webhook-processor
-   resolve(process.cwd(), 'services/worker/lib/services/webhook-processor'), // /app/services/worker/lib/services/webhook-processor
- ]
- 
+ // Используем tsx для поддержки TypeScript импортов - можно импортировать .ts файлы напрямую
  let processWebhookEvent
- let lastError: Error | null = null
- 
- for (const libPath of paths) {
+ try {
+   // Пробуем импорт из корня проекта (lib/ находится в /app/lib/)
+   const module = await import('../../lib/services/webhook-processor')
+   processWebhookEvent = module.processWebhookEvent
+ } catch (error) {
+   // Fallback к альтернативному пути
    try {
-     // Пробуем разные расширения файлов (.js, .ts, без расширения)
-     const extensions = ['', '.js', '.ts', '/index.js', '/index.ts']
-     let moduleImported = false
-     
-     for (const ext of extensions) {
-       try {
-         const fullPath = libPath + ext
-         // Конвертируем в file:// URL для import
-         const moduleUrl = pathToFileURL(fullPath).href
-         const module = await import(moduleUrl)
-         if (module && module.processWebhookEvent) {
-           processWebhookEvent = module.processWebhookEvent
-           console.log(`✅ Successfully imported webhook-processor from: ${fullPath}`)
-           moduleImported = true
-           break
-         }
-       } catch (extError) {
-         // Пробуем следующее расширение
-         continue
-       }
-     }
-     
-     if (moduleImported) {
-       break
-     }
-   } catch (error) {
-     lastError = error as Error
-     // Продолжаем пробовать следующие пути
+     const module = await import('../../../lib/services/webhook-processor')
+     processWebhookEvent = module.processWebhookEvent
+   } catch (fallbackError) {
+     console.error('❌ Failed to import webhook-processor:', { error, fallbackError })
+     throw new Error(`Failed to import webhook-processor: ${error instanceof Error ? error.message : String(error)}`)
    }
  }
- 
- if (!processWebhookEvent) {
-   console.error('❌ Failed to import webhook-processor from all paths:', paths)
-   console.error('Last error:', lastError)
-   throw new Error(`Failed to import webhook-processor. Tried paths: ${paths.join(', ')}`)
- }
- 
  await processWebhookEvent(payload.eventId)
  },
  'kommo:send-message': async (payload: {
