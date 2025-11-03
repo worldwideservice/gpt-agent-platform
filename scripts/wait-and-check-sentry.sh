@@ -78,3 +78,4 @@ echo "   Проверьте алерты вручную:"
 echo "   https://sentry.io/organizations/$SENTRY_ORG/projects/$SENTRY_PROJECT/alerts/rules/"
 echo ""
 
+

@@ -79,3 +79,4 @@ sntrys_eyJpYXQiOjE3NjIxODIyMjQuNjg2NDk2LCJ1cmwiOiJodHRwczovL3NlbnRyeS5pbyIsInJlZ
 **Токен сохранен в:** `scripts/complete-sentry-setup.sh`  
 **Готов к использованию:** После получения DSN через Dashboard
 
+

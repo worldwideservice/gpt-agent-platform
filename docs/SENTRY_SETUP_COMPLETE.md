@@ -142,3 +142,4 @@ Sentry.captureException(new Error('Test error from Sentry setup'))
 **Последнее обновление:** 2025-01-XX  
 **Статус:** ✅ Готово к настройке
 
+

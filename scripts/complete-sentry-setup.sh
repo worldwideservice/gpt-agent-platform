@@ -112,3 +112,4 @@ echo "Или сразу добавьте в Vercel:"
 echo "   bash scripts/auto-setup-vercel-sentry.sh <dsn>"
 echo ""
 
+

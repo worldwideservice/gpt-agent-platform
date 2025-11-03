@@ -76,3 +76,4 @@ gh secret list
 echo ""
 echo "✅ Все secrets добавлены. CI/CD готов к работе!"
 
+

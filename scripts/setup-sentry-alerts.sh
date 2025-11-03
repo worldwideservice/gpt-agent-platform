@@ -71,3 +71,4 @@ echo "1. Настройте алерты через Sentry Dashboard (см. вы
 echo "2. Настройте интеграции (Slack/Email) в Settings → Integrations"
 echo "3. Проверьте что алерты работают (отправьте тестовую ошибку)"
 
+

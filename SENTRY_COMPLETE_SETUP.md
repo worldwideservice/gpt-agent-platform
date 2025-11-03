@@ -93,3 +93,4 @@ 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
 
 **📖 Детальная инструкция:** `docs/SENTRY_ALERTS_QUICK_SETUP.md`
 
+

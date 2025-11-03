@@ -59,3 +59,4 @@ echo "1. Получите DSN из Sentry Dashboard"
 echo "2. Добавьте DSN в Vercel Environment Variables"
 echo "3. Настройте алерты (см. docs/SENTRY_ALERTS.md)"
 
+

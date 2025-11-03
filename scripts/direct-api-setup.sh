@@ -80,3 +80,4 @@ echo "   1. Откройте: https://sentry.io"
 echo "   2. Settings → Client Keys (DSN)"
 echo "   3. Запустите: bash scripts/auto-setup-vercel-sentry.sh <dsn>"
 
+

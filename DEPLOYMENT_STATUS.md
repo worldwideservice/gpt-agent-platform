@@ -74,3 +74,4 @@ console.log('[worker] Supabase URL:', env.SUPABASE_URL ? '***configured***' : 'M
 **Дата:** 2025-01-26  
 **Статус:** Ожидание нового деплоя с улучшенным логированием
 
+

@@ -62,3 +62,4 @@ echo "✅ После создания всех алертов, запустит�
 echo "   bash scripts/verify-sentry-complete.sh"
 echo ""
 
+

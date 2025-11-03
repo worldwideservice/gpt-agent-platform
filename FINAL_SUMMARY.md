@@ -153,3 +153,4 @@ bash scripts/run-full-automation.sh [sentry-dsn]
 
 **🚀 Начните сейчас:** `START_HERE.md`
 
+

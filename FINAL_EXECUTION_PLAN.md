@@ -94,3 +94,4 @@ bash scripts/complete-sentry-setup.sh <ваш-dsn>
 bash scripts/complete-sentry-setup.sh <dsn>
 ```
 
+

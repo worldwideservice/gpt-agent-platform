@@ -178,3 +178,4 @@ echo "   2. Settings → Client Keys (DSN) → Копируйте DSN"
 echo "   3. Запустите: bash scripts/complete-sentry-setup.sh <dsn>"
 echo ""
 
+

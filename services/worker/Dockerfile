@@ -60,7 +60,9 @@ USER worker
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3001}/health || exit 1
 
-# Запускаем worker через tsx для поддержки TypeScript импортов из lib/
+# Запускаем worker через npm start (который использует tsx) для поддержки TypeScript импортов из lib/
 # tsx позволяет динамически импортировать .ts файлы во время выполнения
 # tsx автоматически резолвит path aliases из tsconfig.json при использовании tsImport
-CMD ["tsx", "services/worker/dist/index.js"]
+# Запускаем из директории worker, чтобы tsx правильно нашел все пути
+WORKDIR /app/services/worker
+CMD ["npm", "start"]

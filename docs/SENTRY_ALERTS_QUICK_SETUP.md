@@ -123,3 +123,4 @@
 
 **Следующий шаг:** Деплой Worker (см. `docs/WORKER_DEPLOY_STEP_BY_STEP.md`)
 
+

@@ -109,3 +109,4 @@ bash scripts/verify-sentry-complete.sh
 
 **🚀 Все готово! Следуйте инструкции в `SENTRY_ALERTS_STEP_BY_STEP.md`**
 
+

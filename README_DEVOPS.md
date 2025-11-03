@@ -36,3 +36,4 @@ bash scripts/auto-setup-vercel-sentry.sh <dsn>
 
 **🚀 Начните:** `START_HERE.md`
 
+

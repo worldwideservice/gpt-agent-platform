@@ -83,3 +83,4 @@ Worker должен иметь health check endpoint на `/health` (порт 30
 **Дата выполнения:** 2025-01-26  
 **Метод:** Браузерная автоматизация через MCP Browser Tools
 
+

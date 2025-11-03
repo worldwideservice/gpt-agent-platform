@@ -125,3 +125,4 @@ npx shadcn@latest add toast         # Toast уведомления (возмож
 - TypeScript типизация
 - Shadcn UI компоненты для красивого дизайна
 
+

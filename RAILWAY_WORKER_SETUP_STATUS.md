@@ -85,3 +85,4 @@ railway service create --name worker --directory services/worker
 
 **Дата:** 2025-01-26  
 **Статус:** ⚠️ Требуется решение для создания Worker сервиса
+

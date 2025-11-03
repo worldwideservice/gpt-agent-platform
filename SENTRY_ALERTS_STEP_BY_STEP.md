@@ -187,3 +187,4 @@ https://sentry.io/organizations/world-wide-services/projects/javascript-nextjs/a
 
 **Sentry полностью настроен: 100% ✅**
 
+

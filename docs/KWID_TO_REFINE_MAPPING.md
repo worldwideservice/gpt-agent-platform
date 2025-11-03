@@ -687,3 +687,4 @@ const { mutate: syncCRM } = useCustom();
 - Custom actions (copy, sync) реализуются через `useCustom` hook
 - Фильтры требуют настройки в data provider для корректной работы с API
 
+

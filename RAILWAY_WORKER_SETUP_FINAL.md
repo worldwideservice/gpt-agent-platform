@@ -121,3 +121,4 @@ curl -X POST https://backboard.railway.com/graphql/v2 \
 **Дата создания:** 2025-01-26  
 **Статус:** ✅ Проект создан, основной сервис задеплоен. Требуется создать Worker сервис через CLI или настроить Root Directory.
 
+

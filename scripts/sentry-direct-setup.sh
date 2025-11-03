@@ -89,3 +89,4 @@ echo "   4. Затем запустите:"
 echo "      bash scripts/sentry-direct-setup.sh <ваш-dsn>"
 echo ""
 
+

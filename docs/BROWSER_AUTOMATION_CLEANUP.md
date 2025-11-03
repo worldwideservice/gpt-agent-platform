@@ -89,3 +89,4 @@ ps aux | grep -E "mcp-chrome|playwright.*chrome" | grep -v grep
 **Создано:** 2025-01-26  
 **Версия:** 1.0
 
+
