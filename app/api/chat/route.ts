@@ -410,14 +410,14 @@ export const POST = async (request: NextRequest) => {
  }
 
  // Сохраняем ответ агента
- await addMessageToConversation(conversation.id, {
- role: 'assistant',
- content: llmResponse.content,
- metadata: {
- model: llmResponse.model,
- usage: llmResponse.usage,
- usedKnowledgeBase: useKnowledgeBase && (fullSystemPrompt?.includes('Контекст из базы знаний') ?? false),
- },
+ const assistantMessage = await addMessageToConversation(conversation.id, {
+   role: 'assistant',
+   content: llmResponse.content,
+   metadata: {
+     model: llmResponse.model,
+     usage: llmResponse.usage,
+     usedKnowledgeBase: useKnowledgeBase && (fullSystemPrompt?.includes('Контекст из базы знаний') ?? false),
+   },
  })
 
  // Обрабатываем память агента из разговора (асинхронно, не блокируем ответ)
@@ -469,13 +469,19 @@ export const POST = async (request: NextRequest) => {
  }
 
  return NextResponse.json({
- success: true,
- data: {
- conversationId: conversation.id,
- message: llmResponse.content,
- usage: llmResponse.usage,
- model: llmResponse.model,
- },
+   success: true,
+   data: {
+     conversationId: conversation.id,
+     message: {
+       id: assistantMessage.id,
+       role: assistantMessage.role,
+       content: assistantMessage.content,
+       createdAt: assistantMessage.createdAt,
+       metadata: assistantMessage.metadata,
+     },
+     usage: llmResponse.usage,
+     model: llmResponse.model,
+   },
  })
  } catch (error) {
  console.error('Chat API error', error)
@@ -509,14 +515,17 @@ export const GET = async (request: NextRequest) => {
 
  try {
  if (conversationId) {
- // Получаем сообщения конкретного диалога
- const { getConversationMessages: getMessages } = await import('@/lib/repositories/conversations')
- const messages = await getMessages(conversationId)
+      // Получаем сообщения конкретного диалога
+      const { getConversationMessages: getMessages } = await import('@/lib/repositories/conversations')
+      const messages = await getMessages(conversationId)
 
- return NextResponse.json({
- success: true,
- data: messages,
- })
+      return NextResponse.json({
+        success: true,
+        data: {
+          messages,
+          conversationId,
+        },
+      })
  }
 
  // Получаем список диалогов
