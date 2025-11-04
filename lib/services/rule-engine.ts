@@ -45,14 +45,15 @@ export interface AutomationRule {
 }
 
 export interface RuleExecutionContext {
- organizationId: string
- agentId?: string | null
- leadId?: string
- contactId?: string
- triggerType: string
- triggerData: Record<string, any>
- previousState?: Record<string, any>
- currentState?: Record<string, any>
+  organizationId: string
+  agentId?: string | null
+  leadId?: string
+  contactId?: string
+  triggerType: string
+  triggerData: Record<string, any>
+  previousState?: Record<string, any>
+  currentState?: Record<string, any>
+  ruleName?: string // Добавлено для логирования
 }
 
 /**

@@ -780,9 +780,13 @@ async function triggerRuleEngine(
     // Создаем контекст для Rule Engine
     const ruleContext: RuleExecutionContext = {
       organizationId: orgId,
+      agentId: undefined, // Будет определено в executeRules на основе правил
       triggerType,
       leadId: context.entityType === 'lead' ? context.entityId : undefined,
+      contactId: context.entityType === 'contact' ? context.entityId : undefined,
       triggerData: context.payload,
+      currentState: context.payload as Record<string, any>,
+      previousState: undefined, // Может быть получено из БД если нужно
     }
 
     // Запускаем Rule Engine
