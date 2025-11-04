@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
@@ -24,40 +23,24 @@ export function LandingPageClient() {
   const router = useRouter()
   const { data: session, status } = useSession()
 
-  useEffect(() => {
-    // If user is authenticated, redirect to /manage/[tenantId]
+  const handleGoToPlatform = async () => {
     if (status === 'authenticated' && session?.user) {
-      console.log('User authenticated, getting tenant-id...')
-      
-      // Получаем tenant-id через API
-      fetch('/api/auth/get-tenant-redirect')
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && data.tenantId) {
-            console.log('Tenant-id received, redirecting to /manage/' + data.tenantId)
-            router.replace(`/manage/${data.tenantId}`)
-          } else {
-            // Если не удалось получить tenant-id, редиректим на вход
-            console.log('No tenant-id, redirecting to /login')
-            router.replace('/login')
-          }
-        })
-        .catch(error => {
-          console.error('Error getting tenant-id:', error)
-          router.replace('/login')
-        })
+      try {
+        const response = await fetch('/api/auth/get-tenant-redirect')
+        const data = await response.json()
+        
+        if (data.success && data.tenantId) {
+          router.push(`/manage/${data.tenantId}`)
+        } else {
+          router.push('/login')
+        }
+      } catch (error) {
+        console.error('Error getting tenant-id:', error)
+        router.push('/login')
+      }
+    } else {
+      router.push('/login')
     }
-  }, [session, status, router])
-
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-center">
-          <Logo showTagline className="mb-4" />
-          <p className="text-gray-600">Загрузка...</p>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -106,28 +89,45 @@ export function LandingPageClient() {
             выполнение задач через интеграцию с CRM системами.
           </p>
           <div className="flex w-full items-center justify-center space-x-4 py-4 md:pb-10">
-            <Link href="/register">
-              <Button size="lg" className="text-base">
-                Начать бесплатно
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-            <Link href="/login">
-              <Button variant="outline" size="lg" className="text-base">
-                Войти в аккаунт
-              </Button>
-            </Link>
+            {status === 'authenticated' && session?.user ? (
+              <>
+                <Button 
+                  size="lg" 
+                  className="text-base"
+                  onClick={handleGoToPlatform}
+                >
+                  Перейти на платформу
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link href="/register">
+                  <Button size="lg" className="text-base">
+                    Начать бесплатно
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button variant="outline" size="lg" className="text-base">
+                    Войти в аккаунт
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <span>Уже есть аккаунт?</span>
-            <Link href="/login" className="font-medium text-[#E63946] hover:underline">
-              Войти
-            </Link>
-            <span>или</span>
-            <Link href="/reset-password/request" className="font-medium text-[#E63946] hover:underline">
-              восстановить пароль
-            </Link>
-          </div>
+          {status !== 'authenticated' && (
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <span>Уже есть аккаунт?</span>
+              <Link href="/login" className="font-medium text-[#E63946] hover:underline">
+                Войти
+              </Link>
+              <span>или</span>
+              <Link href="/reset-password/request" className="font-medium text-[#E63946] hover:underline">
+                восстановить пароль
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
