@@ -3,7 +3,7 @@
 ## 🎉 Токен создан через браузерную автоматизацию
 
 **Название токена:** Railway API Token - DevOps Automation  
-**Токен:** `b2d35fc1-afcf-4589-8b24-da667437cf26`  
+**Токен:** `b2d3...cf26 (замаскировано)`  
 **Дата создания:** 2025-01-26  
 
 ---
@@ -24,13 +24,13 @@
 
 **Заголовок авторизации:**
 ```bash
-Authorization: Bearer b2d35fc1-afcf-4589-8b24-da667437cf26
+Authorization: Bearer b2d3...cf26 (замаскировано)
 ```
 
 **Пример запроса:**
 ```bash
 curl -X POST https://backboard.railway.com/graphql/v2 \
-  -H "Authorization: Bearer b2d35fc1-afcf-4589-8b24-da667437cf26" \
+  -H "Authorization: Bearer b2d3...cf26 (замаскировано)" \
   -H "Content-Type: application/json" \
   -d '{"query":"query { me { name email } }"}'
 ```

@@ -3,7 +3,7 @@
 ## ✅ Выполнено
 
 ### 1. ✅ Railway API Token создан и настроен
-- **Токен:** `b2d35fc1-afcf-4589-8b24-da667437cf26` ✅
+- **Токен:** `b2d3...cf26 (замаскировано)` ✅
 - **Статус:** Работает и протестирован через GraphQL API
 - **Обновлено:** Все скрипты и документация содержат новый токен
 
@@ -66,7 +66,7 @@ railway variables set RAILWAY_SERVICE_ROOT_DIRECTORY=services/worker
 
 ```bash
 curl -X POST https://backboard.railway.com/graphql/v2 \
-  -H "Authorization: Bearer b2d35fc1-afcf-4589-8b24-da667437cf26" \
+  -H "Authorization: Bearer b2d3...cf26 (замаскировано)" \
   -H "Content-Type: application/json" \
   -d '{
     "query": "mutation { serviceCreate(projectId: \"ee93e450-dfe7-4414-892f-f3c6b83d91d1\", source: { repo: \"worldwideservice/gpt-agent-platform\", rootDirectory: \"services/worker\" }) { id name } }"
@@ -102,7 +102,7 @@ curl -X POST https://backboard.railway.com/graphql/v2 \
 
 ## 📝 Использованные токены и ID
 
-- **Railway API Token:** `b2d35fc1-afcf-4589-8b24-da667437cf26`
+- **Railway API Token:** `b2d3...cf26 (замаскировано)`
 - **Railway Project ID:** `ee93e450-dfe7-4414-892f-f3c6b83d91d1`
 - **Railway Service ID (основной):** `2a8d827f-d635-4314-98a8-8c2e5cf77f39`
 - **GitHub Repository:** `worldwideservice/gpt-agent-platform`

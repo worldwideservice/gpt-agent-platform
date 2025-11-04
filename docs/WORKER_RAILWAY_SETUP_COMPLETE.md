@@ -36,15 +36,15 @@ Railway может автоматически обнаружить нескол�
 #### Переменные для добавления:
 
 ```bash
-REDIS_URL=redis://default:AYcUASQgZjI2MTM5NzYtYzU2ZS00YjFkLTk3MmQtMWIyODAzYjY3ODg5OGE3ODAzNDUwMzQ5NGE0Yjk5NzEwZDFiNWE4ZTg0MDU=@usw1-merry-term-40416.upstash.io:6379
+REDIS_URL=redis://default:AYcU...MDU= (замаскировано)@usw1-merry-term-40416.upstash.io:6379
 
 SUPABASE_URL=https://rpzchsgutabxeabbnwas.supabase.co
 
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwemNoc2d1dGFieGVhYmJud2FzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTU2MzMzOCwiZXhwIjoyMDc1MTM5MzM4fQ.UIkX-rUGGTbMGfd5YoF41Dx3QBuLH13nO-R3BXdbx2I
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...bx2I (замаскировано)
 
-ENCRYPTION_KEY=HxXQ5WCMJ3TrFZehEHJUyMVgVX5fdGsSWy/2rixkVwE=
+ENCRYPTION_KEY=HxXQ...wE= (замаскировано)
 
-OPENROUTER_API_KEY=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
+OPENROUTER_API_KEY=sk-or-v1-...80d7 (замаскировано)
 
 JOB_QUEUE_NAME=agent-jobs
 
@@ -118,7 +118,7 @@ curl https://your-worker-url.up.railway.app/health
 **Причина:** ENCRYPTION_KEY меньше 32 символов
 
 **Решение:**
-Используйте: `HxXQ5WCMJ3TrFZehEHJUyMVgVX5fdGsSWy/2rixkVwE=`
+Используйте: `HxXQ...wE= (замаскировано)`
 
 ### ❌ Ошибка: "Build failed"
 
@@ -174,7 +174,7 @@ Worker будет автоматически:
 
 ---
 
-**Railway Token:** `b2d35fc1-afcf-4589-8b24-da667437cf26` ✅  
+**Railway Token:** `b2d3...cf26 (замаскировано)` ✅  
 **Последнее обновление:** 2025-01-XX  
 **Статус:** ✅ Готово к деплою
 

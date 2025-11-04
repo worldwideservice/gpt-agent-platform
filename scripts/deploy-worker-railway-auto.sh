@@ -5,7 +5,7 @@
 
 set -e
 
-RAILWAY_TOKEN="${RAILWAY_TOKEN:-b2d35fc1-afcf-4589-8b24-da667437cf26}"
+RAILWAY_TOKEN="${RAILWAY_TOKEN:?RAILWAY_TOKEN is required}"
 
 echo "🚀 Автоматический деплой Worker на Railway"
 echo "=========================================="

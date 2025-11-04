@@ -11,7 +11,7 @@
 
 #### Alert #3: Google API Key
 - **Тип секрета:** Google API Key
-- **Значение:** `AIzaSyDBUGmWp7crZCpF5OxI_6YwNj2WTJ7Xy-8`
+- **Значение:** `AIzaSy...Xy-8` (замаскировано)
 - **Файл:** `sentry-page-content.html:26`
 - **Статус:** Public leak
 - **Дата обнаружения:** Nov 3, 2025, 5:51 PM UTC (14 hours ago)
@@ -19,7 +19,7 @@
 
 #### Alert #2: OpenRouter API Key
 - **Тип секрета:** OpenRouter API Key
-- **Значение:** `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`
+- **Значение:** `sk-or-v1-...80d7` (замаскировано)
 - **Файл:** `env.production:24`
 - **Статус:** Public leak
 - **Дата обнаружения:** Oct 31, 2025, 8:26 AM UTC (3 days ago)
@@ -27,7 +27,7 @@
 
 #### Alert #1: Supabase Service Key
 - **Тип секрета:** Supabase Service Key
-- **Значение:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwemNoc2d1dGFieGVhYmJud2FzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTU2MzMzOCwiZXhwIjoyMDc1MTM5MzM4fQ.UIkX-rUGGTbMGfd5YoF41Dx3QBuLH13nO-R3BXdbx2I`
+- **Значение:** `eyJhbGc...bx2I` (замаскировано)
 - **Файл:** `env.production:11`
 - **Статус:** Public leak
 - **Дата обнаружения:** Oct 31, 2025, 8:26 AM UTC (3 days ago)

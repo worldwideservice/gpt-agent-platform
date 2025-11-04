@@ -12,7 +12,7 @@
 
 ### 1. Railway Token (ВЫСОКИЙ ПРИОРИТЕТ)
 
-**Текущий токен:** `b2d35fc1-afcf-4589-8b24-da667437cf26` (компрометирован)
+**Текущий токен:** `b2d3...cf26 (замаскировано)` (компрометирован)
 
 **Действия:**
 
@@ -85,7 +85,7 @@
 
 ### 4. Upstash Redis Token (ВЫСОКИЙ ПРИОРИТЕТ)
 
-**Текущий токен:** `AYcUASQgZjI2MTM5NzYtYzU2ZS00YjFkLTk3MmQtMWIyODAzYjY3ODg5OGE3ODAzNDUwMzQ5NGE0Yjk5NzEwZDFiNWE4ZTg0MDU=`
+**Текущий токен:** `AYcU...MDU= (замаскировано)`
 
 **Действия:**
 
@@ -131,7 +131,7 @@
 
 ### 6. Encryption Key (КРИТИЧНО!)
 
-**Текущий ключ:** `HxXQ5WCMJ3TrFZehEHJUyMVgVX5fdGsSWy/2rixkVwE=` (компрометирован)
+**Текущий ключ:** `HxXQ...wE= (замаскировано)` (компрометирован)
 
 **⚠️ ВАЖНО:** Ротация этого ключа требует перешифровки всех данных!
 
@@ -159,7 +159,7 @@
 
 ### 7. OpenRouter API Key (СРЕДНИЙ ПРИОРИТЕТ)
 
-**Текущий ключ:** `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`
+**Текущий ключ:** `sk-or-v1-...80d7 (замаскировано)`
 
 **Действия:**
 
@@ -213,7 +213,7 @@ git filter-branch --force --index-filter \
 Все скрипты должны использовать переменные окружения:
 ```bash
 # ❌ ПЛОХО
-RAILWAY_TOKEN="b2d35fc1-afcf-4589-8b24-da667437cf26"
+RAILWAY_TOKEN="b2d3...cf26 (замаскировано)"
 
 # ✅ ХОРОШО
 RAILWAY_TOKEN="${RAILWAY_TOKEN:?RAILWAY_TOKEN is required}"

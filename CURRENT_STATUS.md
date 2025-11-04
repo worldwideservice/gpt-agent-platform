@@ -65,7 +65,7 @@
 ### Проверка статуса деплоя
 ```bash
 curl -s -X POST https://backboard.railway.com/graphql/v2 \
-  -H "Authorization: Bearer b2d35fc1-afcf-4589-8b24-da667437cf26" \
+  -H "Authorization: Bearer b2d3...cf26 (замаскировано)" \
   -H "Content-Type: application/json" \
   -d '{"query":"query { service(id: \"2a8d827f-d635-4314-98a8-8c2e5cf77f39\") { deployments(first: 1) { edges { node { id status createdAt } } } } }"}'
 ```

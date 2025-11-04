@@ -36,7 +36,7 @@
 ### 1. Ротация всех секретов
 
 **Найденные секреты в репозитории:**
-- Railway Token: `b2d35fc1-afcf-4589-8b24-da667437cf26`
+- Railway Token: `b2d3...cf26 (замаскировано)`
 - Sentry Tokens (3 разных)
 - Vercel Token: `g5wBHt7TxDknUEIHchTJUHEK`
 - Upstash Redis Token

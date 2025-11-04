@@ -5,7 +5,7 @@
 
 set -e
 
-RAILWAY_TOKEN="${RAILWAY_TOKEN:-b2d35fc1-afcf-4589-8b24-da667437cf26}"
+RAILWAY_TOKEN="${RAILWAY_TOKEN:-b2d3...cf26 (замаскировано)}"
 
 echo "🚂 Попытка деплоя Worker на Railway"
 echo "===================================="

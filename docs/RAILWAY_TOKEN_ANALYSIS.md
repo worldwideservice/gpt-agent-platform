@@ -3,7 +3,7 @@
 ## ✅ НОВЫЙ ТОКЕН СОЗДАН
 
 **Старый токен:** `5cd06a89-c580-450d-958c-6b1553bb1428` ❌ (невалидный)  
-**Новый токен:** `b2d35fc1-afcf-4589-8b24-da667437cf26` ✅ (работает!)
+**Новый токен:** `b2d3...cf26 (замаскировано)` ✅ (работает!)
 
 **Дата создания:** 2025-01-26  
 **Статус:** ✅ Валидный и протестирован
@@ -12,7 +12,7 @@
 
 ```bash
 curl -X POST https://backboard.railway.com/graphql/v2 \
-  -H "Authorization: Bearer b2d35fc1-afcf-4589-8b24-da667437cf26" \
+  -H "Authorization: Bearer b2d3...cf26 (замаскировано)" \
   -H "Content-Type: application/json" \
   -d '{"query":"query { me { name email } }"}'
 ```

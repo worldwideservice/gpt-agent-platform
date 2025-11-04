@@ -74,7 +74,7 @@ Railway может автоматически обнаружить `services/wor
 ### Переменная 1: REDIS_URL
 ```
 Name: REDIS_URL
-Value: redis://default:AYcUASQgZjI2MTM5NzYtYzU2ZS00YjFkLTk3MmQtMWIyODAzYjY3ODg5OGE3ODAzNDUwMzQ5NGE0Yjk5NzEwZDFiNWE4ZTg0MDU=@usw1-merry-term-40416.upstash.io:6379
+Value: redis://default:AYcU...MDU= (замаскировано)@usw1-merry-term-40416.upstash.io:6379
 ```
 **Нажмите:** Save
 
@@ -88,21 +88,21 @@ Value: https://rpzchsgutabxeabbnwas.supabase.co
 ### Переменная 3: SUPABASE_SERVICE_ROLE_KEY
 ```
 Name: SUPABASE_SERVICE_ROLE_KEY
-Value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwemNoc2d1dGFieGVhYmJud2FzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTU2MzMzOCwiZXhwIjoyMDc1MTM5MzM4fQ.UIkX-rUGGTbMGfd5YoF41Dx3QBuLH13nO-R3BXdbx2I
+Value: eyJhbGc...bx2I (замаскировано)
 ```
 **Нажмите:** Save
 
 ### Переменная 4: ENCRYPTION_KEY
 ```
 Name: ENCRYPTION_KEY
-Value: HxXQ5WCMJ3TrFZehEHJUyMVgVX5fdGsSWy/2rixkVwE=
+Value: HxXQ...wE= (замаскировано)
 ```
 **Нажмите:** Save
 
 ### Переменная 5: OPENROUTER_API_KEY
 ```
 Name: OPENROUTER_API_KEY
-Value: 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
+Value: sk-or-v1-...80d7 (замаскировано)
 ```
 **Нажмите:** Save
 

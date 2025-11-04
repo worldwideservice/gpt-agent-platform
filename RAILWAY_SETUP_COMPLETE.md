@@ -3,7 +3,7 @@
 ## 🎉 Выполнено через браузерную автоматизацию
 
 ### 1. ✅ Создан новый Railway API Token
-- **Токен:** `b2d35fc1-afcf-4589-8b24-da667437cf26`
+- **Токен:** `b2d3...cf26 (замаскировано)`
 - **Название:** Railway API Token - DevOps Automation
 - **Статус:** ✅ Работает и протестирован
 - **Проверка API:** `{"data":{"me":{"name":"Maksym","email":"admin@worldwideservice.eu"}}}`
@@ -52,11 +52,11 @@ Railway автоматически создал проект и начал де�
 
 2. **Добавить переменные окружения для Worker**
    После создания Worker сервиса добавить переменные:
-   - `REDIS_URL` - `redis://default:AYcUASQgZjI2MTM5NzYtYzU2ZS00YjFkLTk3MmQtMWIyODAzYjY3ODg5OGE3ODAzNDUwMzQ5NGE0Yjk5NzEwZDFiNWE4ZTg0MDU=@usw1-merry-term-40416.upstash.io:6379`
+   - `REDIS_URL` - `redis://default:AYcU...MDU= (замаскировано)@usw1-merry-term-40416.upstash.io:6379`
    - `SUPABASE_URL` - `https://rpzchsgutabxeabbnwas.supabase.co`
-   - `SUPABASE_SERVICE_ROLE_KEY` - `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwemNoc2d1dGFieGVhYmJud2FzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTU2MzMzOCwiZXhwIjoyMDc1MTM5MzM4fQ.UIkX-rUGGTbMGfd5YoF41Dx3QBuLH13nO-R3BXdbx2I`
-   - `ENCRYPTION_KEY` - `HxXQ5WCMJ3TrFZehEHJUyMVgVX5fdGsSWy/2rixkVwE=`
-   - `OPENROUTER_API_KEY` - `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`
+   - `SUPABASE_SERVICE_ROLE_KEY` - `eyJhbGc...bx2I (замаскировано)`
+   - `ENCRYPTION_KEY` - `HxXQ...wE= (замаскировано)`
+   - `OPENROUTER_API_KEY` - `sk-or-v1-...80d7 (замаскировано)`
    - `JOB_QUEUE_NAME` - `agent-jobs`
    - `JOB_CONCURRENCY` - `5`
    - `PORT` - `3001`
@@ -65,7 +65,7 @@ Railway автоматически создал проект и начал де�
 
 ## 📋 Текущий статус
 
-**Railway Token:** ✅ Работает (`b2d35fc1-afcf-4589-8b24-da667437cf26`)  
+**Railway Token:** ✅ Работает (`b2d3...cf26 (замаскировано)`)  
 **Проект создан:** ✅  
 **Основной сервис:** 🔄 Деплоится  
 **Worker сервис:** ⏳ Требуется создать отдельно  
@@ -75,7 +75,7 @@ Railway автоматически создал проект и начал де�
 ## 🔗 Полезные ссылки
 
 - **Railway Dashboard:** https://railway.com/project/ee93e450-dfe7-4414-892f-f3c6b83d91d1
-- **Railway API Token:** `b2d35fc1-afcf-4589-8b24-da667437cf26`
+- **Railway API Token:** `b2d3...cf26 (замаскировано)`
 - **Railway API Endpoint:** `https://backboard.railway.com/graphql/v2`
 
 ---

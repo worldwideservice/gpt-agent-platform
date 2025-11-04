@@ -108,7 +108,7 @@ echo ""
 echo -e "${GREEN}✅ Шаг 3: Подготовка деплоя Worker${NC}"
 echo ""
 
-RAILWAY_TOKEN="${RAILWAY_TOKEN:-b2d35fc1-afcf-4589-8b24-da667437cf26}"
+RAILWAY_TOKEN="${RAILWAY_TOKEN:?RAILWAY_TOKEN is required}"
 
 echo "🚂 Railway деплой требует Dashboard"
 echo -e "${YELLOW}⚠️  Railway CLI требует интерактивную авторизацию${NC}"

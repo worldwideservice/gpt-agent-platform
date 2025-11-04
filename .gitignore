@@ -126,3 +126,8 @@ backups/
 
 # Sentry page content (contains API keys)
 sentry-page-content.html
+
+# Playwright MCP screenshots
+.playwright-mcp/
+*.png
+!public/**/*.png
