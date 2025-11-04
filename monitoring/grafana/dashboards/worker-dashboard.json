@@ -1,0 +1,113 @@
+{
+  "dashboard": {
+    "title": "Worker Service Dashboard",
+    "tags": ["worker", "bullmq", "redis"],
+    "timezone": "browser",
+    "schemaVersion": 27,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Jobs Processing Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(worker_jobs_completed_total[5m])",
+            "legendFormat": "{{type}} completed"
+          },
+          {
+            "expr": "rate(worker_jobs_failed_total[5m])",
+            "legendFormat": "{{type}} failed"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Jobs Processing Queue",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "worker_jobs_processing",
+            "legendFormat": "Processing jobs"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Redis Connection Status",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "worker_redis_connection_status",
+            "legendFormat": "Redis connected"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Job Processing Time (95th percentile)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(worker_job_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{type}} p95"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      },
+      {
+        "id": 5,
+        "title": "Total Jobs",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "worker_jobs_total",
+            "legendFormat": "Total"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 16}
+      },
+      {
+        "id": 6,
+        "title": "Completed Jobs",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "worker_jobs_completed_total",
+            "legendFormat": "Completed"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 16}
+      },
+      {
+        "id": 7,
+        "title": "Failed Jobs",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "worker_jobs_failed_total",
+            "legendFormat": "Failed"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 16}
+      },
+      {
+        "id": 8,
+        "title": "Redis Reconnect Attempts",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "worker_redis_reconnect_attempts_total",
+            "legendFormat": "Reconnects"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 16}
+      }
+    ]
+  }
+}
+

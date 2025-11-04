@@ -1,0 +1,91 @@
+# Алерты для Worker сервиса
+# Эти правила будут использоваться Alertmanager для отправки уведомлений
+
+groups:
+  - name: worker_alerts
+    interval: 30s
+    rules:
+      # Алерт: Worker недоступен
+      - alert: WorkerDown
+        expr: up{job="worker"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: worker
+        annotations:
+          summary: "Worker сервис недоступен"
+          description: "Worker сервис не отвечает на health check более 2 минут"
+
+      # Алерт: Высокий процент ошибок jobs
+      - alert: HighJobFailureRate
+        expr: |
+          rate(worker_jobs_failed_total[5m]) / 
+          (rate(worker_jobs_completed_total[5m]) + rate(worker_jobs_failed_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: worker
+        annotations:
+          summary: "Высокий процент ошибок jobs"
+          description: "Более 10% jobs завершаются с ошибкой за последние 5 минут"
+
+      # Алерт: Redis отключен
+      - alert: RedisDisconnected
+        expr: worker_redis_connection_status == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: worker
+        annotations:
+          summary: "Redis отключен"
+          description: "Worker потерял подключение к Redis более 1 минуты назад"
+
+      # Алерт: Высокое время обработки jobs
+      - alert: HighJobProcessingTime
+        expr: |
+          histogram_quantile(0.95, 
+            rate(worker_job_duration_seconds_bucket[5m])
+          ) > 30
+        for: 5m
+        labels:
+          severity: warning
+          component: worker
+        annotations:
+          summary: "Высокое время обработки jobs"
+          description: "95-й перцентиль времени обработки jobs превышает 30 секунд"
+
+      # Алерт: Много jobs в обработке
+      - alert: HighJobProcessingQueue
+        expr: worker_jobs_processing > 50
+        for: 5m
+        labels:
+          severity: warning
+          component: worker
+        annotations:
+          summary: "Большая очередь обработки jobs"
+          description: "Более 50 jobs обрабатываются одновременно более 5 минут"
+
+      # Алерт: Много попыток переподключения Redis
+      - alert: HighRedisReconnectAttempts
+        expr: |
+          rate(worker_redis_reconnect_attempts_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          component: worker
+        annotations:
+          summary: "Частые переподключения Redis"
+          description: "Более 5 попыток переподключения Redis в минуту"
+
+      # Алерт: Низкая производительность Worker
+      - alert: LowWorkerThroughput
+        expr: |
+          rate(worker_jobs_completed_total[5m]) < 0.5
+        for: 10m
+        labels:
+          severity: warning
+          component: worker
+        annotations:
+          summary: "Низкая производительность Worker"
+          description: "Worker обрабатывает менее 0.5 jobs в секунду за последние 10 минут"
+

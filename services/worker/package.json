@@ -10,6 +10,8 @@
     "lint": "eslint 'src/**/*.ts'"
   },
   "dependencies": {
+    "@sentry/node": "^8.40.0",
+    "@sentry/profiling-node": "^8.40.0",
     "@supabase/supabase-js": "^2.76.1",
     "@upstash/redis": "^1.35.6",
     "bcryptjs": "^3.0.3",

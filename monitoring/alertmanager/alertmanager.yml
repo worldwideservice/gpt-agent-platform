@@ -1,0 +1,95 @@
+# Alertmanager Configuration
+# Настройка отправки уведомлений при алертах
+#
+# ИНСТРУКЦИЯ ПО НАСТРОЙКЕ:
+# 1. Для Email уведомлений - раскомментируйте и настройте SMTP параметры ниже
+# 2. Для Slack уведомлений - добавьте webhook URL в секцию slack_configs
+# 3. Для Webhook уведомлений - настройте URL в секции webhook_configs
+
+global:
+  resolve_timeout: 5m
+  # Настройте SMTP для email уведомлений
+  # Раскомментируйте и заполните для включения email уведомлений:
+  # smtp_smarthost: 'smtp.gmail.com:587'
+  # smtp_from: 'alerts@yourdomain.com'
+  # smtp_auth_username: 'your-email@gmail.com'
+  # smtp_auth_password: 'your-app-password'
+  # 
+  # Примеры SMTP провайдеров:
+  # - Gmail: smtp.gmail.com:587
+  # - SendGrid: smtp.sendgrid.net:587
+  # - Mailgun: smtp.mailgun.org:587
+  # - AWS SES: email-smtp.region.amazonaws.com:587
+
+# Маршрутизация алертов
+route:
+  receiver: 'default'
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  routes:
+    # Критические алерты отправляются немедленно
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      continue: true
+    # Предупреждения группируются
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_wait: 30s
+      group_interval: 5m
+
+# Получатели уведомлений
+receivers:
+  - name: 'default'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook'
+        send_resolved: true
+
+  - name: 'critical-alerts'
+    # Email уведомления для критических алертов
+    # Раскомментируйте для включения email уведомлений:
+    # email_configs:
+    #   - to: 'admin@yourdomain.com'
+    #     headers:
+    #       Subject: '🚨 Critical Alert: {{ .GroupLabels.alertname }}'
+    #     html: |
+    #       <h2>Critical Alert</h2>
+    #       <p><strong>Alert:</strong> {{ .GroupLabels.alertname }}</p>
+    #       <p><strong>Description:</strong> {{ range .Alerts }}{{ .Annotations.description }}{{ end }}</p>
+    #       <p><strong>Time:</strong> {{ .Alerts[0].StartsAt }}</p>
+    webhook_configs:
+      # Настройте webhook URL для интеграций (например, Discord, Telegram, etc.)
+      # - url: 'https://your-webhook-url.com/alerts'
+      #   send_resolved: true
+      - url: 'http://localhost:5001/webhook'
+        send_resolved: true
+    # Slack интеграция (если настроена)
+    # Получите webhook URL: https://api.slack.com/messaging/webhooks
+    # slack_configs:
+    #   - api_url: 'YOUR_SLACK_WEBHOOK_URL'
+    #     channel: '#alerts'
+    #     title: '🚨 Critical Alert'
+    #     text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+    #     send_resolved: true
+
+  - name: 'warning-alerts'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook'
+        send_resolved: true
+    # Email уведомления для предупреждений (опционально)
+    # email_configs:
+    #   - to: 'team@yourdomain.com'
+    #     headers:
+    #       Subject: 'Warning: {{ .GroupLabels.alertname }}'
+
+# Ингибиторы (подавление дублирующихся алертов)
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'cluster', 'service']
+

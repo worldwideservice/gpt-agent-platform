@@ -1,99 +1,71 @@
-# 🔍 Отчет по предупреждениям Supabase
+# 🔍 Отчет по предупреждениям Supabase Advisors
 
 **Дата:** 2025-01-26  
-**Проект:** `rpzchsgutabxeabbnwas`
+**Статус:** ⚠️ Найдено 1 предупреждение безопасности
 
 ---
 
-## 🔒 Security Advisors (1)
+## 🔴 Security Advisors
 
-### 1. Leaked Password Protection Disabled ⚠️ WARN
-- **Проблема:** Защита от утечек паролей отключена
-- **Описание:** Supabase Auth может предотвращать использование скомпрометированных паролей, проверяя их через HaveIBeenPwned.org
-- **Решение:** 
-  - Откройте: https://supabase.com/dashboard/project/rpzchsgutabxeabbnwas/auth/policies
-  - Включите "Leaked Password Protection" в настройках Auth
-- **Ссылка:** https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
+### 1. ⚠️ Leaked Password Protection Disabled
 
----
+**Уровень:** WARN  
+**Категория:** SECURITY  
+**Тип:** EXTERNAL
 
-## ⚡ Performance Advisors
+**Описание:**
+Защита от утечек паролей (Leaked Password Protection) в настоящее время отключена.
 
-### 1. Unindexed Foreign Keys ℹ️ INFO
-- **Таблица:** `public.knowledge_base_articles`
-- **Foreign Key:** `knowledge_base_articles_category_id_fkey` (column: `category_id`)
-- **Проблема:** Foreign key без индекса может замедлить запросы
-- **Решение:** Создать индекс на `category_id`
-```sql
-CREATE INDEX idx_knowledge_base_articles_category_id ON public.knowledge_base_articles(category_id);
-```
-- **Ссылка:** https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys
+**Детали:**
+Supabase Auth предотвращает использование скомпрометированных паролей, проверяя их на сайте HaveIBeenPwned.org. Включение этой функции повысит безопасность.
 
-### 2. Auth RLS Initialization Plan ⚠️ WARN (19 таблиц)
-**Проблема:** RLS политики используют `auth.<function>()` без `SELECT`, что приводит к переоценке для каждой строки
+**Рекомендация:**
+Включить защиту от утечек паролей для повышения безопасности аутентификации.
 
-**Затронутые таблицы:**
-- `crm_credentials` - политика "Service role full access"
-- `agent_integrations` - 4 политики
-- `crm_connections` - политика "Users can manage CRM connections in their org"
-- `crm_pipelines` - политика "Users can view CRM pipelines in their org"
-- `crm_pipeline_stages` - политика "Users can view CRM pipeline stages in their org"
-- `agents` - политика "Users can manage agents in their org"
-- `agent_assets` - политика "Users can manage agent assets in their org"
-- `knowledge_base_categories` - политика "Users can manage KB categories in their org"
-- `agent_pipeline_settings` - политика "Users can manage pipeline settings in their org"
-- `agent_conversations` - политика "Users can manage conversations in their org"
-- `agent_memory` - политика "Users can manage agent memory in their org"
-- `knowledge_base_articles` - политика "Users can manage KB articles in their org"
-- `knowledge_chunks` - политика "Users can manage knowledge chunks in their org"
-- `company_knowledge` - политика "Users can manage company knowledge in their org"
-- `sales_scripts` - политика "Users can manage sales scripts in their org"
-- `objection_responses` - политика "Users can manage objections in their org"
-- `users` - 5 политик
-- `organizations` - политика "Service role full access"
-- `organization_members` - политика "Service role full access"
+**Действие:**
+1. Откройте Supabase Dashboard: https://supabase.com/dashboard
+2. Перейдите в **Authentication** → **Attack Protection**
+3. Найдите раздел "Prevent use of leaked passwords"
+4. Включите эту опцию (возможно, требуется включить Captcha сначала)
 
-**Решение:** Заменить `auth.uid()` на `(select auth.uid())` во всех RLS политиках
-- **Ссылка:** https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select
+**Примечание:** После проверки UI, явный переключатель для "Prevent use of leaked passwords" не найден на странице Attack Protection. Возможные варианты:
+- Функция включается автоматически при включении Captcha
+- Требуется настройка через API
+- Функция доступна только на Team плане или выше
 
-### 3. Unused Index ℹ️ INFO (27 индексов)
-**Неиспользуемые индексы:**
-- `idx_agent_conversations_agent_id`
-- `idx_agent_memory_conversation_id`
-- `idx_agents_connection_id`
-- `idx_knowledge_chunks_asset_id`
-- `idx_organization_members_user_id`
-- `idx_organization_members_invited_by`
-- `idx_sales_scripts_agent_id`
-- `idx_users_default_org_id`
-- И еще 19 индексов...
+**Рекомендация:** Проверить документацию Supabase или связаться с поддержкой для уточнения способа включения этой функции на Free плане.
 
-**Решение:** Удалить неиспользуемые индексы для улучшения производительности записи
-- **Ссылка:** https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index
-
-### 4. Multiple Permissive Policies ⚠️ WARN (12 случаев)
-**Проблема:** Несколько разрешающих RLS политик для одной роли и действия на таблице
-
-**Затронутые таблицы:**
-- `organization_members` - 5 случаев (роли: anon, authenticated, authenticator, cli_login_postgres, dashboard_user)
-- `organizations` - 5 случаев (роли: anon, authenticated, authenticator, cli_login_postgres, dashboard_user)
-- `users` - 2 случая (роли: anon, authenticated)
-
-**Решение:** Объединить политики в одну для каждой роли/действия
-- **Ссылка:** https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies
+**Ссылка на документацию:**
+https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
 
 ---
 
-## 🎯 Приоритет исправлений
+## ✅ Performance Advisors
 
-### Критичные (Security)
-1. ✅ **Leaked Password Protection** - включить немедленно
+**Статус:** Не удалось получить данные (возможно, требуется дополнительная настройка)
 
-### Высокий приоритет (Performance)
-1. ⚠️ **Auth RLS Initialization Plan** - исправить для всех таблиц (влияет на производительность)
-2. ⚠️ **Multiple Permissive Policies** - объединить политики
+---
 
-### Средний приоритет (Performance)
-1. ℹ️ **Unindexed Foreign Keys** - добавить индекс
-2. ℹ️ **Unused Index** - удалить неиспользуемые индексы
+## 📋 Следующие шаги
 
+### Приоритет 1: Включить Leaked Password Protection
+
+1. Откройте Supabase Dashboard
+2. Перейдите в Authentication → Password Security
+3. Включите "Leaked Password Protection"
+4. Сохраните изменения
+
+**Время выполнения:** 2-3 минуты
+
+---
+
+## 🔗 Полезные ссылки
+
+- **Supabase Dashboard:** https://supabase.com/dashboard
+- **Документация по безопасности паролей:** https://supabase.com/docs/guides/auth/password-security
+- **HaveIBeenPwned:** https://haveibeenpwned.com/
+
+---
+
+**Последнее обновление:** 2025-01-26  
+**Статус:** ⚠️ Требуется действие - включить Leaked Password Protection

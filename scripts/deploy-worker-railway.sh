@@ -1,68 +1,73 @@
 #!/bin/bash
 
-# Скрипт для автоматического деплоя Worker на Railway
-# Использование: bash scripts/deploy-worker-railway.sh
+# Скрипт для деплоя Worker на Railway
+# Использование: ./scripts/deploy-worker-railway.sh
 
 set -e
 
-RAILWAY_TOKEN="${RAILWAY_TOKEN:?RAILWAY_TOKEN is required}"
+# Цвета для вывода
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
 
-echo "🚀 Деплой Worker сервиса на Railway"
-echo "===================================="
+echo "🚀 Деплой Worker на Railway"
+echo "==========================="
 echo ""
 
-# Проверка Railway CLI
+# Проверка наличия Railway CLI
 if ! command -v railway &> /dev/null; then
-    echo "❌ Railway CLI не установлен"
-    echo "📦 Устанавливаем..."
-    npm install -g @railway/cli
+  echo -e "${YELLOW}⚠️  Railway CLI не установлен${NC}"
+  echo ""
+  echo "Установите Railway CLI:"
+  echo "  npm i -g @railway/cli"
+  echo ""
+  echo "Или используйте Railway Dashboard для деплоя:"
+  echo "  https://railway.app"
+  echo ""
+  exit 1
 fi
 
-# Установка токена
-export RAILWAY_TOKEN="$RAILWAY_TOKEN"
-echo "✅ Railway токен установлен"
-
-# Переход в директорию worker
-cd "$(dirname "$0")/../services/worker" || exit 1
-
-echo ""
-echo "📁 Рабочая директория: $(pwd)"
+echo -e "${GREEN}✅ Railway CLI найден${NC}"
 echo ""
 
-# Проверка переменных окружения
-echo "⚠️  ВНИМАНИЕ: Нужно добавить переменные окружения в Railway Dashboard:"
-echo ""
-echo "Обязательные переменные:"
-echo "  - REDIS_URL"
-echo "  - SUPABASE_URL"
-echo "  - SUPABASE_SERVICE_ROLE_KEY"
-echo "  - ENCRYPTION_KEY"
-echo "  - OPENROUTER_API_KEY (опционально)"
-echo "  - JOB_QUEUE_NAME (по умолчанию: agent-jobs)"
-echo "  - JOB_CONCURRENCY (по умолчанию: 5)"
-echo ""
-
-read -p "Нажмите Enter после того как добавите переменные в Railway Dashboard..."
-
-# Инициализация проекта (если еще не инициализирован)
-if [ ! -f ".railway/config.json" ]; then
-    echo "🔧 Инициализация Railway проекта..."
-    railway init --yes || railway link
+# Проверка авторизации
+if ! railway whoami &> /dev/null; then
+  echo -e "${YELLOW}⚠️  Не авторизован в Railway${NC}"
+  echo ""
+  echo "Авторизуйтесь:"
+  echo "  railway login"
+  echo ""
+  exit 1
 fi
 
-# Деплой
-echo ""
-echo "🚀 Запуск деплоя..."
-railway up
-
-echo ""
-echo "✅ Деплой запущен!"
-echo ""
-echo "🔍 Проверка деплоя:"
-echo "  railway status"
-echo "  railway logs"
-echo ""
-echo "🌐 Health check:"
-echo "  railway domain (получите URL и проверьте /health)"
+echo -e "${GREEN}✅ Авторизован в Railway${NC}"
 echo ""
 
+# Переход в директорию Worker
+cd services/worker
+
+echo "📦 Сборка Worker..."
+if npm run build; then
+  echo -e "${GREEN}✅ Сборка успешна${NC}"
+else
+  echo -e "${RED}❌ Ошибка сборки${NC}"
+  exit 1
+fi
+
+echo ""
+echo "🚀 Деплой на Railway..."
+if railway up; then
+  echo -e "${GREEN}✅ Деплой успешен${NC}"
+else
+  echo -e "${RED}❌ Ошибка деплоя${NC}"
+  exit 1
+fi
+
+echo ""
+echo "✅ Деплой завершен!"
+echo ""
+echo "💡 Проверьте статус:"
+echo "   https://railway.app"
+echo "   или: railway status"
+echo ""

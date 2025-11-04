@@ -5,14 +5,16 @@ import { loadEnvironment } from './loadEnv'
 loadEnvironment()
 
 const envSchema = z.object({
- UPSTASH_REDIS_REST_URL: z.string().url(),
- UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
- SUPABASE_URL: z.string().url(),
- SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
- ENCRYPTION_KEY: z.string().min(32),
- OPENROUTER_API_KEY: z.string().optional(),
- JOB_QUEUE_NAME: z.string().min(1).default('agent-jobs'),
- JOB_CONCURRENCY: z.coerce.number().int().positive().default(5),
+  UPSTASH_REDIS_REST_URL: z.string().url(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
+  SUPABASE_URL: z.string().url(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  ENCRYPTION_KEY: z.string().min(32),
+  OPENROUTER_API_KEY: z.string().optional(),
+  JOB_QUEUE_NAME: z.string().min(1).default('agent-jobs'),
+  JOB_CONCURRENCY: z.coerce.number().int().positive().default(25), // Увеличено для обработки высокой нагрузки (135k-450k jobs/день)
+  SENTRY_DSN: z.string().url().optional(), // Sentry DSN для мониторинга ошибок
+  NODE_ENV: z.string().default('production'),
 })
 
 // Валидация переменных окружения с понятными сообщениями об ошибках

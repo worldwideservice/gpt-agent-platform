@@ -2,14 +2,14 @@
 
 /**
  * Страница списка AI Agents
- * Использует Refine для работы с данными
+ * Использует Refine для работы с данными и готовые компоненты UI
  */
 
 import { useState, useEffect } from "react";
 import { useList, useNavigation, useDelete, useUpdate, useInvalidate } from "@refinedev/core";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Pencil, Copy, Trash2, Plus, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { Copy, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui";
@@ -26,6 +26,10 @@ import { Switch } from "@/components/ui";
 import { Badge } from "@/components/ui";
 import { useToast } from "@/components/ui";
 import { ConfirmDialog } from "@/components/ui";
+import { ListView, ListViewHeader } from "@/components/refine-ui/views/list-view";
+import { EditButton } from "@/components/refine-ui/buttons/edit";
+import { DeleteButton } from "@/components/refine-ui/buttons/delete";
+import { LoadingOverlay } from "@/components/refine-ui/layout/loading-overlay";
 import type { Agent } from "@/types";
 
 export default function AgentListPage() {
@@ -42,10 +46,6 @@ export default function AgentListPage() {
   // Состояние для пагинации
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  
-  // Состояние для диалога подтверждения удаления
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [agentToDelete, setAgentToDelete] = useState<string | null>(null);
   
   // Toast для уведомлений
   const { push: pushToast } = useToast();
@@ -98,9 +98,6 @@ export default function AgentListPage() {
 
   // Инвалидация кэша для обновления данных
   const invalidate = useInvalidate();
-
-  // Удаление агента
-  const { mutate: deleteAgent } = useDelete();
 
   // Обновление статуса агента
   const { mutate: updateAgent } = useUpdate();
@@ -245,17 +242,10 @@ export default function AgentListPage() {
 
   return (
     <div className="p-6">
-      {/* Заголовок */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Агенты ИИ</h1>
-          <nav className="text-sm text-gray-500 mt-1">Агенты ИИ → Список</nav>
-        </div>
-        <Button onClick={() => create("agents")}>
-          <Plus className="h-4 w-4 mr-2" />
-          Создать
-        </Button>
-      </div>
+      <ListView>
+        <ListViewHeader resource="agents" />
+        
+        <LoadingOverlay loading={isLoading} />
 
       {/* Панель инструментов */}
       <div className="flex items-center gap-4 mb-4">
@@ -332,14 +322,7 @@ export default function AgentListPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => edit("agents", agent.id)}
-                        title="Изменить"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
+                      <EditButton recordItemId={agent.id} resource="agents" />
                       <Button
                         variant="ghost"
                         size="sm"
@@ -348,14 +331,21 @@ export default function AgentListPage() {
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteClick(agent.id)}
-                        title="Удалить"
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
+                      <DeleteButton
+                        recordItemId={agent.id}
+                        resource="agents"
+                        onSuccess={() => {
+                          invalidate({
+                            resource: "agents",
+                            invalidates: ["list"],
+                          });
+                          pushToast({
+                            title: "Агент удален",
+                            description: "Агент успешно удален",
+                            variant: "success",
+                          });
+                        }}
+                      />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -439,18 +429,7 @@ export default function AgentListPage() {
           </div>
         </div>
       )}
-
-      {/* Диалог подтверждения удаления */}
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        title="Удалить агента?"
-        description="Вы уверены, что хотите удалить этого агента? Это действие нельзя отменить."
-        confirmText="Удалить"
-        cancelText="Отмена"
-        variant="destructive"
-        onConfirm={handleConfirmDelete}
-      />
+      </ListView>
     </div>
   );
 }

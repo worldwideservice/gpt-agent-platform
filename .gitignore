@@ -118,6 +118,7 @@ services/worker/lib
 scripts/*-variables.sh
 scripts/*-secrets.sh
 scripts/*-token*.sh
+scripts/.backup-secrets.sh
 # Но НЕ игнорируем полезные скрипты:
 !scripts/rotate-all-secrets.sh
 !scripts/cleanup-git-history.sh
