@@ -7,16 +7,31 @@
 const Redis = require('ioredis')
 const { Queue } = require('bullmq')
 
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379'
+// Поддержка нового формата Upstash (UPSTASH_REDIS_REST_URL и UPSTASH_REDIS_REST_TOKEN)
+// и старого формата (REDIS_URL)
+let REDIS_URL = process.env.REDIS_URL
+
+if (!REDIS_URL && process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+  // Строим Redis URL из REST URL и Token для Upstash
+  // Формат: rediss://default:TOKEN@HOST:6379
+  const upstashRestUrl = new URL(process.env.UPSTASH_REDIS_REST_URL)
+  const redisHost = upstashRestUrl.hostname
+  REDIS_URL = `rediss://default:${process.env.UPSTASH_REDIS_REST_TOKEN}@${redisHost}:6379`
+  console.log('📝 Используется формат Upstash (из REST URL и Token)')
+}
+
+REDIS_URL = REDIS_URL || 'redis://localhost:6379'
 const QUEUE_NAME = process.env.JOB_QUEUE_NAME || 'agent-jobs'
 
 async function checkWorker() {
   console.log('🔍 Проверка Worker...')
-  console.log(`Redis URL: ${REDIS_URL}`)
+  console.log(`Redis URL: ${REDIS_URL.substring(0, 30)}...`)
   console.log(`Queue Name: ${QUEUE_NAME}`)
 
   const connection = new Redis(REDIS_URL, {
     maxRetriesPerRequest: null,
+    enableReadyCheck: true,
+    connectTimeout: 15000,
   })
 
   const queue = new Queue(QUEUE_NAME, { connection })

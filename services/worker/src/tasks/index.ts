@@ -648,5 +648,11 @@ export const getTaskHandlers = () => {
  }) => {
  await fineTuneModel(payload)
  },
+ // Простой тестовый обработчик для проверки работы Worker
+ 'test-job': async (payload: { test?: boolean; timestamp?: number }) => {
+ console.log('[worker] Test job received:', payload)
+ // Просто логируем и завершаем успешно
+ return { success: true, receivedAt: new Date().toISOString(), payload }
+ },
  }
 }
