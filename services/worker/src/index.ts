@@ -26,22 +26,39 @@ if (!redisUrl) {
 // Парсим URL для извлечения компонентов
 const url = new URL(redisUrl.replace(/^rediss?:\/\//, 'https://'))
 const isTLS = redisUrl.startsWith('rediss://')
+const host = url.hostname
+const port = parseInt(url.port) || (isTLS ? 6380 : 6379)
+const password = url.password || url.username
+
+console.log('[worker] Redis connection details:', {
+  host,
+  port,
+  isTLS,
+  hasPassword: !!password,
+  protocol: isTLS ? 'rediss' : 'redis',
+})
 
 const connection = new Redis({
-  host: url.hostname,
-  port: parseInt(url.port) || (isTLS ? 6380 : 6379),
-  password: url.password || url.username,
+  host,
+  port,
+  password,
   username: url.username && url.username !== 'default' ? url.username : undefined,
   tls: isTLS ? {
     // Upstash требует TLS для прямого подключения
     rejectUnauthorized: true,
   } : undefined,
-  family: 6, // IPv6 для Upstash
+  // Убираем принудительный IPv6, позволяем системе выбрать автоматически
+  // family: 4, // Попробуем IPv4 сначала
   maxRetriesPerRequest: null,
   enableReadyCheck: true,
+  connectTimeout: 10000, // 10 секунд таймаут подключения
+  lazyConnect: false,
   retryStrategy: (times) => {
     const delay = Math.min(times * 50, 2000)
     console.log(`[worker] Redis retry attempt ${times}, delay: ${delay}ms`)
+    if (times > 5) {
+      console.error(`[worker] Redis connection failed after ${times} attempts`)
+    }
     return delay
   },
   reconnectOnError: (err) => {
@@ -52,6 +69,22 @@ const connection = new Redis({
     }
     return false
   },
+})
+
+connection.on('error', (err) => {
+  console.error('[worker] Redis connection error:', err.message)
+})
+
+connection.on('connect', () => {
+  console.log('[worker] Redis connection established')
+})
+
+connection.on('ready', () => {
+  console.log('[worker] Redis connection ready')
+})
+
+connection.on('close', () => {
+  console.log('[worker] Redis connection closed')
 })
 
 const handlers = getTaskHandlers()
