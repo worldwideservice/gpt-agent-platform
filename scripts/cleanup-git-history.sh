@@ -50,24 +50,14 @@ echo "✅ sentry-page-content.html удален из истории"
 echo ""
 
 echo "📋 Шаг 5: Замена секретов в истории (если они остались)"
-# Создаем файл с заменой для BFG или git-filter-repo
-cat > /tmp/replace-secrets.txt << 'EOF'
-# Railway Token
-b2d35fc1-afcf-4589-8b24-da667437cf26==>***MASKED***
-# OpenRouter API Key
-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==>sk-or-v1-***MASKED***
-# Supabase Service Key
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwemNoc2d1dGFieGVhYmJud2FzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTU2MzMzOCwiZXhwIjoyMDc1MTM5MzM4fQ.UIkX-rUGGTbMGfd5YoF41Dx3QBuLH13nO-R3BXdbx2I==>eyJhbGc***MASKED***
-# Google API Key
-AIzaSyDBUGmWp7crZCpF5OxI_6YwNj2WTJ7Xy-8==>AIzaSy***MASKED***
-# Upstash Token
-AYcUASQgZjI2MTM5NzYtYzU2ZS00YjFkLTk3MmQtMWIyODAzYjY3ODg5OGE3ODAzNDUwMzQ5NGE0Yjk5NzEwZDFiNWE4ZTg0MDU==>AYcU***MASKED***
-# Encryption Key
-HxXQ5WCMJ3TrFZehEHJUyMVgVX5fdGsSWy/2rixkVwE==>HxXQ***MASKED***
-EOF
-
+echo "⚠️  ВНИМАНИЕ: Создайте файл /tmp/replace-secrets.txt вручную с маппингом старых секретов на замаскированные значения"
+echo "   Пример содержимого:"
+echo "   OLD_SECRET_VALUE==>***MASKED-VALUE***"
+echo ""
 echo "⚠️  Для замены секретов в истории используйте BFG Repo-Cleaner:"
 echo "   bfg --replace-text /tmp/replace-secrets.txt"
+echo ""
+echo "💡 СОВЕТ: Не храните реальные секреты в скриптах. Используйте переменные окружения."
 echo ""
 
 echo "📋 Шаг 6: Проверка результата"
