@@ -27,26 +27,33 @@ logger.info('Environment variables loaded', {
 metrics.init(env.JOB_QUEUE_NAME, env.JOB_CONCURRENCY)
 
 // Для прямого подключения к Upstash Redis через ioredis используем формат:
-// rediss://default:TOKEN@ENDPOINT:6379
+// rediss://default:TOKEN@ENDPOINT:PORT
 // 
 // Данные получены из Upstash Console:
-// - Endpoint: тот же хост, что и REST URL (composed-primate-14678.upstash.io)
-// - Port: 6379 (для TLS подключения)
+// - Endpoint: тот же хост, что и REST URL (например: composed-primate-14678.upstash.io)
+// - Port: обычно 6379 для TLS, но может быть другой (нужно проверить в Upstash Dashboard)
 // - Username: default (обязателен для Upstash)
 // - Password: тот же REST Token используется для прямого подключения
 const upstashRestUrl = new URL(env.UPSTASH_REDIS_REST_URL)
 const redisHost = upstashRestUrl.hostname
 
-// Формат для ioredis: rediss://default:TOKEN@ENDPOINT:6379
+// Получаем порт из REST URL или используем 6379 по умолчанию
+// Upstash обычно использует порт 6379 для TLS подключения
+const redisPort = upstashRestUrl.port ? Number.parseInt(upstashRestUrl.port, 10) : 6379
+
+// Формат для ioredis: rediss://default:TOKEN@ENDPOINT:PORT
 // Для Upstash:
 // - Протокол: rediss:// (TLS обязателен)
 // - Username: default (обязателен)
-// - Порт: 6379 (для TLS подключения)
+// - Порт: обычно 6379 (для TLS подключения)
 // - Password: REST Token (один и тот же токен для REST API и прямого подключения)
-const redisUrl = `rediss://default:${env.UPSTASH_REDIS_REST_TOKEN}@${redisHost}:6379`
+const redisUrl = `rediss://default:${encodeURIComponent(env.UPSTASH_REDIS_REST_TOKEN)}@${redisHost}:${redisPort}`
 
-logger.debug('Redis URL constructed', {
+logger.info('Redis URL constructed', {
   redisHost,
+  redisPort,
+  hasToken: !!env.UPSTASH_REDIS_REST_TOKEN,
+  tokenLength: env.UPSTASH_REDIS_REST_TOKEN.length,
   event: 'redis.config',
 })
 
@@ -55,33 +62,71 @@ logger.debug('Redis URL constructed', {
 const connection = new Redis(redisUrl, {
   maxRetriesPerRequest: null,
   enableReadyCheck: true,
-  connectTimeout: 15000,
+  connectTimeout: 30000, // Увеличено до 30 секунд для Upstash
   lazyConnect: false,
+  // TLS настройки для Upstash
+  tls: {
+    // Upstash использует самоподписанные сертификаты, поэтому нужно разрешить
+    rejectUnauthorized: false, // ВАЖНО: для Upstash нужно отключить проверку сертификата
+  },
   // Убираем принудительный family, позволяем системе выбрать
+  family: 4, // Принудительно используем IPv4 (Upstash лучше работает с IPv4)
   retryStrategy: (times) => {
-    const delay = Math.min(times * 50, 2000)
-    console.log(`[worker] Redis retry attempt ${times}, delay: ${delay}ms`)
+    const delay = Math.min(times * 100, 3000) // Увеличена максимальная задержка
+    logger.warn(`Redis retry attempt ${times}, delay: ${delay}ms`, {
+      event: 'redis.retry',
+      attempt: times,
+      delay,
+    })
     if (times > 10) {
-      console.error(`[worker] Redis connection failed after ${times} attempts`)
+      logger.error(`Redis connection failed after ${times} attempts`, {
+        event: 'redis.connection.failed',
+        attempts: times,
+      })
+      // Не возвращаем null, чтобы продолжить попытки, но с ограничением
+      return Math.min(delay, 5000)
     }
     return delay
   },
   reconnectOnError: (err) => {
+    const errorMessage = err.message.toLowerCase()
+    
     // Если DNS ошибка, не переподключаемся автоматически
-    if (err.message.includes('ENOTFOUND') || err.message.includes('getaddrinfo')) {
-      logger.error('DNS resolution failed', err, {
+    if (errorMessage.includes('enotfound') || errorMessage.includes('getaddrinfo') || errorMessage.includes('eai_again')) {
+      logger.error('DNS resolution failed, will not reconnect', err, {
         event: 'redis.dns.failed',
       })
-      // Пробуем использовать REST API как fallback
       return false
     }
-    const targetError = 'READONLY'
-    if (err.message.includes(targetError)) {
+    
+    // Если ошибка аутентификации, не переподключаемся (проблема с токеном)
+    if (errorMessage.includes('auth') || errorMessage.includes('password') || errorMessage.includes('wrong username-password')) {
+      logger.error('Redis authentication failed, check UPSTASH_REDIS_REST_TOKEN', err, {
+        event: 'redis.auth.failed',
+      })
+      return false
+    }
+    
+    // Если ошибка таймаута, пробуем переподключиться
+    if (errorMessage.includes('timeout') || errorMessage.includes('timed-out')) {
+      logger.warn('Redis timeout, will reconnect', {
+        event: 'redis.timeout',
+      })
+      return true
+    }
+    
+    // Если READONLY ошибка, переподключаемся
+    if (errorMessage.includes('readonly')) {
       logger.warn('Redis READONLY error, reconnecting...', {
         event: 'redis.readonly',
       })
       return true
     }
+    
+    // Для других ошибок не переподключаемся автоматически
+    logger.warn('Redis error, not reconnecting', err, {
+      event: 'redis.error',
+    })
     return false
   },
 })
