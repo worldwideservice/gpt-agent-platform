@@ -8,9 +8,8 @@
 
 import { useState } from "react";
 import { useForm } from "@refinedev/react-hook-form";
-import { useNavigation, useOne, useDelete } from "@refinedev/core";
+import { useNavigation, useOne } from "@refinedev/core";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -23,8 +22,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui";
 import { useToast } from "@/components/ui";
-import { ConfirmDialog } from "@/components/ui";
+import { EditView, EditViewHeader } from "@/components/refine-ui/views/edit-view";
+import { DeleteButton } from "@/components/refine-ui/buttons/delete";
+import { LoadingOverlay } from "@/components/refine-ui/layout/loading-overlay";
 import { DealContactFieldsSelector } from "@/components/crm/DealContactFieldsSelector";
+import { TriggersManager } from "./_components/TriggersManager";
+import { SequencesManager } from "./_components/SequencesManager";
+import { IntegrationsManager } from "./_components/IntegrationsManager";
+import { RulesManager } from "./_components/RulesManager";
 
 // Доступные модели ИИ
 const AI_MODELS = [
@@ -48,23 +53,22 @@ const updateAgentSchema = z.object({
     .min(0)
     .max(86400)
     .optional(),
-  settings: z
-    .object({
-      checkBeforeSending: z.boolean().optional(),
-    })
-    .optional(),
+      settings: z
+        .object({
+          checkBeforeSending: z.boolean().optional(),
+          language: z.string().optional(),
+          maxResponseLength: z.number().optional(),
+          enableMarkdown: z.boolean().optional(),
+        })
+        .optional(),
 });
 
 type UpdateAgentFormData = z.infer<typeof updateAgentSchema>;
 
 export default function EditAIAgentPage() {
   const params = useParams();
-  const tenantId = (params?.tenantId as string) || "";
   const agentId = (params?.id as string) || "";
   const { list } = useNavigation();
-  
-  // Состояние для диалога подтверждения удаления
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
   // Toast для уведомлений
   const { push: pushToast } = useToast();
@@ -77,9 +81,6 @@ export default function EditAIAgentPage() {
 
   const agentData = agentResult?.data;
   const isLoadingAgent = agentQuery.isLoading;
-
-  // Удаление агента
-  const { mutate: deleteAgent } = useDelete();
 
   // Форма редактирования
   const {
@@ -110,7 +111,9 @@ export default function EditAIAgentPage() {
   if (isLoadingAgent) {
     return (
       <div className="p-6">
-        <div className="text-center py-8">Загрузка...</div>
+        <LoadingOverlay loading={true}>
+          <div className="text-center py-8">Загрузка...</div>
+        </LoadingOverlay>
       </div>
     );
   }
@@ -120,76 +123,29 @@ export default function EditAIAgentPage() {
       <div className="p-6">
         <div className="text-center py-8">
           <p className="text-red-500">Агент не найден</p>
-          <Link href={`/manage/${tenantId}/ai-agents`}>
-            <Button variant="outline" className="mt-4">
-              Вернуться к списку
-            </Button>
-          </Link>
+          <Button variant="outline" className="mt-4" onClick={() => list("agents")}>
+            Вернуться к списку
+          </Button>
         </div>
       </div>
     );
   }
 
-  const handleDeleteClick = () => {
-    setDeleteDialogOpen(true);
-  };
-
-  const handleConfirmDelete = () => {
-    deleteAgent(
-      {
-        resource: "agents",
-        id: agentId,
-      },
-      {
-        onSuccess: () => {
-          pushToast({
-            title: "Агент удален",
-            description: "Агент успешно удален",
-            variant: "success",
-          });
-          list("agents");
-        },
-        onError: () => {
-          pushToast({
-            title: "Ошибка",
-            description: "Не удалось удалить агента",
-            variant: "error",
-          });
-        },
-      }
-    );
-  };
-
   return (
     <div className="p-6">
-      {/* Заголовок */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Link href={`/manage/${tenantId}/ai-agents`}>
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Назад
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold">
-              Редактирование {agentData?.name || "агента"}
-            </h1>
-            <nav className="text-sm text-gray-500 mt-1">
-              Агенты ИИ → {agentData?.name || "Агент"}
-            </nav>
-          </div>
-        </div>
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={handleDeleteClick}
-          title="Удалить агента"
-        >
-          <Trash2 className="h-4 w-4 mr-2" />
-          Удалить
-        </Button>
-      </div>
+      <EditView>
+        <EditViewHeader 
+          resource="agents" 
+          title={`Редактирование ${agentData?.name || "агента"}`}
+          actionsSlot={
+            <DeleteButton
+              recordItemId={agentId}
+              resource="agents"
+            />
+          }
+        />
+        
+        <LoadingOverlay loading={formLoading}>
 
       {/* Вкладки */}
       <Tabs defaultValue="basic" className="max-w-4xl">
@@ -197,6 +153,7 @@ export default function EditAIAgentPage() {
           <TabsTrigger value="basic">Основные</TabsTrigger>
           <TabsTrigger value="deals">Сделки и контакты</TabsTrigger>
           <TabsTrigger value="triggers">Триггеры</TabsTrigger>
+          <TabsTrigger value="rules">Правила</TabsTrigger>
           <TabsTrigger value="chains">Цепочки</TabsTrigger>
           <TabsTrigger value="integrations">Интеграции</TabsTrigger>
           <TabsTrigger value="advanced">Дополнительно</TabsTrigger>
@@ -426,55 +383,118 @@ export default function EditAIAgentPage() {
         {/* Вкладка "Триггеры" */}
         <TabsContent value="triggers">
           <div className="mt-6">
-            <div className="text-center py-12 text-gray-500">
-              <p className="text-lg font-medium mb-2">Триггеры</p>
-              <p className="text-sm">Раздел в разработке</p>
-            </div>
+            <TriggersManager agentId={agentId} />
+          </div>
+        </TabsContent>
+
+        {/* Вкладка "Правила" */}
+        <TabsContent value="rules">
+          <div className="mt-6">
+            <RulesManager agentId={agentId} />
           </div>
         </TabsContent>
 
         {/* Вкладка "Цепочки" */}
         <TabsContent value="chains">
           <div className="mt-6">
-            <div className="text-center py-12 text-gray-500">
-              <p className="text-lg font-medium mb-2">Цепочки</p>
-              <p className="text-sm">Раздел в разработке</p>
-            </div>
+            <SequencesManager agentId={agentId} />
           </div>
         </TabsContent>
 
         {/* Вкладка "Интеграции" */}
         <TabsContent value="integrations">
           <div className="mt-6">
-            <div className="text-center py-12 text-gray-500">
-              <p className="text-lg font-medium mb-2">Интеграции</p>
-              <p className="text-sm">Раздел в разработке</p>
-            </div>
+            <IntegrationsManager agentId={agentId} />
           </div>
         </TabsContent>
 
         {/* Вкладка "Дополнительно" */}
         <TabsContent value="advanced">
-          <div className="mt-6">
-            <div className="text-center py-12 text-gray-500">
-              <p className="text-lg font-medium mb-2">Дополнительно</p>
-              <p className="text-sm">Раздел в разработке</p>
+          <div className="mt-6 space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Дополнительные настройки</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Расширенные параметры для тонкой настройки агента
+              </p>
+            </div>
+
+            {/* Языковые настройки */}
+            <div className="space-y-6 border rounded-lg p-6">
+              <h4 className="text-base font-semibold">Языковые настройки</h4>
+              <div className="space-y-2">
+                <Label htmlFor="language">Язык ответов</Label>
+                <Select
+                  value={String(watch("settings.language") || agentData?.settings?.language || "ru")}
+                  onValueChange={(value) =>
+                    setValue("settings.language", value, { shouldValidate: true })
+                  }
+                >
+                  <SelectTrigger id="language">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ru">Русский</SelectItem>
+                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="auto">Автоматически</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">
+                  Язык, на котором агент будет отвечать пользователям
+                </p>
+              </div>
+            </div>
+
+            {/* Настройки ответов */}
+            <div className="space-y-6 border rounded-lg p-6">
+              <h4 className="text-base font-semibold">Настройки ответов</h4>
+              
+              <div className="space-y-2">
+                <Label htmlFor="maxResponseLength">Максимальная длина ответа (символов)</Label>
+                <Input
+                  id="maxResponseLength"
+                  type="number"
+                  min="100"
+                  max="10000"
+                  {...register("settings.maxResponseLength", { valueAsNumber: true })}
+                  defaultValue={agentData?.settings?.maxResponseLength || 2000}
+                />
+                <p className="text-xs text-gray-500">
+                  Ограничение длины ответа агента (100 - 10000 символов)
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="enableMarkdown"
+                    checked={watch("settings.enableMarkdown") || false}
+                    onCheckedChange={(checked) =>
+                      setValue("settings.enableMarkdown", checked, { shouldValidate: true })
+                    }
+                    defaultChecked={agentData?.settings?.enableMarkdown || false}
+                  />
+                  <Label htmlFor="enableMarkdown" className="cursor-pointer">
+                    Разрешить форматирование Markdown
+                  </Label>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Агент сможет использовать Markdown для форматирования ответов
+                </p>
+              </div>
+            </div>
+
+            {/* Информация о настройках */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-800">
+                <strong>Примечание:</strong> Основные настройки ИИ (модель, temperature, max tokens) 
+                находятся во вкладке "Основные". Здесь доступны дополнительные параметры для тонкой настройки.
+              </p>
             </div>
           </div>
         </TabsContent>
       </Tabs>
-
-      {/* Диалог подтверждения удаления */}
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        title="Удалить агента?"
-        description="Вы уверены, что хотите удалить этого агента? Это действие нельзя отменить."
-        confirmText="Удалить"
-        cancelText="Отмена"
-        variant="destructive"
-        onConfirm={handleConfirmDelete}
-      />
+      </LoadingOverlay>
+      </EditView>
     </div>
   );
 }

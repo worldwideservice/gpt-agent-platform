@@ -7,9 +7,6 @@
 
 import { useForm } from "@refinedev/react-hook-form";
 import { useNavigation, useList } from "@refinedev/core";
-import { useParams } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
@@ -19,6 +16,8 @@ import { Textarea } from "@/components/ui";
 import { Label } from "@/components/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
 import { useToast } from "@/components/ui";
+import { CreateView, CreateViewHeader } from "@/components/refine-ui/views/create-view";
+import { LoadingOverlay } from "@/components/refine-ui/layout/loading-overlay";
 
 // Схема валидации
 const createCategorySchema = z.object({
@@ -30,8 +29,6 @@ const createCategorySchema = z.object({
 type CreateCategoryFormData = z.infer<typeof createCategorySchema>;
 
 export default function CreateKnowledgeCategoryPage() {
-  const params = useParams();
-  const tenantId = (params?.tenantId as string) || "";
   const { list } = useNavigation();
   const { push: pushToast } = useToast();
 
@@ -83,24 +80,12 @@ export default function CreateKnowledgeCategoryPage() {
 
   return (
     <div className="p-6">
-      {/* Заголовок */}
-      <div className="flex items-center gap-4 mb-6">
-        <Link href={`/manage/${tenantId}/knowledge-categories`}>
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Назад
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold">Создать категорию</h1>
-          <nav className="text-sm text-gray-500 mt-1">
-            Категории → Создать
-          </nav>
-        </div>
-      </div>
-
-      {/* Форма */}
-      <form onSubmit={handleSubmit(onFinish)} className="max-w-2xl space-y-6">
+      <CreateView>
+        <CreateViewHeader resource="knowledge-categories" title="Создать категорию" />
+        
+        <LoadingOverlay loading={formLoading}>
+          {/* Форма */}
+          <form onSubmit={handleSubmit(onFinish)} className="max-w-2xl space-y-6">
         {/* Родительская категория */}
         <div className="space-y-2">
           <Label htmlFor="parentId">Родительская категория</Label>
@@ -186,6 +171,8 @@ export default function CreateKnowledgeCategoryPage() {
           </Button>
         </div>
       </form>
+      </LoadingOverlay>
+      </CreateView>
     </div>
   );
 }

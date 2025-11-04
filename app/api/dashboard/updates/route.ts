@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +12,30 @@ interface UpdateItem {
   color: 'green' | 'blue' | 'purple' | 'yellow'
 }
 
-export const GET = async () => {
+/**
+ * Определяет цвет для типа активности
+ */
+function getActivityColor(activityType: string): 'green' | 'blue' | 'purple' | 'yellow' {
+  switch (activityType) {
+    case 'agent_created':
+    case 'agent_updated':
+    case 'integration_connected':
+      return 'green'
+    case 'agent_response':
+    case 'conversation_started':
+      return 'blue'
+    case 'action_executed':
+    case 'rule_executed':
+    case 'sequence_executed':
+      return 'purple'
+    case 'error_occurred':
+      return 'yellow'
+    default:
+      return 'blue'
+  }
+}
+
+export const GET = async (request: NextRequest) => {
   const session = await auth()
 
   if (!session?.user?.orgId) {
@@ -21,11 +44,42 @@ export const GET = async () => {
 
   try {
     const supabase = getSupabaseServiceRoleClient()
+    const { searchParams } = new URL(request.url)
+    const limit = Number.parseInt(searchParams.get('limit') || '20', 10)
 
-    // Получаем последние события системы для организации
-    // Пока используем комбинацию данных из разных источников
+    // Пытаемся получить обновления из activity_logs
+    const { data: activityLogs, error: logsError } = await supabase
+      .from('activity_logs')
+      .select('id, activity_type, title, description, created_at')
+      .eq('org_id', session.user.orgId)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    // Если таблица существует и есть данные - используем их
+    if (activityLogs && activityLogs.length > 0) {
+      const updates: UpdateItem[] = activityLogs.map((log) => ({
+        id: log.id,
+        message: log.title,
+        timestamp: new Date(log.created_at).toLocaleString('ru-RU', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        color: getActivityColor(log.activity_type),
+      }))
+
+      return NextResponse.json({
+        success: true,
+        data: updates,
+      })
+    }
+
+    // Fallback: если таблицы нет или она пустая, используем старый метод
+    if (logsError && logsError.code === '42P01') {
+      // Таблица не существует - используем старый метод
     const [agentsResult, conversationsResult] = await Promise.all([
-      // Последние созданные агенты
       supabase
         .from('agents')
         .select('id, name, created_at')
@@ -33,10 +87,9 @@ export const GET = async () => {
         .order('created_at', { ascending: false })
         .limit(5),
 
-      // Последние разговоры
       supabase
-        .from('agent_conversations')
-        .select('id, agent_id, created_at, status')
+          .from('conversations')
+          .select('id, agent_id, created_at')
         .eq('org_id', session.user.orgId)
         .order('created_at', { ascending: false })
         .limit(5),
@@ -44,7 +97,6 @@ export const GET = async () => {
 
     const updates: UpdateItem[] = []
 
-    // Добавляем обновления о созданных агентах
     if (agentsResult.data) {
       agentsResult.data.forEach((agent) => {
         updates.push({
@@ -62,14 +114,11 @@ export const GET = async () => {
       })
     }
 
-    // Добавляем обновления о разговорах
     if (conversationsResult.data) {
       conversationsResult.data.forEach((conversation) => {
-        const statusText =
-          conversation.status === 'active' ? 'Начался новый разговор' : 'Разговор завершен'
         updates.push({
           id: `conversation-${conversation.id}`,
-          message: statusText,
+            message: 'Начался новый разговор',
           timestamp: new Date(conversation.created_at).toLocaleString('ru-RU', {
             day: '2-digit',
             month: '2-digit',
@@ -77,19 +126,25 @@ export const GET = async () => {
             hour: '2-digit',
             minute: '2-digit',
           }),
-          color: conversation.status === 'active' ? 'blue' : 'purple',
+            color: 'blue',
         })
       })
     }
 
-    // Сортируем по времени (новые сначала) и берем последние 10
     const sortedUpdates = updates
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, 10)
+        .slice(0, limit)
 
+      return NextResponse.json({
+        success: true,
+        data: sortedUpdates,
+      })
+    }
+
+    // Если ошибка другая - возвращаем пустой массив
     return NextResponse.json({
       success: true,
-      data: sortedUpdates,
+      data: [],
     })
   } catch (error) {
     console.error('Failed to fetch dashboard updates:', error)

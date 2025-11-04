@@ -429,14 +429,41 @@ const executeSendEmailStep = async (
 ): Promise<boolean> => {
  if (!step.template || !step.recipient) return false
 
- // Здесь должна быть интеграция с email-сервисом
- console.log('Sequence: Sending email', {
+  try {
+    const { sendTemplateEmail } = await import('./email')
+
+    // Подготавливаем переменные для шаблона
+    const variables: Record<string, string> = {
+      ...execution.execution_data,
+      recipient: step.recipient,
+    }
+
+    // Отправляем email
+    const success = await sendTemplateEmail(
+      step.recipient,
+      step.template.subject || 'Сообщение от World Wide Services',
+      step.template.html || step.template.body || '',
+      variables,
+    )
+
+    if (!success) {
+      console.error('Failed to send email in sequence step:', {
+        recipient: step.recipient,
+        stepId: step.id,
+      })
+      return false
+    }
+
+    console.log('Sequence: Email sent successfully', {
  recipient: step.recipient,
- template: step.template,
- executionData: execution.execution_data,
+      stepId: step.id,
  })
 
  return true
+  } catch (error) {
+    console.error('Error sending email in sequence step:', error)
+    return false
+  }
 }
 
 /**

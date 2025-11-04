@@ -6,6 +6,7 @@ import {
  getKnowledgeBaseCategories,
  createKnowledgeBaseCategory,
 } from '@/lib/repositories/knowledge-base'
+import { createErrorResponse } from '@/lib/utils/error-handler'
 
 export const GET = async () => {
  const session = await auth()
@@ -20,17 +21,14 @@ export const GET = async () => {
  return NextResponse.json({
  success: true,
  data: categories,
+ timestamp: new Date().toISOString(),
  })
  } catch (error) {
- console.error('Categories API error', error)
-
- return NextResponse.json(
- {
- success: false,
- error: 'Не удалось загрузить категории',
- },
- { status: 500 },
- )
+ const { response, status } = createErrorResponse(error, {
+   code: 'CATEGORIES_LIST_ERROR',
+   logToSentry: true,
+ })
+ return NextResponse.json(response, { status })
  }
 }
 
@@ -53,14 +51,15 @@ export const POST = async (request: NextRequest) => {
 
  if (!parsed.success) {
  const issues = parsed.error.issues.map((issue) => issue.message)
- return NextResponse.json(
- {
- success: false,
- error: 'Некорректные данные',
- details: issues,
- },
- { status: 400 },
+ const { response, status } = createErrorResponse(
+   new Error('Некорректные данные'),
+   {
+     code: 'VALIDATION_ERROR',
+     details: issues,
+     logToSentry: false,
+   }
  )
+ return NextResponse.json(response, { status })
  }
 
  const category = await createKnowledgeBaseCategory(session.user.orgId, parsed.data)
@@ -68,17 +67,14 @@ export const POST = async (request: NextRequest) => {
  return NextResponse.json({
  success: true,
  data: category,
+ timestamp: new Date().toISOString(),
  })
  } catch (error) {
- console.error('Category create API error', error)
-
- return NextResponse.json(
- {
- success: false,
- error: 'Не удалось создать категорию',
- },
- { status: 500 },
- )
+ const { response, status } = createErrorResponse(error, {
+   code: 'CATEGORY_CREATE_ERROR',
+   logToSentry: true,
+ })
+ return NextResponse.json(response, { status })
  }
 }
 

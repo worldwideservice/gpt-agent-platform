@@ -65,35 +65,70 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
  )
  }
 
- // TODO: Вызвать реальную синхронизацию через API
- // Пока просто обновляем timestamp
+ // Вызываем реальную синхронизацию через Worker API
+ try {
+ const { backendFetch } = await import('@/lib/backend/client')
+ 
+ await backendFetch('/crm/sync', {
+ method: 'POST',
+ body: JSON.stringify({
+ orgId: session.user.orgId,
+ provider: 'kommo',
+ connectionId: crmConnection.id,
+ baseDomain: crmConnection.base_domain,
+ }),
+ })
+
+ // Обновляем timestamp синхронизации в интеграции
  const { error: updateError } = await supabase
  .from('agent_integrations')
  .update({
  settings: {
  ...((integration.settings as Record<string, unknown>) || {}),
  last_synced_at: new Date().toISOString(),
+ sync_status: 'queued',
  },
  })
  .eq('id', integrationId)
 
  if (updateError) {
  console.error('Error updating sync timestamp:', updateError)
- return NextResponse.json(
- { success: false, error: 'Не удалось обновить метаданные синхронизации' },
- { status: 500 }
- )
+ // Не прерываем выполнение, т.к. синхронизация уже запущена
  }
-
- // TODO: Запустить фоновую задачу синхронизации:
- // - Синхронизация воронок (pipelines)
- // - Синхронизация полей (lead_fields, contact_fields)
- // - Синхронизация каналов (channels)
 
  return NextResponse.json({
  success: true,
  message: 'Синхронизация запущена',
+ details: {
+ pipelines: 'Синхронизация воронок поставлена в очередь',
+ fields: 'Синхронизация полей будет выполнена автоматически',
+ channels: 'Синхронизация каналов будет выполнена автоматически',
+ },
  })
+ } catch (syncError) {
+ console.error('Failed to trigger CRM sync:', syncError)
+ 
+ // Обновляем статус ошибки
+ await supabase
+ .from('agent_integrations')
+ .update({
+ settings: {
+ ...((integration.settings as Record<string, unknown>) || {}),
+ sync_status: 'failed',
+ sync_error: syncError instanceof Error ? syncError.message : 'Unknown error',
+ },
+ })
+ .eq('id', integrationId)
+
+ return NextResponse.json(
+ {
+ success: false,
+ error: 'Не удалось запустить синхронизацию',
+ details: syncError instanceof Error ? syncError.message : 'Unknown error',
+ },
+ { status: 500 }
+ )
+ }
  } catch (error) {
  console.error('Agent integration sync API error:', error)
  return NextResponse.json(

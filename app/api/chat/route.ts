@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { z } from 'zod'
 
 import { auth } from '@/auth'
+import { createErrorResponse } from '@/lib/utils/error-handler'
 import {
  createConversation,
  getConversationById,
@@ -219,14 +220,15 @@ export const POST = async (request: NextRequest) => {
 
  if (!parsed.success) {
  const issues = parsed.error.issues.map((issue) => issue.message)
- return NextResponse.json(
- {
- success: false,
- error: 'Некорректные данные',
- details: issues,
- },
- { status: 400 },
+ const { response, status } = createErrorResponse(
+   new Error('Некорректные данные'),
+   {
+     code: 'VALIDATION_ERROR',
+     details: issues,
+     logToSentry: false,
+   }
  )
+ return NextResponse.json(response, { status })
  }
 
  const { conversationId, agentId, message, useKnowledgeBase, clientIdentifier } = parsed.data
@@ -419,6 +421,21 @@ export const POST = async (request: NextRequest) => {
      usedKnowledgeBase: useKnowledgeBase && (fullSystemPrompt?.includes('Контекст из базы знаний') ?? false),
    },
  })
+
+ // Логируем ответ агента (асинхронно, не блокируем ответ)
+ if (agentId || conversation.agentId) {
+   const { ActivityLogger } = await import('@/lib/services/activity-logger')
+   ActivityLogger.agentResponse(
+     organizationId,
+     agentId || conversation.agentId || '',
+     conversation.id,
+     llmResponse.content.length,
+   ).catch((error) => {
+     if (process.env.NODE_ENV === 'development') {
+       console.error('Failed to log agent response:', error)
+     }
+   })
+ }
 
  // Обрабатываем память агента из разговора (асинхронно, не блокируем ответ)
  if (clientIdentifier) {

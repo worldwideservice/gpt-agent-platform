@@ -8,8 +8,6 @@
 import { useForm } from "@refinedev/react-hook-form";
 import { useNavigation, useList, useOne } from "@refinedev/core";
 import { useParams } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
@@ -19,6 +17,9 @@ import { Textarea } from "@/components/ui";
 import { Label } from "@/components/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
 import { useToast } from "@/components/ui";
+import { EditView, EditViewHeader } from "@/components/refine-ui/views/edit-view";
+import { DeleteButton } from "@/components/refine-ui/buttons/delete";
+import { LoadingOverlay } from "@/components/refine-ui/layout/loading-overlay";
 
 // Схема валидации (та же, что и в Create)
 const updateCategorySchema = z.object({
@@ -31,7 +32,6 @@ type UpdateCategoryFormData = z.infer<typeof updateCategorySchema>;
 
 export default function EditKnowledgeCategoryPage() {
   const params = useParams();
-  const tenantId = (params?.tenantId as string) || "";
   const categoryId = (params?.id as string) || "";
   const { list } = useNavigation();
   const { push: pushToast } = useToast();
@@ -91,7 +91,9 @@ export default function EditKnowledgeCategoryPage() {
   if (isLoadingCategory) {
     return (
       <div className="p-6">
-        <div className="text-center py-8">Загрузка...</div>
+        <LoadingOverlay loading={true}>
+          <div className="text-center py-8">Загрузка...</div>
+        </LoadingOverlay>
       </div>
     );
   }
@@ -101,11 +103,9 @@ export default function EditKnowledgeCategoryPage() {
       <div className="p-6">
         <div className="text-center py-8">
           <p className="text-red-500">Категория не найдена</p>
-          <Link href={`/manage/${tenantId}/knowledge-categories`}>
-            <Button variant="outline" className="mt-4">
-              Вернуться к списку
-            </Button>
-          </Link>
+          <Button variant="outline" className="mt-4" onClick={() => list("knowledge-categories")}>
+            Вернуться к списку
+          </Button>
         </div>
       </div>
     );
@@ -113,24 +113,21 @@ export default function EditKnowledgeCategoryPage() {
 
   return (
     <div className="p-6">
-      {/* Заголовок */}
-      <div className="flex items-center gap-4 mb-6">
-        <Link href={`/manage/${tenantId}/knowledge-categories`}>
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Назад
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold">Редактировать категорию</h1>
-          <nav className="text-sm text-gray-500 mt-1">
-            Категории → {categoryData?.name || "Редактировать"} → Редактировать
-          </nav>
-        </div>
-      </div>
-
-      {/* Форма */}
-      <form onSubmit={handleSubmit(onFinish)} className="max-w-2xl space-y-6">
+      <EditView>
+        <EditViewHeader 
+          resource="knowledge-categories" 
+          title={`Редактировать категорию: ${categoryData?.name || ""}`}
+          actionsSlot={
+            <DeleteButton
+              recordItemId={categoryId}
+              resource="knowledge-categories"
+            />
+          }
+        />
+        
+        <LoadingOverlay loading={formLoading}>
+          {/* Форма */}
+          <form onSubmit={handleSubmit(onFinish)} className="max-w-2xl space-y-6">
         {/* Родительская категория */}
         <div className="space-y-2">
           <Label htmlFor="parentId">Родительская категория</Label>
@@ -219,6 +216,8 @@ export default function EditKnowledgeCategoryPage() {
           </Button>
         </div>
       </form>
+      </LoadingOverlay>
+      </EditView>
     </div>
   );
 }

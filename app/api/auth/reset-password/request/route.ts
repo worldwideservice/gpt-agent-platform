@@ -32,13 +32,15 @@ export const POST = async (request: NextRequest) => {
 
  const resetUrl = buildResetUrl(request, token)
 
- console.info(
- `Password reset link for ${normalizedEmail}`,
- {
- resetUrl,
- expiresAt,
- },
- )
+ // Отправляем email через SendGrid
+ try {
+ const { sendPasswordResetEmail } = await import('@/lib/services/email')
+ await sendPasswordResetEmail(normalizedEmail, token, resetUrl)
+ console.info(`Password reset email sent to ${normalizedEmail}`)
+ } catch (error) {
+ console.error('Failed to send password reset email:', error)
+ // Продолжаем выполнение даже если email не отправился
+ }
 
  return NextResponse.json({ success: true })
  } catch (error) {

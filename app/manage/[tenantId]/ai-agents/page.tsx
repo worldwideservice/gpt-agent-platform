@@ -25,7 +25,6 @@ import {
 import { Switch } from "@/components/ui";
 import { Badge } from "@/components/ui";
 import { useToast } from "@/components/ui";
-import { ConfirmDialog } from "@/components/ui";
 import { ListView, ListViewHeader } from "@/components/refine-ui/views/list-view";
 import { EditButton } from "@/components/refine-ui/buttons/edit";
 import { DeleteButton } from "@/components/refine-ui/buttons/delete";
@@ -173,46 +172,6 @@ export default function AgentListPage() {
     }
   };
 
-  // Обработчик открытия диалога удаления
-  const handleDeleteClick = (agentId: string) => {
-    setAgentToDelete(agentId);
-    setDeleteDialogOpen(true);
-  };
-
-  // Обработчик подтверждения удаления
-  const handleConfirmDelete = () => {
-    if (!agentToDelete) return;
-
-    deleteAgent(
-      {
-        resource: "agents",
-        id: agentToDelete,
-      },
-      {
-        onSuccess: async () => {
-          await invalidate({
-            resource: "agents",
-            invalidates: ["list"],
-          });
-          pushToast({
-            title: "Агент удален",
-            description: "Агент успешно удален",
-            variant: "success",
-          });
-          setDeleteDialogOpen(false);
-          setAgentToDelete(null);
-        },
-        onError: (error) => {
-          console.error("Ошибка удаления агента:", error);
-          pushToast({
-            title: "Ошибка",
-            description: "Не удалось удалить агента",
-            variant: "error",
-          });
-        },
-      }
-    );
-  };
 
   if (isError) {
     return (
@@ -245,8 +204,8 @@ export default function AgentListPage() {
       <ListView>
         <ListViewHeader resource="agents" />
         
-        <LoadingOverlay loading={isLoading} />
-
+        <LoadingOverlay loading={isLoading}>
+          <div>
       {/* Панель инструментов */}
       <div className="flex items-center gap-4 mb-4">
         <div className="relative flex-1 max-w-md">
@@ -334,17 +293,8 @@ export default function AgentListPage() {
                       <DeleteButton
                         recordItemId={agent.id}
                         resource="agents"
-                        onSuccess={() => {
-                          invalidate({
-                            resource: "agents",
-                            invalidates: ["list"],
-                          });
-                          pushToast({
-                            title: "Агент удален",
-                            description: "Агент успешно удален",
-                            variant: "success",
-                          });
-                        }}
+                        size="sm"
+                        variant="ghost"
                       />
                     </div>
                   </TableCell>
@@ -429,6 +379,8 @@ export default function AgentListPage() {
           </div>
         </div>
       )}
+          </div>
+        </LoadingOverlay>
       </ListView>
     </div>
   );

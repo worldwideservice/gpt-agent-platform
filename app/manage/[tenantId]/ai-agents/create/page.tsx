@@ -7,9 +7,6 @@
 
 import { useForm } from "@refinedev/react-hook-form";
 import { useNavigation } from "@refinedev/core";
-import { useParams } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
@@ -19,6 +16,8 @@ import { Textarea } from "@/components/ui";
 import { Label } from "@/components/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
 import { useToast } from "@/components/ui";
+import { CreateView, CreateViewHeader } from "@/components/refine-ui/views/create-view";
+import { LoadingOverlay } from "@/components/refine-ui/layout/loading-overlay";
 
 // Доступные модели ИИ
 const AI_MODELS = [
@@ -55,8 +54,6 @@ const createAgentSchema = z.object({
 type CreateAgentFormData = z.infer<typeof createAgentSchema>;
 
 export default function CreateAIAgentPage() {
-  const params = useParams();
-  const tenantId = (params?.tenantId as string) || "";
   const { list } = useNavigation();
   const { push: pushToast } = useToast();
 
@@ -106,24 +103,12 @@ export default function CreateAIAgentPage() {
 
   return (
     <div className="p-6">
-      {/* Заголовок */}
-      <div className="flex items-center gap-4 mb-6">
-        <Link href={`/manage/${tenantId}/ai-agents`}>
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Назад
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold">Создать агента ИИ</h1>
-          <nav className="text-sm text-gray-500 mt-1">
-            Агенты ИИ → Создать
-          </nav>
-        </div>
-      </div>
-
-      {/* Форма */}
-      <form onSubmit={handleSubmit(onFinish)} className="max-w-4xl space-y-6">
+      <CreateView>
+        <CreateViewHeader resource="agents" title="Создать агента ИИ" />
+        
+        <LoadingOverlay loading={formLoading}>
+          {/* Форма */}
+          <form onSubmit={handleSubmit(onFinish)} className="max-w-4xl space-y-6">
         {/* Название */}
         <div className="space-y-2">
           <Label htmlFor="name">
@@ -264,6 +249,8 @@ export default function CreateAIAgentPage() {
           </Button>
         </div>
       </form>
+      </LoadingOverlay>
+      </CreateView>
     </div>
   );
 }

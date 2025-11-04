@@ -6,14 +6,15 @@
  */
 
 import { useState, useEffect } from "react";
-import { useList, useNavigation, useDelete, useInvalidate } from "@refinedev/core";
+import { useList, useNavigation, useInvalidate } from "@refinedev/core";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Pencil, Trash2, Plus, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Folder } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Folder } from "lucide-react";
 
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
+import { Badge } from "@/components/ui";
 import {
   Table,
   TableHeader,
@@ -22,9 +23,11 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui";
-import { Badge } from "@/components/ui";
 import { useToast } from "@/components/ui";
-import { ConfirmDialog } from "@/components/ui";
+import { ListView, ListViewHeader } from "@/components/refine-ui/views/list-view";
+import { EditButton } from "@/components/refine-ui/buttons/edit";
+import { DeleteButton } from "@/components/refine-ui/buttons/delete";
+import { LoadingOverlay } from "@/components/refine-ui/layout/loading-overlay";
 import type { KnowledgeBaseCategory } from "@/types";
 
 export default function KnowledgeCategoriesListPage() {
@@ -87,55 +90,6 @@ export default function KnowledgeCategoriesListPage() {
   // Инвалидация кэша для обновления данных
   const invalidate = useInvalidate();
 
-  // Удаление категории
-  const { mutate: deleteCategory } = useDelete();
-
-  // Обработчик открытия диалога удаления
-  const handleDeleteClick = (categoryId: string) => {
-    setCategoryToDelete(categoryId);
-    setDeleteDialogOpen(true);
-  };
-
-  // Обработчик подтверждения удаления
-  const handleConfirmDelete = () => {
-    if (!categoryToDelete) return;
-
-    deleteCategory(
-      {
-        resource: "knowledge-categories",
-        id: categoryToDelete,
-      },
-      {
-        onSuccess: async () => {
-          await invalidate({
-            resource: "knowledge-categories",
-            invalidates: ["list"],
-          });
-          // Также обновляем список статей, так как они зависят от категорий
-          await invalidate({
-            resource: "knowledge-items",
-            invalidates: ["list"],
-          });
-          pushToast({
-            title: "Категория удалена",
-            description: "Категория успешно удалена",
-            variant: "success",
-          });
-          setDeleteDialogOpen(false);
-          setCategoryToDelete(null);
-        },
-        onError: (error) => {
-          console.error("Ошибка удаления категории:", error);
-          pushToast({
-            title: "Ошибка",
-            description: "Не удалось удалить категорию",
-            variant: "error",
-          });
-        },
-      }
-    );
-  };
-
   if (isError) {
     return (
       <div className="p-6">
@@ -164,17 +118,11 @@ export default function KnowledgeCategoriesListPage() {
 
   return (
     <div className="p-6">
-      {/* Заголовок */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Категории</h1>
-          <nav className="text-sm text-gray-500 mt-1">Категории → Список</nav>
-        </div>
-        <Button onClick={() => create("knowledge-categories")}>
-          <Plus className="h-4 w-4 mr-2" />
-          Создать
-        </Button>
-      </div>
+      <ListView>
+        <ListViewHeader resource="knowledge-categories" />
+        
+        <LoadingOverlay loading={isLoading}>
+          <div>
 
       {/* Панель инструментов */}
       <div className="flex items-center gap-4 mb-4">
@@ -238,22 +186,13 @@ export default function KnowledgeCategoriesListPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
+                      <EditButton recordItemId={category.id} resource="knowledge-categories" size="sm" variant="ghost" />
+                      <DeleteButton
+                        recordItemId={category.id}
+                        resource="knowledge-categories"
                         size="sm"
-                        onClick={() => edit("knowledge-categories", category.id)}
-                        title="Изменить"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
                         variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteClick(category.id)}
-                        title="Удалить"
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
+                      />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -337,18 +276,9 @@ export default function KnowledgeCategoriesListPage() {
           </div>
         </div>
       )}
-
-      {/* Диалог подтверждения удаления */}
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        title="Удалить категорию?"
-        description="Вы уверены, что хотите удалить эту категорию? Это действие нельзя отменить."
-        confirmText="Удалить"
-        cancelText="Отмена"
-        variant="destructive"
-        onConfirm={handleConfirmDelete}
-      />
+          </div>
+        </LoadingOverlay>
+      </ListView>
     </div>
   );
 }

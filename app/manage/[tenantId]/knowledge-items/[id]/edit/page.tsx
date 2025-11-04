@@ -8,8 +8,6 @@
 import { useForm } from "@refinedev/react-hook-form";
 import { useNavigation, useList, useOne } from "@refinedev/core";
 import { useParams } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
@@ -20,6 +18,9 @@ import { Label } from "@/components/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
 import { Switch } from "@/components/ui";
 import { useToast } from "@/components/ui";
+import { EditView, EditViewHeader } from "@/components/refine-ui/views/edit-view";
+import { DeleteButton } from "@/components/refine-ui/buttons/delete";
+import { LoadingOverlay } from "@/components/refine-ui/layout/loading-overlay";
 
 // Схема валидации
 const updateArticleSchema = z.object({
@@ -34,7 +35,6 @@ type UpdateArticleFormData = z.infer<typeof updateArticleSchema>;
 
 export default function EditKnowledgeItemPage() {
   const params = useParams();
-  const tenantId = (params?.tenantId as string) || "";
   const articleId = (params?.id as string) || "";
   const { list } = useNavigation();
   const { push: pushToast } = useToast();
@@ -95,7 +95,9 @@ export default function EditKnowledgeItemPage() {
   if (isLoadingArticle) {
     return (
       <div className="p-6">
-        <div className="text-center py-8">Загрузка...</div>
+        <LoadingOverlay loading={true}>
+          <div className="text-center py-8">Загрузка...</div>
+        </LoadingOverlay>
       </div>
     );
   }
@@ -105,11 +107,9 @@ export default function EditKnowledgeItemPage() {
       <div className="p-6">
         <div className="text-center py-8">
           <p className="text-red-500">Статья не найдена</p>
-          <Link href={`/manage/${tenantId}/knowledge-items`}>
-            <Button variant="outline" className="mt-4">
-              Вернуться к списку
-            </Button>
-          </Link>
+          <Button variant="outline" className="mt-4" onClick={() => list("knowledge-items")}>
+            Вернуться к списку
+          </Button>
         </div>
       </div>
     );
@@ -117,21 +117,19 @@ export default function EditKnowledgeItemPage() {
 
   return (
     <div className="p-6">
-      {/* Заголовок */}
-      <div className="flex items-center gap-4 mb-6">
-        <Link href={`/manage/${tenantId}/knowledge-items`}>
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Назад
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold">Редактировать статью</h1>
-          <nav className="text-sm text-gray-500 mt-1">
-            Статьи → {articleData.title || "Редактировать"} → Редактировать
-          </nav>
-        </div>
-      </div>
+      <EditView>
+        <EditViewHeader 
+          resource="knowledge-items" 
+          title={`Редактировать статью: ${articleData?.title || ""}`}
+          actionsSlot={
+            <DeleteButton
+              recordItemId={articleId}
+              resource="knowledge-items"
+            />
+          }
+        />
+        
+        <LoadingOverlay loading={formLoading}>
 
       {/* Форма */}
       <form onSubmit={handleSubmit(onFinish)} className="max-w-4xl space-y-6">
@@ -258,6 +256,8 @@ export default function EditKnowledgeItemPage() {
           </Button>
         </div>
       </form>
+      </LoadingOverlay>
+      </EditView>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { getAgents } from '@/lib/repositories/agents'
+import { createErrorResponse } from '@/lib/utils/error-handler'
 
 const querySchema = z.object({
  search: z.string().optional(),
@@ -242,15 +243,14 @@ export const GET = async (request: NextRequest) => {
  page: parsedParams.data.page,
  limit: parsedParams.data.limit,
  },
+ timestamp: new Date().toISOString(),
  })
  } catch (error) {
- return NextResponse.json(
- {
- success: false,
- error: 'Не удалось загрузить агентов',
- },
- { status: 500 },
- )
+ const { response, status } = createErrorResponse(error, {
+ code: 'AGENTS_LIST_ERROR',
+ logToSentry: true,
+ })
+ return NextResponse.json(response, { status })
  }
 }
 
@@ -313,18 +313,25 @@ export const POST = async (request: NextRequest) => {
  settings: parsed.data.settings ?? {},
  })
 
+ // Логируем создание агента
+ const { ActivityLogger } = await import('@/lib/services/activity-logger')
+ await ActivityLogger.agentCreated(session.user.orgId, session.user.id, agent.id, agent.name).catch(
+ (error) => {
+ console.error('Failed to log agent creation:', error)
+ },
+ )
+
  return NextResponse.json({
  success: true,
  data: agent,
+ timestamp: new Date().toISOString(),
  })
  } catch (error) {
- return NextResponse.json(
- {
- success: false,
- error: 'Не удалось создать агента',
- },
- { status: 500 },
- )
+ const { response, status } = createErrorResponse(error, {
+ code: 'AGENT_CREATE_ERROR',
+ logToSentry: true,
+ })
+ return NextResponse.json(response, { status })
  }
 }
 

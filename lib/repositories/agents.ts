@@ -1,4 +1,5 @@
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { getCachedAgent, setCachedAgent, invalidateAgentCache } from '@/lib/utils/cache'
 
 import type { Agent, AgentSettings } from '@/types'
 import type {
@@ -567,28 +568,41 @@ const buildWeeklyActivitySeries = (
 }
 
 export const getAgentById = async (
- agentId: string,
- organizationId: string,
+  agentId: string,
+  organizationId: string,
 ): Promise<Agent | null> => {
- const supabase = getSupabaseServiceRoleClient()
+  // Пытаемся получить из кэша
+  const cached = await getCachedAgent(agentId, organizationId)
+  if (cached) {
+    return cached
+  }
 
- const { data, error } = await supabase
- .from('agents')
- .select(AGENT_SELECT_FIELDS)
- .eq('id', agentId)
- .eq('org_id', organizationId)
- .maybeSingle()
+  const supabase = getSupabaseServiceRoleClient()
 
- if (error) {
- console.error('Failed to fetch agent from Supabase', error)
- throw new Error('Не удалось загрузить агента')
- }
+  const { data, error } = await supabase
+    .from('agents')
+    .select(AGENT_SELECT_FIELDS)
+    .eq('id', agentId)
+    .eq('org_id', organizationId)
+    .maybeSingle()
 
- if (!data) {
- return null
- }
+  if (error) {
+    console.error('Failed to fetch agent from Supabase', error)
+    throw new Error('Не удалось загрузить агента')
+  }
 
- return mapAgentRowToDomain(data as AgentRow)
+  if (!data) {
+    return null
+  }
+
+  const agent = mapAgentRowToDomain(data as AgentRow)
+  
+  // Сохраняем в кэш (TTL 10 минут)
+  await setCachedAgent(agentId, organizationId, agent, 600).catch(() => {
+    // Игнорируем ошибки кэширования
+  })
+
+  return agent
 }
 
 export const updateAgentStatus = async (
@@ -657,11 +671,18 @@ export const createAgent = async (
  throw new Error('Не удалось создать агента')
  }
 
- if (!data) {
- throw new Error('Не удалось создать агента')
- }
+  if (!data) {
+    throw new Error('Не удалось создать агента')
+  }
 
- return mapAgentRowToDomain(data as AgentRow)
+  const agent = mapAgentRowToDomain(data as AgentRow)
+  
+  // Инвалидируем кэш при создании агента
+  await invalidateAgentCache(agent.id, organizationId).catch(() => {
+    // Игнорируем ошибки кэширования
+  })
+
+  return agent
 }
 
 export const updateAgent = async (

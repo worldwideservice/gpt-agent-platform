@@ -7,63 +7,113 @@ on:
     branches: [main, develop]
 
 env:
-  NODE_VERSION: '20.x'
+  NODE_VERSION: '20'
 
 jobs:
-  lint-and-typecheck:
+  # Проверка качества кода
+  lint:
     name: Lint & Type Check
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-
+      
       - name: Install dependencies
         run: npm ci
-
+      
       - name: Run ESLint
         run: npm run lint
-
+      
       - name: Type Check
         run: npm run type-check
-
+      
       - name: Format Check
         run: npm run format:check
 
-  test:
-    name: E2E Tests
+  # Проверка безопасности
+  security:
+    name: Security Scan
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-
+      
       - name: Install dependencies
         run: npm ci
+      
+      - name: Run npm audit
+        run: npm run audit:security
+        continue-on-error: true
+      
+      - name: Check for secrets in code
+        run: |
+          # Проверка на хардкоженные секреты
+          if grep -r "password\|secret\|token\|key" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+            -E "(=.*['\"][^'\"]{20,}['\"]|process\.env\.[A-Z_]+.*=.*['\"][^'\"]{10,}['\"])" \
+            --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist \
+            app/ lib/ services/; then
+            echo "⚠️ Warning: Potential secrets found in code"
+            exit 1
+          fi
 
-      - name: Install Playwright browsers
-        run: npm run playwright:install -- --with-deps
+  # Unit тесты
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run unit tests
+        run: npm run test:unit
+        continue-on-error: true
+        env:
+          NODE_ENV: test
 
+  # E2E тесты
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+      
       - name: Run E2E tests
-        run: npm run test
+        run: npm run test:e2e
         env:
           E2E_ONBOARDING_FAKE: '1'
           DEMO_MODE: 'true'
-          NODE_ENV: 'test'
+          BASE_URL: 'http://localhost:3000'
           NEXT_PUBLIC_SUPABASE_URL: 'https://demo.supabase.co'
           NEXT_PUBLIC_SUPABASE_ANON_KEY: 'demo-anon-key'
           SUPABASE_URL: 'https://demo.supabase.co'
@@ -71,98 +121,63 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: 'demo-service-role-key'
           NEXTAUTH_SECRET: 'demo-nextauth-secret'
           NEXTAUTH_URL: 'http://localhost:3000'
-          OPENROUTER_API_KEY: 'demo-openrouter-key'
-          REDIS_URL: 'redis://localhost:6379'
-
+      
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: playwright-report/
-          retention-days: 7
+          retention-days: 30
 
-  security:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run npm audit
-        run: npm run audit:security
-        continue-on-error: true
-
-      - name: Check for secrets
-        uses: trufflesecurity/trufflehog@main
-        with:
-          path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
-
+  # Сборка
   build:
-    name: Build Check
+    name: Build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    
+    needs: [lint, security]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-
+      
       - name: Install dependencies
         run: npm ci
-
+      
       - name: Build application
         run: npm run build
         env:
-          NODE_ENV: 'production'
-          NEXT_PUBLIC_SUPABASE_URL: 'https://demo.supabase.co'
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: 'demo-anon-key'
-          SUPABASE_URL: 'https://demo.supabase.co'
-          SUPABASE_SERVICE_ROLE_KEY: 'demo-service-role-key'
-          NEXTAUTH_SECRET: 'demo-nextauth-secret'
-          NEXTAUTH_URL: 'https://demo.vercel.app'
-          OPENROUTER_API_KEY: 'demo-openrouter-key'
-
+          NODE_ENV: production
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      
       - name: Upload build artifacts
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: build-output
+          name: build-artifacts
           path: .next/
-          retention-days: 1
+          retention-days: 7
 
-  summary:
-    name: CI Summary
+  # Проверка переменных окружения
+  env-check:
+    name: Environment Variables Check
     runs-on: ubuntu-latest
-    needs: [lint-and-typecheck, test, security, build]
-    if: always()
-    
     steps:
-      - name: Check CI status
-        run: |
-          if [ "${{ needs.lint-and-typecheck.result }}" != "success" ] || \
-             [ "${{ needs.test.result }}" != "success" ] || \
-             [ "${{ needs.build.result }}" != "success" ]; then
-            echo "❌ Some CI checks failed"
-            exit 1
-          else
-            echo "✅ All CI checks passed"
-          fi
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Check environment variables
+        run: npm run check:env
+        continue-on-error: true

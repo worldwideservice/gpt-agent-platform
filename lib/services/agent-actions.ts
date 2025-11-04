@@ -1,6 +1,8 @@
 import { KommoActionsService } from './kommo-actions'
 import { generateChatResponse } from './llm'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { retryApiCall } from '@/lib/utils/retry'
+import { ActivityLogger } from './activity-logger'
 
 export interface AgentActionContext {
  organizationId: string
@@ -33,36 +35,65 @@ export class AgentActionsService {
  }
 
  /**
- * Анализирует ситуацию и предлагает действия агента
- */
+  * Анализирует ситуацию и предлагает действия агента
+  */
  async analyzeAndSuggestActions(context: AgentActionContext): Promise<SuggestedAction[]> {
  const suggestions: SuggestedAction[] = []
 
  try {
- // Получаем контекст сделки если есть leadId
- let leadContext = null
- if (context.leadId) {
- leadContext = await this.kommoService.getLeadContext(context.leadId)
- console.log('Получен контекст сделки:', leadContext.lead.name)
- }
+   // Получаем контекст сделки если есть leadId (с retry)
+   let leadContext = null
+   if (context.leadId) {
+     try {
+       leadContext = await retryApiCall(
+         () => this.kommoService.getLeadContext(context.leadId!),
+         {
+           maxRetries: 2,
+           initialDelay: 500,
+         }
+       )
+       if (leadContext?.lead?.name) {
+         console.log('Получен контекст сделки:', leadContext.lead.name)
+       }
+     } catch (error) {
+       console.error('Failed to fetch lead context (non-critical):', error)
+       // Не критично - продолжаем без контекста
+     }
+   }
 
- // Анализируем сообщение пользователя для определения намерений
- const userIntent = await this.analyzeUserIntent(context.userMessage, context.conversationHistory, context.organizationId)
+   // Анализируем сообщение пользователя для определения намерений (с retry)
+   const userIntent = await retryApiCall(
+     () => this.analyzeUserIntent(context.userMessage, context.conversationHistory, context.organizationId),
+     {
+       maxRetries: 2,
+       initialDelay: 500,
+     }
+   ).catch(() => 'other') // Fallback на 'other' если не удалось определить
 
- // Определяем возможные действия на основе анализа
- const actions = await this.determinePossibleActions({
- ...context,
- userIntent,
- leadContext,
- })
+   // Определяем возможные действия на основе анализа
+   const actions = await this.determinePossibleActions({
+     ...context,
+     userIntent,
+     leadContext,
+   })
 
- suggestions.push(...actions)
+   suggestions.push(...actions)
 
- // Сортируем по уверенности
- suggestions.sort((a, b) => b.confidence - a.confidence)
+   // Сортируем по уверенности
+   suggestions.sort((a, b) => b.confidence - a.confidence)
 
  } catch (error) {
- console.error('Failed to analyze actions:', error)
+   console.error('Failed to analyze actions:', error)
+   
+   // Логируем ошибку в Activity Logger
+   ActivityLogger.errorOccurred(
+     context.organizationId,
+     'action_analysis_failed',
+     error instanceof Error ? error.message : 'Unknown error',
+     { agent_id: context.agentId }
+   ).catch(() => {
+     // Игнорируем ошибки логирования
+   })
  }
 
  return suggestions
@@ -276,28 +307,104 @@ export class AgentActionsService {
  }
 
  /**
- * Выполняет предложенное действие
- */
+  * Выполняет предложенное действие с retry и логированием
+  */
  async executeSuggestedAction(action: SuggestedAction, context: AgentActionContext): Promise<any> {
+ const startTime = Date.now()
+ let result: any = null
+ let error: Error | null = null
+
  try {
- if (action.type === 'kommo_action' && action.kommoAction) {
- return await this.kommoService.executeAction({
- type: action.kommoAction.type as any,
- data: action.kommoAction.data,
- entityId: action.kommoAction.entityId,
- entityType: action.kommoAction.entityType,
- })
- }
+   if (action.type === 'kommo_action' && action.kommoAction) {
+     // Выполняем с retry для надежности
+     result = await retryApiCall(
+       () => this.kommoService.executeAction({
+         type: action.kommoAction!.type as any,
+         data: action.kommoAction!.data,
+         entityId: action.kommoAction!.entityId,
+         entityType: action.kommoAction!.entityType,
+       }),
+       {
+         maxRetries: 3,
+         initialDelay: 1000,
+         retryableErrors: [/network/i, /timeout/i, /503/i, /502/i, /500/i],
+       }
+     )
 
- if (action.type === 'send_message' && action.data?.message) {
- // Отправить сообщение через существующий чат
- return { message_sent: true, content: action.data.message }
- }
+     // Логируем успешное выполнение действия
+     await ActivityLogger.actionExecuted(
+       context.organizationId,
+       context.agentId,
+       action.kommoAction.type,
+       {
+         entity_id: action.kommoAction.entityId,
+         entity_type: action.kommoAction.entityType,
+         confidence: action.confidence,
+         reason: action.reason,
+         duration_ms: Date.now() - startTime,
+       }
+     ).catch(() => {
+       // Игнорируем ошибки логирования
+     })
 
- return { executed: true }
- } catch (error) {
- console.error('Failed to execute suggested action:', error)
- throw error
+     return result
+   }
+
+   if (action.type === 'send_message' && action.data?.message) {
+     // Отправить сообщение через существующий чат
+     result = { message_sent: true, content: action.data.message }
+     
+     // Логируем отправку сообщения
+     await ActivityLogger.actionExecuted(
+       context.organizationId,
+       context.agentId,
+       'send_message',
+       {
+         message_length: action.data.message.length,
+         duration_ms: Date.now() - startTime,
+       }
+     ).catch(() => {
+       // Игнорируем ошибки логирования
+     })
+
+     return result
+   }
+
+   result = { executed: true }
+   return result
+ } catch (err) {
+   error = err instanceof Error ? err : new Error(String(err))
+   const duration = Date.now() - startTime
+
+   console.error('Failed to execute suggested action:', error)
+
+   // Логируем ошибку выполнения действия
+   await ActivityLogger.errorOccurred(
+     context.organizationId,
+     'action_execution_failed',
+     error.message,
+     {
+       agent_id: context.agentId,
+       action_type: action.type,
+       action_data: action.kommoAction || action.data,
+       confidence: action.confidence,
+       duration_ms: duration,
+     }
+   ).catch(() => {
+     // Игнорируем ошибки логирования
+   })
+
+   // Для критичных ошибок выбрасываем дальше
+   // Для некритичных - возвращаем информацию об ошибке
+   if (action.confidence > 0.8) {
+     throw error
+   }
+
+   return {
+     executed: false,
+     error: error.message,
+     action_type: action.type,
+   }
  }
  }
 

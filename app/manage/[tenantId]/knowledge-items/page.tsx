@@ -6,10 +6,10 @@
  */
 
 import { useState, useEffect } from "react";
-import { useList, useNavigation, useDelete, useInvalidate } from "@refinedev/core";
+import { useList, useNavigation, useInvalidate } from "@refinedev/core";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Pencil, Trash2, Plus, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileText } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui";
@@ -23,8 +23,10 @@ import {
   TableCell,
 } from "@/components/ui";
 import { Badge } from "@/components/ui";
-import { useToast } from "@/components/ui";
-import { ConfirmDialog } from "@/components/ui";
+import { ListView, ListViewHeader } from "@/components/refine-ui/views/list-view";
+import { EditButton } from "@/components/refine-ui/buttons/edit";
+import { DeleteButton } from "@/components/refine-ui/buttons/delete";
+import { LoadingOverlay } from "@/components/refine-ui/layout/loading-overlay";
 import type { KnowledgeBaseArticle } from "@/types";
 
 export default function KnowledgeItemsListPage() {
@@ -42,13 +44,6 @@ export default function KnowledgeItemsListPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   
-  // Состояние для диалога подтверждения удаления
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [articleToDelete, setArticleToDelete] = useState<string | null>(null);
-  
-  // Toast для уведомлений
-  const { push: pushToast } = useToast();
-
   // Debounce для поиска
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -105,50 +100,6 @@ export default function KnowledgeItemsListPage() {
   // Инвалидация кэша для обновления данных
   const invalidate = useInvalidate();
 
-  // Удаление статьи
-  const { mutate: deleteArticle } = useDelete();
-
-  // Обработчик открытия диалога удаления
-  const handleDeleteClick = (articleId: string) => {
-    setArticleToDelete(articleId);
-    setDeleteDialogOpen(true);
-  };
-
-  // Обработчик подтверждения удаления
-  const handleConfirmDelete = () => {
-    if (!articleToDelete) return;
-
-    deleteArticle(
-      {
-        resource: "knowledge-items",
-        id: articleToDelete,
-      },
-      {
-        onSuccess: async () => {
-          await invalidate({
-            resource: "knowledge-items",
-            invalidates: ["list"],
-          });
-          pushToast({
-            title: "Статья удалена",
-            description: "Статья успешно удалена",
-            variant: "success",
-          });
-          setDeleteDialogOpen(false);
-          setArticleToDelete(null);
-        },
-        onError: (error) => {
-          console.error("Ошибка удаления статьи:", error);
-          pushToast({
-            title: "Ошибка",
-            description: "Не удалось удалить статью",
-            variant: "error",
-          });
-        },
-      }
-    );
-  };
-
   if (isError) {
     return (
       <div className="p-6">
@@ -177,18 +128,11 @@ export default function KnowledgeItemsListPage() {
 
   return (
     <div className="p-6">
-      {/* Заголовок */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Статьи</h1>
-          <nav className="text-sm text-gray-500 mt-1">Статьи → Список</nav>
-        </div>
-        <Button onClick={() => create("knowledge-items")}>
-          <Plus className="h-4 w-4 mr-2" />
-          Создать
-        </Button>
-      </div>
-
+      <ListView>
+        <ListViewHeader resource="knowledge-items" />
+        
+        <LoadingOverlay loading={isLoading}>
+          <div>
       {/* Панель инструментов */}
       <div className="flex items-center gap-4 mb-4">
         <div className="relative flex-1 max-w-md">
@@ -273,22 +217,13 @@ export default function KnowledgeItemsListPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
+                      <EditButton recordItemId={article.id} resource="knowledge-items" size="sm" variant="ghost" />
+                      <DeleteButton
+                        recordItemId={article.id}
+                        resource="knowledge-items"
                         size="sm"
-                        onClick={() => edit("knowledge-items", article.id)}
-                        title="Изменить"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
                         variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteClick(article.id)}
-                        title="Удалить"
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
+                      />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -372,18 +307,9 @@ export default function KnowledgeItemsListPage() {
           </div>
         </div>
       )}
-
-      {/* Диалог подтверждения удаления */}
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        title="Удалить статью?"
-        description="Вы уверены, что хотите удалить эту статью? Это действие нельзя отменить."
-        confirmText="Удалить"
-        cancelText="Отмена"
-        variant="destructive"
-        onConfirm={handleConfirmDelete}
-      />
+          </div>
+        </LoadingOverlay>
+      </ListView>
     </div>
   );
 }

@@ -5,6 +5,7 @@
 
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { executeRules, type RuleExecutionContext } from './rule-engine'
+import { startSequence } from './sequences'
 import { addJobToQueue } from '@/lib/queue'
 import { getCrmConnectionData } from '@/lib/repositories/crm-connection'
 import { KommoAPI } from '@/lib/crm/kommo'
@@ -139,12 +140,47 @@ export const processWebhookEvent = async (eventId: string): Promise<boolean> => 
         success = false
     }
 
-    // Запускаем Rule Engine если событие обработано успешно
+    // Запускаем Rule Engine и Sequences если событие обработано успешно
     if (success && event.entity_type && event.entity_id) {
+      // Запускаем Rule Engine
       await triggerRuleEngine(event.org_id, eventType, eventSubtype, {
         entityId: event.entity_id,
         entityType: event.entity_type,
         payload: event.payload,
+      }).catch((error) => {
+        console.error('Failed to trigger Rule Engine:', error)
+      })
+
+      // Запускаем Sequences для соответствующих событий
+      if (eventSubtype === 'lead_created' || eventSubtype === 'stage_changed') {
+        await triggerSequences(event.org_id, eventType, eventSubtype, {
+          entityId: event.entity_id,
+          entityType: event.entity_type,
+          payload: event.payload,
+        }).catch((error) => {
+          console.error('Failed to trigger Sequences:', error)
+        })
+      }
+    }
+
+    // Логируем обработку webhook события (асинхронно)
+    if (success) {
+      const { ActivityLogger } = await import('./activity-logger')
+      const activityType = eventSubtype === 'lead_created' ? 'lead_created' 
+        : eventSubtype === 'lead_updated' ? 'lead_updated'
+        : eventSubtype === 'task_created' ? 'task_created'
+        : eventSubtype === 'task_completed' ? 'task_completed'
+        : eventSubtype === 'call_completed' ? 'call_completed'
+        : 'action_executed'
+      
+      ActivityLogger.logActivity({
+        orgId: event.org_id,
+        activityType: activityType as any,
+        title: `Webhook событие: ${eventType}`,
+        description: `Обработано событие ${eventType}${eventSubtype ? ` (${eventSubtype})` : ''}`,
+        metadata: { event_type: eventType, event_subtype: eventSubtype, entity_id: event.entity_id },
+      }).catch((error) => {
+        console.error('Failed to log webhook activity:', error)
       })
     }
 
@@ -312,14 +348,87 @@ async function handleTaskEvent(
       tasks = taskData
     }
 
+    const supabase = getSupabaseServiceRoleClient()
+
     for (const task of tasks) {
       const taskId = String(task.id || '')
       const entityId = String(task.entity_id || '')
       const entityType = String(task.entity_type || '')
+      const taskText = String(task.text || task.name || 'Задача')
+      const taskTypeId = task.task_type_id ? Number(task.task_type_id) : null
+      const completeTill = task.complete_till ? Number(task.complete_till) : null
+      const responsibleUserId = task.responsible_user_id ? Number(task.responsible_user_id) : null
+      const isCompleted = task.is_completed === true || task.result === true
 
       if (!taskId) continue
 
-      console.log(`Task event processed: ${taskId}, entity: ${entityType}:${entityId}`)
+      // Сохраняем информацию о задаче в БД (если есть таблица crm_tasks)
+      try {
+        const { error: taskError } = await supabase
+          .from('crm_tasks')
+          .upsert({
+            org_id: orgId,
+            task_id: taskId,
+            entity_id: entityId,
+            entity_type: entityType,
+            task_text: taskText,
+            task_type_id: taskTypeId,
+            complete_till: completeTill ? new Date(completeTill * 1000).toISOString() : null,
+            responsible_user_id: responsibleUserId,
+            is_completed: isCompleted,
+            metadata: task,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }, {
+            onConflict: 'org_id,task_id',
+          })
+
+        if (taskError && taskError.code !== '42P01') { // 42P01 = table doesn't exist
+          console.error(`Error saving task ${taskId}:`, taskError)
+        }
+      } catch (tableError) {
+        // Таблица может не существовать - это не критично
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Table crm_tasks may not exist, skipping save for task ${taskId}`)
+        }
+      }
+
+      // Если задача связана со сделкой (lead), создаем заметку в conversation
+      if (entityType === 'leads' && entityId) {
+        try {
+          const { data: conversations } = await supabase
+            .from('conversations')
+            .select('id')
+            .eq('org_id', orgId)
+            .eq('lead_id', Number(entityId))
+            .limit(1)
+
+          if (conversations && conversations.length > 0) {
+            const conversationId = conversations[0].id
+
+            // Создаем системное сообщение о задаче
+            await supabase
+              .from('conversation_messages')
+              .insert({
+                conversation_id: conversationId,
+                role: 'system',
+                content: isCompleted 
+                  ? `✅ Задача выполнена: ${taskText}`
+                  : `📋 Создана задача: ${taskText}${completeTill ? ` (до ${new Date(completeTill * 1000).toLocaleString('ru-RU')})` : ''}`,
+                metadata: {
+                  task_id: taskId,
+                  task_type: 'crm_task',
+                  event: isCompleted ? 'task_completed' : 'task_created',
+                },
+              })
+          }
+        } catch (conversationError) {
+          // Не критично, если не удалось создать заметку
+          console.error(`Error creating conversation note for task ${taskId}:`, conversationError)
+        }
+      }
+
+      console.log(`Task event processed: ${taskId}, entity: ${entityType}:${entityId}, completed: ${isCompleted}`)
     }
 
     return true
@@ -461,19 +570,154 @@ async function handleCallEvent(
       calls = callData
     }
 
+    const supabase = getSupabaseServiceRoleClient()
+
     for (const call of calls) {
       const callId = String(call.id || '')
       const entityId = String(call.entity_id || '')
       const entityType = String(call.entity_type || '')
+      const callDirection = String(call.direction || 'outbound')
+      const callStatus = String(call.status || 'unknown')
+      const callDuration = call.duration ? Number(call.duration) : null
+      const callSource = call.source || null
+      const callUniq = String(call.uniq || '')
+      const callCreatedAt = call.created_at ? Number(call.created_at) : Date.now() / 1000
 
       if (!callId) continue
 
-      console.log(`Call event processed: ${callId}, entity: ${entityType}:${entityId}`)
+      // Сохраняем информацию о звонке в БД (если есть таблица crm_calls)
+      try {
+        const { error: callError } = await supabase
+          .from('crm_calls')
+          .upsert({
+            org_id: orgId,
+            call_id: callId,
+            entity_id: entityId,
+            entity_type: entityType,
+            direction: callDirection,
+            status: callStatus,
+            duration: callDuration,
+            source: callSource,
+            uniq: callUniq,
+            metadata: call,
+            created_at: new Date(callCreatedAt * 1000).toISOString(),
+            updated_at: new Date().toISOString(),
+          }, {
+            onConflict: 'org_id,call_id',
+          })
+
+        if (callError && callError.code !== '42P01') { // 42P01 = table doesn't exist
+          console.error(`Error saving call ${callId}:`, callError)
+        }
+      } catch (tableError) {
+        // Таблица может не существовать - это не критично
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Table crm_calls may not exist, skipping save for call ${callId}`)
+        }
+      }
+
+      // Если звонок связан со сделкой (lead), создаем заметку в conversation
+      if (entityType === 'leads' && entityId && callStatus === 'success') {
+        try {
+          const { data: conversations } = await supabase
+            .from('conversations')
+            .select('id')
+            .eq('org_id', orgId)
+            .eq('lead_id', Number(entityId))
+            .limit(1)
+
+          if (conversations && conversations.length > 0) {
+            const conversationId = conversations[0].id
+
+            // Формируем текст заметки о звонке
+            const callNote = callDirection === 'inbound'
+              ? `📞 Входящий звонок${callDuration ? ` (${Math.round(callDuration)} сек)` : ''}`
+              : `📞 Исходящий звонок${callDuration ? ` (${Math.round(callDuration)} сек)` : ''}`
+
+            // Создаем системное сообщение о звонке
+            await supabase
+              .from('conversation_messages')
+              .insert({
+                conversation_id: conversationId,
+                role: 'system',
+                content: callNote,
+                metadata: {
+                  call_id: callId,
+                  call_type: 'crm_call',
+                  direction: callDirection,
+                  duration: callDuration,
+                  event: 'call_completed',
+                },
+              })
+
+            // Если звонок пропущен (missed), можно создать задачу на перезвон
+            if (callStatus === 'missed' && callDirection === 'inbound') {
+              // Запускаем создание задачи через очередь (не блокируем обработку)
+              const { addJobToQueue } = await import('@/lib/queue')
+              await addJobToQueue('kommo:create-task', {
+                orgId,
+                leadId: Number(entityId),
+                taskData: {
+                  text: 'Перезвонить клиенту',
+                  complete_till: Math.floor(Date.now() / 1000) + 3600, // через час
+                  task_type_id: 1, // звонок
+                },
+              }).catch(error => {
+                console.error(`Failed to create callback task for missed call ${callId}:`, error)
+              })
+            }
+          }
+        } catch (conversationError) {
+          // Не критично, если не удалось создать заметку
+          console.error(`Error creating conversation note for call ${callId}:`, conversationError)
+        }
+      }
+
+      console.log(`Call event processed: ${callId}, entity: ${entityType}:${entityId}, status: ${callStatus}, duration: ${callDuration}`)
     }
 
     return true
   } catch (error) {
     console.error('Error handling call event:', error)
+    return false
+  }
+}
+
+/**
+ * Обработка событий компаний (companies)
+ */
+async function handleCompanyEvent(
+  orgId: string,
+  payload: Record<string, unknown>,
+  eventSubtype?: string | null
+): Promise<boolean> {
+  try {
+    const companyData = payload.companies || payload
+
+    if (!companyData || typeof companyData !== 'object') {
+      return false
+    }
+
+    let companies: Array<Record<string, unknown>> = []
+
+    if ('add' in companyData && Array.isArray(companyData.add)) {
+      companies = companyData.add as Array<Record<string, unknown>>
+    } else if ('update' in companyData && Array.isArray(companyData.update)) {
+      companies = companyData.update as Array<Record<string, unknown>>
+    } else if (Array.isArray(companyData)) {
+      companies = companyData
+    }
+
+    for (const company of companies) {
+      const companyId = String(company.id || '')
+      if (!companyId) continue
+
+      console.log(`Company event processed: ${companyId}, subtype: ${eventSubtype}`)
+    }
+
+    return true
+  } catch (error) {
+    console.error('Error handling company event:', error)
     return false
   }
 }
@@ -545,6 +789,75 @@ async function triggerRuleEngine(
   } catch (error) {
     console.error('Error triggering Rule Engine:', error)
     // Не выбрасываем ошибку, чтобы не прервать обработку webhook
+  }
+}
+
+/**
+ * Запускает Sequences для события
+ */
+async function triggerSequences(
+  orgId: string,
+  eventType: string,
+  eventSubtype: string | null,
+  context: {
+    entityId: string
+    entityType: string
+    payload: Record<string, unknown>
+  }
+): Promise<boolean> {
+  try {
+    const supabase = getSupabaseServiceRoleClient()
+
+    // Получаем активные последовательности для организации
+    const { data: sequences, error } = await supabase
+      .from('sequences')
+      .select('*')
+      .eq('org_id', orgId)
+      .eq('is_active', true)
+      .in('trigger_type', ['lead_created', 'stage_changed', 'event'])
+
+    if (error || !sequences || sequences.length === 0) {
+      return false
+    }
+
+    // Фильтруем последовательности по типу триггера
+    const matchingSequences = sequences.filter((seq) => {
+      if (seq.trigger_type === 'lead_created' && eventSubtype === 'lead_created') {
+        return true
+      }
+      if (seq.trigger_type === 'stage_changed' && eventSubtype === 'lead_status_changed') {
+        return true
+      }
+      if (seq.trigger_type === 'event' && eventType === eventSubtype) {
+        return true
+      }
+      return false
+    })
+
+    // Запускаем каждую подходящую последовательность
+    for (const sequence of matchingSequences) {
+      try {
+        const leadId = context.entityType === 'leads' ? context.entityId : undefined
+        const contactId = context.entityType === 'contacts' ? context.entityId : undefined
+
+        if (leadId) {
+          await startSequence(
+            sequence.id,
+            orgId,
+            leadId,
+            contactId,
+            context.payload
+          )
+        }
+      } catch (sequenceError) {
+        console.error(`Failed to start sequence ${sequence.id}:`, sequenceError)
+      }
+    }
+
+    return true
+  } catch (error) {
+    console.error('Error triggering Sequences:', error)
+    return false
   }
 }
 

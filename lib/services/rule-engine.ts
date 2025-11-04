@@ -461,18 +461,47 @@ const executeUpdateField = async (
  * Отправляет email
  */
 const executeSendEmail = async (
- action: RuleAction,
- context: RuleExecutionContext,
+  action: RuleAction,
+  context: RuleExecutionContext,
 ): Promise<boolean> => {
- if (!action.template || !action.recipient) return false
+  if (!action.template || !action.recipient) return false
 
- // Здесь должна быть интеграция с email-сервисом
- console.log('Sending email:', {
- recipient: action.recipient,
- template: action.template,
- })
+  try {
+    const { sendTemplateEmail } = await import('./email')
 
- return true
+    // Подготавливаем переменные для шаблона из контекста
+    const variables: Record<string, string> = {
+      ...context.leadData,
+      ...context.contactData,
+      recipient: action.recipient,
+    }
+
+    // Отправляем email
+    const success = await sendTemplateEmail(
+      action.recipient,
+      action.template.subject || 'Сообщение от World Wide Services',
+      action.template.html || action.template.body || '',
+      variables,
+    )
+
+    if (!success) {
+      console.error('Failed to send email in rule action:', {
+        recipient: action.recipient,
+        actionId: action.id,
+      })
+      return false
+    }
+
+    console.log('Rule: Email sent successfully', {
+      recipient: action.recipient,
+      actionId: action.id,
+    })
+
+    return true
+  } catch (error) {
+    console.error('Error sending email in rule action:', error)
+    return false
+  }
 }
 
 /**

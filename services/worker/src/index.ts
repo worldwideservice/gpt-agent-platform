@@ -1,23 +1,27 @@
 import { Worker } from 'bullmq'
 import Redis from 'ioredis'
 
-console.log('[worker] Starting Worker service...')
-console.log('[worker] Node version:', process.version)
-console.log('[worker] Working directory:', process.cwd())
-
 import { getTaskHandlers } from './tasks'
 import { env } from './lib/env'
 import { startHealthServer, setRedisConnection } from './health'
 import { metrics } from './metrics'
 import { initSentry, trackJob } from './lib/sentry'
+import { logger } from './lib/logger'
+
+logger.info('Starting Worker service', {
+  nodeVersion: process.version,
+  workingDirectory: process.cwd(),
+  event: 'worker.start',
+})
 
 // Инициализируем Sentry как можно раньше для отслеживания всех ошибок
 initSentry()
 
-console.log('[worker] Environment variables loaded successfully')
-console.log('[worker] Upstash REST URL:', env.UPSTASH_REDIS_REST_URL ? '***configured***' : 'MISSING')
-console.log('[worker] Upstash REST Token:', env.UPSTASH_REDIS_REST_TOKEN ? '***configured***' : 'MISSING')
-console.log('[worker] Supabase URL:', env.SUPABASE_URL ? '***configured***' : 'MISSING')
+logger.info('Environment variables loaded', {
+  redisConfigured: !!env.UPSTASH_REDIS_REST_URL,
+  supabaseConfigured: !!env.SUPABASE_URL,
+  event: 'worker.config',
+})
 
 // Инициализируем метрики
 metrics.init(env.JOB_QUEUE_NAME, env.JOB_CONCURRENCY)
@@ -41,8 +45,10 @@ const redisHost = upstashRestUrl.hostname
 // - Password: REST Token (один и тот же токен для REST API и прямого подключения)
 const redisUrl = `rediss://default:${env.UPSTASH_REDIS_REST_TOKEN}@${redisHost}:6379`
 
-console.log('[worker] Constructed Redis URL:', redisUrl.substring(0, 30) + '...')
-console.log('[worker] NOTE: Если подключение не работает, проверьте Endpoint, Port и Password в Upstash Console')
+logger.debug('Redis URL constructed', {
+  redisHost,
+  event: 'redis.config',
+})
 
 // Создаем подключение к Redis через ioredis
 // Для Upstash требуется TLS и правильные настройки
@@ -63,13 +69,17 @@ const connection = new Redis(redisUrl, {
   reconnectOnError: (err) => {
     // Если DNS ошибка, не переподключаемся автоматически
     if (err.message.includes('ENOTFOUND') || err.message.includes('getaddrinfo')) {
-      console.error('[worker] DNS resolution failed. Trying alternative approach...')
+      logger.error('DNS resolution failed', err, {
+        event: 'redis.dns.failed',
+      })
       // Пробуем использовать REST API как fallback
       return false
     }
     const targetError = 'READONLY'
     if (err.message.includes(targetError)) {
-      console.log('[worker] Redis READONLY error, reconnecting...')
+      logger.warn('Redis READONLY error, reconnecting...', {
+        event: 'redis.readonly',
+      })
       return true
     }
     return false
@@ -77,27 +87,29 @@ const connection = new Redis(redisUrl, {
 })
 
 connection.on('error', (err) => {
-  console.error('[worker] Redis connection error:', err.message)
+  logger.redisError(err)
   metrics.redisError(err)
 })
 
 connection.on('connect', () => {
-  console.log('[worker] Redis connection established')
+  logger.redisConnect()
   metrics.redisConnected()
 })
 
 connection.on('ready', () => {
-  console.log('[worker] Redis connection ready')
+  logger.info('Redis connection ready', {
+    event: 'redis.ready',
+  })
   metrics.redisConnected()
 })
 
 connection.on('close', () => {
-  console.log('[worker] Redis connection closed')
+  logger.redisDisconnect()
   metrics.redisDisconnected()
 })
 
 connection.on('reconnecting', () => {
-  console.log('[worker] Redis reconnecting...')
+  logger.redisReconnectAttempt(metrics.getMetrics().redis.reconnectAttempts)
   metrics.redisReconnectAttempt()
 })
 
@@ -106,24 +118,40 @@ const handlers = getTaskHandlers()
 const worker = new Worker(
   env.JOB_QUEUE_NAME,
   async (job) => {
-    // Отмечаем начало обработки job
-    metrics.jobStarted(job.id || '', job.name)
+    const jobId = job.id || 'unknown'
+    const jobName = job.name
+    const startTime = Date.now()
 
-    const handler = handlers[job.name as keyof typeof handlers]
+    // Отмечаем начало обработки job
+    metrics.jobStarted(jobId, jobName)
+    logger.jobStart(jobId, jobName, job.data)
+
+    const handler = handlers[jobName as keyof typeof handlers]
 
     if (!handler) {
-      throw new Error(`No handler registered for job ${job.name}`)
+      const error = new Error(`No handler registered for job ${jobName}`)
+      logger.jobFailed(jobId, jobName, error)
+      throw error
     }
 
     // Обертываем выполнение job в Sentry tracking для автоматического отслеживания ошибок
-    await trackJob(
-      job.name,
-      job.id || 'unknown',
-      job.data,
-      async () => {
-        await handler(job.data)
-      },
-    )
+    try {
+      await trackJob(
+        jobName,
+        jobId,
+        job.data,
+        async () => {
+          await handler(job.data)
+        },
+      )
+      
+      const duration = Date.now() - startTime
+      logger.jobComplete(jobId, jobName, duration)
+    } catch (error) {
+      const duration = Date.now() - startTime
+      logger.jobFailed(jobId, jobName, error, duration)
+      throw error
+    }
   },
   {
     connection,
@@ -144,31 +172,42 @@ const worker = new Worker(
 )
 
 worker.on('active', (job) => {
-  console.log(`[worker] Job ${job.id} (${job.name}) started processing`)
+  logger.debug(`Job ${job.id} (${job.name}) started processing`, {
+    jobId: job.id,
+    jobName: job.name,
+    event: 'job.active',
+  })
 })
 
 worker.on('completed', (job) => {
-  console.log(`[worker] Job ${job.id} (${job.name}) completed`)
+  // Логирование уже выполнено в handler
   metrics.jobCompleted(job.id || '', job.name)
 })
 
 worker.on('failed', (job, error) => {
-  console.error(`[worker] Job ${job?.id} (${job?.name}) failed:`, error.message)
+  // Логирование уже выполнено в handler
   metrics.jobFailed(job?.id || '', job?.name || 'unknown', error)
 })
 
 worker.on('stalled', (jobId) => {
-  console.warn(`[worker] Job ${jobId} stalled`)
+  logger.warn(`Job ${jobId} stalled`, {
+    jobId,
+    event: 'job.stalled',
+  })
 })
 
 worker.on('error', (error) => {
-  console.error('[worker] Worker error:', error)
+  logger.error('Worker error', error, {
+    event: 'worker.error',
+  })
 })
 
 // Запускаем health check сервер после создания подключения к Redis
 startHealthServer()
 setRedisConnection(connection)
 
-console.log(`[worker] Started processing jobs from queue: ${env.JOB_QUEUE_NAME}`)
-console.log(`[worker] Concurrency: ${env.JOB_CONCURRENCY}`)
-console.log(`[worker] Metrics collection enabled`)
+logger.info('Worker started successfully', {
+  queueName: env.JOB_QUEUE_NAME,
+  concurrency: env.JOB_CONCURRENCY,
+  event: 'worker.ready',
+})

@@ -1,16 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 
+import { auth } from '@/auth'
 import { KommoAPI } from '@/lib/crm/kommo'
+import { createErrorResponse } from '@/lib/utils/error-handler'
 
 /**
  * API endpoint для работы с Kommo CRM
  */
 
+const kommoActionSchema = z.object({
+  action: z.enum(['pipelines', 'users', 'lead', 'contact']),
+  id: z.string().optional(),
+})
+
+const kommoPostSchema = z.object({
+  action: z.string().min(1),
+  data: z.record(z.unknown()),
+})
+
 // GET - Получение данных из Kommo
 export async function GET(request: NextRequest) {
  try {
+ const session = await auth()
+ if (!session?.user?.orgId) {
+ const { response, status } = createErrorResponse(
+   new Error('Unauthorized'),
+   { code: 'AUTHENTICATION_ERROR', logToSentry: false }
+ )
+ return NextResponse.json(response, { status })
+ }
+
  const searchParams = request.nextUrl.searchParams
  const action = searchParams.get('action')
+ const id = searchParams.get('id')
 
  // Инициализация Kommo API
  const kommo = new KommoAPI({
@@ -34,49 +57,74 @@ export async function GET(request: NextRequest) {
  }
 
  case 'lead': {
- const leadId = searchParams.get('id')
- if (!leadId) {
- return NextResponse.json(
- { success: false, error: 'Lead ID required' },
- { status: 400 }
+ if (!id) {
+ const { response, status } = createErrorResponse(
+   new Error('Lead ID required'),
+   { code: 'VALIDATION_ERROR', logToSentry: false }
  )
+ return NextResponse.json(response, { status })
  }
- const lead = await kommo.getLead(parseInt(leadId, 10))
- return NextResponse.json({ success: true, data: lead })
+ const lead = await kommo.getLead(parseInt(id, 10))
+ return NextResponse.json({ success: true, data: lead, timestamp: new Date().toISOString() })
  }
 
  case 'contact': {
- const contactId = searchParams.get('id')
- if (!contactId) {
- return NextResponse.json(
- { success: false, error: 'Contact ID required' },
- { status: 400 }
+ if (!id) {
+ const { response, status } = createErrorResponse(
+   new Error('Contact ID required'),
+   { code: 'VALIDATION_ERROR', logToSentry: false }
  )
+ return NextResponse.json(response, { status })
  }
- const contact = await kommo.getContact(parseInt(contactId, 10))
- return NextResponse.json({ success: true, data: contact })
+ const contact = await kommo.getContact(parseInt(id, 10))
+ return NextResponse.json({ success: true, data: contact, timestamp: new Date().toISOString() })
  }
 
  default:
- return NextResponse.json(
- { success: false, error: 'Invalid action' },
- { status: 400 }
+ const { response: defaultResponse, status: defaultStatus } = createErrorResponse(
+   new Error('Invalid action'),
+   { code: 'INVALID_ACTION', logToSentry: false }
  )
+ return NextResponse.json(defaultResponse, { status: defaultStatus })
  }
  } catch (error) {
- console.error('Kommo API Error:', error)
- return NextResponse.json(
- { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
- { status: 500 }
- )
+ const { response, status } = createErrorResponse(error, {
+   code: 'KOMMO_API_ERROR',
+   logToSentry: true,
+ })
+ return NextResponse.json(response, { status })
  }
 }
 
 // POST - Создание данных в Kommo
 export async function POST(request: NextRequest) {
  try {
+ const session = await auth()
+ if (!session?.user?.orgId) {
+ const { response, status } = createErrorResponse(
+   new Error('Unauthorized'),
+   { code: 'AUTHENTICATION_ERROR', logToSentry: false }
+ )
+ return NextResponse.json(response, { status })
+ }
+
  const body = await request.json()
- const { action, data } = body
+ const parsed = kommoPostSchema.safeParse(body)
+
+ if (!parsed.success) {
+ const issues = parsed.error.issues.map((issue) => issue.message)
+ const { response, status } = createErrorResponse(
+   new Error('Validation failed'),
+   {
+     code: 'VALIDATION_ERROR',
+     details: issues,
+     logToSentry: false,
+   }
+ )
+ return NextResponse.json(response, { status })
+ }
+
+ const { action, data } = parsed.data
 
  const kommo = new KommoAPI({
  domain: process.env.KOMMO_DOMAIN || '',
@@ -130,17 +178,18 @@ export async function POST(request: NextRequest) {
  }
 
  default:
- return NextResponse.json(
- { success: false, error: 'Invalid action' },
- { status: 400 }
+ const { response: defaultResponse, status: defaultStatus } = createErrorResponse(
+   new Error('Invalid action'),
+   { code: 'INVALID_ACTION', logToSentry: false }
  )
+ return NextResponse.json(defaultResponse, { status: defaultStatus })
  }
  } catch (error) {
- console.error('Kommo API Error:', error)
- return NextResponse.json(
- { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
- { status: 500 }
- )
+ const { response, status } = createErrorResponse(error, {
+   code: 'KOMMO_API_ERROR',
+   logToSentry: true,
+ })
+ return NextResponse.json(response, { status })
  }
 }
 

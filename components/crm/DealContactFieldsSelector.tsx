@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { X, Briefcase, Users, Eye, RefreshCw, Edit, ChevronDown, ChevronUp, GripVertical, Trash2 } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Briefcase, Users, RefreshCw, Edit, ChevronDown, ChevronUp, GripVertical, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { Select } from '@/components/ui/Select'
-import { Badge } from '@/components/ui/shadcn/badge'
+import { useToast } from '@/components/ui'
 
 interface Field {
  id: string
@@ -23,6 +23,8 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  const [availableDealFields, setAvailableDealFields] = useState<Field[]>([])
  const [availableContactFields, setAvailableContactFields] = useState<Field[]>([])
  const [isLoading, setIsLoading] = useState(true)
+ const [isSaving, setIsSaving] = useState(false)
+ const { push: pushToast } = useToast()
 
  // Загрузка доступных полей из CRM
  useEffect(() => {
@@ -72,11 +74,53 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  void fetchFields()
  }, [agentId])
 
+ const saveFields = useCallback(async () => {
+ setIsSaving(true)
+ try {
+ const response = await fetch(`/api/agents/${agentId}/fields`, {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({
+ dealFields,
+ contactFields,
+ }),
+ })
+
+ if (!response.ok) {
+ throw new Error('Не удалось сохранить поля')
+ }
+
+ pushToast({
+ title: 'Поля сохранены',
+ description: 'Настройки полей успешно сохранены',
+ variant: 'success',
+ })
+ } catch (error) {
+ console.error('Failed to save fields', error)
+ pushToast({
+ title: 'Ошибка',
+ description: 'Не удалось сохранить поля',
+ variant: 'error',
+ })
+ } finally {
+ setIsSaving(false)
+ }
+ }, [agentId, dealFields, contactFields, pushToast])
+
  useEffect(() => {
  if (onFieldsChange) {
  onFieldsChange(dealFields, contactFields)
  }
  }, [dealFields, contactFields, onFieldsChange])
+
+ // Автоматическое сохранение при изменении полей (с debounce)
+ useEffect(() => {
+ if (isLoading) return // Не сохраняем при первой загрузке
+ const timeoutId = setTimeout(() => {
+ saveFields()
+ }, 1000) // Сохраняем через 1 секунду после последнего изменения
+ return () => clearTimeout(timeoutId)
+ }, [dealFields, contactFields, isLoading, saveFields])
 
  const addDealField = (fieldId: string) => {
  if (!dealFields.includes(fieldId)) {
@@ -96,28 +140,6 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
 
  const removeContactField = (fieldId: string) => {
  setContactFields(contactFields.filter(id => id !== fieldId))
- }
-
- const saveFields = async () => {
- try {
- const response = await fetch(`/api/agents/${agentId}/fields`, {
- method: 'POST',
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify({
- dealFields,
- contactFields,
- }),
- })
-
- if (!response.ok) {
- throw new Error('Не удалось сохранить поля')
- }
-
- alert('Поля успешно сохранены')
- } catch (error) {
- console.error('Failed to save fields', error)
- alert('Ошибка сохранения полей')
- }
  }
 
  const [dealDataCollapsed, setDealDataCollapsed] = useState(false)
