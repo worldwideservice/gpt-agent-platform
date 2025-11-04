@@ -20,7 +20,7 @@
    - `docs/RAILWAY_QUICK_START.md`
    - `docs/RAILWAY_SETUP.md`
    
-   **Значение:** `b2d35fc1-afcf-4589-8b24-da667437cf26`
+   **Значение:** `b2d3...cf26` (замаскировано - требуется ротация)
 
 2. **SENTRY_TOKEN** - найдено в:
    - `scripts/wait-and-check-sentry.sh`
@@ -37,47 +37,47 @@
    - `docs/SENTRY_SETUP_COMPLETE.md`
    - `docs/DEVOPS_IMPLEMENTATION_STEPS.md`
    
-   **Значения:**
-   - `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`
-   - `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`
-   - `82a4d7aaaf2d11f092a62ea79c10f815`
+   **Значения:** (замаскировано - требуется ротация)
+   - `sntryu_...d4be`
+   - `sntrys_...x20`
+   - `82a4...f815`
 
 3. **VERCEL_TOKEN** - найдено в:
    - `scripts/direct-api-setup.sh`
    - `scripts/auto-setup-vercel-sentry.sh`
    - `scripts/setup-github-secrets.sh`
    
-   **Значение:** `g5wBHt7TxDknUEIHchTJUHEK`
+   **Значение:** `g5wB...HEK` (замаскировано - требуется ротация)
 
 4. **UPSTASH_REDIS_REST_TOKEN** - найдено в:
    - `scripts/update-railway-variables.sh`
    - `scripts/railway-setup-variables.sh`
    
-   **Значение:** `AYcUASQgZjI2MTM5NzYtYzU2ZS00YjFkLTk3MmQtMWIyODAzYjY3ODg5OGE3ODAzNDUwMzQ5NGE0Yjk5NzEwZDFiNWE4ZTg0MDU=`
+   **Значение:** `AYcU...MDU=` (замаскировано - требуется ротация)
 
 5. **SUPABASE_SERVICE_ROLE_KEY** - найдено в:
    - `scripts/update-railway-variables.sh`
    - `scripts/railway-setup-variables.sh`
    
-   **Значение:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwemNoc2d1dGFieGVhYm53YXMiLCJyb2xlIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNzU5NTYzMzM4LCJleHAiOjIwNzUxMzkzMzh9.UIkX-rUGGTbMGfd5YoF41Dx3QBuLH13nO-R3BXdbx2I`
+   **Значение:** `eyJhbGc...bx2I` (замаскировано - требуется ротация)
 
 6. **ENCRYPTION_KEY** - найдено в:
    - `scripts/update-railway-variables.sh`
    - `scripts/railway-setup-variables.sh`
    - `scripts/add-worker-env-vars.sh`
    
-   **Значение:** `HxXQ5WCMJ3TrFZehEHJUyMVgVX5fdGsSWy/2rixkVwE=`
+   **Значение:** `HxXQ...wE=` (замаскировано - требуется ротация)
 
 7. **OPENROUTER_API_KEY** - найдено в:
    - `scripts/update-railway-variables.sh`
    - `scripts/railway-setup-variables.sh`
    
-   **Значение:** `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`
+   **Значение:** `sk-or-v1-...80d7` (замаскировано - требуется ротация)
 
 8. **SENTRY_PASSWORD** - найдено в:
    - `scripts/open-sentry-for-alerts.sh`
    
-   **Значение:** `l1tmw6u977c9!Q`
+   **Значение:** `l1tm...!Q` (замаскировано - требуется ротация)
 
 ---
 
@@ -162,7 +162,7 @@ scripts/*-secrets.sh
 Все скрипты должны использовать переменные окружения:
 ```bash
 # ❌ ПЛОХО
-RAILWAY_TOKEN="b2d35fc1-afcf-4589-8b24-da667437cf26"
+RAILWAY_TOKEN="b2d3...cf26"
 
 # ✅ ХОРОШО
 RAILWAY_TOKEN="${RAILWAY_TOKEN:?RAILWAY_TOKEN is required}"
