@@ -5,7 +5,8 @@ import { loadEnvironment } from './loadEnv'
 loadEnvironment()
 
 const envSchema = z.object({
- REDIS_URL: z.string().url(),
+ UPSTASH_REDIS_REST_URL: z.string().url(),
+ UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
  SUPABASE_URL: z.string().url(),
  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
  ENCRYPTION_KEY: z.string().min(32),
@@ -19,7 +20,8 @@ let env: z.infer<typeof envSchema>
 
 try {
   env = envSchema.parse({
-    REDIS_URL: process.env.REDIS_URL,
+    UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+    UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,

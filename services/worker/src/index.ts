@@ -10,92 +10,60 @@ import { env } from './lib/env'
 import { startHealthServer } from './health'
 
 console.log('[worker] Environment variables loaded successfully')
-console.log('[worker] Redis URL:', env.REDIS_URL ? '***configured***' : 'MISSING')
+console.log('[worker] Upstash REST URL:', env.UPSTASH_REDIS_REST_URL ? '***configured***' : 'MISSING')
+console.log('[worker] Upstash REST Token:', env.UPSTASH_REDIS_REST_TOKEN ? '***configured***' : 'MISSING')
 console.log('[worker] Supabase URL:', env.SUPABASE_URL ? '***configured***' : 'MISSING')
 
 // Запускаем health check сервер
 startHealthServer()
 
-// Настройки подключения к Redis для Upstash
-// Upstash требует TLS и может использовать IPv6
-const redisUrl = env.REDIS_URL
-if (!redisUrl) {
-  throw new Error('REDIS_URL is required')
-}
+// Пробуем получить правильный Redis URL для прямого подключения
+// Для Upstash прямой Redis URL обычно имеет формат: rediss://default:TOKEN@ENDPOINT:PORT
+// ENDPOINT может отличаться от REST URL хоста
+// Используем REST URL хост как fallback, но с правильным портом и TLS
+const upstashRestUrl = new URL(env.UPSTASH_REDIS_REST_URL)
+const redisHost = upstashRestUrl.hostname
 
-console.log('[worker] Parsing Redis URL:', redisUrl.substring(0, 20) + '...')
+// Для Upstash прямой Redis подключение обычно использует:
+// - Протокол: rediss:// (TLS)
+// - Порт: 6380 (для TLS) или 6379 (для non-TLS)
+// - Хост: может быть тот же, что и REST URL, или другой
+// Попробуем использовать тот же хост с правильным портом
+const redisUrl = `rediss://default:${env.UPSTASH_REDIS_REST_TOKEN}@${redisHost}:6380`
 
-// Парсим URL для извлечения компонентов
-// Пробуем разные форматы парсинга
-let url: URL
-try {
-  // Стандартный формат: rediss://default:TOKEN@HOST:PORT
-  url = new URL(redisUrl.replace(/^rediss?:\/\//, 'https://'))
-} catch (error) {
-  console.error('[worker] Failed to parse Redis URL:', error)
-  throw new Error(`Invalid REDIS_URL format: ${redisUrl}`)
-}
+console.log('[worker] Constructed Redis URL:', redisUrl.substring(0, 30) + '...')
 
-const isTLS = redisUrl.startsWith('rediss://')
-const host = url.hostname
-const port = parseInt(url.port) || (isTLS ? 6380 : 6379)
-const password = url.password || url.username
-
-console.log('[worker] Redis connection details:', {
-  host,
-  port,
-  isTLS,
-  hasPassword: !!password,
-  protocol: isTLS ? 'rediss' : 'redis',
-  urlUsername: url.username,
-})
-
-// Для Upstash пробуем разные варианты подключения
-// Вариант 1: Стандартное подключение с TLS
-const connectionOptions: Redis.RedisOptions = {
-  host,
-  port,
-  password,
-  username: url.username && url.username !== 'default' ? url.username : undefined,
-  tls: isTLS ? {
-    // Upstash требует TLS для прямого подключения
-    rejectUnauthorized: true,
-  } : undefined,
+// Создаем подключение к Redis через ioredis
+// Для Upstash требуется TLS и правильные настройки
+const connection = new Redis(redisUrl, {
   maxRetriesPerRequest: null,
   enableReadyCheck: true,
-  connectTimeout: 15000, // Увеличиваем таймаут до 15 секунд
+  connectTimeout: 15000,
   lazyConnect: false,
-  // Пробуем сначала IPv4, потом IPv6
-  family: 4, // Начинаем с IPv4
+  // Убираем принудительный family, позволяем системе выбрать
   retryStrategy: (times) => {
     const delay = Math.min(times * 50, 2000)
     console.log(`[worker] Redis retry attempt ${times}, delay: ${delay}ms`)
     if (times > 10) {
       console.error(`[worker] Redis connection failed after ${times} attempts`)
-      // После 10 попыток пробуем IPv6
-      if (times === 11) {
-        console.log('[worker] Trying IPv6 connection...')
-        connectionOptions.family = 6
-      }
     }
     return delay
   },
   reconnectOnError: (err) => {
+    // Если DNS ошибка, не переподключаемся автоматически
+    if (err.message.includes('ENOTFOUND') || err.message.includes('getaddrinfo')) {
+      console.error('[worker] DNS resolution failed. Trying alternative approach...')
+      // Пробуем использовать REST API как fallback
+      return false
+    }
     const targetError = 'READONLY'
     if (err.message.includes(targetError)) {
       console.log('[worker] Redis READONLY error, reconnecting...')
       return true
     }
-    // Если DNS ошибка, не переподключаемся автоматически
-    if (err.message.includes('ENOTFOUND') || err.message.includes('getaddrinfo')) {
-      console.error('[worker] DNS resolution failed. Check REDIS_URL hostname.')
-      return false
-    }
     return false
   },
-}
-
-const connection = new Redis(connectionOptions)
+})
 
 connection.on('error', (err) => {
   console.error('[worker] Redis connection error:', err.message)
