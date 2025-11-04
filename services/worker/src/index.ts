@@ -17,30 +17,24 @@ console.log('[worker] Supabase URL:', env.SUPABASE_URL ? '***configured***' : 'M
 // Запускаем health check сервер
 startHealthServer()
 
-// Для прямого подключения к Upstash Redis нужны отдельные Endpoint, Port и Password
-// Эти данные отличаются от REST URL и REST Token
-// Формат для ioredis: rediss://:PASSWORD@ENDPOINT:PORT
+// Для прямого подключения к Upstash Redis через ioredis используем формат:
+// rediss://default:TOKEN@ENDPOINT:6379
 // 
-// ВАЖНО: Для получения правильных данных нужно открыть Upstash Console:
-// 1. Перейдите в https://console.upstash.com/redis
-// 2. Откройте вашу базу данных
-// 3. В разделе "Connect to your database" найдите:
-//    - Endpoint (хост)
-//    - Port (обычно 6380 для TLS)
-//    - Password (отдельный от REST Token)
-//
-// Временное решение: используем REST URL хост с правильным форматом
-// Это может не сработать, если прямой Endpoint отличается от REST URL
+// Данные получены из Upstash Console:
+// - Endpoint: тот же хост, что и REST URL (composed-primate-14678.upstash.io)
+// - Port: 6379 (для TLS подключения)
+// - Username: default (обязателен для Upstash)
+// - Password: тот же REST Token используется для прямого подключения
 const upstashRestUrl = new URL(env.UPSTASH_REDIS_REST_URL)
 const redisHost = upstashRestUrl.hostname
 
-// Формат для ioredis: rediss://:PASSWORD@ENDPOINT:PORT
+// Формат для ioredis: rediss://default:TOKEN@ENDPOINT:6379
 // Для Upstash:
 // - Протокол: rediss:// (TLS обязателен)
-// - Порт: 6380 (для TLS)
-// - Password: может быть REST Token, но лучше использовать отдельный Password из Console
-// - Endpoint: может быть тот же хост, что и REST URL, или другой
-const redisUrl = `rediss://:${env.UPSTASH_REDIS_REST_TOKEN}@${redisHost}:6380`
+// - Username: default (обязателен)
+// - Порт: 6379 (для TLS подключения)
+// - Password: REST Token (один и тот же токен для REST API и прямого подключения)
+const redisUrl = `rediss://default:${env.UPSTASH_REDIS_REST_TOKEN}@${redisHost}:6379`
 
 console.log('[worker] Constructed Redis URL:', redisUrl.substring(0, 30) + '...')
 console.log('[worker] NOTE: Если подключение не работает, проверьте Endpoint, Port и Password в Upstash Console')
