@@ -30,12 +30,13 @@ try {
     JOB_CONCURRENCY: process.env.JOB_CONCURRENCY,
   })
 } catch (error) {
-  if (error instanceof z.ZodError) {
+  if (error instanceof z.ZodError && error.errors) {
     const missingVars = error.errors.map((e) => e.path.join('.')).join(', ')
     console.error('❌ Missing required environment variables:', missingVars)
     console.error('Please add these variables in Railway Dashboard: Settings → Variables')
     process.exit(1)
   }
+  console.error('❌ Environment validation error:', error)
   throw error
 }
 
