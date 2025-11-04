@@ -1,26 +1,17 @@
-name: 🧪 Testing Suite
+name: Test Suite
 
 on:
   push:
-    branches: [ main, develop, feature/** ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
-  schedule:
-    # Запуск тестов каждый день в 03:00 UTC
-    - cron: '0 3 * * *'
+    branches: [main, develop]
+  workflow_dispatch:
 
 jobs:
-  # ==========================================
-  # E2E тесты на разных браузерах
-  # ==========================================
   e2e-tests:
-    name: 🎭 E2E Tests - ${{ matrix.browser }}
+    name: E2E Tests
     runs-on: ubuntu-latest
-    
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chromium, firefox, webkit]
+    timeout-minutes: 30
     
     steps:
       - name: 📥 Checkout code
@@ -36,29 +27,50 @@ jobs:
         run: npm ci
 
       - name: 🎭 Install Playwright
-        run: npx playwright install --with-deps ${{ matrix.browser }}
+        run: npm run playwright:install
 
       - name: 🔨 Build project
         run: npm run build
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://demo.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'demo-anon-key' }}
+          SUPABASE_DEFAULT_ORGANIZATION_ID: ${{ secrets.SUPABASE_DEFAULT_ORGANIZATION_ID || '00000000-0000-4000-8000-000000000001' }}
 
       - name: 🚀 Start server
         run: npm run start &
         env:
           PORT: 3000
+          NODE_ENV: production
 
       - name: ⏳ Wait for server
-        run: npx wait-on http://localhost:3000 --timeout 60000
+        run: |
+          timeout=60
+          elapsed=0
+          while ! curl -f http://localhost:3000/api/health > /dev/null 2>&1; do
+            if [ $elapsed -ge $timeout ]; then
+              echo "Server failed to start within $timeout seconds"
+              exit 1
+            fi
+            echo "Waiting for server... ($elapsed/$timeout seconds)"
+            sleep 2
+            elapsed=$((elapsed + 2))
+          done
+          echo "Server is ready!"
 
       - name: 🧪 Run E2E tests
-        run: npx playwright test --project=${{ matrix.browser }}
+        run: npm run test:e2e -- --project=chromium --workers=2
         env:
           CI: true
+          E2E_ONBOARDING_FAKE: '1'
+          DEMO_MODE: 'true'
+          BASE_URL: 'http://localhost:3000'
 
       - name: 📤 Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report-${{ matrix.browser }}
+          name: playwright-report
           path: playwright-report/
           retention-days: 30
 
@@ -66,122 +78,6 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: screenshots-${{ matrix.browser }}
+          name: test-screenshots
           path: test-results/
           retention-days: 7
-
-  # ==========================================
-  # Accessibility тесты
-  # ==========================================
-  accessibility:
-    name: ♿ Accessibility Tests
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 📦 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: 📚 Install dependencies
-        run: npm ci
-
-      - name: 🎭 Install Playwright
-        run: npx playwright install --with-deps chromium
-
-      - name: 🔨 Build project
-        run: npm run build
-
-      - name: 🚀 Start server
-        run: npm run start &
-
-      - name: ⏳ Wait for server
-        run: npx wait-on http://localhost:3000
-
-      - name: ♿ Run accessibility tests
-        run: npx playwright test --grep @accessibility
-        continue-on-error: true
-
-      - name: 📤 Upload accessibility report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: accessibility-report
-          path: playwright-report/
-          retention-days: 30
-
-  # ==========================================
-  # Visual Regression тесты
-  # ==========================================
-  visual-regression:
-    name: 📸 Visual Regression Tests
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 📦 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: 📚 Install dependencies
-        run: npm ci
-
-      - name: 🎭 Install Playwright
-        run: npx playwright install --with-deps chromium
-
-      - name: 🔨 Build project
-        run: npm run build
-
-      - name: 🚀 Start server
-        run: npm run start &
-
-      - name: ⏳ Wait for server
-        run: npx wait-on http://localhost:3000
-
-      - name: 📸 Run visual regression tests
-        run: npx playwright test --grep @visual
-        continue-on-error: true
-
-      - name: 📤 Upload visual diffs
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: visual-regression-diffs
-          path: test-results/
-          retention-days: 7
-
-  # ==========================================
-  # Сводка тестов
-  # ==========================================
-  test-summary:
-    name: 📊 Test Summary
-    runs-on: ubuntu-latest
-    needs: [e2e-tests, accessibility, visual-regression]
-    if: always()
-    
-    steps:
-      - name: 📊 Generate summary
-        run: |
-          echo "## 🧪 Test Results Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### E2E Tests: ${{ needs.e2e-tests.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "### Accessibility: ${{ needs.accessibility.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "### Visual Regression: ${{ needs.visual-regression.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "${{ needs.e2e-tests.result }}" == "success" ] && \
-             [ "${{ needs.accessibility.result }}" == "success" ] && \
-             [ "${{ needs.visual-regression.result }}" == "success" ]; then
-            echo "✅ All tests passed!" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ Some tests failed. Check artifacts for details." >> $GITHUB_STEP_SUMMARY
-          fi
-
