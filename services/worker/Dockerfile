@@ -33,11 +33,6 @@ COPY services/worker/package.json services/worker/package-lock.json ./services/w
 # Копируем собранное приложение Worker
 COPY --from=base /app/services/worker/dist ./services/worker/dist
 
-# Копируем src/lib в services/worker/lib для резолва импортов ../lib/env из dist/index.js
-# Импорт ../lib/env из dist/index.js резолвится как services/worker/lib/env
-# Поэтому копируем src/lib в services/worker/lib (на уровень выше dist)
-COPY --from=base /app/services/worker/src/lib ./services/worker/lib
-
 # Копируем lib и types директории из корня (нужны для импортов во время выполнения)
 COPY --from=base /app/lib ./lib
 COPY --from=base /app/types ./types
@@ -65,6 +60,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 # Запускаем worker напрямую через tsx из node_modules для поддержки TypeScript импортов из lib/
 # tsx позволяет динамически импортировать .ts файлы во время выполнения
 # tsx автоматически резолвит path aliases из tsconfig.json при использовании tsImport
-# Запускаем из /app/services/worker, чтобы импорты ../lib/env из dist/index.js резолвились правильно
-WORKDIR /app/services/worker
-CMD ["node", "/app/services/worker/node_modules/.bin/tsx", "--tsconfig", "/app/tsconfig.json", "dist/index.js"]
+# Запускаем из корня /app, чтобы пути ../../../lib/env правильно резолвились
+WORKDIR /app
+CMD ["node", "/app/services/worker/node_modules/.bin/tsx", "--tsconfig", "/app/tsconfig.json", "/app/services/worker/dist/index.js"]

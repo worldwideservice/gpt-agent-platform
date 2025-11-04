@@ -7,7 +7,7 @@
  * - Сохраняет chunks в БД
  */
 
-import { getSupabaseClient } from '../../../lib/supabase'
+import { getSupabaseClient } from '../lib/supabase.ts'
 import { env } from '../lib/env.ts'
 
 // Прямая реализация функций, так как worker не имеет доступа к lib корневого проекта

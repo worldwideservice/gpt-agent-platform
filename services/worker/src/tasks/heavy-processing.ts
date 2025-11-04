@@ -1,5 +1,5 @@
 import { env } from '../lib/env.ts'
-import { getSupabaseClient } from '../../../lib/supabase'
+import { getSupabaseClient } from '../lib/supabase.ts'
 
 const supabase = getSupabaseClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY)
 
