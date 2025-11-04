@@ -113,3 +113,13 @@ kwid-extraction/node_modules/
 # GitHub Secrets (содержит токены)
 GITHUB_SECRETS_COMMANDS.txt
 services/worker/lib
+
+# Scripts with secrets (should use env vars instead)
+scripts/*-variables.sh
+scripts/*-secrets.sh
+scripts/*-token*.sh
+
+# Backup files
+backups/
+*.backup
+*.bak
