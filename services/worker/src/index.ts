@@ -17,21 +17,33 @@ console.log('[worker] Supabase URL:', env.SUPABASE_URL ? '***configured***' : 'M
 // Запускаем health check сервер
 startHealthServer()
 
-// Пробуем получить правильный Redis URL для прямого подключения
-// Для Upstash прямой Redis URL обычно имеет формат: rediss://default:TOKEN@ENDPOINT:PORT
-// ENDPOINT может отличаться от REST URL хоста
-// Используем REST URL хост как fallback, но с правильным портом и TLS
+// Для прямого подключения к Upstash Redis нужны отдельные Endpoint, Port и Password
+// Эти данные отличаются от REST URL и REST Token
+// Формат для ioredis: rediss://:PASSWORD@ENDPOINT:PORT
+// 
+// ВАЖНО: Для получения правильных данных нужно открыть Upstash Console:
+// 1. Перейдите в https://console.upstash.com/redis
+// 2. Откройте вашу базу данных
+// 3. В разделе "Connect to your database" найдите:
+//    - Endpoint (хост)
+//    - Port (обычно 6380 для TLS)
+//    - Password (отдельный от REST Token)
+//
+// Временное решение: используем REST URL хост с правильным форматом
+// Это может не сработать, если прямой Endpoint отличается от REST URL
 const upstashRestUrl = new URL(env.UPSTASH_REDIS_REST_URL)
 const redisHost = upstashRestUrl.hostname
 
-// Для Upstash прямой Redis подключение обычно использует:
-// - Протокол: rediss:// (TLS)
-// - Порт: 6380 (для TLS) или 6379 (для non-TLS)
-// - Хост: может быть тот же, что и REST URL, или другой
-// Попробуем использовать тот же хост с правильным портом
-const redisUrl = `rediss://default:${env.UPSTASH_REDIS_REST_TOKEN}@${redisHost}:6380`
+// Формат для ioredis: rediss://:PASSWORD@ENDPOINT:PORT
+// Для Upstash:
+// - Протокол: rediss:// (TLS обязателен)
+// - Порт: 6380 (для TLS)
+// - Password: может быть REST Token, но лучше использовать отдельный Password из Console
+// - Endpoint: может быть тот же хост, что и REST URL, или другой
+const redisUrl = `rediss://:${env.UPSTASH_REDIS_REST_TOKEN}@${redisHost}:6380`
 
 console.log('[worker] Constructed Redis URL:', redisUrl.substring(0, 30) + '...')
+console.log('[worker] NOTE: Если подключение не работает, проверьте Endpoint, Port и Password в Upstash Console')
 
 // Создаем подключение к Redis через ioredis
 // Для Upstash требуется TLS и правильные настройки
