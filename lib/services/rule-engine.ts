@@ -154,18 +154,24 @@ export const executeRules = async (
  continue
  }
 
- // Выполняем действия
- const actionResults = await executeActions(rule.actions, context)
+      // Выполняем действия
+      const actionResults = await executeActions(rule.actions, context)
 
- // Логируем выполнение
- await logRuleExecution(rule.id, context, actionResults)
+      // Добавляем ruleName в контекст для логирования
+      const contextWithRuleName = {
+        ...context,
+        ruleName: rule.name,
+      }
 
- results.push({
- ruleId: rule.id,
- actions: rule.actions,
- success: actionResults.every(r => r.success),
- error: actionResults.find(r => !r.success)?.error,
- })
+      // Логируем выполнение
+      await logRuleExecution(rule.id, contextWithRuleName, actionResults)
+
+      results.push({
+        ruleId: rule.id,
+        actions: rule.actions,
+        success: actionResults.every(r => r.success),
+        error: actionResults.find(r => !r.success)?.error,
+      })
 
  } catch (error) {
  console.error(`Rule execution failed for rule ${rule.id}`, error)
@@ -564,24 +570,48 @@ const executeAiResponse = async (
  * Логирует выполнение правила
  */
 const logRuleExecution = async (
- ruleId: string,
- context: RuleExecutionContext,
- actionResults: Array<{ action: RuleAction; success: boolean; error?: string }>,
+  ruleId: string,
+  context: RuleExecutionContext,
+  actionResults: Array<{ action: RuleAction; success: boolean; error?: string }>,
 ): Promise<void> => {
- const supabase = getSupabaseServiceRoleClient()
+  const supabase = getSupabaseServiceRoleClient()
 
- try {
- await supabase.from('rule_executions').insert({
- rule_id: ruleId,
- org_id: context.organizationId,
- lead_id: context.leadId,
- execution_context: context,
- action_results: actionResults,
- executed_at: new Date().toISOString(),
- })
- } catch (error) {
- console.error('Failed to log rule execution', error)
- }
+  try {
+    // Логируем в rule_executions (для детального анализа)
+    await supabase.from('rule_executions').insert({
+      rule_id: ruleId,
+      org_id: context.organizationId,
+      lead_id: context.leadId,
+      execution_context: context,
+      action_results: actionResults,
+      executed_at: new Date().toISOString(),
+    })
+
+    // Логируем в activity_logs (для Dashboard Recent Updates)
+    const { logActivity } = await import('./activity-logger')
+    const ruleName = context.ruleName || `Правило #${ruleId}`
+    const successCount = actionResults.filter((r) => r.success).length
+    const totalCount = actionResults.length
+    
+    await logActivity({
+      orgId: context.organizationId,
+      agentId: context.agentId || undefined,
+      activityType: 'rule_executed',
+      title: `Правило выполнено: ${ruleName}`,
+      description: `Выполнено ${successCount} из ${totalCount} действий`,
+      metadata: {
+        rule_id: ruleId,
+        rule_name: ruleName,
+        success_count: successCount,
+        total_actions: totalCount,
+        lead_id: context.leadId,
+      },
+    }).catch((error) => {
+      console.error('Failed to log rule execution to activity_logs:', error)
+    })
+  } catch (error) {
+    console.error('Failed to log rule execution', error)
+  }
 }
 
 /**

@@ -161,59 +161,79 @@ export const getSequences = async (
  * Запускает последовательность для лида
  */
 export const startSequence = async (
- sequenceId: string,
- orgId: string,
- leadId: string,
- contactId?: string,
- initialData: Record<string, any> = {},
+  sequenceId: string,
+  orgId: string,
+  leadId: string,
+  contactId?: string,
+  initialData: Record<string, any> = {},
 ): Promise<string | null> => {
- const supabase = getSupabaseServiceRoleClient()
+  const supabase = getSupabaseServiceRoleClient()
 
- try {
- // Получаем последовательность с шагами
- const { data: sequence, error: seqError } = await supabase
- .from('sequences')
- .select(`
- *,
- steps:sequence_steps(*)
- `)
- .eq('id', sequenceId)
- .eq('org_id', orgId)
- .single()
+  try {
+    // Получаем последовательность с шагами
+    const { data: sequence, error: seqError } = await supabase
+      .from('sequences')
+      .select(`
+        *,
+        steps:sequence_steps(*)
+      `)
+      .eq('id', sequenceId)
+      .eq('org_id', orgId)
+      .single()
 
- if (seqError || !sequence || !sequence.is_active) {
- console.error('Sequence not found or inactive', seqError)
- return null
- }
+    if (seqError || !sequence || !sequence.is_active) {
+      console.error('Sequence not found or inactive', seqError)
+      return null
+    }
 
- // Создаем выполнение последовательности
- const { data: execution, error: execError } = await supabase
- .from('sequence_executions')
- .insert({
- sequence_id: sequenceId,
- org_id: orgId,
- lead_id: leadId,
- contact_id: contactId,
- current_step: 0,
- status: 'running',
- execution_data: initialData,
- })
- .select('id')
- .single()
+    // Создаем выполнение последовательности
+    const { data: execution, error: execError } = await supabase
+      .from('sequence_executions')
+      .insert({
+        sequence_id: sequenceId,
+        org_id: orgId,
+        lead_id: leadId,
+        contact_id: contactId,
+        current_step: 0,
+        status: 'running',
+        execution_data: initialData,
+      })
+      .select('id')
+      .single()
 
- if (execError || !execution) {
- console.error('Failed to create sequence execution', execError)
- return null
- }
+    if (execError || !execution) {
+      console.error('Failed to create sequence execution', execError)
+      return null
+    }
 
- // Планируем первый шаг
- await scheduleNextStep(execution.id, sequence.steps, 0)
+    // Логируем запуск последовательности в activity_logs
+    const { logActivity } = await import('./activity-logger')
+    await logActivity({
+      orgId,
+      agentId: sequence.agent_id || undefined,
+      activityType: 'sequence_executed',
+      title: `Последовательность запущена: ${sequence.name}`,
+      description: `Последовательность "${sequence.name}" запущена для сделки #${leadId}`,
+      metadata: {
+        sequence_id: sequenceId,
+        sequence_name: sequence.name,
+        lead_id: leadId,
+        contact_id: contactId,
+        execution_id: execution.id,
+        steps_count: sequence.steps?.length || 0,
+      },
+    }).catch((error) => {
+      console.error('Failed to log sequence start to activity_logs:', error)
+    })
 
- return execution.id
- } catch (error) {
- console.error('Error starting sequence', error)
- return null
- }
+    // Планируем первый шаг
+    await scheduleNextStep(execution.id, sequence.steps, 0)
+
+    return execution.id
+  } catch (error) {
+    console.error('Error starting sequence', error)
+    return null
+  }
 }
 
 /**
@@ -226,18 +246,47 @@ const scheduleNextStep = async (
 ): Promise<void> => {
  const supabase = getSupabaseServiceRoleClient()
 
- const nextStep = steps.find(step => step.step_order === currentStepIndex + 1)
- if (!nextStep) {
- // Последний шаг завершен
- await supabase
- .from('sequence_executions')
- .update({
- status: 'completed',
- completed_at: new Date().toISOString(),
- })
- .eq('id', executionId)
- return
- }
+  const nextStep = steps.find(step => step.step_order === currentStepIndex + 1)
+  if (!nextStep) {
+    // Последний шаг завершен - логируем завершение
+    await supabase
+      .from('sequence_executions')
+      .update({
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+      })
+      .eq('id', executionId)
+
+    // Логируем завершение последовательности в activity_logs
+    const { data: execution } = await supabase
+      .from('sequence_executions')
+      .select('org_id, sequence_id, lead_id, sequences(name, agent_id)')
+      .eq('id', executionId)
+      .single()
+
+    if (execution) {
+      const sequence = execution.sequences as { name: string; agent_id: string | null } | null
+      const { logActivity } = await import('./activity-logger')
+      await logActivity({
+        orgId: execution.org_id,
+        agentId: sequence?.agent_id || undefined,
+        activityType: 'sequence_executed',
+        title: `Последовательность завершена: ${sequence?.name || 'Неизвестная'}`,
+        description: `Последовательность "${sequence?.name || 'Неизвестная'}" успешно завершена`,
+        metadata: {
+          sequence_id: execution.sequence_id,
+          sequence_name: sequence?.name,
+          lead_id: execution.lead_id,
+          execution_id: executionId,
+          status: 'completed',
+        },
+      }).catch((error) => {
+        console.error('Failed to log sequence completion to activity_logs:', error)
+      })
+    }
+
+    return
+  }
 
  // Вычисляем время следующего выполнения
  const nextExecutionAt = new Date(Date.now() + nextStep.delay_minutes * 60 * 1000)
