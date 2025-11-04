@@ -4,7 +4,7 @@
  * Страница истории Webhooks
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { Search, Filter, RefreshCw, AlertCircle, CheckCircle, Clock, XCircle } from "lucide-react";
 
@@ -52,7 +52,7 @@ export default function WebhooksPage() {
   const [filterType, setFilterType] = useState<string>("all");
   const { push: pushToast } = useToast();
 
-  const refreshWebhooks = async () => {
+  const refreshWebhooks = useCallback(async () => {
     try {
       setIsLoading(true);
       const params = new URLSearchParams();
@@ -77,11 +77,11 @@ export default function WebhooksPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filterStatus, filterType, searchQuery, pushToast]);
 
   useEffect(() => {
     refreshWebhooks();
-  }, [filterStatus, filterType]);
+  }, [filterStatus, filterType, refreshWebhooks]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {

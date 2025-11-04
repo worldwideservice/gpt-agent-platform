@@ -89,7 +89,7 @@ export function TrainingTab({ agentId }: TrainingTabProps) {
   }, [assets, loadAssets])
 
   // Обработка загрузки файла
-  const handleFileUpload = async (file: File) => {
+  const handleFileUpload = useCallback(async (file: File) => {
     // Проверка размера (50 MB)
     const maxSize = 50 * 1024 * 1024
     if (file.size > maxSize) {
@@ -147,7 +147,7 @@ export function TrainingTab({ agentId }: TrainingTabProps) {
     } finally {
       setUploading(false)
     }
-  }
+  }, [agentId, push, loadAssets])
 
   // Drag & Drop handlers
   const handleDrag = useCallback((e: React.DragEvent) => {

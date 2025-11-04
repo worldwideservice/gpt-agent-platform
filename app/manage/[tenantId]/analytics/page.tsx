@@ -4,7 +4,7 @@
  * Страница расширенной аналитики
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { Calendar, Download, TrendingUp, TrendingDown, Users, MessageSquare, Zap, Clock } from "lucide-react";
 
@@ -56,7 +56,7 @@ export default function AnalyticsPage() {
   const [dateRange, setDateRange] = useState("7d");
   const { push: pushToast } = useToast();
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       setIsLoading(true);
       const params = new URLSearchParams();
@@ -81,11 +81,11 @@ export default function AnalyticsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [dateRange, pushToast]);
 
   useEffect(() => {
     fetchAnalytics();
-  }, [dateRange]);
+  }, [dateRange, fetchAnalytics]);
 
   const handleExport = async () => {
     try {

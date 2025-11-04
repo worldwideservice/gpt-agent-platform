@@ -4,7 +4,7 @@
  * Компонент управления правилами автоматизации (Rule Engine) агента
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Plus, Edit, Trash2, Play, Settings } from "lucide-react";
 
 import { Button } from "@/components/ui";
@@ -61,7 +61,7 @@ export function RulesManager({ agentId }: RulesManagerProps) {
   const [selectedRule, setSelectedRule] = useState<AutomationRule | null>(null);
   const { push: pushToast } = useToast();
 
-  const refreshRules = async () => {
+  const refreshRules = useCallback(async () => {
     try {
       const response = await fetch(`/api/agents/${agentId}/rules`, {
         credentials: "include",
@@ -73,7 +73,7 @@ export function RulesManager({ agentId }: RulesManagerProps) {
     } catch (error) {
       console.error("Failed to fetch rules", error);
     }
-  };
+  }, [agentId]);
 
   // Загрузка правил
   useEffect(() => {
@@ -83,7 +83,7 @@ export function RulesManager({ agentId }: RulesManagerProps) {
       setIsLoading(false);
     };
     fetchRules();
-  }, [agentId]);
+  }, [agentId, refreshRules]);
 
   const handleToggleStatus = async (rule: AutomationRule) => {
     try {

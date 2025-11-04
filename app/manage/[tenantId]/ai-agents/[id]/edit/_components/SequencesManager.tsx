@@ -4,7 +4,7 @@
  * Компонент управления последовательностями (Sequences) агента
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Plus, Edit, Trash2, Play } from "lucide-react";
 
 import { Button } from "@/components/ui";
@@ -48,7 +48,7 @@ export function SequencesManager({ agentId }: SequencesManagerProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const { push: pushToast } = useToast();
 
-  const refreshSequences = async () => {
+  const refreshSequences = useCallback(async () => {
     try {
       const response = await fetch(`/api/agents/${agentId}/sequences`, {
         credentials: "include",
@@ -60,7 +60,7 @@ export function SequencesManager({ agentId }: SequencesManagerProps) {
     } catch (error) {
       console.error("Failed to fetch sequences", error);
     }
-  };
+  }, [agentId]);
 
   // Загрузка последовательностей
   useEffect(() => {
@@ -70,7 +70,7 @@ export function SequencesManager({ agentId }: SequencesManagerProps) {
       setIsLoading(false);
     };
     fetchSequences();
-  }, [agentId]);
+  }, [agentId, refreshSequences]);
 
   const handleToggleStatus = async (sequence: Sequence) => {
     try {

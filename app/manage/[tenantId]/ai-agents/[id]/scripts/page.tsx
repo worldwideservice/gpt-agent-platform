@@ -4,7 +4,7 @@
  * Страница управления скриптами продаж для агента
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { Plus, Edit, Trash2, FileText } from "lucide-react";
 
@@ -55,7 +55,7 @@ export default function ScriptsPage() {
   const [selectedScript, setSelectedScript] = useState<SalesScript | null>(null);
   const { push: pushToast } = useToast();
 
-  const refreshScripts = async () => {
+  const refreshScripts = useCallback(async () => {
     try {
       const response = await fetch(`/api/agents/${agentId}/scripts`, {
         credentials: "include",
@@ -67,7 +67,7 @@ export default function ScriptsPage() {
     } catch (error) {
       console.error("Failed to fetch scripts", error);
     }
-  };
+  }, [agentId]);
 
   useEffect(() => {
     const fetchScripts = async () => {
@@ -76,7 +76,7 @@ export default function ScriptsPage() {
       setIsLoading(false);
     };
     fetchScripts();
-  }, [agentId]);
+  }, [agentId, refreshScripts]);
 
   const handleDeleteClick = (script: SalesScript) => {
     setScriptToDelete(script);

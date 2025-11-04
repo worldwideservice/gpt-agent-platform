@@ -5,7 +5,7 @@
  * Работает напрямую с API (без Refine, так как структура API отличается)
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Plus, Edit, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui";
@@ -48,7 +48,7 @@ export function TriggersManager({ agentId }: TriggersManagerProps) {
   const [selectedTrigger, setSelectedTrigger] = useState<Trigger | null>(null);
   const { push: pushToast } = useToast();
 
-  const refreshTriggers = async () => {
+  const refreshTriggers = useCallback(async () => {
     try {
       const response = await fetch(`/api/agents/${agentId}/triggers`, {
         credentials: "include",
@@ -60,7 +60,7 @@ export function TriggersManager({ agentId }: TriggersManagerProps) {
     } catch (error) {
       console.error("Failed to fetch triggers", error);
     }
-  };
+  }, [agentId]);
 
   // Загрузка триггеров
   useEffect(() => {
@@ -70,7 +70,7 @@ export function TriggersManager({ agentId }: TriggersManagerProps) {
       setIsLoading(false);
     };
     fetchTriggers();
-  }, [agentId]);
+  }, [agentId, refreshTriggers]);
 
   const handleToggleStatus = async (trigger: Trigger) => {
     try {

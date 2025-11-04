@@ -4,7 +4,7 @@
  * Компонент управления интеграциями агента
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Plus, Settings, ExternalLink } from "lucide-react";
 
 import { Button } from "@/components/ui";
@@ -37,7 +37,7 @@ export function IntegrationsManager({ agentId }: IntegrationsManagerProps) {
   const [isLoading, setIsLoading] = useState(true);
   const { push: pushToast } = useToast();
 
-  const refreshIntegrations = async () => {
+  const refreshIntegrations = useCallback(async () => {
     try {
       const response = await fetch(`/api/agents/${agentId}/integrations`, {
         credentials: "include",
@@ -50,7 +50,7 @@ export function IntegrationsManager({ agentId }: IntegrationsManagerProps) {
     } catch (error) {
       console.error("Failed to fetch integrations", error);
     }
-  };
+  }, [agentId]);
 
   // Загрузка интеграций
   useEffect(() => {
@@ -60,7 +60,7 @@ export function IntegrationsManager({ agentId }: IntegrationsManagerProps) {
       setIsLoading(false);
     };
     fetchIntegrations();
-  }, [agentId]);
+  }, [agentId, refreshIntegrations]);
 
   const handleToggleStatus = async (integration: Integration) => {
     try {
