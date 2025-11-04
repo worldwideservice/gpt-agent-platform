@@ -73,11 +73,8 @@ if (process.env.REDIS_URL && process.env.REDIS_URL.startsWith('rediss://')) {
   })
 }
 
-logger.info('Redis URL constructed', {
-  redisHost,
-  redisPort,
-  hasToken: !!env.UPSTASH_REDIS_REST_TOKEN,
-  tokenLength: env.UPSTASH_REDIS_REST_TOKEN.length,
+logger.info('Redis URL ready', {
+  redisUrl: redisUrl.replace(/:[^:@]+@/, ':****@'), // Маскируем токен в логах
   event: 'redis.config',
 })
 
