@@ -123,3 +123,6 @@ scripts/*-token*.sh
 backups/
 *.backup
 *.bak
+
+# Sentry page content (contains API keys)
+sentry-page-content.html
