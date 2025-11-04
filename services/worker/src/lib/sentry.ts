@@ -4,7 +4,6 @@
  */
 
 import * as Sentry from '@sentry/node'
-import { ProfilingIntegration } from '@sentry/profiling-node'
 import { env } from './env'
 
 let isInitialized = false
@@ -30,7 +29,6 @@ export function initSentry() {
       tracesSampleRate: 1.0, // 100% для Worker (критично для мониторинга)
       profilesSampleRate: 0.1, // 10% для profiling (оптимизация производительности)
       integrations: [
-        new ProfilingIntegration(),
         new Sentry.Integrations.Http({ tracing: true }),
       ],
       // Настройки для Worker сервиса
