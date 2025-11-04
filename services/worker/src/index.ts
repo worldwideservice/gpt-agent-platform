@@ -26,28 +26,52 @@ logger.info('Environment variables loaded', {
 // Инициализируем метрики
 metrics.init(env.JOB_QUEUE_NAME, env.JOB_CONCURRENCY)
 
-// Для прямого подключения к Upstash Redis через ioredis используем формат:
-// rediss://default:TOKEN@ENDPOINT:PORT
-// 
-// Данные получены из Upstash Console:
-// - Endpoint: тот же хост, что и REST URL (например: composed-primate-14678.upstash.io)
-// - Port: обычно 6379 для TLS, но может быть другой (нужно проверить в Upstash Dashboard)
-// - Username: default (обязателен для Upstash)
-// - Password: тот же REST Token используется для прямого подключения
-const upstashRestUrl = new URL(env.UPSTASH_REDIS_REST_URL)
-const redisHost = upstashRestUrl.hostname
+// Для прямого подключения к Upstash Redis через ioredis
+// Приоритет: используем REDIS_URL если он есть, иначе формируем из REST URL и токена
+let redisUrl: string
 
-// Получаем порт из REST URL или используем 6379 по умолчанию
-// Upstash обычно использует порт 6379 для TLS подключения
-const redisPort = upstashRestUrl.port ? Number.parseInt(upstashRestUrl.port, 10) : 6379
+if (process.env.REDIS_URL && process.env.REDIS_URL.startsWith('rediss://')) {
+  // Используем готовый REDIS_URL (если он есть и правильного формата)
+  redisUrl = process.env.REDIS_URL
+  logger.info('Using REDIS_URL from environment', {
+    event: 'redis.config',
+  })
+} else {
+  // Формируем URL из REST URL и токена
+  // Формат для ioredis: rediss://default:TOKEN@ENDPOINT:PORT
+  const upstashRestUrl = new URL(env.UPSTASH_REDIS_REST_URL)
+  const redisHost = upstashRestUrl.hostname
+  
+  // Получаем порт из REST URL или используем 6380 по умолчанию (Upstash часто использует 6380 для TLS)
+  // Если есть REDIS_URL, извлекаем порт оттуда
+  let redisPort = 6380 // Upstash часто использует 6380 для TLS
+  if (process.env.REDIS_URL) {
+    try {
+      const redisUrlObj = new URL(process.env.REDIS_URL)
+      if (redisUrlObj.port) {
+        redisPort = Number.parseInt(redisUrlObj.port, 10)
+      }
+    } catch {
+      // Игнорируем ошибку парсинга
+    }
+  } else if (upstashRestUrl.port) {
+    redisPort = Number.parseInt(upstashRestUrl.port, 10)
+  }
 
-// Формат для ioredis: rediss://default:TOKEN@ENDPOINT:PORT
-// Для Upstash:
-// - Протокол: rediss:// (TLS обязателен)
-// - Username: default (обязателен)
-// - Порт: обычно 6379 (для TLS подключения)
-// - Password: REST Token (один и тот же токен для REST API и прямого подключения)
-const redisUrl = `rediss://default:${encodeURIComponent(env.UPSTASH_REDIS_REST_TOKEN)}@${redisHost}:${redisPort}`
+  // Формат для ioredis: rediss://default:TOKEN@ENDPOINT:PORT
+  // Для Upstash:
+  // - Протокол: rediss:// (TLS обязателен)
+  // - Username: default (обязателен)
+  // - Порт: обычно 6380 (для TLS подключения, но может быть 6379)
+  // - Password: REST Token (один и тот же токен для REST API и прямого подключения)
+  redisUrl = `rediss://default:${encodeURIComponent(env.UPSTASH_REDIS_REST_TOKEN)}@${redisHost}:${redisPort}`
+  
+  logger.info('Redis URL constructed from REST URL', {
+    redisHost,
+    redisPort,
+    event: 'redis.config',
+  })
+}
 
 logger.info('Redis URL constructed', {
   redisHost,
