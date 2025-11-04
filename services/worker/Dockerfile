@@ -33,7 +33,11 @@ COPY services/worker/package.json services/worker/package-lock.json ./services/w
 # Копируем собранное приложение Worker
 COPY --from=base /app/services/worker/dist ./services/worker/dist
 
-# Копируем lib и types директории из корня (нужны для импортов во время выполнения)
+# Копируем локальный lib из services/worker/src/lib для резолва импортов ../lib/* из dist/index.js
+# Импорт ../lib/env.ts из dist/index.js резолвится как services/worker/lib/env.ts
+COPY --from=base /app/services/worker/src/lib ./services/worker/lib
+
+# Копируем lib и types директории из корня (могут быть нужны для динамических импортов)
 COPY --from=base /app/lib ./lib
 COPY --from=base /app/types ./types
 # Копируем tsconfig.json для правильного резолва path aliases
