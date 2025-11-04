@@ -23,8 +23,19 @@ if (!redisUrl) {
   throw new Error('REDIS_URL is required')
 }
 
+console.log('[worker] Parsing Redis URL:', redisUrl.substring(0, 20) + '...')
+
 // Парсим URL для извлечения компонентов
-const url = new URL(redisUrl.replace(/^rediss?:\/\//, 'https://'))
+// Пробуем разные форматы парсинга
+let url: URL
+try {
+  // Стандартный формат: rediss://default:TOKEN@HOST:PORT
+  url = new URL(redisUrl.replace(/^rediss?:\/\//, 'https://'))
+} catch (error) {
+  console.error('[worker] Failed to parse Redis URL:', error)
+  throw new Error(`Invalid REDIS_URL format: ${redisUrl}`)
+}
+
 const isTLS = redisUrl.startsWith('rediss://')
 const host = url.hostname
 const port = parseInt(url.port) || (isTLS ? 6380 : 6379)
@@ -36,9 +47,12 @@ console.log('[worker] Redis connection details:', {
   isTLS,
   hasPassword: !!password,
   protocol: isTLS ? 'rediss' : 'redis',
+  urlUsername: url.username,
 })
 
-const connection = new Redis({
+// Для Upstash пробуем разные варианты подключения
+// Вариант 1: Стандартное подключение с TLS
+const connectionOptions: Redis.RedisOptions = {
   host,
   port,
   password,
@@ -47,17 +61,22 @@ const connection = new Redis({
     // Upstash требует TLS для прямого подключения
     rejectUnauthorized: true,
   } : undefined,
-  // Убираем принудительный IPv6, позволяем системе выбрать автоматически
-  // family: 4, // Попробуем IPv4 сначала
   maxRetriesPerRequest: null,
   enableReadyCheck: true,
-  connectTimeout: 10000, // 10 секунд таймаут подключения
+  connectTimeout: 15000, // Увеличиваем таймаут до 15 секунд
   lazyConnect: false,
+  // Пробуем сначала IPv4, потом IPv6
+  family: 4, // Начинаем с IPv4
   retryStrategy: (times) => {
     const delay = Math.min(times * 50, 2000)
     console.log(`[worker] Redis retry attempt ${times}, delay: ${delay}ms`)
-    if (times > 5) {
+    if (times > 10) {
       console.error(`[worker] Redis connection failed after ${times} attempts`)
+      // После 10 попыток пробуем IPv6
+      if (times === 11) {
+        console.log('[worker] Trying IPv6 connection...')
+        connectionOptions.family = 6
+      }
     }
     return delay
   },
@@ -67,9 +86,16 @@ const connection = new Redis({
       console.log('[worker] Redis READONLY error, reconnecting...')
       return true
     }
+    // Если DNS ошибка, не переподключаемся автоматически
+    if (err.message.includes('ENOTFOUND') || err.message.includes('getaddrinfo')) {
+      console.error('[worker] DNS resolution failed. Check REDIS_URL hostname.')
+      return false
+    }
     return false
   },
-})
+}
+
+const connection = new Redis(connectionOptions)
 
 connection.on('error', (err) => {
   console.error('[worker] Redis connection error:', err.message)
