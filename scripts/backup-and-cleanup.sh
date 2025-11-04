@@ -21,9 +21,13 @@ echo "💾 Создание бэкапа и очистка старых бэка
 echo "=========================================="
 echo ""
 
-# Загрузить секреты если файл существует
-if [ -f "$SCRIPT_DIR/.backup-secrets.sh" ]; then
-  source "$SCRIPT_DIR/.backup-secrets.sh"
+# Проверка переменной окружения
+if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+  echo -e "${RED}❌ Ошибка: SUPABASE_SERVICE_ROLE_KEY не установлен${NC}"
+  echo "Установите переменную окружения:"
+  echo "  export SUPABASE_SERVICE_ROLE_KEY=your-service-role-key"
+  echo "  ./scripts/backup-and-cleanup.sh"
+  exit 1
 fi
 
 # Создать бэкап

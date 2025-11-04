@@ -16,7 +16,7 @@ const kommoActionSchema = z.object({
 
 const kommoPostSchema = z.object({
   action: z.string().min(1),
-  data: z.record(z.unknown()),
+  data: z.record(z.string(), z.unknown()),
 })
 
 // GET - Получение данных из Kommo
@@ -137,29 +137,73 @@ export async function POST(request: NextRequest) {
 
  switch (action) {
  case 'create_lead': {
- const lead = await kommo.createLead(data)
+ const leadData = data as { name: string; [key: string]: unknown }
+ if (!leadData.name) {
+   const { response, status } = createErrorResponse(
+     new Error('Lead name is required'),
+     { code: 'VALIDATION_ERROR', logToSentry: false }
+   )
+   return NextResponse.json(response, { status })
+ }
+ const lead = await kommo.createLead(leadData as Parameters<typeof kommo.createLead>[0])
  return NextResponse.json({ success: true, data: lead })
  }
 
  case 'update_lead': {
- const { id, ...leadData } = data
- const lead = await kommo.updateLead(id, leadData)
+ const { id, ...leadData } = data as { id: number; [key: string]: unknown }
+ if (typeof id !== 'number') {
+   const { response, status } = createErrorResponse(
+     new Error('Lead ID must be a number'),
+     { code: 'VALIDATION_ERROR', logToSentry: false }
+   )
+   return NextResponse.json(response, { status })
+ }
+ const lead = await kommo.updateLead(id, leadData as Partial<Parameters<typeof kommo.createLead>[0]>)
  return NextResponse.json({ success: true, data: lead })
  }
 
  case 'create_contact': {
- const contact = await kommo.createContact(data)
+ const contactData = data as { name: string; [key: string]: unknown }
+ if (!contactData.name) {
+   const { response, status } = createErrorResponse(
+     new Error('Contact name is required'),
+     { code: 'VALIDATION_ERROR', logToSentry: false }
+   )
+   return NextResponse.json(response, { status })
+ }
+ const contact = await kommo.createContact(contactData as Parameters<typeof kommo.createContact>[0])
  return NextResponse.json({ success: true, data: contact })
  }
 
  case 'update_contact': {
- const { id, ...contactData } = data
- const contact = await kommo.updateContact(id, contactData)
+ const { id, ...contactData } = data as { id: number; [key: string]: unknown }
+ if (typeof id !== 'number') {
+   const { response, status } = createErrorResponse(
+     new Error('Contact ID must be a number'),
+     { code: 'VALIDATION_ERROR', logToSentry: false }
+   )
+   return NextResponse.json(response, { status })
+ }
+ const contact = await kommo.updateContact(id, contactData as Partial<Parameters<typeof kommo.createContact>[0]>)
  return NextResponse.json({ success: true, data: contact })
  }
 
  case 'add_note': {
- const { lead_id, note_text } = data
+ const { lead_id, note_text } = data as { lead_id: number; note_text: string }
+ if (typeof lead_id !== 'number') {
+   const { response, status } = createErrorResponse(
+     new Error('Lead ID must be a number'),
+     { code: 'VALIDATION_ERROR', logToSentry: false }
+   )
+   return NextResponse.json(response, { status })
+ }
+ if (typeof note_text !== 'string') {
+   const { response, status } = createErrorResponse(
+     new Error('Note text must be a string'),
+     { code: 'VALIDATION_ERROR', logToSentry: false }
+   )
+   return NextResponse.json(response, { status })
+ }
  await kommo.addNoteToLead(lead_id, {
  note_type: 'common',
  params: { text: note_text },
@@ -168,12 +212,28 @@ export async function POST(request: NextRequest) {
  }
 
  case 'search_leads': {
- const leads = await kommo.searchLeads(data.query)
+ const { query } = data as { query: string }
+ if (typeof query !== 'string') {
+   const { response, status } = createErrorResponse(
+     new Error('Query must be a string'),
+     { code: 'VALIDATION_ERROR', logToSentry: false }
+   )
+   return NextResponse.json(response, { status })
+ }
+ const leads = await kommo.searchLeads(query)
  return NextResponse.json({ success: true, data: leads })
  }
 
  case 'search_contacts': {
- const contacts = await kommo.searchContacts(data.query)
+ const { query } = data as { query: string }
+ if (typeof query !== 'string') {
+   const { response, status } = createErrorResponse(
+     new Error('Query must be a string'),
+     { code: 'VALIDATION_ERROR', logToSentry: false }
+   )
+   return NextResponse.json(response, { status })
+ }
+ const contacts = await kommo.searchContacts(query)
  return NextResponse.json({ success: true, data: contacts })
  }
 

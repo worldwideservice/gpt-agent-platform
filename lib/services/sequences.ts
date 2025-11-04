@@ -439,17 +439,26 @@ const executeSendEmailStep = async (
     }
 
     // Отправляем email
+    // template может быть строкой или объектом
+    const templateStr = typeof step.template === 'string' 
+      ? step.template 
+      : (step.template as any)?.html || (step.template as any)?.body || ''
+    
+    const subject = typeof step.template === 'string'
+      ? 'Сообщение от World Wide Services'
+      : (step.template as any)?.subject || 'Сообщение от World Wide Services'
+
     const success = await sendTemplateEmail(
-      step.recipient,
-      step.template.subject || 'Сообщение от World Wide Services',
-      step.template.html || step.template.body || '',
+      step.recipient || '',
+      subject,
+      templateStr,
       variables,
     )
 
     if (!success) {
       console.error('Failed to send email in sequence step:', {
         recipient: step.recipient,
-        stepId: step.id,
+        stepOrder: step.step_order,
       })
       return false
     }

@@ -1,7 +1,7 @@
 {
-  "name": "GPT Agent Platform",
-  "short_name": "GPT Agent",
-  "description": "Обучаемый виртуальный сотрудник для автоматизации общения с клиентами",
+  "name": "T11 Platform",
+  "short_name": "T11",
+  "description": "Create and Automate - Платформа для создания и автоматизации работы с AI-агентами",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -16,13 +16,13 @@
       "name": "Создать агента",
       "short_name": "Новый агент",
       "description": "Создать нового AI агента",
-      "url": "/agents/create"
+      "url": "/ai-agents/create"
     },
     {
       "name": "Чат",
       "short_name": "Чат",
       "description": "Открыть чат с AI агентом",
-      "url": "/chat"
+      "url": "/test-chat"
     }
   ]
 }

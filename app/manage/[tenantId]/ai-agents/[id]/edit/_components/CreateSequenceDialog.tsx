@@ -214,7 +214,7 @@ export function CreateSequenceDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit((data) => onSubmit(data as unknown as CreateSequenceFormData))} className="space-y-6">
           {/* Основная информация */}
           <div className="space-y-4">
             <div className="space-y-2">

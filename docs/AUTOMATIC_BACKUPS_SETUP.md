@@ -62,28 +62,20 @@ export SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 0 2 * * * cd /path/to/project && ./scripts/backup-database-cron.sh >> /var/log/backup.log 2>&1
 ```
 
-### Вариант 2: Использование файла с секретами
+### Вариант 2: Использование скриптов настройки (рекомендуется)
 
-**Создайте файл `scripts/.backup-secrets.sh`:**
+**Используйте готовые скрипты для настройки:**
 
 ```bash
-#!/bin/bash
+# Автоматическая настройка (без интерактивного ввода)
 export SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+./scripts/setup-backup-cron-auto.sh
+
+# Или интерактивная настройка
+./scripts/setup-backup-cron.sh
 ```
 
-**Установите права:**
-
-```bash
-chmod 600 scripts/.backup-secrets.sh  # Только для чтения владельцем
-```
-
-**Обновите crontab:**
-
-```bash
-0 2 * * * cd /path/to/project && source scripts/.backup-secrets.sh && ./scripts/backup-database-cron.sh >> /var/log/backup.log 2>&1
-```
-
-**Важно:** Добавьте `scripts/.backup-secrets.sh` в `.gitignore`!
+Эти скрипты автоматически настроят cron задачу с использованием переменных окружения.
 
 ---
 

@@ -83,7 +83,6 @@ export function EditScriptDialog({
     setValue,
     reset,
   } = useForm<UpdateScriptFormData>({
-    // @ts-expect-error - resolver type mismatch
     resolver: zodResolver(updateScriptSchema),
     defaultValues: {
       title: script.title,

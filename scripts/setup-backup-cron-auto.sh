@@ -29,23 +29,9 @@ if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
   exit 1
 fi
 
-# Создать файл с секретами
-if [ ! -f "$PROJECT_DIR/scripts/.backup-secrets.sh" ]; then
-  echo "📝 Создание файла для секретов..."
-  echo "export SUPABASE_SERVICE_ROLE_KEY='$SUPABASE_SERVICE_ROLE_KEY'" > "$PROJECT_DIR/scripts/.backup-secrets.sh"
-  chmod 600 "$PROJECT_DIR/scripts/.backup-secrets.sh"
-  echo -e "${GREEN}✅ Файл .backup-secrets.sh создан${NC}"
-  
-  # Добавить в .gitignore если еще не добавлен
-  if ! grep -q "scripts/.backup-secrets.sh" "$PROJECT_DIR/.gitignore" 2>/dev/null; then
-    echo "scripts/.backup-secrets.sh" >> "$PROJECT_DIR/.gitignore"
-    echo -e "${GREEN}✅ Добавлено в .gitignore${NC}"
-  fi
-fi
-
 # Настройка cron (ежедневно в 2:00)
 CRON_TIME="0 2"
-CRON_CMD="cd $PROJECT_DIR && source scripts/.backup-secrets.sh && ./scripts/backup-database-cron.sh >> $PROJECT_DIR/logs/backup.log 2>&1"
+CRON_CMD="cd $PROJECT_DIR && export SUPABASE_SERVICE_ROLE_KEY='$SUPABASE_SERVICE_ROLE_KEY' && ./scripts/backup-database-cron.sh >> $PROJECT_DIR/logs/backup.log 2>&1"
 
 # Создать временный файл с cron задачей
 CRON_TEMP=$(mktemp)

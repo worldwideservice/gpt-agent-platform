@@ -3,7 +3,7 @@
 import React from "react";
 import { type BaseKey, useDeleteButton } from "@refinedev/core";
 import { Loader2, Trash } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import {
   Popover,
   PopoverContent,

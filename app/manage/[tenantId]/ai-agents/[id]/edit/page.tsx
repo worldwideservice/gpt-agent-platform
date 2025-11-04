@@ -30,13 +30,14 @@ import { TriggersManager } from "./_components/TriggersManager";
 import { SequencesManager } from "./_components/SequencesManager";
 import { IntegrationsManager } from "./_components/IntegrationsManager";
 import { RulesManager } from "./_components/RulesManager";
+import { TrainingTab } from "./_components/TrainingTab";
 
-// Доступные модели ИИ
+// Доступные модели ИИ (по KWID)
 const AI_MODELS = [
-  { value: "gpt-4", label: "GPT-4" },
+  { value: "gpt-4o", label: "GPT-4o" },
+  { value: "gpt-4o-mini", label: "GPT-4o mini" },
   { value: "gpt-4-turbo", label: "GPT-4 Turbo" },
   { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo" },
-  { value: "gpt-4o", label: "GPT-4o" },
 ];
 
 // Схема валидации
@@ -44,7 +45,7 @@ const updateAgentSchema = z.object({
   name: z.string().min(1, "Название обязательно"),
   status: z.enum(["active", "inactive", "draft"]).optional(),
   model: z.string().optional(),
-  instructions: z.string().optional(),
+  instructions: z.string().min(1, "Инструкции для агента обязательны"),
   temperature: z.number().min(0).max(2).optional(),
   maxTokens: z.number().int().min(128).max(8000).optional(),
   responseDelaySeconds: z
@@ -151,6 +152,7 @@ export default function EditAIAgentPage() {
       <Tabs defaultValue="basic" className="max-w-4xl">
         <TabsList>
           <TabsTrigger value="basic">Основные</TabsTrigger>
+          <TabsTrigger value="training">Обучение</TabsTrigger>
           <TabsTrigger value="deals">Сделки и контакты</TabsTrigger>
           <TabsTrigger value="triggers">Триггеры</TabsTrigger>
           <TabsTrigger value="rules">Правила</TabsTrigger>
@@ -207,33 +209,6 @@ export default function EditAIAgentPage() {
                     Активно
                   </Label>
                 </div>
-              </div>
-
-              {/* Инструкции */}
-              <div className="space-y-2">
-                <Label htmlFor="instructions">
-                  Инструкции для агента{" "}
-                  <span className="text-red-500">*</span>
-                </Label>
-                <Textarea
-                  id="instructions"
-                  {...register("instructions")}
-                  placeholder="Начальные инструкции по тону, стилю и ответам вашего агента..."
-                  rows={10}
-                  defaultValue={agentData?.instructions || ""}
-                  className={errors.instructions ? "border-red-500" : ""}
-                />
-                <p className="text-xs text-gray-500">
-                  Вы также можете добавить общие сведения о компании, чтобы
-                  помочь агенту отвечать более точно.
-                </p>
-                {errors.instructions && (
-                  <p className="text-sm text-red-500">
-                    {typeof errors.instructions.message === "string"
-                      ? errors.instructions.message
-                      : "Ошибка в поле инструкций"}
-                  </p>
-                )}
               </div>
             </div>
 
@@ -352,6 +327,26 @@ export default function EditAIAgentPage() {
 
             {/* Кнопки действий */}
             <div className="flex items-center gap-4 pt-6 border-t">
+              <Button type="submit" disabled={formLoading}>
+                {formLoading ? "Сохранение..." : "Сохранить"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => list("agents")}
+                disabled={formLoading}
+              >
+                Отмена
+              </Button>
+            </div>
+          </form>
+        </TabsContent>
+
+        {/* Вкладка "Обучение" */}
+        <TabsContent value="training">
+          <form onSubmit={handleSubmit(onFinish)}>
+            <TrainingTab agentId={agentId} />
+            <div className="flex items-center gap-4 pt-6 border-t mt-6">
               <Button type="submit" disabled={formLoading}>
                 {formLoading ? "Сохранение..." : "Сохранить"}
               </Button>

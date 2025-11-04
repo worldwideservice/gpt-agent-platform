@@ -152,7 +152,7 @@ export const processWebhookEvent = async (eventId: string): Promise<boolean> => 
       })
 
       // Запускаем Sequences для соответствующих событий
-      if (eventSubtype === 'lead_created' || eventSubtype === 'stage_changed') {
+      if (eventSubtype === 'lead_created' || eventSubtype === 'lead_status_changed') {
         await triggerSequences(event.org_id, eventType, eventSubtype, {
           entityId: event.entity_id,
           entityType: event.entity_type,
@@ -165,23 +165,28 @@ export const processWebhookEvent = async (eventId: string): Promise<boolean> => 
 
     // Логируем обработку webhook события (асинхронно)
     if (success) {
-      const { ActivityLogger } = await import('./activity-logger')
-      const activityType = eventSubtype === 'lead_created' ? 'lead_created' 
-        : eventSubtype === 'lead_updated' ? 'lead_updated'
-        : eventSubtype === 'task_created' ? 'task_created'
-        : eventSubtype === 'task_completed' ? 'task_completed'
-        : eventSubtype === 'call_completed' ? 'call_completed'
-        : 'action_executed'
-      
-      ActivityLogger.logActivity({
-        orgId: event.org_id,
-        activityType: activityType as any,
-        title: `Webhook событие: ${eventType}`,
-        description: `Обработано событие ${eventType}${eventSubtype ? ` (${eventSubtype})` : ''}`,
-        metadata: { event_type: eventType, event_subtype: eventSubtype, entity_id: event.entity_id },
-      }).catch((error) => {
-        console.error('Failed to log webhook activity:', error)
-      })
+      try {
+        const { logActivity } = await import('./activity-logger')
+        const activityType = eventSubtype === 'lead_created' ? 'lead_created' 
+          : eventSubtype === 'lead_updated' ? 'lead_updated'
+          : eventSubtype === 'task_created' ? 'task_created'
+          : eventSubtype === 'task_completed' ? 'task_completed'
+          : 'action_executed'
+        
+        // Используем функцию logActivity
+        await logActivity({
+          orgId: event.org_id,
+          activityType: activityType as any,
+          title: `Webhook событие: ${eventType}`,
+          description: `Обработано событие ${eventType}${eventSubtype ? ` (${eventSubtype})` : ''}`,
+          metadata: { event_type: eventType, event_subtype: eventSubtype, entity_id: event.entity_id },
+        }).catch((error: unknown) => {
+          console.error('Failed to log webhook activity:', error)
+        })
+      } catch (error) {
+        // Не критично, если не удалось залогировать
+        console.error('Failed to import logActivity:', error)
+      }
     }
 
     // Помечаем как completed
@@ -651,7 +656,7 @@ async function handleCallEvent(
               })
 
             // Если звонок пропущен (missed), можно создать задачу на перезвон
-            if (callStatus === 'missed' && callDirection === 'inbound') {
+            if (callStatus && callStatus !== 'success' && callStatus !== 'completed' && callDirection === 'inbound') {
               // Запускаем создание задачи через очередь (не блокируем обработку)
               const { addJobToQueue } = await import('@/lib/queue')
               await addJobToQueue('kommo:create-task', {

@@ -119,7 +119,7 @@ export function CreateRuleDialog({
     setValue,
     reset,
   } = useForm<CreateRuleFormData>({
-    // @ts-expect-error - resolver type mismatch
+    // @ts-expect-error - zodResolver type mismatch with react-hook-form
     resolver: zodResolver(createRuleSchema),
     defaultValues: {
       name: "",
@@ -248,7 +248,7 @@ export function CreateRuleDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit((data) => onSubmit(data as unknown as CreateRuleFormData))} className="space-y-6">
           {/* Основная информация */}
           <div className="space-y-4">
             <div className="space-y-2">

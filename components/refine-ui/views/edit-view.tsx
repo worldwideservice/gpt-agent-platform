@@ -9,7 +9,7 @@ import {
 import type { PropsWithChildren } from "react";
 import { Breadcrumb } from "@/components/refine-ui/layout/breadcrumb";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { RefreshButton } from "@/components/refine-ui/buttons/refresh";
 import { ArrowLeftIcon } from "lucide-react";
 

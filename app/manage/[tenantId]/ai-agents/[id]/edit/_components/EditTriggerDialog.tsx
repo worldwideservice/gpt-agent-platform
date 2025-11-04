@@ -79,7 +79,6 @@ export function EditTriggerDialog({
     setValue,
     reset,
   } = useForm<UpdateTriggerFormData>({
-    // @ts-expect-error - resolver type mismatch with react-hook-form
     resolver: zodResolver(updateTriggerSchema),
     defaultValues: {
       name: trigger.name,

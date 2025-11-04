@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 
 /**
  * Middleware для редиректов со старых путей на новые Kwid-подобные пути
- * Если пользователь на старом пути и есть организация, редиректим на новый формат
+ * Редиректы на базовые пути без tenant-id, layout подставит tenant-id из сессии
  */
 export async function middleware(request: NextRequest) {
  const { pathname } = request.nextUrl
@@ -30,8 +30,29 @@ export async function middleware(request: NextRequest) {
  return NextResponse.next()
  }
 
- // Для защищенных путей - редирект будет обрабатываться в layout
- // Здесь просто пропускаем дальше
+ // Редиректы старых путей на новые (без tenant-id, layout подставит)
+ const redirects: Record<string, string> = {
+ '/agents': '/manage/redirect/ai-agents',
+ '/knowledge-base/articles': '/manage/redirect/knowledge-items',
+ '/knowledge-base/categories': '/manage/redirect/knowledge-categories',
+ '/account': '/manage/redirect/account-settings',
+ '/chat': '/manage/redirect/test-chat',
+ }
+
+ // Проверяем точное совпадение
+ if (redirects[pathname]) {
+ return NextResponse.redirect(new URL(redirects[pathname], request.url))
+ }
+
+ // Проверяем префиксы
+ for (const [oldPath, newPath] of Object.entries(redirects)) {
+ if (pathname.startsWith(oldPath + '/')) {
+ const rest = pathname.slice(oldPath.length)
+ return NextResponse.redirect(new URL(`${newPath}${rest}`, request.url))
+ }
+ }
+
+ // Для остальных защищенных путей - пропускаем дальше
  return NextResponse.next()
 }
 

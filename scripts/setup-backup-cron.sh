@@ -35,60 +35,14 @@ echo ""
 if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
   echo -e "${YELLOW}⚠️  SUPABASE_SERVICE_ROLE_KEY не установлен${NC}"
   echo ""
-  echo "Выберите вариант:"
-  echo "1. Ввести SUPABASE_SERVICE_ROLE_KEY сейчас"
-  echo "2. Использовать файл .backup-secrets.sh (рекомендуется)"
-  echo "3. Отменить настройку"
+  echo "Введите SUPABASE_SERVICE_ROLE_KEY:"
+  read -sp "SUPABASE_SERVICE_ROLE_KEY: " SUPABASE_SERVICE_ROLE_KEY
   echo ""
-  read -p "Ваш выбор (1-3): " choice
   
-  case $choice in
-    1)
-      read -sp "Введите SUPABASE_SERVICE_ROLE_KEY: " SUPABASE_SERVICE_ROLE_KEY
-      echo ""
-      ;;
-    2)
-      if [ -f "$PROJECT_DIR/scripts/.backup-secrets.sh" ]; then
-        source "$PROJECT_DIR/scripts/.backup-secrets.sh"
-        echo -e "${GREEN}✅ Секреты загружены из .backup-secrets.sh${NC}"
-      else
-        echo -e "${YELLOW}⚠️  Файл .backup-secrets.sh не найден${NC}"
-        echo "Создать файл .backup-secrets.sh? (y/n)"
-        read -p "Ваш выбор: " create_secrets
-        
-        if [ "$create_secrets" = "y" ]; then
-          read -sp "Введите SUPABASE_SERVICE_ROLE_KEY: " SUPABASE_SERVICE_ROLE_KEY
-          echo ""
-          echo "export SUPABASE_SERVICE_ROLE_KEY='$SUPABASE_SERVICE_ROLE_KEY'" > "$PROJECT_DIR/scripts/.backup-secrets.sh"
-          chmod 600 "$PROJECT_DIR/scripts/.backup-secrets.sh"
-          echo -e "${GREEN}✅ Файл .backup-secrets.sh создан${NC}"
-          
-          # Добавить в .gitignore если еще не добавлен
-          if ! grep -q "scripts/.backup-secrets.sh" "$PROJECT_DIR/.gitignore" 2>/dev/null; then
-            echo "scripts/.backup-secrets.sh" >> "$PROJECT_DIR/.gitignore"
-            echo -e "${GREEN}✅ Добавлено в .gitignore${NC}"
-          fi
-        else
-          echo -e "${RED}❌ Отменено${NC}"
-          exit 1
-        fi
-      fi
-      ;;
-    3)
-      echo -e "${RED}❌ Отменено${NC}"
-      exit 1
-      ;;
-    *)
-      echo -e "${RED}❌ Неверный выбор${NC}"
-      exit 1
-      ;;
-  esac
-fi
-
-# Проверка, что SUPABASE_SERVICE_ROLE_KEY установлен
-if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
-  echo -e "${RED}❌ Ошибка: SUPABASE_SERVICE_ROLE_KEY не установлен${NC}"
-  exit 1
+  if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+    echo -e "${RED}❌ Ошибка: SUPABASE_SERVICE_ROLE_KEY не может быть пустым${NC}"
+    exit 1
+  fi
 fi
 
 echo ""
@@ -156,11 +110,7 @@ if grep -q "backup-database-cron.sh" "$CRON_TEMP"; then
 fi
 
 # Определить команду для cron
-if [ -f "$PROJECT_DIR/scripts/.backup-secrets.sh" ]; then
-  CRON_CMD="cd $PROJECT_DIR && source scripts/.backup-secrets.sh && ./scripts/backup-database-cron.sh >> $PROJECT_DIR/logs/backup.log 2>&1"
-else
-  CRON_CMD="cd $PROJECT_DIR && export SUPABASE_SERVICE_ROLE_KEY='$SUPABASE_SERVICE_ROLE_KEY' && ./scripts/backup-database-cron.sh >> $PROJECT_DIR/logs/backup.log 2>&1"
-fi
+CRON_CMD="cd $PROJECT_DIR && export SUPABASE_SERVICE_ROLE_KEY='$SUPABASE_SERVICE_ROLE_KEY' && ./scripts/backup-database-cron.sh >> $PROJECT_DIR/logs/backup.log 2>&1"
 
 # Добавить новую задачу
 echo "$CRON_TIME * * * $CRON_CMD" >> "$CRON_TEMP"

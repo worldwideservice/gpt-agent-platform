@@ -4,7 +4,7 @@ import { RequestForm } from './RequestForm'
 
 export const metadata: Metadata = {
  title: 'Сброс пароля',
- description: 'Получите ссылку для сброса пароля GPT Agent',
+  description: 'Получите ссылку для сброса пароля T11',
 }
 
 const ResetPasswordRequestPage = () => {

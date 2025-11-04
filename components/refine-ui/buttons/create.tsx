@@ -3,7 +3,7 @@
 import React from "react";
 import { type BaseKey, useCreateButton } from "@refinedev/core";
 import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 
 type CreateButtonProps = {
   /**

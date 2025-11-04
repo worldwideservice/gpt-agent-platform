@@ -3,7 +3,7 @@
 import React from "react";
 import { type BaseKey, useRefreshButton } from "@refinedev/core";
 import { RefreshCcw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 type RefreshButtonProps = {

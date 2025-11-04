@@ -11,7 +11,7 @@ export const runtime = 'nodejs'
 
 const jobSchema = z.object({
   type: z.string().min(1, 'Job type is required'),
-  payload: z.record(z.unknown()).optional().default({}),
+  payload: z.record(z.string(), z.unknown()).optional().default({}),
 })
 
  export async function POST(request: NextRequest) {

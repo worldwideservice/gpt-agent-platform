@@ -4,6 +4,49 @@
 // Shadcn UI компоненты (основная библиотека)
 export * from './shadcn'
 
+// Breadcrumb компоненты
+export {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+  BreadcrumbEllipsis,
+} from './breadcrumb'
+
+// Progress компонент
+export { Progress } from './progress'
+
+// Accordion компоненты
+export {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from './accordion'
+
+// Separator компонент
+export { Separator } from './separator'
+
+// Alert Dialog компоненты
+export {
+  AlertDialog,
+  AlertDialogPortal,
+  AlertDialogOverlay,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from './alert-dialog'
+
+// Logo компоненты
+export { Logo, LogoCompact } from './Logo'
+
 // Дополнительные компоненты
 export { Toggle } from './Toggle'
 

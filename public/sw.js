@@ -1,7 +1,7 @@
-// Service Worker for GPT Agent Platform PWA
-const CACHE_NAME = 'gpt-agent-v1.0.0'
-const STATIC_CACHE = 'gpt-agent-static-v1.0.0'
-const API_CACHE = 'gpt-agent-api-v1.0.0'
+// Service Worker for T11 Platform PWA
+const CACHE_NAME = 't11-platform-v1.0.0'
+const STATIC_CACHE = 't11-platform-static-v1.0.0'
+const API_CACHE = 't11-platform-api-v1.0.0'
 
 // Resources to cache immediately
 const STATIC_ASSETS = [
