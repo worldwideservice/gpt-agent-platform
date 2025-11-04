@@ -29,32 +29,37 @@ metrics.init(env.JOB_QUEUE_NAME, env.JOB_CONCURRENCY)
 // Для прямого подключения к Upstash Redis через ioredis
 // Приоритет: используем REDIS_URL если он есть, иначе формируем из REST URL и токена
 let redisUrl: string
+let redisHost: string = ''
+let redisPort: number = 6380
 
 if (process.env.REDIS_URL && process.env.REDIS_URL.startsWith('rediss://')) {
   // Используем готовый REDIS_URL (если он есть и правильного формата)
   redisUrl = process.env.REDIS_URL
+  
+  // Извлекаем host и port для логирования
+  try {
+    const redisUrlObj = new URL(redisUrl)
+    redisHost = redisUrlObj.hostname
+    if (redisUrlObj.port) {
+      redisPort = Number.parseInt(redisUrlObj.port, 10)
+    }
+  } catch {
+    // Игнорируем ошибку парсинга
+  }
+  
   logger.info('Using REDIS_URL from environment', {
+    redisHost,
+    redisPort,
     event: 'redis.config',
   })
 } else {
   // Формируем URL из REST URL и токена
   // Формат для ioredis: rediss://default:TOKEN@ENDPOINT:PORT
   const upstashRestUrl = new URL(env.UPSTASH_REDIS_REST_URL)
-  const redisHost = upstashRestUrl.hostname
+  redisHost = upstashRestUrl.hostname
   
   // Получаем порт из REST URL или используем 6380 по умолчанию (Upstash часто использует 6380 для TLS)
-  // Если есть REDIS_URL, извлекаем порт оттуда
-  let redisPort = 6380 // Upstash часто использует 6380 для TLS
-  if (process.env.REDIS_URL) {
-    try {
-      const redisUrlObj = new URL(process.env.REDIS_URL)
-      if (redisUrlObj.port) {
-        redisPort = Number.parseInt(redisUrlObj.port, 10)
-      }
-    } catch {
-      // Игнорируем ошибку парсинга
-    }
-  } else if (upstashRestUrl.port) {
+  if (upstashRestUrl.port) {
     redisPort = Number.parseInt(upstashRestUrl.port, 10)
   }
 
@@ -69,11 +74,15 @@ if (process.env.REDIS_URL && process.env.REDIS_URL.startsWith('rediss://')) {
   logger.info('Redis URL constructed from REST URL', {
     redisHost,
     redisPort,
+    hasToken: !!env.UPSTASH_REDIS_REST_TOKEN,
+    tokenLength: env.UPSTASH_REDIS_REST_TOKEN.length,
     event: 'redis.config',
   })
 }
 
 logger.info('Redis URL ready', {
+  redisHost,
+  redisPort,
   redisUrl: redisUrl.replace(/:[^:@]+@/, ':****@'), // Маскируем токен в логах
   event: 'redis.config',
 })
