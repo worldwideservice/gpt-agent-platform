@@ -65,18 +65,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
  )
  }
 
- // Вызываем реальную синхронизацию через Worker API
+ // Запускаем синхронизацию через Job Queue (Worker обрабатывает job 'crm:sync-pipelines')
  try {
- const { backendFetch } = await import('@/lib/backend/client')
+ const { addJobToQueue } = await import('@/lib/queue')
  
- await backendFetch('/crm/sync', {
- method: 'POST',
- body: JSON.stringify({
- orgId: session.user.orgId,
+ // Добавляем job в очередь для обработки Worker
+ const job = await addJobToQueue('crm:sync-pipelines', {
  provider: 'kommo',
+ orgId: session.user.orgId,
  connectionId: crmConnection.id,
  baseDomain: crmConnection.base_domain,
- }),
  })
 
  // Обновляем timestamp синхронизации в интеграции
@@ -87,6 +85,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
  ...((integration.settings as Record<string, unknown>) || {}),
  last_synced_at: new Date().toISOString(),
  sync_status: 'queued',
+ sync_job_id: job.id, // Сохраняем ID job для отслеживания
  },
  })
  .eq('id', integrationId)
@@ -100,6 +99,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
  success: true,
  message: 'Синхронизация запущена',
  details: {
+ jobId: job.id,
  pipelines: 'Синхронизация воронок поставлена в очередь',
  fields: 'Синхронизация полей будет выполнена автоматически',
  channels: 'Синхронизация каналов будет выполнена автоматически',
