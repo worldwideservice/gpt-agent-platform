@@ -16,8 +16,42 @@ console.log('[worker] Supabase URL:', env.SUPABASE_URL ? '***configured***' : 'M
 // Запускаем health check сервер
 startHealthServer()
 
-const connection = new Redis(env.REDIS_URL, {
- maxRetriesPerRequest: null,
+// Настройки подключения к Redis для Upstash
+// Upstash требует TLS и может использовать IPv6
+const redisUrl = env.REDIS_URL
+if (!redisUrl) {
+  throw new Error('REDIS_URL is required')
+}
+
+// Парсим URL для извлечения компонентов
+const url = new URL(redisUrl.replace(/^rediss?:\/\//, 'https://'))
+const isTLS = redisUrl.startsWith('rediss://')
+
+const connection = new Redis({
+  host: url.hostname,
+  port: parseInt(url.port) || (isTLS ? 6380 : 6379),
+  password: url.password || url.username,
+  username: url.username && url.username !== 'default' ? url.username : undefined,
+  tls: isTLS ? {
+    // Upstash требует TLS для прямого подключения
+    rejectUnauthorized: true,
+  } : undefined,
+  family: 6, // IPv6 для Upstash
+  maxRetriesPerRequest: null,
+  enableReadyCheck: true,
+  retryStrategy: (times) => {
+    const delay = Math.min(times * 50, 2000)
+    console.log(`[worker] Redis retry attempt ${times}, delay: ${delay}ms`)
+    return delay
+  },
+  reconnectOnError: (err) => {
+    const targetError = 'READONLY'
+    if (err.message.includes(targetError)) {
+      console.log('[worker] Redis READONLY error, reconnecting...')
+      return true
+    }
+    return false
+  },
 })
 
 const handlers = getTaskHandlers()
