@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useParams } from 'next/navigation'
 import { useSidebar } from './SidebarToggle'
 
 // Простые fallback переводы (так как next-intl временно отключен)
@@ -186,8 +186,12 @@ const getInitials = (value: string): string => {
 
 export const Sidebar = ({ organizations, activeOrganizationId, tenantId, isOpen = false }: SidebarProps) => {
  const pathname = usePathname()
+ const params = useParams()
  const { close } = useSidebar()
- const navigation = getNavigation(() => {}, tenantId)
+ 
+ // Получаем tenantId из props или из URL (fallback)
+ const actualTenantId = tenantId || (params?.tenantId as string) || ''
+ const navigation = getNavigation(() => {}, actualTenantId)
 
  const handleItemClick = () => {
  if (window.matchMedia('(max-width: 1024px)').matches) {
@@ -195,7 +199,7 @@ export const Sidebar = ({ organizations, activeOrganizationId, tenantId, isOpen 
  }
  }
 
- const basePath = tenantId ? `/manage/${tenantId}` : '/'
+ const basePath = actualTenantId ? `/manage/${actualTenantId}` : '/'
 
  return (
  <>

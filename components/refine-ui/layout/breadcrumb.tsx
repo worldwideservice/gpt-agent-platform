@@ -2,10 +2,11 @@
 
 import { Fragment, useMemo } from "react";
 import { Home } from "lucide-react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
 import {
   matchResourceFromRoute,
   useBreadcrumb,
-  useLink,
   useResourceParams,
 } from "@refinedev/core";
 import {
@@ -17,7 +18,8 @@ import {
 } from "@/components/ui/breadcrumb";
 
 export function Breadcrumb() {
-  const Link = useLink();
+  const params = useParams();
+  const tenantId = (params?.tenantId as string) || "";
   const { breadcrumbs } = useBreadcrumb();
   const { resources } = useResourceParams();
   const rootRouteResource = matchResourceFromRoute("/", resources);
@@ -29,11 +31,13 @@ export function Breadcrumb() {
       Component: React.ReactNode;
     }[] = [];
 
+    // Главная страница (Dashboard) с tenant-id
+    const homeHref = tenantId ? `/manage/${tenantId}` : (rootRouteResource.matchedRoute ?? "/");
     list.push({
       key: "breadcrumb-item-home",
-      href: rootRouteResource.matchedRoute ?? "/",
+      href: homeHref,
       Component: (
-        <Link to={rootRouteResource.matchedRoute ?? "/"}>
+        <Link href={homeHref}>
           {rootRouteResource?.resource?.meta?.icon ?? (
             <Home className="h-4 w-4" />
           )}
@@ -41,16 +45,31 @@ export function Breadcrumb() {
       ),
     });
 
+    // Остальные breadcrumbs с tenant-id
     for (const { label, href } of breadcrumbs) {
+      if (!href) {
+        list.push({
+          key: `breadcrumb-item-${label}`,
+          href: "",
+          Component: <span>{label}</span>,
+        });
+        continue;
+      }
+
+      // Добавляем tenant-id к пути, если его нет
+      const finalHref = tenantId && !href.startsWith(`/manage/${tenantId}`) && !href.startsWith('http') && !href.startsWith('/docs')
+        ? `/manage/${tenantId}${href.startsWith('/') ? href : `/${href}`}`
+        : href;
+
       list.push({
         key: `breadcrumb-item-${label}`,
-        href: href ?? "",
-        Component: href ? <Link to={href}>{label}</Link> : <span>{label}</span>,
+        href: finalHref,
+        Component: <Link href={finalHref}>{label}</Link>,
       });
     }
 
     return list;
-  }, [breadcrumbs, Link, rootRouteResource]);
+  }, [breadcrumbs, tenantId, rootRouteResource]);
 
   return (
     <ShadcnBreadcrumb>
