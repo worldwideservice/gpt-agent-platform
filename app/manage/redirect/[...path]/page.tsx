@@ -39,7 +39,10 @@ export default async function RedirectPage({ params }: RedirectPageProps) {
   
   if (!targetPath) {
     logger.warn('[RedirectPage] Unknown path key', { pathKey, fromPath })
-    redirect('/login')
+    // Вместо редиректа на /login, показываем not-found
+    // Это позволит пользователю увидеть, что страница не найдена
+    const { notFound } = await import('next/navigation')
+    notFound()
   }
   
   try {
@@ -48,6 +51,7 @@ export default async function RedirectPage({ params }: RedirectPageProps) {
     
     if (!tenantId) {
       logger.warn('[RedirectPage] No tenant-id found in session', { pathKey })
+      // Редиректим на логин, если нет сессии
       redirect('/login')
     }
     

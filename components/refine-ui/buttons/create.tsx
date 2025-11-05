@@ -1,8 +1,10 @@
 "use client";
 
 import React from "react";
+import { useParams } from "next/navigation";
 import { type BaseKey, useCreateButton } from "@refinedev/core";
 import { Plus } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 
 type CreateButtonProps = {
@@ -29,7 +31,10 @@ export const CreateButton = React.forwardRef<
   React.ComponentRef<typeof Button>,
   CreateButtonProps
 >(({ resource, accessControl, meta, children, onClick, ...rest }, ref) => {
-  const { hidden, disabled, LinkComponent, to, label } = useCreateButton({
+  const params = useParams();
+  const tenantId = (params?.tenantId as string) || "";
+  
+  const { hidden, disabled, to, label } = useCreateButton({
     resource,
     accessControl,
     meta,
@@ -40,11 +45,13 @@ export const CreateButton = React.forwardRef<
 
   if (isHidden) return null;
 
+  // Добавляем tenant-id к пути, если он есть
+  const href = tenantId && to ? `/manage/${tenantId}${to}` : to;
+
   return (
     <Button {...rest} ref={ref} disabled={isDisabled} asChild>
-      <LinkComponent
-        to={to}
-        replace={false}
+      <Link
+        href={href || "#"}
         onClick={(e: React.PointerEvent<HTMLButtonElement>) => {
           if (isDisabled) {
             e.preventDefault();
@@ -62,7 +69,7 @@ export const CreateButton = React.forwardRef<
             <span>{label ?? "Create"}</span>
           </div>
         )}
-      </LinkComponent>
+      </Link>
     </Button>
   );
 });

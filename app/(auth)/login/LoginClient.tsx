@@ -47,59 +47,47 @@ export const LoginClient = () => {
  }
 
  if (result?.ok) {
- await new Promise(resolve => setTimeout(resolve, 1000))
+      // Ждем немного, чтобы сессия успела обновиться
+      await new Promise(resolve => setTimeout(resolve, 500))
 
- const sessionResponse = await fetch('/api/auth/session')
- const sessionData = await sessionResponse.json()
+      try {
+        // Получаем tenant-id для редиректа
+        const redirectResponse = await fetch('/api/auth/get-tenant-redirect', {
+          cache: 'no-store',
+        })
+        
+        if (!redirectResponse.ok) {
+          throw new Error('Failed to get redirect URL')
+        }
+        
+        const redirectData = await redirectResponse.json()
 
- if (sessionData?.user) {
- const redirectResponse = await fetch('/api/auth/get-tenant-redirect')
- const redirectData = await redirectResponse.json()
-
- if (redirectData.success && redirectData.tenantId) {
- pushToast({
- title: 'Вход выполнен! ✅',
- description: `Добро пожаловать, ${email}!`,
- variant: 'success',
- })
- window.location.href = `/manage/${redirectData.tenantId}`
- } else {
- pushToast({
- title: 'Ошибка входа',
- description: 'Не удалось определить вашу организацию. Попробуйте войти заново.',
- variant: 'error',
- })
- }
- return
- }
-
- try {
- const redirectResponse = await fetch('/api/auth/get-tenant-redirect')
- const redirectData = await redirectResponse.json()
- 
- if (redirectData.success && redirectData.tenantId) {
- pushToast({
- title: 'Вход выполнен! ✅',
- description: `Добро пожаловать, ${email}!`,
- variant: 'success',
- })
- window.location.href = `/manage/${redirectData.tenantId}`
- } else {
- pushToast({
- title: 'Ошибка входа',
- description: 'Не удалось определить вашу организацию. Попробуйте войти заново.',
- variant: 'error',
- })
- }
- } catch {
- pushToast({
- title: 'Ошибка входа',
- description: 'Не удалось определить вашу организацию. Попробуйте войти заново.',
- variant: 'error',
- })
- }
- return
- }
+        if (redirectData.success && redirectData.tenantId) {
+          pushToast({
+            title: 'Вход выполнен! ✅',
+            description: `Добро пожаловать, ${email}!`,
+            variant: 'success',
+          })
+          // Используем router.push вместо window.location.href для лучшей навигации
+          router.push(`/manage/${redirectData.tenantId}`)
+          router.refresh()
+        } else {
+          pushToast({
+            title: 'Ошибка входа',
+            description: redirectData.error || 'Не удалось определить вашу организацию. Попробуйте войти заново.',
+            variant: 'error',
+          })
+        }
+      } catch (redirectError) {
+        console.error('[LoginClient] Redirect error:', redirectError)
+        pushToast({
+          title: 'Ошибка входа',
+          description: 'Не удалось определить вашу организацию. Попробуйте войти заново.',
+          variant: 'error',
+        })
+      }
+      return
+    }
 
  setError('Неверные email или пароль')
 

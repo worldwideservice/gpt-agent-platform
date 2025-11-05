@@ -87,15 +87,56 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
  }
  }
  } catch (orgError) {
- console.error("[manage layout] Error getting organizations", orgError);
- organizations = [];
- activeOrganization = null;
- redirect("/login");
- }
- } catch (authError) {
- console.error("[manage layout] Auth error", authError);
- redirect("/login");
- }
+    console.error("[manage layout] Error getting organizations", orgError);
+    
+    // Логируем детальную ошибку для отладки
+    if (orgError instanceof Error) {
+      console.error("[manage layout] Error details:", {
+        message: orgError.message,
+        stack: orgError.stack,
+      });
+    }
+    
+    organizations = [];
+    activeOrganization = null;
+    
+    // Не редиректим сразу, чтобы не скрыть ошибку
+    // Вместо этого пробуем найти организацию по orgId из сессии
+    if (session?.user?.orgId) {
+      try {
+        const { getSupabaseServiceRoleClient } = await import('@/lib/supabase/admin');
+        const supabase = getSupabaseServiceRoleClient();
+        const { data: orgData } = await supabase
+          .from('organizations')
+          .select('id, name, slug')
+          .eq('id', session.user.orgId)
+          .single();
+        
+        if (orgData) {
+          const { generateTenantId } = await import('@/lib/utils/tenant');
+          const correctTenantId = generateTenantId(orgData.id, orgData.slug || `org-${orgData.id.substring(0, 8)}`);
+          redirect(`/manage/${correctTenantId}`);
+        }
+      } catch (fallbackError) {
+        console.error("[manage layout] Fallback error:", fallbackError);
+      }
+    }
+    
+    redirect("/login");
+  }
+} catch (authError) {
+  console.error("[manage layout] Auth error", authError);
+  
+  // Логируем детальную ошибку для отладки
+  if (authError instanceof Error) {
+    console.error("[manage layout] Auth error details:", {
+      message: authError.message,
+      stack: authError.stack,
+    });
+  }
+  
+  redirect("/login");
+}
 
  return (
    <RefineProvider>
@@ -104,6 +145,7 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
          session={session}
          organizations={organizations}
          activeOrganization={activeOrganization}
+         tenantId={tenantId}
        >
          {children}
        </HeaderWithSidebar>

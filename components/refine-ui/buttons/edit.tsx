@@ -1,9 +1,11 @@
 "use client";
 
 import React from "react";
+import { useParams } from "next/navigation";
 import { type BaseKey, useEditButton } from "@refinedev/core";
 import { Button } from "@/components/ui/Button";
 import { Pencil } from "lucide-react";
+import Link from "next/link";
 
 type EditButtonProps = {
   /**
@@ -38,7 +40,10 @@ export const EditButton = React.forwardRef<
     { resource, recordItemId, accessControl, meta, children, onClick, ...rest },
     ref,
   ) => {
-    const { hidden, disabled, LinkComponent, to, label } = useEditButton({
+    const params = useParams();
+    const tenantId = (params?.tenantId as string) || "";
+    
+    const { hidden, disabled, to, label } = useEditButton({
       resource,
       id: recordItemId,
       accessControl,
@@ -50,11 +55,13 @@ export const EditButton = React.forwardRef<
 
     if (isHidden) return null;
 
+    // Добавляем tenant-id к пути, если он есть
+    const href = tenantId && to ? `/manage/${tenantId}${to}` : to;
+
     return (
       <Button {...rest} ref={ref} disabled={isDisabled} asChild>
-        <LinkComponent
-          to={to}
-          replace={false}
+        <Link
+          href={href || "#"}
           onClick={(e: React.PointerEvent<HTMLButtonElement>) => {
             if (isDisabled) {
               e.preventDefault();
@@ -72,7 +79,7 @@ export const EditButton = React.forwardRef<
               <span>{label}</span>
             </div>
           )}
-        </LinkComponent>
+        </Link>
       </Button>
     );
   },

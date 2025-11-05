@@ -58,13 +58,10 @@ export const ChatInput = ({
         {/* Agent Selector */}
         <div className="mb-3">
           <Select
-            value={selectedAgentId || ''}
+            value={selectedAgentId || undefined}
             onValueChange={(value) => onAgentChange(value || null)}
             disabled={disabled || activeAgents.length === 0}
-            options={[
-              { value: '', label: 'Выберите агента ИИ' },
-              ...activeAgents.map((agent) => ({ value: agent.id, label: agent.name })),
-            ]}
+            options={activeAgents.map((agent) => ({ value: agent.id, label: agent.name }))}
             placeholder="Выберите агента ИИ"
           />
           {activeAgents.length === 0 && (
