@@ -57,14 +57,20 @@ export function Breadcrumb() {
       }
 
       // Добавляем tenant-id к пути, если его нет
-      const finalHref = tenantId && !href.startsWith(`/manage/${tenantId}`) && !href.startsWith('http') && !href.startsWith('/docs')
-        ? `/manage/${tenantId}${href.startsWith('/') ? href : `/${href}`}`
-        : href;
+      let finalHref = href;
+      if (tenantId && !href.startsWith(`/manage/${tenantId}`) && !href.startsWith('http') && !href.startsWith('/docs')) {
+        finalHref = `/manage/${tenantId}${href.startsWith('/') ? href : `/${href}`}`;
+      }
+
+      // Убеждаемся, что href - строка
+      if (typeof finalHref !== 'string') {
+        finalHref = '';
+      }
 
       list.push({
         key: `breadcrumb-item-${label}`,
         href: finalHref,
-        Component: <Link href={finalHref}>{label}</Link>,
+        Component: finalHref ? <Link href={finalHref}>{label}</Link> : <span>{label}</span>,
       });
     }
 
