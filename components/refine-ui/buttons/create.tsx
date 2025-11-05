@@ -52,7 +52,7 @@ export const CreateButton = React.forwardRef<
     <Button {...rest} ref={ref} disabled={isDisabled} asChild>
       <Link
         href={href || "#"}
-        onClick={(e: React.PointerEvent<HTMLButtonElement>) => {
+        onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
           if (isDisabled) {
             e.preventDefault();
             return;
