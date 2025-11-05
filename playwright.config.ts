@@ -30,8 +30,8 @@ export default defineConfig({
  // Настройки запуска тестов
  fullyParallel: true,
  forbidOnly: !!process.env.CI,
- retries: process.env.CI ? 2 : 0,
- workers: process.env.CI ? 1 : 4, // Увеличено количество воркеров
+ retries: process.env.CI ? 1 : 0, // Уменьшено количество retries для ускорения
+ workers: process.env.CI ? 4 : 4, // Увеличено количество воркеров в CI до 4
  
  // Репортеры
  reporter: [

@@ -11,7 +11,7 @@ jobs:
   e2e-tests:
     name: E2E Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20  # Уменьшено с 30 до 20 минут (тесты должны выполняться быстрее)
     
     steps:
       - name: 📥 Checkout code
@@ -59,7 +59,7 @@ jobs:
           echo "Server is ready!"
 
       - name: 🧪 Run E2E tests
-        run: npm run test:e2e -- --project=chromium --workers=2
+        run: npm run test:e2e -- --project=chromium --workers=4
         env:
           CI: true
           REUSE_SERVER: 'true'  # Используем уже запущенный сервер
