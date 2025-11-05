@@ -13,48 +13,51 @@ interface LogoProps {
 export const Logo = ({ className, showTagline = false, href }: LogoProps) => {
   const content = (
     <div className={cn('flex flex-col items-center', className)}>
-      {/* Логотип - стилизованная буква T */}
+      {/* Логотип - воронка/туннель с концентрическими линиями */}
       <div className="relative mb-2">
         <svg
-          width="48"
-          height="48"
-          viewBox="0 0 48 48"
+          width="80"
+          height="40"
+          viewBox="0 0 120 60"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className="drop-shadow-sm"
         >
-          {/* Вертикальная часть T с градиентом */}
-          <rect
-            x="18"
-            y="10"
-            width="12"
-            height="28"
-            fill="url(#gradientT)"
-            rx="2"
+          {/* Центральный черный круг */}
+          <circle
+            cx="60"
+            cy="30"
+            r="5"
+            fill="#000000"
           />
-          {/* Горизонтальная часть T - изогнутая форма с вогнутостью сверху */}
-          <path
-            d="M 6 14 C 8 10, 10 10, 12 12 C 14 10, 16 10, 18 12 L 18 20 C 16 18, 14 18, 12 20 L 12 14 Z M 30 12 C 32 10, 34 10, 36 12 C 38 10, 40 10, 42 14 L 42 20 C 40 18, 38 18, 36 20 L 36 12 Z"
-            fill="url(#gradientT)"
-          />
-          <defs>
-            <linearGradient id="gradientT" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#FF6B35" />
-              <stop offset="50%" stopColor="#E63946" />
-              <stop offset="100%" stopColor="#8B1538" />
-            </linearGradient>
-          </defs>
+          
+          {/* Концентрические эллиптические линии с градиентом */}
+          <ellipse cx="60" cy="30" rx="12" ry="6" fill="none" stroke="#000000" strokeWidth="0.8" opacity="0.95" />
+          <ellipse cx="60" cy="30" rx="15" ry="7.5" fill="none" stroke="#000000" strokeWidth="0.75" opacity="0.9" />
+          <ellipse cx="60" cy="30" rx="18" ry="9" fill="none" stroke="#000000" strokeWidth="0.7" opacity="0.85" />
+          <ellipse cx="60" cy="30" rx="21" ry="10.5" fill="none" stroke="#000000" strokeWidth="0.65" opacity="0.8" />
+          <ellipse cx="60" cy="30" rx="24" ry="12" fill="none" stroke="#000000" strokeWidth="0.6" opacity="0.75" />
+          <ellipse cx="60" cy="30" rx="27" ry="13.5" fill="none" stroke="#000000" strokeWidth="0.55" opacity="0.7" />
+          <ellipse cx="60" cy="30" rx="30" ry="15" fill="none" stroke="#000000" strokeWidth="0.5" opacity="0.65" />
+          <ellipse cx="60" cy="30" rx="33" ry="16.5" fill="none" stroke="#000000" strokeWidth="0.45" opacity="0.6" />
+          <ellipse cx="60" cy="30" rx="36" ry="18" fill="none" stroke="#000000" strokeWidth="0.4" opacity="0.55" />
+          <ellipse cx="60" cy="30" rx="39" ry="19.5" fill="none" stroke="#000000" strokeWidth="0.35" opacity="0.5" />
+          <ellipse cx="60" cy="30" rx="42" ry="21" fill="none" stroke="#000000" strokeWidth="0.3" opacity="0.45" />
+          <ellipse cx="60" cy="30" rx="45" ry="22.5" fill="none" stroke="#000000" strokeWidth="0.3" opacity="0.4" />
+          <ellipse cx="60" cy="30" rx="48" ry="24" fill="none" stroke="#000000" strokeWidth="0.3" opacity="0.35" />
+          <ellipse cx="60" cy="30" rx="51" ry="25.5" fill="none" stroke="#000000" strokeWidth="0.3" opacity="0.3" />
+          <ellipse cx="60" cy="30" rx="54" ry="27" fill="none" stroke="#000000" strokeWidth="0.3" opacity="0.25" />
         </svg>
       </div>
       
-      {/* Текст T11 */}
+      {/* Текст TON 18 */}
       <div className="flex flex-col items-center">
-        <span className="text-lg font-bold uppercase tracking-tight text-[#5C1A2E]">
-          T11
+        <span className="text-lg font-bold tracking-tight text-black">
+          TON 18
         </span>
         {showTagline && (
-          <span className="text-[10px] font-medium uppercase tracking-wider text-[#5C1A2E] mt-0.5">
-            CREATE AND AUTOMATE
+          <span className="text-[10px] font-normal tracking-wider text-black mt-0.5">
+            create infinity
           </span>
         )}
       </div>
@@ -79,35 +82,35 @@ export const LogoCompact = ({ className, href }: { className?: string; href?: st
       {/* Компактный логотип */}
       <div className="relative">
         <svg
-          width="32"
-          height="32"
-          viewBox="0 0 48 48"
+          width="48"
+          height="24"
+          viewBox="0 0 120 60"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          <rect
-            x="18"
-            y="10"
-            width="12"
-            height="28"
-            fill="url(#gradientTCompact)"
-            rx="2"
+          {/* Центральный черный круг */}
+          <circle
+            cx="60"
+            cy="30"
+            r="5"
+            fill="#000000"
           />
-          <path
-            d="M 6 14 C 8 10, 10 10, 12 12 C 14 10, 16 10, 18 12 L 18 20 C 16 18, 14 18, 12 20 L 12 14 Z M 30 12 C 32 10, 34 10, 36 12 C 38 10, 40 10, 42 14 L 42 20 C 40 18, 38 18, 36 20 L 36 12 Z"
-            fill="url(#gradientTCompact)"
-          />
-          <defs>
-            <linearGradient id="gradientTCompact" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#FF6B35" />
-              <stop offset="50%" stopColor="#E63946" />
-              <stop offset="100%" stopColor="#8B1538" />
-            </linearGradient>
-          </defs>
+          
+          {/* Концентрические эллиптические линии с градиентом */}
+          <ellipse cx="60" cy="30" rx="12" ry="6" fill="none" stroke="#000000" strokeWidth="0.8" opacity="0.95" />
+          <ellipse cx="60" cy="30" rx="15" ry="7.5" fill="none" stroke="#000000" strokeWidth="0.75" opacity="0.9" />
+          <ellipse cx="60" cy="30" rx="18" ry="9" fill="none" stroke="#000000" strokeWidth="0.7" opacity="0.85" />
+          <ellipse cx="60" cy="30" rx="21" ry="10.5" fill="none" stroke="#000000" strokeWidth="0.65" opacity="0.8" />
+          <ellipse cx="60" cy="30" rx="24" ry="12" fill="none" stroke="#000000" strokeWidth="0.6" opacity="0.75" />
+          <ellipse cx="60" cy="30" rx="27" ry="13.5" fill="none" stroke="#000000" strokeWidth="0.55" opacity="0.7" />
+          <ellipse cx="60" cy="30" rx="30" ry="15" fill="none" stroke="#000000" strokeWidth="0.5" opacity="0.65" />
+          <ellipse cx="60" cy="30" rx="33" ry="16.5" fill="none" stroke="#000000" strokeWidth="0.45" opacity="0.6" />
+          <ellipse cx="60" cy="30" rx="36" ry="18" fill="none" stroke="#000000" strokeWidth="0.4" opacity="0.55" />
+          <ellipse cx="60" cy="30" rx="39" ry="19.5" fill="none" stroke="#000000" strokeWidth="0.35" opacity="0.5" />
         </svg>
       </div>
-      <span className="text-xl font-bold uppercase tracking-tight text-[#5C1A2E]">
-        T11
+      <span className="text-xl font-bold tracking-tight text-black">
+        TON 18
       </span>
     </div>
   )

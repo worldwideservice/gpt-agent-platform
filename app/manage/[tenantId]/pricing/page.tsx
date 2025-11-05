@@ -111,8 +111,21 @@ export default function PricingPage() {
     loadData()
   }, [push])
 
-  const formatPrice = (plan: PricingPlan) =>
-    billingCycle === 'monthly' ? plan.priceMonthly : plan.priceYearly
+  const formatPrice = (plan: PricingPlan) => {
+    // Если есть функция расчета динамической цены - используем её
+    if (plan.calculatePrice) {
+      return plan.calculatePrice(selectedResponsesNum, billingCycle)
+    }
+    // Иначе используем статичную цену
+    return billingCycle === 'monthly' ? plan.priceMonthly : plan.priceYearly
+  }
+
+  // Рассчитываем цену за разговор для динамического отображения
+  const calculatePerConversation = (plan: PricingPlan, price: number) => {
+    if (selectedResponsesNum === 0) return ''
+    const perConversation = price / selectedResponsesNum
+    return `Около $${perConversation.toFixed(2)} за разговор`
+  }
 
   const isUnavailableForPlan = (plan: PricingPlan) =>
     plan.unavailableForResponses?.includes(selectedResponsesNum) ?? false
@@ -292,10 +305,12 @@ export default function PricingPage() {
                     {isCurrent && <Badge variant="secondary">Текущий план</Badge>}
                   </div>
                   <div className="space-y-1">
-                    <div className="text-3xl font-bold">${price}</div>
+                    <div className="text-3xl font-bold">${price.toLocaleString()}</div>
                     <CardDescription>/ {billingCycle === 'monthly' ? 'месяц' : 'год'}</CardDescription>
-                    {plan.perConversation && (
-                      <CardDescription className="text-xs">{plan.perConversation}</CardDescription>
+                    {(plan.perConversation || plan.calculatePrice) && (
+                      <CardDescription className="text-xs">
+                        {plan.perConversation || calculatePerConversation(plan, price)}
+                      </CardDescription>
                     )}
                   </div>
                   {isCurrent && (

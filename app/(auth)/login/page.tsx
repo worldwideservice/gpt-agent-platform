@@ -6,7 +6,7 @@ import { LoginClient } from './LoginClient'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Вход в T11',
+  title: 'Вход в TON 18',
  description: 'Авторизуйтесь, чтобы управлять AI-агентами и интеграциями',
 }
 

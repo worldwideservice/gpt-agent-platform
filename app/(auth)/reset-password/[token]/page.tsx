@@ -14,7 +14,7 @@ interface PageProps {
 
 export const metadata: Metadata = {
  title: 'Создание нового пароля',
-  description: 'Задайте новый пароль для своей учётной записи T11',
+  description: 'Задайте новый пароль для своей учётной записи TON 18',
 }
 
 const ResetPasswordConfirmPage = async ({ params }: PageProps) => {

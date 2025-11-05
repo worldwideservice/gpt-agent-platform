@@ -220,7 +220,7 @@ export function LandingPageClient() {
             <div className="mx-auto flex max-w-[980px] flex-col items-center gap-4 text-center">
               <Badge variant="secondary" className="mb-2 animate-pulse">
                 <Sparkles className="mr-2 h-3 w-3 animate-spin-slow" />
-                Create and Automate
+                create infinity
               </Badge>
               <h1 className="text-3xl font-bold leading-tight tracking-tighter md:text-5xl lg:leading-[1.1] bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
                 Создавайте и автоматизируйте
@@ -230,7 +230,7 @@ export function LandingPageClient() {
                 </span>
               </h1>
               <p className="max-w-[750px] text-lg text-gray-600 sm:text-xl">
-                T11 — это платформа для создания умных виртуальных сотрудников, 
+                TON 18 — это платформа для создания умных виртуальных сотрудников, 
                 которые автоматизируют общение с клиентами, обработку сделок и 
                 выполнение задач через интеграцию с CRM системами.
               </p>
@@ -504,7 +504,7 @@ export function LandingPageClient() {
                 Готовы начать автоматизацию?
               </h2>
               <p className="max-w-[85%] leading-normal text-gray-600 dark:text-gray-400 sm:text-lg sm:leading-7">
-                Присоединяйтесь к T11 и создайте своего первого AI-агента уже сегодня. 
+                Присоединяйтесь к TON 18 и создайте своего первого AI-агента уже сегодня. 
                 Бесплатная регистрация, без кредитной карты.
               </p>
               <div className="flex w-full items-center justify-center space-x-4 py-4">
@@ -549,9 +549,9 @@ export function LandingPageClient() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-8 md:flex-row md:gap-16">
             <div className="flex flex-col gap-4 md:max-w-xs">
-              <Logo />
+              <Logo showTagline />
               <p className="text-sm text-gray-600">
-                Create and Automate — Платформа для создания и автоматизации работы с AI-агентами
+                create infinity — Платформа для создания и автоматизации работы с AI-агентами
               </p>
             </div>
             <div className="grid flex-1 grid-cols-2 gap-8 sm:grid-cols-3 md:grid-cols-4">
@@ -609,7 +609,7 @@ export function LandingPageClient() {
           </div>
           <div className="mt-8 border-t pt-8">
             <p className="text-xs text-gray-500">
-              © {new Date().getFullYear()} T11 Platform. Все права защищены.
+              © {new Date().getFullYear()} TON 18. Все права защищены.
             </p>
           </div>
         </div>

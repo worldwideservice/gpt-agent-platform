@@ -8,7 +8,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin', 'cyrillic'] })
 
 export const metadata: Metadata = {
-  title: 'T11 - Create and Automate',
+  title: 'TON 18 - create infinity',
   description: 'Обучаемый виртуальный сотрудник для автоматизации общения с клиентами',
   manifest: '/manifest.json',
   metadataBase: new URL(process.env.NODE_ENV === 'production'
@@ -18,32 +18,32 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: false,
     statusBarStyle: 'default',
-    title: 'T11',
+    title: 'TON 18',
   },
   formatDetection: {
     telephone: false,
   },
   openGraph: {
     type: 'website',
-    siteName: 'T11 Platform',
-    title: 'T11 - Create and Automate',
+    siteName: 'TON 18',
+    title: 'TON 18 - create infinity',
     description: 'Обучаемый виртуальный сотрудник для автоматизации общения с клиентами',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'T11 Platform',
+        alt: 'TON 18 Platform',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'T11 - Create and Automate',
+    title: 'TON 18 - create infinity',
     description: 'Обучаемый виртуальный сотрудник для автоматизации общения с клиентами',
     images: ['/og-image.png'],
   },
- robots: {
+  robots: {
  index: true,
  follow: true,
  googleBot: {
@@ -81,7 +81,7 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: 'T11 Platform',
+    name: 'TON 18',
     description: 'Обучаемый виртуальный сотрудник для автоматизации общения с клиентами',
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web Browser',
@@ -92,7 +92,7 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
     },
     creator: {
       '@type': 'Organization',
-      name: 'T11',
+      name: 'TON 18',
     },
  featureList: [
  'AI-powered customer communication',
