@@ -265,7 +265,11 @@ const scheduleNextStep = async (
       .single()
 
     if (execution) {
-      const sequence = execution.sequences as { name: string; agent_id: string | null } | null
+      // sequences может быть массивом или объектом в зависимости от запроса
+      const sequencesData = execution.sequences
+      const sequence = Array.isArray(sequencesData) 
+        ? (sequencesData[0] as unknown as { name: string; agent_id: string | null } | undefined)
+        : (sequencesData as unknown as { name: string; agent_id: string | null } | null)
       const { logActivity } = await import('./activity-logger')
       await logActivity({
         orgId: execution.org_id,
