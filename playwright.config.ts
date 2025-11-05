@@ -8,6 +8,13 @@ export default defineConfig({
  // Папка с тестами
  testDir: './tests',
  
+ // Исключаем unit тесты и integration тесты (они используют vitest, не Playwright)
+ testIgnore: [
+   '**/unit/**',
+   '**/integration/**',
+   '**/*.test.ts', // Исключаем файлы с расширением .test.ts (vitest тесты)
+ ],
+ 
  // Папка для скриншотов и артефактов
  outputDir: './test-results',
  
