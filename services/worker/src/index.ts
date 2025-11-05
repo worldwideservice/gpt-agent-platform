@@ -89,20 +89,28 @@ const connection = new Redis(redisUrl, {
   // Это может помочь избежать проблем с сетью в некоторых регионах
   // family: undefined, // Удалено - используем дефолтное поведение системы
   retryStrategy: (times) => {
-    // Экспоненциальная задержка с максимальным ограничением
-    const delay = Math.min(times * 200, 10000) // Увеличена задержка до 10 секунд максимум
-    logger.warn(`Redis retry attempt ${times}, delay: ${delay}ms`, {
+    // Экспоненциальная задержка с jitter для избежания thundering herd
+    // Формула: baseDelay * (2^attempt) + random(0, baseDelay)
+    const baseDelay = 200
+    const exponentialDelay = Math.min(baseDelay * Math.pow(2, times - 1), 10000) // Максимум 10 секунд
+    const jitter = Math.random() * baseDelay // Добавляем случайность 0-200ms
+    const delay = Math.min(exponentialDelay + jitter, 15000) // Финальная задержка с ограничением 15 секунд
+    
+    logger.warn(`Redis retry attempt ${times}, delay: ${Math.round(delay)}ms`, {
       event: 'redis.retry',
       attempt: times,
-      delay,
+      delay: Math.round(delay),
+      exponentialDelay: Math.round(exponentialDelay),
+      jitter: Math.round(jitter),
     })
-    if (times > 20) {
-      logger.error(`Redis connection failed after ${times} attempts`, {
+    
+    if (times > 30) {
+      logger.error(`Redis connection failed after ${times} attempts, will continue with max delay`, {
         event: 'redis.connection.failed',
         attempts: times,
       })
-      // Не возвращаем null, чтобы продолжить попытки, но с ограничением
-      return Math.min(delay, 15000) // Максимальная задержка 15 секунд
+      // Не возвращаем null, чтобы продолжить попытки, но с максимальной задержкой
+      return 15000 // Максимальная задержка 15 секунд
     }
     return delay
   },
@@ -117,36 +125,50 @@ const connection = new Redis(redisUrl, {
       return false
     }
     
-    // Если ошибка аутентификации, не переподключаемся (проблема с токеном)
-    if (errorMessage.includes('auth') || errorMessage.includes('password') || errorMessage.includes('wrong username-password')) {
-      logger.error('Redis authentication failed, check UPSTASH_REDIS_REST_TOKEN', err, {
-        event: 'redis.auth.failed',
-      })
-      return false
-    }
-    
-    // Если ошибка таймаута, пробуем переподключиться
-    if (errorMessage.includes('timeout') || errorMessage.includes('timed-out')) {
+    // ВАЖНО: Upstash может возвращать таймаут как "timed-out or wrong username-password"
+    // Если ошибка содержит "timed-out", пробуем переподключиться (даже если есть "wrong username-password")
+    // Это может быть временный сетевой таймаут, а не реальная проблема с токеном
+    if (errorMessage.includes('timed-out') || errorMessage.includes('timeout')) {
+      // Если ошибка содержит и "timed-out" и "wrong username-password", это скорее всего временный таймаут
+      if (errorMessage.includes('wrong username-password')) {
+        logger.warn('Redis timeout with auth error (likely temporary), will reconnect', {
+          event: 'redis.timeout.auth',
+          error: err.message,
+        })
+        return true // Пробуем переподключиться при временном таймауте
+      }
       logger.warn('Redis timeout, will reconnect', {
         event: 'redis.timeout',
+        error: err.message,
       })
       return true
+    }
+    
+    // Если ошибка аутентификации БЕЗ таймаута, не переподключаемся (реальная проблема с токеном)
+    if ((errorMessage.includes('auth') || errorMessage.includes('password') || errorMessage.includes('wrong username-password')) 
+        && !errorMessage.includes('timeout') && !errorMessage.includes('timed-out')) {
+      logger.error('Redis authentication failed (no timeout), check UPSTASH_REDIS_REST_TOKEN', err, {
+        event: 'redis.auth.failed',
+        error: err.message,
+      })
+      return false
     }
     
     // Если READONLY ошибка, переподключаемся
     if (errorMessage.includes('readonly')) {
       logger.warn('Redis READONLY error, reconnecting...', {
         event: 'redis.readonly',
+        error: err.message,
       })
       return true
     }
     
-    // Для других ошибок не переподключаемся автоматически
-    logger.warn('Redis error, not reconnecting', {
+    // Для других ошибок пробуем переподключиться (может быть временная проблема)
+    logger.warn('Redis error, will reconnect', {
       event: 'redis.error',
       error: err.message,
     })
-    return false
+    return true // Изменено: теперь переподключаемся при неизвестных ошибках (может быть временная проблема)
   },
 })
 
@@ -175,6 +197,63 @@ connection.on('close', () => {
 connection.on('reconnecting', () => {
   logger.redisReconnectAttempt(metrics.getMetrics().redis.reconnectAttempts)
   metrics.redisReconnectAttempt()
+})
+
+// Периодическая проверка подключения (health check)
+// Выполняется каждые 30 секунд для автоматического обнаружения проблем
+let healthCheckInterval: ReturnType<typeof setInterval> | null = null
+const startHealthCheck = () => {
+  if (healthCheckInterval) {
+    clearInterval(healthCheckInterval)
+  }
+  
+  healthCheckInterval = setInterval(async () => {
+    try {
+      // Простая проверка - попытка выполнить PING
+      const result = await connection.ping()
+      if (result === 'PONG') {
+        // Подключение работает нормально
+        logger.debug('Redis health check: OK', {
+          event: 'redis.health.check',
+          status: 'ok',
+        })
+      } else {
+        logger.warn('Redis health check: unexpected response', {
+          event: 'redis.health.check',
+          status: 'unexpected',
+          response: result,
+        })
+      }
+    } catch (error) {
+      // При ошибке health check логируем, но не переподключаемся вручную
+      // ioredis сам переподключится через reconnectOnError
+      logger.warn('Redis health check: failed', {
+        event: 'redis.health.check',
+        status: 'failed',
+        error: error instanceof Error ? error.message : String(error),
+      })
+    }
+  }, 30000) // Проверка каждые 30 секунд
+  
+  logger.info('Redis health check started (every 30s)', {
+    event: 'redis.health.check.start',
+  })
+}
+
+// Запускаем health check после успешного подключения
+connection.once('ready', () => {
+  startHealthCheck()
+})
+
+// Останавливаем health check при закрытии подключения
+connection.on('close', () => {
+  if (healthCheckInterval) {
+    clearInterval(healthCheckInterval)
+    healthCheckInterval = null
+    logger.info('Redis health check stopped', {
+      event: 'redis.health.check.stop',
+    })
+  }
 })
 
 const handlers = getTaskHandlers()
