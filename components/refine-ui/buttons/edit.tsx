@@ -30,10 +30,6 @@ type EditButtonProps = {
    * `meta` property is used when creating the URL for the related action and path.
    */
   meta?: Record<string, unknown>;
-  /**
-   * Click handler (optional)
-   */
-  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
 } & Omit<React.ComponentProps<typeof Button>, 'onClick'>;
 
 export const EditButton = React.forwardRef<
@@ -73,7 +69,8 @@ export const EditButton = React.forwardRef<
             }
             if (onClick) {
               e.preventDefault();
-              onClick(e);
+              // Приводим тип события к ожидаемому Button onClick
+              onClick(e as unknown as React.MouseEvent<HTMLButtonElement>);
             }
           }}
         >

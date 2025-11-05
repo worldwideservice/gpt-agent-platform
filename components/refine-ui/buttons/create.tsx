@@ -59,7 +59,8 @@ export const CreateButton = React.forwardRef<
           }
           if (onClick) {
             e.preventDefault();
-            onClick(e);
+            // Приводим тип события к ожидаемому Button onClick
+            onClick(e as unknown as React.MouseEvent<HTMLButtonElement>);
           }
         }}
       >
