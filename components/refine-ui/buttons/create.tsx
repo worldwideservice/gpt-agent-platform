@@ -25,7 +25,11 @@ type CreateButtonProps = {
    * `meta` property is used when creating the URL for the related action and path.
    */
   meta?: Record<string, unknown>;
-} & React.ComponentProps<typeof Button>;
+  /**
+   * Click handler (optional) - для совместимости с Button
+   */
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+} & Omit<React.ComponentProps<typeof Button>, 'onClick'>;
 
 export const CreateButton = React.forwardRef<
   React.ComponentRef<typeof Button>,
