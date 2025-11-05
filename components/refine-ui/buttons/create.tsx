@@ -4,7 +4,6 @@ import React from "react";
 import { useParams } from "next/navigation";
 import { type BaseKey, useCreateButton } from "@refinedev/core";
 import { Plus } from "lucide-react";
-import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 
 type CreateButtonProps = {
@@ -25,20 +24,16 @@ type CreateButtonProps = {
    * `meta` property is used when creating the URL for the related action and path.
    */
   meta?: Record<string, unknown>;
-  /**
-   * Click handler (optional) - для совместимости с Button
-   */
-  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
 } & Omit<React.ComponentProps<typeof Button>, 'onClick'>;
 
 export const CreateButton = React.forwardRef<
   React.ComponentRef<typeof Button>,
   CreateButtonProps
->(({ resource, accessControl, meta, children, onClick, ...rest }, ref) => {
+>(({ resource, accessControl, meta, children, ...rest }, ref) => {
   const params = useParams();
   const tenantId = (params?.tenantId as string) || "";
   
-  const { hidden, disabled, to, label } = useCreateButton({
+  const { hidden, disabled, LinkComponent, to, label } = useCreateButton({
     resource,
     accessControl,
     meta,
@@ -54,27 +49,17 @@ export const CreateButton = React.forwardRef<
 
   return (
     <Button {...rest} ref={ref} disabled={isDisabled} asChild>
-      <Link
-        href={href || "#"}
-        onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-          if (isDisabled) {
-            e.preventDefault();
-            return;
-          }
-          if (onClick) {
-            e.preventDefault();
-            // Приводим тип события к ожидаемому Button onClick
-            onClick(e as unknown as React.MouseEvent<HTMLButtonElement>);
-          }
-        }}
+      <LinkComponent
+        to={href || "#"}
+        replace={false}
       >
         {children ?? (
           <div className="flex items-center gap-2 font-semibold">
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 w-4" />
             <span>{label ?? "Create"}</span>
           </div>
         )}
-      </Link>
+      </LinkComponent>
     </Button>
   );
 });

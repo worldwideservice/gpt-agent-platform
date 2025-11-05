@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import { type BaseKey, useEditButton } from "@refinedev/core";
 import { Button } from "@/components/ui/Button";
 import { Pencil } from "lucide-react";
-import Link from "next/link";
 
 type EditButtonProps = {
   /**
@@ -30,10 +29,6 @@ type EditButtonProps = {
    * `meta` property is used when creating the URL for the related action and path.
    */
   meta?: Record<string, unknown>;
-  /**
-   * Click handler (optional) - для совместимости с Button
-   */
-  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
 } & Omit<React.ComponentProps<typeof Button>, 'onClick'>;
 
 export const EditButton = React.forwardRef<
@@ -41,13 +36,13 @@ export const EditButton = React.forwardRef<
   EditButtonProps
 >(
   (
-    { resource, recordItemId, accessControl, meta, children, onClick, ...rest },
+    { resource, recordItemId, accessControl, meta, children, ...rest },
     ref,
   ) => {
     const params = useParams();
     const tenantId = (params?.tenantId as string) || "";
     
-    const { hidden, disabled, to, label } = useEditButton({
+    const { hidden, disabled, LinkComponent, to, label } = useEditButton({
       resource,
       id: recordItemId,
       accessControl,
@@ -64,19 +59,9 @@ export const EditButton = React.forwardRef<
 
     return (
       <Button {...rest} ref={ref} disabled={isDisabled} asChild>
-        <Link
-          href={href || "#"}
-          onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-            if (isDisabled) {
-              e.preventDefault();
-              return;
-            }
-            if (onClick) {
-              e.preventDefault();
-              // Приводим тип события к ожидаемому Button onClick
-              onClick(e as unknown as React.MouseEvent<HTMLButtonElement>);
-            }
-          }}
+        <LinkComponent
+          to={href || "#"}
+          replace={false}
         >
           {children ?? (
             <div className="flex items-center gap-2 font-semibold">
@@ -84,7 +69,7 @@ export const EditButton = React.forwardRef<
               <span>{label}</span>
             </div>
           )}
-        </Link>
+        </LinkComponent>
       </Button>
     );
   },
