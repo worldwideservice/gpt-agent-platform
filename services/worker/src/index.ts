@@ -27,58 +27,44 @@ logger.info('Environment variables loaded', {
 metrics.init(env.JOB_QUEUE_NAME, env.JOB_CONCURRENCY)
 
 // Для прямого подключения к Upstash Redis через ioredis
-// Приоритет: используем REDIS_URL если он есть, иначе формируем из REST URL и токена
+// ВСЕГДА формируем URL из UPSTASH_REDIS_REST_URL для надежности
+// Игнорируем REDIS_URL полностью, так как он может содержать неправильный хост
 let redisUrl: string
 let redisHost: string = ''
-let redisPort: number = 6380
+let redisPort: number = 6379 // Upstash использует 6379 для TLS (не 6380)
 
-if (process.env.REDIS_URL && process.env.REDIS_URL.startsWith('rediss://')) {
-  // Используем готовый REDIS_URL (если он есть и правильного формата)
-  redisUrl = process.env.REDIS_URL
-  
-  // Извлекаем host и port для логирования
-  try {
-    const redisUrlObj = new URL(redisUrl)
-    redisHost = redisUrlObj.hostname
-    if (redisUrlObj.port) {
-      redisPort = Number.parseInt(redisUrlObj.port, 10)
-    }
-  } catch {
-    // Игнорируем ошибку парсинга
-  }
-  
-  logger.info('Using REDIS_URL from environment', {
-    redisHost,
-    redisPort,
-    event: 'redis.config',
-  })
+// Формируем URL из REST URL и токена
+// REST URL: https://xxx.upstash.io (без порта, это HTTPS endpoint)
+// Для прямого TCP подключения используем тот же хост, но порт 6379 (TLS)
+const upstashRestUrl = new URL(env.UPSTASH_REDIS_REST_URL)
+redisHost = upstashRestUrl.hostname
+
+// REST URL не содержит порт (это HTTPS endpoint), поэтому используем дефолтный порт для TLS
+// Upstash использует порт 6379 для TLS подключения (не 6380)
+// Если в будущем REST URL будет содержать порт, используем его
+if (upstashRestUrl.port) {
+  redisPort = Number.parseInt(upstashRestUrl.port, 10)
 } else {
-  // Формируем URL из REST URL и токена
-  // Формат для ioredis: rediss://default:TOKEN@ENDPOINT:PORT
-  const upstashRestUrl = new URL(env.UPSTASH_REDIS_REST_URL)
-  redisHost = upstashRestUrl.hostname
-  
-  // Получаем порт из REST URL или используем 6380 по умолчанию (Upstash часто использует 6380 для TLS)
-  if (upstashRestUrl.port) {
-    redisPort = Number.parseInt(upstashRestUrl.port, 10)
-  }
-
-  // Формат для ioredis: rediss://default:TOKEN@ENDPOINT:PORT
-  // Для Upstash:
-  // - Протокол: rediss:// (TLS обязателен)
-  // - Username: default (обязателен)
-  // - Порт: обычно 6380 (для TLS подключения, но может быть 6379)
-  // - Password: REST Token (один и тот же токен для REST API и прямого подключения)
-  redisUrl = `rediss://default:${encodeURIComponent(env.UPSTASH_REDIS_REST_TOKEN)}@${redisHost}:${redisPort}`
-  
-  logger.info('Redis URL constructed from REST URL', {
-    redisHost,
-    redisPort,
-    hasToken: !!env.UPSTASH_REDIS_REST_TOKEN,
-    tokenLength: env.UPSTASH_REDIS_REST_TOKEN.length,
-    event: 'redis.config',
-  })
+  // Для Upstash прямой TCP подключение использует порт 6379 с TLS
+  redisPort = 6379
 }
+
+// Формат для ioredis: rediss://default:TOKEN@ENDPOINT:PORT
+// Для Upstash:
+// - Протокол: rediss:// (TLS обязателен)
+// - Username: default (обязателен)
+// - Порт: 6379 (для TLS подключения к Upstash)
+// - Password: REST Token (один и тот же токен для REST API и прямого подключения)
+redisUrl = `rediss://default:${encodeURIComponent(env.UPSTASH_REDIS_REST_TOKEN)}@${redisHost}:${redisPort}`
+
+logger.info('Redis URL constructed from REST URL (REDIS_URL ignored)', {
+  redisHost,
+  redisPort,
+  hasToken: !!env.UPSTASH_REDIS_REST_TOKEN,
+  tokenLength: env.UPSTASH_REDIS_REST_TOKEN.length,
+  restUrl: env.UPSTASH_REDIS_REST_URL,
+  event: 'redis.config',
+})
 
 logger.info('Redis URL ready', {
   redisHost,
@@ -92,29 +78,31 @@ logger.info('Redis URL ready', {
 const connection = new Redis(redisUrl, {
   maxRetriesPerRequest: null,
   enableReadyCheck: true,
-  connectTimeout: 30000, // Увеличено до 30 секунд для Upstash
+  connectTimeout: 60000, // Увеличено до 60 секунд для Upstash (может быть медленное подключение)
   lazyConnect: false,
   // TLS настройки для Upstash
   tls: {
     // Upstash использует самоподписанные сертификаты, поэтому нужно разрешить
     rejectUnauthorized: false, // ВАЖНО: для Upstash нужно отключить проверку сертификата
   },
-  // Убираем принудительный family, позволяем системе выбрать
-  family: 4, // Принудительно используем IPv4 (Upstash лучше работает с IPv4)
+  // Убираем принудительный family - позволяем системе выбрать IPv4/IPv6
+  // Это может помочь избежать проблем с сетью в некоторых регионах
+  // family: undefined, // Удалено - используем дефолтное поведение системы
   retryStrategy: (times) => {
-    const delay = Math.min(times * 100, 3000) // Увеличена максимальная задержка
+    // Экспоненциальная задержка с максимальным ограничением
+    const delay = Math.min(times * 200, 10000) // Увеличена задержка до 10 секунд максимум
     logger.warn(`Redis retry attempt ${times}, delay: ${delay}ms`, {
       event: 'redis.retry',
       attempt: times,
       delay,
     })
-    if (times > 10) {
+    if (times > 20) {
       logger.error(`Redis connection failed after ${times} attempts`, {
         event: 'redis.connection.failed',
         attempts: times,
       })
       // Не возвращаем null, чтобы продолжить попытки, но с ограничением
-      return Math.min(delay, 5000)
+      return Math.min(delay, 15000) // Максимальная задержка 15 секунд
     }
     return delay
   },
@@ -154,8 +142,9 @@ const connection = new Redis(redisUrl, {
     }
     
     // Для других ошибок не переподключаемся автоматически
-    logger.warn('Redis error, not reconnecting', err, {
+    logger.warn('Redis error, not reconnecting', {
       event: 'redis.error',
+      error: err.message,
     })
     return false
   },
