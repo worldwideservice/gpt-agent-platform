@@ -179,7 +179,10 @@ export function TriggersManager({ agentId }: TriggersManagerProps) {
               </TableHeader>
               <TableBody>
                 {triggers.map((trigger) => (
-                  <TableRow key={trigger.id}>
+                  <TableRow 
+                    key={trigger.id}
+                    className="transition-all duration-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm cursor-pointer"
+                  >
                     <TableCell>
                       <div>
                         <div className="font-medium">{trigger.name}</div>

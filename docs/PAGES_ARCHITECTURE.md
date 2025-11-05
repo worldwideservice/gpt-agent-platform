@@ -399,15 +399,7 @@
 - Описание всех API endpoints
 - Примеры запросов и ответов
 
-### 43. `/graphql-playground` - GraphQL Playground
-**Назначение:** Интерактивная среда для тестирования GraphQL запросов
-**Файл:** `app/graphql-playground/page.tsx`
-**Описание:**
-- GraphQL схема
-- Выполнение запросов и мутаций
-- Документация типов
-
-### 44. `/test-kommo` - Тестовая страница Kommo интеграции
+### 43. `/test-kommo` - Тестовая страница Kommo интеграции
 **Назначение:** Тестирование интеграции с Kommo CRM
 **Файл:** `app/test-kommo/page.tsx`
 **Описание:**
@@ -477,7 +469,6 @@
 Служебные:
 ├── /admin
 ├── /api-docs
-├── /graphql-playground
 └── /test-kommo
 ```
 

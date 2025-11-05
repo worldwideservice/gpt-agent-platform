@@ -42,3 +42,4 @@ echo "Подождите 1-2 минуты и проверьте:"
 echo "  ./scripts/check-worker-health.sh"
 echo ""
 
+

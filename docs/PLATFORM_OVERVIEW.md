@@ -454,16 +454,6 @@
 
 **API:** `GET /api/docs` — Swagger JSON
 
-### GraphQL Playground (`/graphql-playground`)
-
-**Страница:** `/graphql-playground`
-**Функционал:**
-- GraphQL запросы
-- Схема API
-- Интерактивный редактор
-
-**API:** `POST /api/graphql`
-
 ---
 
 ## 🏗️ Архитектура системы

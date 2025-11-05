@@ -1,133 +1,162 @@
 /**
- * Универсальный retry механизм с exponential backoff
- * Используется для надежных вызовов внешних API
+ * Retry utility with exponential backoff
+ * 
+ * Provides professional retry mechanism for async operations
+ * with configurable attempts, delays, and error handling.
  */
 
 export interface RetryOptions {
+  /** Maximum number of retry attempts (default: 3) */
+  maxAttempts?: number
+  /** @deprecated Use maxAttempts instead - Maximum number of retry attempts (default: 3) */
   maxRetries?: number
+  /** Initial delay in milliseconds (default: 1000) */
   initialDelay?: number
+  /** Maximum delay in milliseconds (default: 10000) */
   maxDelay?: number
+  /** Multiplier for exponential backoff (default: 2) */
   backoffMultiplier?: number
-  retryableErrors?: Array<string | RegExp>
-  onRetry?: (attempt: number, error: Error, delay: number) => void
-}
-
-const DEFAULT_OPTIONS: Required<Omit<RetryOptions, 'retryableErrors' | 'onRetry'>> = {
-  maxRetries: 3,
-  initialDelay: 1000, // 1 секунда
-  maxDelay: 30000, // 30 секунд
-  backoffMultiplier: 2,
+  /** Array of regex patterns or strings to match retryable errors */
+  retryableErrors?: (RegExp | string)[]
+  /** Function to determine if error should be retried (default: retry all) */
+  shouldRetry?: (error: unknown, attempt: number) => boolean
+  /** Callback before each retry attempt */
+  onRetry?: (error: unknown, attempt: number, delay: number) => void
 }
 
 /**
- * Проверяет, является ли ошибка retryable
+ * Calculates delay for exponential backoff
  */
-function isRetryableError(error: unknown, retryableErrors?: Array<string | RegExp>): boolean {
-  if (!retryableErrors || retryableErrors.length === 0) {
-    // По умолчанию retry для сетевых ошибок и 5xx
-    if (error instanceof Error) {
-      const errorMessage = error.message.toLowerCase()
-      return (
-        errorMessage.includes('network') ||
-        errorMessage.includes('timeout') ||
-        errorMessage.includes('econnrefused') ||
-        errorMessage.includes('econnreset') ||
-        errorMessage.includes('etimedout')
-      )
-    }
-    return false
-  }
-
-  const errorString = error instanceof Error ? error.message : String(error)
-
-  return retryableErrors.some((pattern) => {
-    if (typeof pattern === 'string') {
-      return errorString.includes(pattern)
-    }
-    return pattern.test(errorString)
-  })
+function calculateDelay(
+  attempt: number,
+  initialDelay: number,
+  maxDelay: number,
+  multiplier: number
+): number {
+  const delay = initialDelay * Math.pow(multiplier, attempt)
+  return Math.min(delay, maxDelay)
 }
 
 /**
- * Вычисляет задержку для следующей попытки (exponential backoff)
+ * Sleep utility
  */
-function calculateDelay(attempt: number, options: Required<Omit<RetryOptions, 'retryableErrors' | 'onRetry'>>): number {
-  const delay = options.initialDelay * Math.pow(options.backoffMultiplier, attempt - 1)
-  return Math.min(delay, options.maxDelay)
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 /**
- * Выполняет функцию с retry механизмом
+ * Retries an async function with exponential backoff
+ * 
+ * @example
+ * ```ts
+ * const result = await retry(
+ *   () => fetch('/api/data'),
+ *   {
+ *     maxAttempts: 3,
+ *     initialDelay: 1000,
+ *     onRetry: (error, attempt, delay) => {
+ *       console.log(`Retry ${attempt} after ${delay}ms`)
+ *     }
+ *   }
+ * )
+ * ```
  */
-export async function withRetry<T>(
+export async function retry<T>(
   fn: () => Promise<T>,
   options: RetryOptions = {}
 ): Promise<T> {
-  const opts = {
-    ...DEFAULT_OPTIONS,
-    ...options,
-  }
+  // Support both maxAttempts and maxRetries for backward compatibility
+  const maxAttempts = options.maxAttempts ?? options.maxRetries ?? 3
+  
+  const {
+    initialDelay = 1000,
+    maxDelay = 10000,
+    backoffMultiplier = 2,
+    retryableErrors,
+    shouldRetry,
+    onRetry,
+  } = options
 
-  let lastError: Error | unknown
+  // Create default shouldRetry if retryableErrors is provided
+  const defaultShouldRetry = retryableErrors
+    ? (error: unknown) => {
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        return retryableErrors.some(pattern => {
+          if (pattern instanceof RegExp) {
+            return pattern.test(errorMessage)
+          }
+          return errorMessage.toLowerCase().includes(pattern.toLowerCase())
+        })
+      }
+    : () => true
 
-  for (let attempt = 1; attempt <= opts.maxRetries; attempt++) {
+  const shouldRetryFn = shouldRetry || defaultShouldRetry
+
+  let lastError: unknown
+  let attempt = 0
+
+  while (attempt < maxAttempts) {
     try {
       return await fn()
     } catch (error) {
       lastError = error
+      attempt++
 
-      // Если это последняя попытка или ошибка не retryable - выбрасываем
-      if (attempt >= opts.maxRetries || !isRetryableError(error, opts.retryableErrors)) {
+      // Check if we should retry
+      if (attempt >= maxAttempts || !shouldRetryFn(error, attempt)) {
         throw error
       }
 
-      // Вычисляем задержку
-      const delay = calculateDelay(attempt, opts)
+      // Calculate delay with exponential backoff
+      const delay = calculateDelay(
+        attempt - 1,
+        initialDelay,
+        maxDelay,
+        backoffMultiplier
+      )
 
-      // Вызываем callback если есть
-      if (opts.onRetry && error instanceof Error) {
-        opts.onRetry(attempt, error, delay)
+      // Call onRetry callback if provided
+      if (onRetry) {
+        onRetry(error, attempt, delay)
       }
 
-      // Логируем retry
-      if (process.env.NODE_ENV === 'development') {
-        console.warn(
-          `[retry] Attempt ${attempt}/${opts.maxRetries} failed, retrying in ${delay}ms:`,
-          error instanceof Error ? error.message : String(error)
-        )
-      }
-
-      // Ждем перед следующей попыткой
-      await new Promise((resolve) => setTimeout(resolve, delay))
+      // Wait before retrying
+      await sleep(delay)
     }
   }
 
-  // Не должно быть достигнуто, но TypeScript требует
   throw lastError
 }
 
 /**
- * Специализированный retry для API вызовов
+ * Retries with jitter (randomized delay) to prevent thundering herd
  */
-export async function retryApiCall<T>(
+export async function retryWithJitter<T>(
   fn: () => Promise<T>,
   options: RetryOptions = {}
 ): Promise<T> {
-  return withRetry(fn, {
-    maxRetries: 3,
-    initialDelay: 1000,
-    maxDelay: 10000,
-    retryableErrors: [
-      /network/i,
-      /timeout/i,
-      /econnrefused/i,
-      /econnreset/i,
-      /etimedout/i,
-      /503/i,
-      /502/i,
-      /500/i,
-    ],
+  const jitterOptions = {
     ...options,
-  })
+    onRetry: async (error: unknown, attempt: number, delay: number) => {
+      // Add random jitter (±20%)
+      const jitter = delay * 0.2 * (Math.random() * 2 - 1)
+      const jitteredDelay = Math.max(0, delay + jitter)
+      
+      await sleep(jitteredDelay)
+      options.onRetry?.(error, attempt, jitteredDelay)
+    },
+  }
+
+  return retry(fn, jitterOptions)
 }
 
+/**
+ * Legacy function for backward compatibility
+ * @deprecated Use retry() instead
+ */
+export async function retryApiCall<T>(
+  fn: () => Promise<T>,
+  options?: RetryOptions
+): Promise<T> {
+  return retry(fn, options)
+}

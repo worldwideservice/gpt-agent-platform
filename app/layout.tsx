@@ -106,7 +106,7 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
  }
 
  return (
- <html lang={locale} className="light">
+ <html lang={locale} className="light" suppressHydrationWarning>
  <head>
  <script
  type="application/ld+json"

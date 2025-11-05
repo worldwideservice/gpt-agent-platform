@@ -148,6 +148,29 @@ const nextConfig = {
       }
     }
 
+    // Remove console.log in production (keep console.error and console.warn)
+    if (!dev) {
+      config.optimization = {
+        ...config.optimization,
+        minimize: true,
+      }
+      
+      // Add Terser plugin configuration to remove console.log
+      if (config.optimization.minimizer) {
+        config.optimization.minimizer.forEach((minimizer) => {
+          if (minimizer.constructor.name === 'TerserPlugin' || minimizer.constructor.name === 'SwcMinifyPlugin') {
+            if (minimizer.options) {
+              minimizer.options.compress = {
+                ...(minimizer.options.compress || {}),
+                drop_console: true, // Remove all console.* in production
+                pure_funcs: ['console.log', 'console.debug', 'console.info'], // Keep error and warn
+              }
+            }
+          }
+        })
+      }
+    }
+
     return config
   },
 }

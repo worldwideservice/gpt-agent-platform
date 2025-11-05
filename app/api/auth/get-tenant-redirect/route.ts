@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { getTenantIdFromSession } from "@/lib/utils/getTenantRedirect";
+import { logger } from "@/lib/utils/logger";
+import { metrics } from "@/lib/utils/metrics";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -8,14 +10,19 @@ export const runtime = "nodejs";
 /**
  * API endpoint для получения tenant-id из текущей сессии
  * Используется клиентским компонентом после логина для редиректа
+ * 
+ * Performance: Оптимизирован для быстрого ответа
+ * Security: Не возвращает sensitive данные
  */
 export async function GET() {
+ const startTime = Date.now()
+ 
  try {
- console.log("[get-tenant-redirect] API called");
+ logger.debug("[get-tenant-redirect] API called");
  const tenantId = await getTenantIdFromSession();
 
  if (!tenantId) {
- console.warn("[get-tenant-redirect] No tenant-id found in session");
+ logger.warn("[get-tenant-redirect] No tenant-id found in session");
  return NextResponse.json(
  {
  success: false,
@@ -26,13 +33,33 @@ export async function GET() {
  );
  }
 
- console.log("[get-tenant-redirect] Successfully got tenant-id:", tenantId);
+ const duration = Date.now() - startTime
+ logger.debug("[get-tenant-redirect] Successfully got tenant-id", {
+ tenantId: tenantId.substring(0, 8) + '...', // Partial for logging
+ })
+ 
+ logger.performance("get-tenant-redirect", duration)
+ 
+ // Record metric for monitoring
+ metrics.recordApiCall('/api/auth/get-tenant-redirect', duration, 200)
+ 
  return NextResponse.json({
  success: true,
  tenantId,
  });
  } catch (error) {
- console.error("[get-tenant-redirect] Failed to get tenant redirect:", error);
+ const errorInstance = error instanceof Error ? error : new Error(String(error))
+ const duration = Date.now() - startTime
+ logger.error("[get-tenant-redirect] Failed to get tenant redirect", errorInstance, {
+ duration: `${duration}ms`,
+ })
+ 
+ // Record error metric
+ metrics.recordError('get-tenant-redirect', {
+ errorType: errorInstance.message,
+ })
+ metrics.recordApiCall('/api/auth/get-tenant-redirect', duration, 500)
+ 
  return NextResponse.json(
  {
  success: false,

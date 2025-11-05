@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/Textarea'
 import { Badge } from '@/components/ui/Badge'
 import { Progress } from '@/components/ui/progress'
+import { ProgressRing } from '@/components/ui/progress-ring'
 import { useToast } from '@/components/ui/toast-context'
 import {
   AlertDialog,
@@ -45,6 +46,7 @@ export function TrainingTab({ agentId }: TrainingTabProps) {
   const [assets, setAssets] = useState<Asset[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [dragActive, setDragActive] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [assetToDelete, setAssetToDelete] = useState<string | null>(null)
@@ -115,28 +117,63 @@ export function TrainingTab({ agentId }: TrainingTabProps) {
     }
 
     setUploading(true)
+    setUploadProgress(0)
 
     try {
       const formData = new FormData()
       formData.append('file', file)
 
-      const response = await fetch(`/api/agents/${agentId}/assets`, {
-        method: 'POST',
-        body: formData,
+      // Используем XMLHttpRequest для отслеживания прогресса загрузки
+      const xhr = new XMLHttpRequest()
+
+      // Отслеживаем прогресс загрузки
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const percentComplete = (e.loaded / e.total) * 100
+          setUploadProgress(Math.round(percentComplete))
+        }
       })
 
-      const data = await response.json()
-
-      if (data.success) {
-        push({
-          title: 'Успешно',
-          description: 'Файл загружен и будет обработан',
-          variant: 'success',
+      const uploadPromise = new Promise<void>((resolve, reject) => {
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const data = JSON.parse(xhr.responseText)
+              if (data.success) {
+                resolve()
+              } else {
+                reject(new Error(data.error || 'Не удалось загрузить файл'))
+              }
+            } catch (error) {
+              reject(new Error('Ошибка при обработке ответа'))
+            }
+          } else {
+            reject(new Error(`Ошибка загрузки: ${xhr.statusText}`))
+          }
         })
-        await loadAssets()
-      } else {
-        throw new Error(data.error || 'Не удалось загрузить файл')
-      }
+
+        xhr.addEventListener('error', () => {
+          reject(new Error('Ошибка сети при загрузке файла'))
+        })
+
+        xhr.addEventListener('abort', () => {
+          reject(new Error('Загрузка отменена'))
+        })
+
+        xhr.open('POST', `/api/agents/${agentId}/assets`)
+        xhr.withCredentials = true // Для сохранения сессии
+        xhr.send(formData)
+      })
+
+      await uploadPromise
+
+      push({
+        title: 'Успешно',
+        description: 'Файл загружен и будет обработан',
+        variant: 'success',
+      })
+      setUploadProgress(100)
+      await loadAssets()
     } catch (error) {
       console.error('Failed to upload file', error)
       push({
@@ -146,6 +183,7 @@ export function TrainingTab({ agentId }: TrainingTabProps) {
       })
     } finally {
       setUploading(false)
+      setTimeout(() => setUploadProgress(0), 1000) // Сбрасываем прогресс через секунду
     }
   }, [agentId, push, loadAssets])
 
@@ -311,31 +349,43 @@ export function TrainingTab({ agentId }: TrainingTabProps) {
             className="hidden"
             disabled={uploading}
           />
-          <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-          <p className="text-sm font-medium text-gray-700 mb-2">
-            Перетащите файл сюда или нажмите для выбора
-          </p>
-          <p className="text-xs text-gray-500 mb-4">
-            Поддерживаются: PDF, DOCX, TXT, HTML, Markdown (до 50 MB)
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-          >
-            {uploading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Загрузка...
-              </>
-            ) : (
-              <>
+          {uploading ? (
+            <div className="flex flex-col items-center">
+              <ProgressRing 
+                value={uploadProgress} 
+                size={80} 
+                strokeWidth={6}
+                color="#E63946"
+                showLabel={true}
+                className="mb-4"
+              />
+              <p className="text-sm font-medium text-gray-700 mb-1">
+                Загрузка файла...
+              </p>
+              <p className="text-xs text-gray-500">
+                {uploadProgress}% завершено
+              </p>
+            </div>
+          ) : (
+            <>
+              <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+              <p className="text-sm font-medium text-gray-700 mb-2">
+                Перетащите файл сюда или нажмите для выбора
+              </p>
+              <p className="text-xs text-gray-500 mb-4">
+                Поддерживаются: PDF, DOCX, TXT, HTML, Markdown (до 50 MB)
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
                 <Upload className="h-4 w-4 mr-2" />
                 Загрузить файл
-              </>
-            )}
-          </Button>
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Список загруженных файлов */}
@@ -372,9 +422,18 @@ export function TrainingTab({ agentId }: TrainingTabProps) {
                         )}
                       </div>
                       {asset.status === 'processing' && (
-                        <div className="mt-2">
-                          <Progress value={50} className="h-2" />
-                          <p className="text-xs text-gray-500 mt-1">Обработка файла...</p>
+                        <div className="mt-2 flex items-center gap-3">
+                          <ProgressRing 
+                            value={50} 
+                            size={40} 
+                            strokeWidth={4}
+                            color="#0284c7"
+                            showLabel={false}
+                          />
+                          <div className="flex-1">
+                            <Progress value={50} className="h-2" />
+                            <p className="text-xs text-gray-500 mt-1">Обработка файла...</p>
+                          </div>
                         </div>
                       )}
                       {asset.status === 'failed' && asset.processing_error && (

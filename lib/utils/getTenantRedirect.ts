@@ -8,24 +8,42 @@ import { auth } from "@/auth";
 import { getOrganizationsForUser } from "@/lib/repositories/organizations";
 import { generateTenantId } from "@/lib/utils/tenant";
 import { getSupabaseServiceRoleClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/utils/logger";
+import { tenantCache } from "@/lib/utils/tenant-cache";
 
 /**
  * Получает tenant-id из текущей сессии пользователя
  * @returns tenant-id в формате {numericId}-{slug} или null если не удалось получить
  */
 export async function getTenantIdFromSession(): Promise<string | null> {
+ const startTime = Date.now()
+ 
  try {
  const session = await auth();
 
- if (!session?.user?.orgId) {
- console.warn("[getTenantIdFromSession] No session or orgId found", {
+ if (!session?.user?.orgId || !session?.user?.id) {
+ logger.warn("[getTenantIdFromSession] No session or orgId found", {
  hasSession: !!session,
  hasOrgId: !!session?.user?.orgId,
+ hasUserId: !!session?.user?.id,
  });
  return null;
  }
 
- console.log("[getTenantIdFromSession] Getting organizations for user", {
+ // Check cache first
+ const cachedTenantId = tenantCache.get(session.user.id, session.user.orgId)
+ if (cachedTenantId) {
+ const duration = Date.now() - startTime
+ logger.debug("[getTenantIdFromSession] Tenant-id from cache", {
+ userId: session.user.id,
+ orgId: session.user.orgId,
+ duration: `${duration}ms`,
+ })
+ logger.performance("getTenantIdFromSession (cached)", duration)
+ return cachedTenantId
+ }
+
+ logger.debug("[getTenantIdFromSession] Getting organizations for user", {
  userId: session.user.id,
  orgId: session.user.orgId,
  });
@@ -39,7 +57,7 @@ export async function getTenantIdFromSession(): Promise<string | null> {
  null;
 
  if (!activeOrganization) {
- console.warn("[getTenantIdFromSession] No active organization found", {
+ logger.warn("[getTenantIdFromSession] No active organization found", {
  userId: session.user.id,
  organizationsCount: organizations.length,
  orgId: session.user.orgId,
@@ -47,7 +65,7 @@ export async function getTenantIdFromSession(): Promise<string | null> {
  return null;
  }
 
- console.log("[getTenantIdFromSession] Active organization found", {
+ logger.debug("[getTenantIdFromSession] Active organization found", {
  orgId: activeOrganization.id,
  orgName: activeOrganization.name,
  hasSlug: !!activeOrganization.slug,
@@ -58,7 +76,7 @@ export async function getTenantIdFromSession(): Promise<string | null> {
  
  // Если slug нет, получаем его из базы
  if (!slug) {
- console.log("[getTenantIdFromSession] Slug not in organization object, fetching from DB", {
+ logger.debug("[getTenantIdFromSession] Slug not in organization object, fetching from DB", {
  orgId: activeOrganization.id,
  });
  const supabase = getSupabaseServiceRoleClient();
@@ -69,22 +87,24 @@ export async function getTenantIdFromSession(): Promise<string | null> {
  .single();
 
  if (error) {
- console.error("[getTenantIdFromSession] Error fetching organization slug from DB", {
- orgId: activeOrganization.id,
- error: error.message,
- code: error.code,
- });
+ logger.error("[getTenantIdFromSession] Error fetching organization slug from DB", 
+  new Error(error.message), 
+  {
+   orgId: activeOrganization.id,
+   code: error.code,
+  }
+ );
  }
 
  if (!orgData) {
- console.warn("[getTenantIdFromSession] Organization not found in DB", {
+ logger.warn("[getTenantIdFromSession] Organization not found in DB", {
  orgId: activeOrganization.id,
  });
  }
 
  if (orgData?.slug) {
  slug = orgData.slug;
- console.log("[getTenantIdFromSession] Slug retrieved from DB", {
+ logger.debug("[getTenantIdFromSession] Slug retrieved from DB", {
  orgId: activeOrganization.id,
  slug,
  });
@@ -93,7 +113,7 @@ export async function getTenantIdFromSession(): Promise<string | null> {
 
  // Если slug все еще отсутствует, создаем дефолтный на основе ID
  if (!slug) {
- console.warn("[getTenantIdFromSession] Slug still missing, generating default", {
+ logger.warn("[getTenantIdFromSession] Slug still missing, generating default", {
  orgId: activeOrganization.id,
  orgName: activeOrganization.name,
  });
@@ -103,7 +123,7 @@ export async function getTenantIdFromSession(): Promise<string | null> {
  ? activeOrganization.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') || `org-${activeOrganization.id.substring(0, 8)}`
  : `org-${activeOrganization.id.substring(0, 8)}`;
  
- console.log("[getTenantIdFromSession] Generated default slug", {
+ logger.debug("[getTenantIdFromSession] Generated default slug", {
  orgId: activeOrganization.id,
  defaultSlug,
  });
@@ -117,14 +137,16 @@ export async function getTenantIdFromSession(): Promise<string | null> {
  .eq("id", activeOrganization.id);
  
  if (updateError) {
- console.error("[getTenantIdFromSession] Failed to update organization slug in DB", {
- orgId: activeOrganization.id,
- defaultSlug,
- error: updateError.message,
- code: updateError.code,
- });
+ logger.error("[getTenantIdFromSession] Failed to update organization slug in DB", 
+  new Error(updateError.message),
+  {
+   orgId: activeOrganization.id,
+   defaultSlug,
+   code: updateError.code,
+  }
+ );
  } else {
- console.log("[getTenantIdFromSession] Successfully updated organization slug in DB", {
+ logger.debug("[getTenantIdFromSession] Successfully updated organization slug in DB", {
  orgId: activeOrganization.id,
  slug: defaultSlug,
  });
@@ -132,11 +154,14 @@ export async function getTenantIdFromSession(): Promise<string | null> {
  
  slug = defaultSlug;
  } catch (error) {
- console.error("[getTenantIdFromSession] Exception while updating organization slug", {
- orgId: activeOrganization.id,
- defaultSlug,
- error: error instanceof Error ? error.message : String(error),
- });
+ const errorInstance = error instanceof Error ? error : new Error(String(error))
+ logger.error("[getTenantIdFromSession] Exception while updating organization slug", 
+  errorInstance,
+  {
+   orgId: activeOrganization.id,
+   defaultSlug,
+  }
+ );
  // Используем временный slug даже если не удалось сохранить
  slug = defaultSlug;
  }
@@ -144,23 +169,37 @@ export async function getTenantIdFromSession(): Promise<string | null> {
 
  if (slug) {
  const tenantId = generateTenantId(activeOrganization.id, slug);
- console.log("[getTenantIdFromSession] Successfully generated tenant-id", {
+ const duration = Date.now() - startTime
+ logger.debug("[getTenantIdFromSession] Successfully generated tenant-id", {
  orgId: activeOrganization.id,
  slug,
- tenantId,
+ tenantId: tenantId.substring(0, 8) + '...', // Partial for logging
  });
+ 
+ // Log performance if operation took longer than expected
+ logger.performance("getTenantIdFromSession", duration, {
+ orgId: activeOrganization.id,
+ hasSlugInCache: !!activeOrganization.slug,
+ })
+ 
+ // Cache the result for future requests
+ tenantCache.set(session.user.id, session.user.orgId, tenantId)
+ 
  return tenantId;
  }
 
- console.error("[getTenantIdFromSession] Failed to get or generate slug", {
- orgId: activeOrganization.id,
- orgName: activeOrganization.name,
- });
+ logger.error("[getTenantIdFromSession] Failed to get or generate slug", 
+  new Error("Slug generation failed"),
+  {
+   orgId: activeOrganization.id,
+   orgName: activeOrganization.name,
+  }
+ );
  return null;
  } catch (error) {
- console.error("[getTenantIdFromSession] Unexpected error", {
- error: error instanceof Error ? error.message : String(error),
- stack: error instanceof Error ? error.stack : undefined,
+ const errorInstance = error instanceof Error ? error : new Error(String(error))
+ logger.error("[getTenantIdFromSession] Unexpected error", errorInstance, {
+ stack: errorInstance.stack,
  });
  return null;
  }

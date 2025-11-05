@@ -6,7 +6,7 @@
  * Использует Refine для работы с данными
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "@refinedev/react-hook-form";
 import { useNavigation, useOne } from "@refinedev/core";
 import { useParams } from "next/navigation";
@@ -21,7 +21,10 @@ import { Label } from "@/components/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
 import { Switch } from "@/components/ui";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui";
+import { Badge } from "@/components/ui";
 import { useToast } from "@/components/ui";
+import { ScrollAnimation } from "@/components/ui/scroll-animation";
+import { GlassCard } from "@/components/ui/glass-card";
 import { EditView, EditViewHeader } from "@/components/refine-ui/views/edit-view";
 import { DeleteButton } from "@/components/refine-ui/buttons/delete";
 import { LoadingOverlay } from "@/components/refine-ui/layout/loading-overlay";
@@ -108,6 +111,61 @@ export default function EditAIAgentPage() {
   const model = watch("model");
   const checkBeforeSending = watch("settings.checkBeforeSending");
 
+  // Состояния для счетчиков элементов на вкладках
+  const [triggersCount, setTriggersCount] = useState(0);
+  const [rulesCount, setRulesCount] = useState(0);
+  const [sequencesCount, setSequencesCount] = useState(0);
+  const [integrationsCount, setIntegrationsCount] = useState(0);
+  const [loadingCounts, setLoadingCounts] = useState(true);
+
+  // Загрузка счетчиков для Badge на вкладках
+  useEffect(() => {
+    const loadCounts = async () => {
+      if (!agentId) return;
+      
+      try {
+        setLoadingCounts(true);
+        
+        // Загружаем счетчики параллельно
+        const [triggersRes, rulesRes, sequencesRes, integrationsRes] = await Promise.all([
+          fetch(`/api/agents/${agentId}/triggers`, { credentials: "include" }).catch(() => null),
+          fetch(`/api/agents/${agentId}/rules`, { credentials: "include" }).catch(() => null),
+          fetch(`/api/agents/${agentId}/sequences`, { credentials: "include" }).catch(() => null),
+          fetch(`/api/agents/${agentId}/integrations`, { credentials: "include" }).catch(() => null),
+        ]);
+
+        if (triggersRes?.ok) {
+          const data = await triggersRes.json();
+          setTriggersCount(Array.isArray(data.data) ? data.data.length : 0);
+        }
+
+        if (rulesRes?.ok) {
+          const data = await rulesRes.json();
+          setRulesCount(Array.isArray(data.data) ? data.data.length : 0);
+        }
+
+        if (sequencesRes?.ok) {
+          const data = await sequencesRes.json();
+          setSequencesCount(Array.isArray(data.data) ? data.data.length : 0);
+        }
+
+        if (integrationsRes?.ok) {
+          const data = await integrationsRes.json();
+          const integrations = data.integrations || data.data || [];
+          setIntegrationsCount(Array.isArray(integrations) ? integrations.length : 0);
+        }
+      } catch (error) {
+        console.error("Failed to load counts", error);
+      } finally {
+        setLoadingCounts(false);
+      }
+    };
+
+    if (agentId && !isLoadingAgent) {
+      loadCounts();
+    }
+  }, [agentId, isLoadingAgent]);
+
   // Загружаем данные агента
   if (isLoadingAgent) {
     return (
@@ -154,10 +212,38 @@ export default function EditAIAgentPage() {
           <TabsTrigger value="basic">Основные</TabsTrigger>
           <TabsTrigger value="training">Обучение</TabsTrigger>
           <TabsTrigger value="deals">Сделки и контакты</TabsTrigger>
-          <TabsTrigger value="triggers">Триггеры</TabsTrigger>
-          <TabsTrigger value="rules">Правила</TabsTrigger>
-          <TabsTrigger value="chains">Цепочки</TabsTrigger>
-          <TabsTrigger value="integrations">Интеграции</TabsTrigger>
+          <TabsTrigger value="triggers">
+            Триггеры
+            {!loadingCounts && triggersCount > 0 && (
+              <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1.5 text-xs">
+                {triggersCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="rules">
+            Правила
+            {!loadingCounts && rulesCount > 0 && (
+              <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1.5 text-xs">
+                {rulesCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="chains">
+            Цепочки
+            {!loadingCounts && sequencesCount > 0 && (
+              <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1.5 text-xs">
+                {sequencesCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="integrations">
+            Интеграции
+            {!loadingCounts && integrationsCount > 0 && (
+              <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1.5 text-xs">
+                {integrationsCount}
+              </Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="advanced">Дополнительно</TabsTrigger>
         </TabsList>
 
@@ -168,6 +254,7 @@ export default function EditAIAgentPage() {
             className="space-y-8 mt-6"
           >
             {/* Секция "Профиль агента" */}
+            <ScrollAnimation direction="fade" delay={100}>
             <div className="space-y-6">
               <h2 className="text-lg font-semibold">Профиль агента</h2>
 
@@ -181,7 +268,7 @@ export default function EditAIAgentPage() {
                   {...register("name")}
                   placeholder="Название агента*"
                   defaultValue={agentData?.name || ""}
-                  className={errors.name ? "border-red-500" : ""}
+                  className={`transition-all duration-300 hover:border-[#E63946]/50 focus:border-[#E63946] ${errors.name ? "border-red-500" : ""}`}
                 />
                 {errors.name && (
                   <p className="text-sm text-red-500">
@@ -211,8 +298,10 @@ export default function EditAIAgentPage() {
                 </div>
               </div>
             </div>
+            </ScrollAnimation>
 
             {/* Секция "Взаимодействие" */}
+            <ScrollAnimation direction="fade" delay={200}>
             <div className="space-y-6 border-t pt-6">
               <h2 className="text-lg font-semibold">Взаимодействие</h2>
 
@@ -241,8 +330,10 @@ export default function EditAIAgentPage() {
                 </p>
               </div>
             </div>
+            </ScrollAnimation>
 
             {/* Секция "Настройки ИИ" */}
+            <ScrollAnimation direction="fade" delay={300}>
             <div className="space-y-6 border-t pt-6">
               <h2 className="text-lg font-semibold">Настройки ИИ</h2>
 
@@ -287,6 +378,7 @@ export default function EditAIAgentPage() {
                     max="2"
                     {...register("temperature", { valueAsNumber: true })}
                     defaultValue={agentData?.temperature || 0.7}
+                    className="transition-all duration-300 hover:border-[#E63946]/50 focus:border-[#E63946]"
                   />
                   <p className="text-xs text-gray-500">0.0 - 2.0</p>
                 </div>
@@ -301,6 +393,7 @@ export default function EditAIAgentPage() {
                     max="8000"
                     {...register("maxTokens", { valueAsNumber: true })}
                     defaultValue={agentData?.maxTokens || 2000}
+                    className="transition-all duration-300 hover:border-[#E63946]/50 focus:border-[#E63946]"
                   />
                   <p className="text-xs text-gray-500">128 - 8000</p>
                 </div>
@@ -319,13 +412,16 @@ export default function EditAIAgentPage() {
                       valueAsNumber: true,
                     })}
                     defaultValue={agentData?.responseDelaySeconds || 0}
+                    className="transition-all duration-300 hover:border-[#E63946]/50 focus:border-[#E63946]"
                   />
                   <p className="text-xs text-gray-500">0 - 86400</p>
                 </div>
               </div>
             </div>
+            </ScrollAnimation>
 
             {/* Кнопки действий */}
+            <ScrollAnimation direction="fade" delay={400}>
             <div className="flex items-center gap-4 pt-6 border-t">
               <Button type="submit" disabled={formLoading}>
                 {formLoading ? "Сохранение..." : "Сохранить"}
@@ -339,13 +435,16 @@ export default function EditAIAgentPage() {
                 Отмена
               </Button>
             </div>
+            </ScrollAnimation>
           </form>
         </TabsContent>
 
         {/* Вкладка "Обучение" */}
         <TabsContent value="training">
           <form onSubmit={handleSubmit(onFinish)}>
+            <ScrollAnimation direction="fade" delay={100}>
             <TrainingTab agentId={agentId} />
+            </ScrollAnimation>
             <div className="flex items-center gap-4 pt-6 border-t mt-6">
               <Button type="submit" disabled={formLoading}>
                 {formLoading ? "Сохранение..." : "Сохранить"}
@@ -365,6 +464,7 @@ export default function EditAIAgentPage() {
         {/* Вкладка "Сделки и контакты" */}
         <TabsContent value="deals">
           <div className="mt-6">
+            <ScrollAnimation direction="fade" delay={100}>
             <DealContactFieldsSelector
               agentId={agentId}
               onFieldsChange={(dealFields, contactFields) => {
@@ -372,40 +472,50 @@ export default function EditAIAgentPage() {
                 console.log('Fields changed:', { dealFields, contactFields })
               }}
             />
+            </ScrollAnimation>
           </div>
         </TabsContent>
 
         {/* Вкладка "Триггеры" */}
         <TabsContent value="triggers">
           <div className="mt-6">
+            <ScrollAnimation direction="fade" delay={100}>
             <TriggersManager agentId={agentId} />
+            </ScrollAnimation>
           </div>
         </TabsContent>
 
         {/* Вкладка "Правила" */}
         <TabsContent value="rules">
           <div className="mt-6">
+            <ScrollAnimation direction="fade" delay={100}>
             <RulesManager agentId={agentId} />
+            </ScrollAnimation>
           </div>
         </TabsContent>
 
         {/* Вкладка "Цепочки" */}
         <TabsContent value="chains">
           <div className="mt-6">
+            <ScrollAnimation direction="fade" delay={100}>
             <SequencesManager agentId={agentId} />
+            </ScrollAnimation>
           </div>
         </TabsContent>
 
         {/* Вкладка "Интеграции" */}
         <TabsContent value="integrations">
           <div className="mt-6">
+            <ScrollAnimation direction="fade" delay={100}>
             <IntegrationsManager agentId={agentId} />
+            </ScrollAnimation>
           </div>
         </TabsContent>
 
         {/* Вкладка "Дополнительно" */}
         <TabsContent value="advanced">
           <div className="mt-6 space-y-6">
+            <ScrollAnimation direction="fade" delay={100}>
             <div>
               <h3 className="text-lg font-semibold mb-2">Дополнительные настройки</h3>
               <p className="text-sm text-gray-500 mb-6">
@@ -414,69 +524,73 @@ export default function EditAIAgentPage() {
             </div>
 
             {/* Языковые настройки */}
-            <div className="space-y-6 border rounded-lg p-6">
-              <h4 className="text-base font-semibold">Языковые настройки</h4>
-              <div className="space-y-2">
-                <Label htmlFor="language">Язык ответов</Label>
-                <Select
-                  value={String(watch("settings.language") || agentData?.settings?.language || "ru")}
-                  onValueChange={(value) =>
-                    setValue("settings.language", value, { shouldValidate: true })
-                  }
-                >
-                  <SelectTrigger id="language">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ru">Русский</SelectItem>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="auto">Автоматически</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-gray-500">
-                  Язык, на котором агент будет отвечать пользователям
-                </p>
+            <GlassCard variant="subtle">
+              <div className="space-y-6 p-6">
+                <h4 className="text-base font-semibold">Языковые настройки</h4>
+                <div className="space-y-2">
+                  <Label htmlFor="language">Язык ответов</Label>
+                  <Select
+                    value={String(watch("settings.language") || agentData?.settings?.language || "ru")}
+                    onValueChange={(value) =>
+                      setValue("settings.language", value, { shouldValidate: true })
+                    }
+                  >
+                    <SelectTrigger id="language">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ru">Русский</SelectItem>
+                      <SelectItem value="en">English</SelectItem>
+                      <SelectItem value="auto">Автоматически</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500">
+                    Язык, на котором агент будет отвечать пользователям
+                  </p>
+                </div>
               </div>
-            </div>
+            </GlassCard>
 
             {/* Настройки ответов */}
-            <div className="space-y-6 border rounded-lg p-6">
-              <h4 className="text-base font-semibold">Настройки ответов</h4>
-              
-              <div className="space-y-2">
-                <Label htmlFor="maxResponseLength">Максимальная длина ответа (символов)</Label>
-                <Input
-                  id="maxResponseLength"
-                  type="number"
-                  min="100"
-                  max="10000"
-                  {...register("settings.maxResponseLength", { valueAsNumber: true })}
-                  defaultValue={agentData?.settings?.maxResponseLength || 2000}
-                />
-                <p className="text-xs text-gray-500">
-                  Ограничение длины ответа агента (100 - 10000 символов)
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="enableMarkdown"
-                    checked={watch("settings.enableMarkdown") || false}
-                    onCheckedChange={(checked) =>
-                      setValue("settings.enableMarkdown", checked, { shouldValidate: true })
-                    }
-                    defaultChecked={agentData?.settings?.enableMarkdown || false}
+            <GlassCard variant="subtle">
+              <div className="space-y-6 p-6">
+                <h4 className="text-base font-semibold">Настройки ответов</h4>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="maxResponseLength">Максимальная длина ответа (символов)</Label>
+                  <Input
+                    id="maxResponseLength"
+                    type="number"
+                    min="100"
+                    max="10000"
+                    {...register("settings.maxResponseLength", { valueAsNumber: true })}
+                    defaultValue={agentData?.settings?.maxResponseLength || 2000}
                   />
-                  <Label htmlFor="enableMarkdown" className="cursor-pointer">
-                    Разрешить форматирование Markdown
-                  </Label>
+                  <p className="text-xs text-gray-500">
+                    Ограничение длины ответа агента (100 - 10000 символов)
+                  </p>
                 </div>
-                <p className="text-xs text-gray-500">
-                  Агент сможет использовать Markdown для форматирования ответов
-                </p>
+
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="enableMarkdown"
+                      checked={watch("settings.enableMarkdown") || false}
+                      onCheckedChange={(checked) =>
+                        setValue("settings.enableMarkdown", checked, { shouldValidate: true })
+                      }
+                      defaultChecked={agentData?.settings?.enableMarkdown || false}
+                    />
+                    <Label htmlFor="enableMarkdown" className="cursor-pointer">
+                      Разрешить форматирование Markdown
+                    </Label>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Агент сможет использовать Markdown для форматирования ответов
+                  </p>
+                </div>
               </div>
-            </div>
+            </GlassCard>
 
             {/* Информация о настройках */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -485,6 +599,7 @@ export default function EditAIAgentPage() {
                 находятся во вкладке "Основные". Здесь доступны дополнительные параметры для тонкой настройки.
               </p>
             </div>
+            </ScrollAnimation>
           </div>
         </TabsContent>
       </Tabs>

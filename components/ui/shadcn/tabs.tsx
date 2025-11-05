@@ -29,7 +29,13 @@ const TabsTrigger = React.forwardRef<
  <TabsPrimitive.Trigger
  ref={ref}
  className={cn(
- "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",
+ "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all duration-300",
+ "hover:scale-105 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100",
+ "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E63946] focus-visible:ring-offset-2",
+ "disabled:pointer-events-none disabled:opacity-50",
+ "data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",
+ "data-[state=active]:border-b-2 data-[state=active]:border-[#E63946]",
+ "relative group",
  className
  )}
  {...props}
@@ -44,7 +50,8 @@ const TabsContent = React.forwardRef<
  <TabsPrimitive.Content
  ref={ref}
  className={cn(
- "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+ "mt-2 ring-offset-background focus-visible:outline-none",
+ "animate-in fade-in-50 slide-in-from-bottom-2 duration-300",
  className
  )}
  {...props}

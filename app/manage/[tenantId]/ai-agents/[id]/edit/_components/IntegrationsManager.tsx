@@ -139,7 +139,10 @@ export function IntegrationsManager({ agentId }: IntegrationsManagerProps) {
               </TableHeader>
               <TableBody>
                 {integrations.map((integration) => (
-                  <TableRow key={integration.id}>
+                  <TableRow 
+                    key={integration.id}
+                    className="transition-all duration-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm cursor-pointer"
+                  >
                     <TableCell>
                       <div className="font-medium">
                         {getIntegrationName(integration.integration_type)}
