@@ -1,0 +1,11 @@
+{
+  "updates": {
+    "data.agent_id": "553",
+    "data.message": "Automated test message (ignore)"
+  },
+  "call": {
+    "path": "",
+    "method": "sendMessage",
+    "params": []
+  }
+}

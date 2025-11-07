@@ -9,6 +9,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Plus, Trash2 } from "lucide-react";
+import { DraggableCondition } from "./DraggableCondition";
+import { DraggableAction } from "./DraggableAction";
 
 import {
   Dialog,
@@ -110,6 +112,8 @@ export function CreateRuleDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [conditions, setConditions] = useState<Condition[]>([]);
   const [actions, setActions] = useState<Action[]>([]);
+  const [draggedConditionIndex, setDraggedConditionIndex] = useState<number | null>(null);
+  const [draggedActionIndex, setDraggedActionIndex] = useState<number | null>(null);
 
   const {
     register,
@@ -154,6 +158,24 @@ export function CreateRuleDialog({
     );
   };
 
+  const handleConditionDragStart = (index: number) => {
+    setDraggedConditionIndex(index);
+  };
+
+  const handleConditionDragEnd = () => {
+    setDraggedConditionIndex(null);
+  };
+
+  const handleConditionDrop = (targetIndex: number) => {
+    if (draggedConditionIndex === null || draggedConditionIndex === targetIndex) return;
+    
+    const newConditions = [...conditions];
+    const [removed] = newConditions.splice(draggedConditionIndex, 1);
+    newConditions.splice(targetIndex, 0, removed);
+    setConditions(newConditions);
+    setDraggedConditionIndex(null);
+  };
+
   const addAction = () => {
     setActions([
       ...actions,
@@ -170,6 +192,24 @@ export function CreateRuleDialog({
 
   const updateAction = (index: number, updates: Partial<Action>) => {
     setActions(actions.map((a, i) => (i === index ? { ...a, ...updates } : a)));
+  };
+
+  const handleActionDragStart = (index: number) => {
+    setDraggedActionIndex(index);
+  };
+
+  const handleActionDragEnd = () => {
+    setDraggedActionIndex(null);
+  };
+
+  const handleActionDrop = (targetIndex: number) => {
+    if (draggedActionIndex === null || draggedActionIndex === targetIndex) return;
+    
+    const newActions = [...actions];
+    const [removed] = newActions.splice(draggedActionIndex, 1);
+    newActions.splice(targetIndex, 0, removed);
+    setActions(newActions);
+    setDraggedActionIndex(null);
   };
 
   const onSubmit = async (data: CreateRuleFormData) => {
@@ -344,129 +384,29 @@ export function CreateRuleDialog({
                 conditions.map((condition, index) => (
                   <div
                     key={index}
-                    className="border rounded-lg p-4 space-y-3"
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.add("border-blue-400");
+                    }}
+                    onDragLeave={(e) => {
+                      e.currentTarget.classList.remove("border-blue-400");
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.remove("border-blue-400");
+                      handleConditionDrop(index);
+                    }}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">
-                        Условие {index + 1}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeCondition(index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label>Тип условия</Label>
-                        <Select
-                          value={condition.type}
-                          onValueChange={(value) =>
-                            updateCondition(index, { type: value })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {CONDITION_TYPES.map((type) => (
-                              <SelectItem key={type.value} value={type.value}>
-                                {type.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {condition.type === "field_value" && (
-                        <>
-                          <div className="space-y-2">
-                            <Label>Оператор</Label>
-                            <Select
-                              value={condition.operator}
-                              onValueChange={(value) =>
-                                updateCondition(index, { operator: value })
-                              }
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {CONDITION_OPERATORS.map((op) => (
-                                  <SelectItem key={op.value} value={op.value}>
-                                    {op.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label>Поле</Label>
-                            <Input
-                              value={condition.field || ""}
-                              onChange={(e) =>
-                                updateCondition(index, { field: e.target.value })
-                              }
-                              placeholder="Название поля"
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label>Значение</Label>
-                            <Input
-                              value={condition.value || ""}
-                              onChange={(e) =>
-                                updateCondition(index, { value: e.target.value })
-                              }
-                              placeholder="Значение"
-                            />
-                          </div>
-                        </>
-                      )}
-
-                      {condition.type === "time_elapsed" && (
-                        <>
-                          <div className="space-y-2">
-                            <Label>Количество</Label>
-                            <Input
-                              type="number"
-                              value={condition.timeValue || ""}
-                              onChange={(e) =>
-                                updateCondition(index, {
-                                  timeValue: Number(e.target.value),
-                                })
-                              }
-                              placeholder="Количество"
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label>Единица времени</Label>
-                            <Select
-                              value={condition.timeUnit}
-                              onValueChange={(value) =>
-                                updateCondition(index, { timeUnit: value })
-                              }
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="minutes">Минуты</SelectItem>
-                                <SelectItem value="hours">Часы</SelectItem>
-                                <SelectItem value="days">Дни</SelectItem>
-                                <SelectItem value="weeks">Недели</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </>
-                      )}
-                    </div>
+                    <DraggableCondition
+                      condition={condition}
+                      index={index}
+                      onUpdate={updateCondition}
+                      onRemove={removeCondition}
+                      onDragStart={handleConditionDragStart}
+                      onDragEnd={handleConditionDragEnd}
+                      onDragOver={() => {}}
+                      isDragging={draggedConditionIndex === index}
+                    />
                   </div>
                 ))
               )}
@@ -496,163 +436,30 @@ export function CreateRuleDialog({
                 </p>
               ) : (
                 actions.map((action, index) => (
-                  <div key={index} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">
-                        Действие {index + 1}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeAction(index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="space-y-2">
-                        <Label>Тип действия</Label>
-                        <Select
-                          value={action.type}
-                          onValueChange={(value) =>
-                            updateAction(index, { type: value })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {ACTION_TYPES.map((type) => (
-                              <SelectItem key={type.value} value={type.value}>
-                                {type.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {action.type === "send_message" && (
-                        <div className="space-y-2">
-                          <Label>Шаблон сообщения</Label>
-                          <Textarea
-                            value={action.template || ""}
-                            onChange={(e) =>
-                              updateAction(index, { template: e.target.value })
-                            }
-                            placeholder="Текст сообщения"
-                            rows={3}
-                          />
-                        </div>
-                      )}
-
-                      {action.type === "create_task" && (
-                        <>
-                          <div className="space-y-2">
-                            <Label>Название задачи</Label>
-                            <Input
-                              value={action.template || ""}
-                              onChange={(e) =>
-                                updateAction(index, { template: e.target.value })
-                              }
-                              placeholder="Название задачи"
-                            />
-                          </div>
-                        </>
-                      )}
-
-                      {action.type === "update_field" && (
-                        <>
-                          <div className="space-y-2">
-                            <Label>Поле</Label>
-                            <Input
-                              value={action.targetField || ""}
-                              onChange={(e) =>
-                                updateAction(index, { targetField: e.target.value })
-                              }
-                              placeholder="Название поля"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Новое значение</Label>
-                            <Input
-                              value={action.newValue || ""}
-                              onChange={(e) =>
-                                updateAction(index, { newValue: e.target.value })
-                              }
-                              placeholder="Значение"
-                            />
-                          </div>
-                        </>
-                      )}
-
-                      {action.type === "send_email" && (
-                        <>
-                          <div className="space-y-2">
-                            <Label>Получатель</Label>
-                            <Input
-                              value={action.recipient || ""}
-                              onChange={(e) =>
-                                updateAction(index, { recipient: e.target.value })
-                              }
-                              placeholder="email@example.com"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Текст письма</Label>
-                            <Textarea
-                              value={action.template || ""}
-                              onChange={(e) =>
-                                updateAction(index, { template: e.target.value })
-                              }
-                              placeholder="Текст письма"
-                              rows={3}
-                            />
-                          </div>
-                        </>
-                      )}
-
-                      {action.type === "webhook" && (
-                        <div className="space-y-2">
-                          <Label>URL Webhook</Label>
-                          <Input
-                            value={action.webhookUrl || ""}
-                            onChange={(e) =>
-                              updateAction(index, { webhookUrl: e.target.value })
-                            }
-                            placeholder="https://example.com/webhook"
-                          />
-                        </div>
-                      )}
-
-                      {action.type === "ai_response" && (
-                        <div className="space-y-2">
-                          <Label>Промпт для AI</Label>
-                          <Textarea
-                            value={action.aiPrompt || ""}
-                            onChange={(e) =>
-                              updateAction(index, { aiPrompt: e.target.value })
-                            }
-                            placeholder="Промпт для генерации ответа"
-                            rows={3}
-                          />
-                        </div>
-                      )}
-
-                      {action.type === "change_stage" && (
-                        <div className="space-y-2">
-                          <Label>Новый этап</Label>
-                          <Input
-                            value={action.newValue || ""}
-                            onChange={(e) =>
-                              updateAction(index, { newValue: e.target.value })
-                            }
-                            placeholder="ID этапа"
-                          />
-                        </div>
-                      )}
-                    </div>
+                  <div
+                    key={index}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.add("border-blue-400");
+                    }}
+                    onDragLeave={(e) => {
+                      e.currentTarget.classList.remove("border-blue-400");
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.remove("border-blue-400");
+                      handleActionDrop(index);
+                    }}
+                  >
+                    <DraggableAction
+                      action={action}
+                      index={index}
+                      onUpdate={updateAction}
+                      onRemove={removeAction}
+                      onDragStart={handleActionDragStart}
+                      onDragEnd={handleActionDragEnd}
+                      isDragging={draggedActionIndex === index}
+                    />
                   </div>
                 ))
               )}

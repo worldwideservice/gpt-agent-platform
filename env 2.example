@@ -1,0 +1,146 @@
+# ==============================================================================
+# T11 PLATFORM - ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ
+# ==============================================================================
+# Скопируйте этот файл в .env.local для локальной разработки
+# ⚠️ НЕ КОММИТЬТЕ .env.local С РЕАЛЬНЫМИ СЕКРЕТАМИ В GIT!
+
+# ==============================================================================
+# 🔐 ОБЯЗАТЕЛЬНЫЕ ПЕРЕМЕННЫЕ (Критично для работы)
+# ==============================================================================
+
+# === АУТЕНТИФИКАЦИЯ ===
+# Секрет для NextAuth JWT токенов (минимум 32 символа)
+# Генерация: openssl rand -base64 32
+NEXTAUTH_SECRET=your_secure_random_secret_32_chars_minimum
+
+# URL приложения (для локальной разработки: http://localhost:3000)
+NEXTAUTH_URL=http://localhost:3000
+
+# Дополнительный секрет для JWT токенов
+# Генерация: openssl rand -base64 32
+JWT_SECRET=another_secure_random_secret_for_jwt
+
+# === SUPABASE БАЗА ДАННЫХ ===
+# URL вашего Supabase проекта
+SUPABASE_URL=https://your-project-ref.supabase.co
+
+# Анонимный ключ Supabase (для серверных операций)
+SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Сервисный ключ Supabase (ОБХОДИТ RLS, используйте только на сервере!)
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# Публичный URL Supabase (для клиентских операций)
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+
+# Публичный анонимный ключ Supabase (для клиентских операций)
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# UUID организации по умолчанию (опционально, для demo-режима)
+SUPABASE_DEFAULT_ORGANIZATION_ID=00000000-0000-4000-8000-000000000001
+
+# === REDIS ДЛЯ BACKGROUND JOBS И RATE LIMITING ===
+# REST URL для Upstash Redis (используется в production)
+UPSTASH_REDIS_REST_URL=https://your-upstash-redis-url.upstash.io
+
+# REST токен для Upstash Redis
+UPSTASH_REDIS_REST_TOKEN=your_upstash_token
+
+# Прямое подключение к Redis (опционально, для локальной разработки)
+# Формат: redis://username:password@host:port
+REDIS_URL=redis://localhost:6379
+
+# === AI API (OPENROUTER) ===
+# API ключ для OpenRouter (формат: sk-or-v1-...)
+# Получение: https://openrouter.ai/keys
+OPENROUTER_API_KEY=sk-or-v1-your-openrouter-api-key
+
+# Модель для embeddings (опционально, по умолчанию используется text-embedding-ada-002)
+# OPENROUTER_EMBEDDING_MODEL=text-embedding-ada-002
+
+# === ДОПОЛНИТЕЛЬНЫЕ СЕКРЕТЫ ===
+# Ключ шифрования для чувствительных данных (32 байта в base64)
+# Генерация: openssl rand -base64 32
+ENCRYPTION_KEY=32_char_encryption_key_for_sensitive_data
+
+# ==============================================================================
+# 🔧 ОПЦИОНАЛЬНЫЕ ПЕРЕМЕННЫЕ (Используются при наличии)
+# ==============================================================================
+
+# === BACKEND API ===
+# URL Fastify API сервиса (для локальной разработки: http://localhost:4000)
+BACKEND_API_URL=http://localhost:4000
+
+# === KOMMO CRM INTEGRATION ===
+# Базовый URL для OAuth редиректа Kommo
+KOMMO_OAUTH_REDIRECT_BASE=http://localhost:3000/integrations/kommo/oauth/callback
+
+# Секрет для проверки подписи Kommo Webhook
+KOMMO_WEBHOOK_SECRET=change-me-in-development
+
+# === EMAIL SERVICE (SMTP) ===
+# SMTP настройки для отправки email (опционально)
+# SendGrid пример:
+SMTP_HOST=smtp.sendgrid.net
+SMTP_PORT=587
+SMTP_USER=apikey
+SMTP_PASS=SG.your-sendgrid-api-key
+FROM_EMAIL=noreply@yourdomain.com
+
+# === CRON JOBS ===
+# Секрет для защиты cron endpoints (Vercel Cron)
+CRON_SECRET=your-cron-secret-here
+
+# === МОНИТОРИНГ (SENTRY) ===
+# Sentry DSN для отслеживания ошибок (опционально)
+SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
+NEXT_PUBLIC_SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
+
+# === WEBSOCKET ===
+# URL фронтенда для WebSocket CORS (опционально, по умолчанию используется NEXTAUTH_URL)
+FRONTEND_URL=http://localhost:3000
+
+# URL WebSocket сервера (опционально, по умолчанию используется window.location.origin)
+WEBSOCKET_URL=ws://localhost:3000
+
+# === АДМИН ДОСТУП ===
+# Список email адресов администраторов (через запятую)
+ADMIN_USERS=admin@example.com,manager@example.com
+
+# === FEATURE FLAGS ===
+# Демо-режим (только для разработки/тестирования)
+DEMO_MODE=false
+
+# Фейковый onboarding для E2E тестов (только для тестирования)
+E2E_ONBOARDING_FAKE=false
+
+# === ENVIRONMENT ===
+# Режим окружения (production, development, test)
+NODE_ENV=development
+
+# ==============================================================================
+# 🧪 ТОЛЬКО ДЛЯ РАЗРАБОТКИ (Development Only)
+# ==============================================================================
+
+# === KOMMO CRM TESTING ===
+# Включить тестовые endpoints Kommo API (0 = выключено, 1 = включено)
+KOMMO_TEST_ENABLED=0
+
+# Настройки Kommo для ручного тестирования (заполните при необходимости)
+KOMMO_TEST_DOMAIN=
+KOMMO_TEST_CLIENT_ID=
+KOMMO_TEST_CLIENT_SECRET=
+KOMMO_TEST_REDIRECT_URI=
+KOMMO_TEST_ACCESS_TOKEN=
+KOMMO_TEST_REFRESH_TOKEN=
+
+# ==============================================================================
+# 📝 ПРИМЕЧАНИЯ
+# ==============================================================================
+# 
+# 1. Все переменные с префиксом NEXT_PUBLIC_ доступны в браузере
+# 2. Секретные переменные (ключи, токены) НЕ должны иметь префикс NEXT_PUBLIC_
+# 3. Для production используйте env.production.example как шаблон
+# 4. Проверьте наличие всех обязательных переменных: npm run check:env
+# 
+# ==============================================================================

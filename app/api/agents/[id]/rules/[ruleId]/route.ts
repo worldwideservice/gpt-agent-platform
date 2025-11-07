@@ -22,8 +22,9 @@ const updateRuleSchema = z.object({
  */
 export const PATCH = async (
   request: NextRequest,
-  { params }: { params: { id: string; ruleId: string } },
+  { params }: { params: Promise<{ id: string; ruleId: string }> },
 ) => {
+  const { id, ruleId } = await params
   const session = await auth()
 
   if (!session?.user?.orgId) {
@@ -59,9 +60,9 @@ export const PATCH = async (
         ...parsed.data,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', params.ruleId)
+      .eq('id', ruleId)
       .eq('org_id', session.user.orgId)
-      .eq('agent_id', params.id)
+      .eq('agent_id', id)
       .select()
       .single()
 
@@ -93,8 +94,9 @@ export const PATCH = async (
  */
 export const DELETE = async (
   request: NextRequest,
-  { params }: { params: { id: string; ruleId: string } },
+  { params }: { params: Promise<{ id: string; ruleId: string }> },
 ) => {
+  const { id, ruleId } = await params
   const session = await auth()
 
   if (!session?.user?.orgId) {
@@ -111,9 +113,9 @@ export const DELETE = async (
     const { error } = await supabase
       .from('automation_rules')
       .delete()
-      .eq('id', params.ruleId)
+      .eq('id', ruleId)
       .eq('org_id', session.user.orgId)
-      .eq('agent_id', params.id)
+      .eq('agent_id', id)
 
     if (error) {
       console.error('Failed to delete rule', error)

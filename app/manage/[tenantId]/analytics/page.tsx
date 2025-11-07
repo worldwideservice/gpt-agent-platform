@@ -87,9 +87,19 @@ export default function AnalyticsPage() {
     fetchAnalytics();
   }, [dateRange, fetchAnalytics]);
 
+  const [exportFormat, setExportFormat] = useState<"csv" | "json" | "pdf">("csv");
+  const [exportReportType, setExportReportType] = useState<string>("");
+
   const handleExport = async () => {
     try {
-      const response = await fetch(`/api/analytics/export?range=${dateRange}`, {
+      const params = new URLSearchParams();
+      params.append("range", dateRange);
+      params.append("format", exportFormat);
+      if (exportReportType) {
+        params.append("reportType", exportReportType);
+      }
+
+      const response = await fetch(`/api/analytics/export?${params.toString()}`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -97,16 +107,29 @@ export default function AnalyticsPage() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `analytics-${dateRange}-${new Date().toISOString().split("T")[0]}.csv`;
+        
+        // Получаем имя файла из заголовка Content-Disposition
+        const contentDisposition = response.headers.get("Content-Disposition");
+        let filename = `analytics-${dateRange}-${new Date().toISOString().split("T")[0]}.${exportFormat}`;
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+          if (filenameMatch) {
+            filename = filenameMatch[1];
+          }
+        }
+        
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
         pushToast({
           title: "Экспорт выполнен",
-          description: "Данные успешно экспортированы",
+          description: `Данные успешно экспортированы в формате ${exportFormat.toUpperCase()}`,
           variant: "success",
         });
+      } else {
+        throw new Error("Failed to export");
       }
     } catch (error) {
       pushToast({
@@ -146,6 +169,28 @@ export default function AnalyticsPage() {
               <SelectItem value="30d">Последние 30 дней</SelectItem>
               <SelectItem value="90d">Последние 90 дней</SelectItem>
               <SelectItem value="1y">Последний год</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={exportFormat} onValueChange={(value) => setExportFormat(value as "csv" | "json" | "pdf")}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="csv">CSV</SelectItem>
+              <SelectItem value="json">JSON</SelectItem>
+              <SelectItem value="pdf">PDF</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={exportReportType} onValueChange={setExportReportType}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Все данные" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Все данные</SelectItem>
+              <SelectItem value="usage">Использование</SelectItem>
+              <SelectItem value="performance">Производительность</SelectItem>
+              <SelectItem value="engagement">Вовлечённость</SelectItem>
+              <SelectItem value="revenue">Доходы</SelectItem>
             </SelectContent>
           </Select>
           <Button onClick={handleExport} variant="outline">

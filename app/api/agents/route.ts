@@ -302,6 +302,17 @@ export const POST = async (request: NextRequest) => {
  )
  }
 
+ // Проверяем лимит агентов перед созданием
+ const { checkUsageLimit } = await import('@/lib/services/usage-tracker')
+ const agentLimitCheck = await checkUsageLimit(session.user.orgId, 'agents', 1)
+
+ if (!agentLimitCheck.allowed && agentLimitCheck.limit !== -1) {
+   return NextResponse.json({
+     success: false,
+     error: `Лимит агентов превышен. Использовано: ${agentLimitCheck.current}/${agentLimitCheck.limit}. Обновите план подписки.`,
+   }, { status: 403 })
+ }
+
  const agent = await createAgent(session.user.orgId, {
  name: parsed.data.name,
  status: parsed.data.status,
@@ -311,6 +322,12 @@ export const POST = async (request: NextRequest) => {
  maxTokens: parsed.data.maxTokens,
  responseDelaySeconds: parsed.data.responseDelaySeconds,
  settings: parsed.data.settings ?? {},
+ })
+
+ // Отслеживаем использование агентов
+ const { useResource } = await import('@/lib/services/usage-tracker')
+ await useResource(session.user.orgId, 'agents', 1, `Создан агент: ${agent.name}`).catch((error) => {
+   console.error('Failed to track agent usage', error)
  })
 
  // Логируем создание агента

@@ -24,6 +24,12 @@ export const POST = async (request: NextRequest) => {
  body: JSON.stringify(payload),
  })
 
+ // Логируем синхронизацию интеграции
+ const { ActivityLogger } = await import('@/lib/services/activity-logger')
+ await ActivityLogger.integrationSynced(session.user.orgId, 'kommo', true).catch((error) => {
+   console.error('Failed to log integration sync:', error)
+ })
+
  return NextResponse.json({ success: true })
  } catch (error) {
  console.error('Kommo sync pipelines error', error)

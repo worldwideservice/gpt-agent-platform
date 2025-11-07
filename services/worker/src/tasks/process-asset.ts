@@ -185,6 +185,220 @@ const parseFileContent = async (fileBuffer: Buffer, mimeType: string, fileName: 
 }
 
 /**
+ * Обрабатывает большой файл с использованием streaming
+ */
+async function processLargeFileWithStreaming(
+  assetId: string,
+  organizationId: string,
+  asset: any,
+  supabase: any,
+): Promise<void> {
+  const CHUNK_SIZE = 1024 * 1024 // 1MB chunks
+  const BATCH_SIZE = 10 // Обрабатываем по 10 chunks за раз
+  const EMBEDDING_BATCH_SIZE = 50 // Генерируем embeddings батчами
+
+  try {
+    const storageClient = getSupabaseClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY)
+    
+    // Получаем размер файла
+    const { data: fileInfo } = await storageClient.storage
+      .from('agent-assets')
+      .list(asset.storage_path.split('/').slice(0, -1).join('/'), {
+        search: asset.storage_path.split('/').pop(),
+      })
+
+    // Скачиваем файл по частям (streaming)
+    const { data: fileStream, error: downloadError } = await storageClient.storage
+      .from('agent-assets')
+      .download(asset.storage_path)
+
+    if (downloadError || !fileStream) {
+      throw new Error(`Failed to download file: ${downloadError?.message ?? 'Unknown error'}`)
+    }
+
+    // Для текстовых файлов читаем по частям
+    if (asset.mime_type?.startsWith('text/') || asset.source_name?.endsWith('.txt') || asset.source_name?.endsWith('.md')) {
+      const reader = fileStream.stream().getReader()
+      const decoder = new TextDecoder('utf-8')
+      let accumulatedText = ''
+      let chunkIndex = 0
+      const textChunks: string[] = []
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          accumulatedText += decoder.decode(value, { stream: true })
+          
+          // Разбиваем на chunks по размеру
+          while (accumulatedText.length >= CHUNK_SIZE) {
+            const chunk = accumulatedText.slice(0, CHUNK_SIZE)
+            textChunks.push(chunk)
+            accumulatedText = accumulatedText.slice(CHUNK_SIZE)
+            chunkIndex++
+          }
+        }
+
+        // Добавляем остаток
+        if (accumulatedText.length > 0) {
+          textChunks.push(accumulatedText)
+        }
+      } finally {
+        reader.releaseLock()
+      }
+
+      // Обрабатываем chunks батчами
+      const allChunksWithEmbeddings: Array<{ content: string; embedding: number[] }> = []
+
+      for (let i = 0; i < textChunks.length; i += BATCH_SIZE) {
+        const batch = textChunks.slice(i, i + BATCH_SIZE)
+        
+        // Разбиваем каждый chunk на более мелкие части для embeddings
+        const embeddingChunks: string[] = []
+        for (const textChunk of batch) {
+          const subChunks = chunkByTokenEstimate(textChunk, 600, 120)
+          embeddingChunks.push(...subChunks)
+        }
+
+        // Генерируем embeddings батчами
+        for (let j = 0; j < embeddingChunks.length; j += EMBEDDING_BATCH_SIZE) {
+          const embeddingBatch = embeddingChunks.slice(j, j + EMBEDDING_BATCH_SIZE)
+          const embeddings = await generateEmbeddings(embeddingBatch)
+          
+          for (let k = 0; k < embeddingBatch.length; k++) {
+            allChunksWithEmbeddings.push({
+              content: embeddingBatch[k],
+              embedding: embeddings[k]?.embedding || [],
+            })
+          }
+
+          // Обновляем прогресс
+          const progress = Math.round(((i + batch.length) / textChunks.length) * 100)
+          await supabase
+            .from('agent_assets')
+            .update({
+              processing_progress: progress,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', assetId)
+        }
+      }
+
+      // Сохраняем chunks батчами
+      for (let i = 0; i < allChunksWithEmbeddings.length; i += 100) {
+        const batch = allChunksWithEmbeddings.slice(i, i + 100)
+        const chunkRows = batch.map((chunk, index) => ({
+          org_id: organizationId,
+          agent_id: asset.agent_id,
+          asset_id: assetId,
+          content: chunk.content,
+          embedding: chunk.embedding,
+          metadata: {
+            position: i + index,
+            length: chunk.content.length,
+            sourceFile: asset.source_name,
+            fileSize: asset.file_size,
+          },
+        }))
+
+        await supabase.from('knowledge_chunks').insert(chunkRows)
+      }
+
+      await updateAssetStatus(assetId, { status: 'completed', chunksCount: allChunksWithEmbeddings.length })
+      console.log(`[worker] Large file ${assetId} processed with streaming: ${allChunksWithEmbeddings.length} chunks created`)
+    } else {
+      // Для PDF/DOCX пока используем стандартную обработку (можно улучшить позже)
+      const arrayBuffer = await fileStream.arrayBuffer()
+      const fileBuffer = Buffer.from(arrayBuffer)
+      const textContent = await parseFileContent(fileBuffer, asset.mime_type ?? '', asset.source_name ?? '')
+      
+      // Обрабатываем большие тексты по частям
+      const chunksWithEmbeddings = await generateEmbeddingsForDocumentInBatches(
+        textContent,
+        600,
+        120,
+        EMBEDDING_BATCH_SIZE,
+        async (progress) => {
+          await supabase
+            .from('agent_assets')
+            .update({
+              processing_progress: progress,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', assetId)
+        }
+      )
+
+      // Сохраняем chunks батчами
+      for (let i = 0; i < chunksWithEmbeddings.length; i += 100) {
+        const batch = chunksWithEmbeddings.slice(i, i + 100)
+        const chunkRows = batch.map((chunk, index) => ({
+          org_id: organizationId,
+          agent_id: asset.agent_id,
+          asset_id: assetId,
+          content: chunk.content,
+          embedding: chunk.embedding,
+          metadata: {
+            position: i + index,
+            length: chunk.content.length,
+            sourceFile: asset.source_name,
+            fileSize: asset.file_size,
+          },
+        }))
+
+        await supabase.from('knowledge_chunks').insert(chunkRows)
+      }
+
+      await updateAssetStatus(assetId, { status: 'completed', chunksCount: chunksWithEmbeddings.length })
+      console.log(`[worker] Large file ${assetId} processed: ${chunksWithEmbeddings.length} chunks created`)
+    }
+  } catch (error) {
+    console.error(`[worker] Failed to process large file ${assetId} with streaming:`, error)
+    throw error
+  }
+}
+
+/**
+ * Генерирует embeddings для документа батчами с прогрессом
+ */
+async function generateEmbeddingsForDocumentInBatches(
+  content: string,
+  chunkSize = 600,
+  overlap = 120,
+  batchSize = 50,
+  onProgress?: (progress: number) => Promise<void>,
+): Promise<Array<{ content: string; embedding: number[] }>> {
+  const chunks = chunkByTokenEstimate(content, chunkSize, overlap)
+
+  if (chunks.length === 0) {
+    return []
+  }
+
+  const result: Array<{ content: string; embedding: number[] }> = []
+
+  for (let i = 0; i < chunks.length; i += batchSize) {
+    const batch = chunks.slice(i, i + batchSize)
+    const embeddings = await generateEmbeddings(batch)
+
+    for (let j = 0; j < batch.length; j++) {
+      result.push({
+        content: batch[j],
+        embedding: embeddings[j]?.embedding || [],
+      })
+    }
+
+    // Обновляем прогресс
+    if (onProgress) {
+      const progress = Math.round(((i + batch.length) / chunks.length) * 100)
+      await onProgress(progress)
+    }
+  }
+
+  return result
+}
+
+/**
  * Обрабатывает загруженный файл агента
  */
 export const processAsset = async (payload: ProcessAssetJob): Promise<void> => {
@@ -211,15 +425,24 @@ export const processAsset = async (payload: ProcessAssetJob): Promise<void> => {
  throw new Error('Asset storage path is missing')
  }
 
- // Скачиваем файл из Storage (нужен клиент с service role для доступа)
- // TODO: Использовать правильный клиент для Storage
+ // Определяем размер файла для выбора стратегии обработки
+ const fileSize = asset.file_size || 0
+ const LARGE_FILE_THRESHOLD = 10 * 1024 * 1024 // 10MB
+
+ // Для больших файлов используем streaming
+ if (fileSize > LARGE_FILE_THRESHOLD) {
+   console.log(`[worker] Processing large file ${assetId} (${(fileSize / 1024 / 1024).toFixed(2)}MB) with streaming`)
+   return await processLargeFileWithStreaming(assetId, organizationId, asset, supabase)
+ }
+
+ // Для небольших файлов используем стандартную обработку
  const storageClient = getSupabaseClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY)
  const { data: fileData, error: downloadError } = await storageClient.storage
- .from('agent-assets')
- .download(asset.storage_path)
+   .from('agent-assets')
+   .download(asset.storage_path)
 
  if (downloadError || !fileData) {
- throw new Error(`Failed to download file: ${downloadError?.message ?? 'Unknown error'}`)
+   throw new Error(`Failed to download file: ${downloadError?.message ?? 'Unknown error'}`)
  }
 
  // Конвертируем Blob в Buffer

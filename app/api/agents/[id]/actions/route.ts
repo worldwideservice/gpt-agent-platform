@@ -38,8 +38,9 @@ const executeActionSchema = z.object({
  */
 export const GET = async (
  request: NextRequest,
- { params }: { params: { id: string } },
+ { params }: { params: Promise<{ id: string }> },
 ) => {
+ const { id } = await params
  const session = await auth()
 
  if (!session?.user?.orgId) {
@@ -68,8 +69,9 @@ export const GET = async (
  */
 export const POST = async (
  request: NextRequest,
- { params }: { params: { id: string } },
+ { params }: { params: Promise<{ id: string }> },
 ) => {
+ const { id } = await params
  const session = await auth()
 
  if (!session?.user?.orgId) {
@@ -98,7 +100,7 @@ export const POST = async (
  // Анализируем ситуацию
  const suggestions = await actionsService.analyzeAndSuggestActions({
  organizationId: session.user.orgId,
- agentId: params.id,
+ agentId: id,
  leadId: leadId || undefined,
  conversationHistory,
  userMessage: message,
@@ -122,8 +124,9 @@ export const POST = async (
  */
 export const PUT = async (
  request: NextRequest,
- { params }: { params: { id: string } },
+ { params }: { params: Promise<{ id: string }> },
 ) => {
+ const { id } = await params
  const session = await auth()
 
  if (!session?.user?.orgId) {
@@ -152,10 +155,21 @@ export const PUT = async (
  // Выполняем действие
  const result = await actionsService.executeSuggestedAction(action, {
  organizationId: session.user.orgId,
- agentId: params.id,
+ agentId: id,
  leadId: leadId || 0,
  conversationHistory,
  userMessage: 'Выполнение действия через API',
+ })
+
+ // Логируем выполнение действия
+ const { ActivityLogger } = await import('@/lib/services/activity-logger')
+ await ActivityLogger.actionExecuted(
+   session.user.orgId,
+   id,
+   action.type,
+   { lead_id: leadId, ...action.data }
+ ).catch((error) => {
+   console.error('Failed to log action execution:', error)
  })
 
  return NextResponse.json({

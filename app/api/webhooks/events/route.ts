@@ -30,11 +30,11 @@ export const GET = async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url)
     const parsed = querySchema.safeParse({
-      status: searchParams.get('status'),
-      event_type: searchParams.get('event_type'),
-      search: searchParams.get('search'),
-      limit: searchParams.get('limit'),
-      offset: searchParams.get('offset'),
+      status: searchParams.get('status') || undefined,
+      event_type: searchParams.get('event_type') || undefined,
+      search: searchParams.get('search') || undefined,
+      limit: searchParams.get('limit') || undefined,
+      offset: searchParams.get('offset') || undefined,
     })
 
     if (!parsed.success) {
@@ -101,6 +101,26 @@ export const GET = async (request: NextRequest) => {
     return NextResponse.json(response, { status })
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

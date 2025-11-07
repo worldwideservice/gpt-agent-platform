@@ -5,6 +5,8 @@ export interface AgentSettings {
  presencePenalty?: number
  frequencyPenalty?: number
  defaultChannels?: string[]
+ maxResponseLength?: number
+ enableMarkdown?: boolean
  knowledgeBaseAllCategories?: boolean
  createTaskOnNotFound?: boolean
  notFoundMessage?: string

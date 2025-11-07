@@ -31,7 +31,9 @@ export default defineConfig({
  fullyParallel: true,
  forbidOnly: !!process.env.CI,
  retries: process.env.CI ? 1 : 0, // Уменьшено количество retries для ускорения
- workers: process.env.CI ? 4 : 4, // Увеличено количество воркеров в CI до 4
+ // ОГРАНИЧИВАЕМ ВОРКЕРЫ ДЛЯ СНИЖЕНИЯ НАГРУЗКИ НА НОУТБУК
+ // 1 воркер для локальной разработки, 2 для CI
+ workers: process.env.CI ? 2 : 1,
  
  // Репортеры
  reporter: [

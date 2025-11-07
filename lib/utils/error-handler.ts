@@ -38,7 +38,7 @@ export enum ErrorType {
 /**
  * Определяет тип ошибки
  */
-function classifyError(error: unknown): ErrorType {
+export function classifyError(error: unknown): ErrorType {
   if (error instanceof Error) {
     const message = error.message.toLowerCase()
 
@@ -108,7 +108,13 @@ export function createErrorResponse(
     logToSentry?: boolean
   }
 ): { response: ApiError; status: number } {
-  const errorType = classifyError(error)
+  let errorType = classifyError(error)
+  
+  // Если явно указан код валидации, используем его для определения статуса
+  if (context?.code === 'VALIDATION_ERROR' || context?.code === ErrorType.VALIDATION) {
+    errorType = ErrorType.VALIDATION
+  }
+  
   const message = error instanceof Error ? error.message : String(error)
   const status = getHttpStatus(errorType)
 

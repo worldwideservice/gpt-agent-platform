@@ -1,0 +1,12 @@
+{
+  "updates": {
+    "data.title": "Test Category Snapshot"
+  },
+  "calls": [
+    {
+      "path": "",
+      "method": "create",
+      "params": []
+    }
+  ]
+}

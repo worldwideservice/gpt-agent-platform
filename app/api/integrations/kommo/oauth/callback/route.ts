@@ -7,8 +7,8 @@ export const runtime = 'nodejs'
 const querySchema = z.object({
  code: z.string().min(1),
  state: z.string().min(1),
- error: z.string().optional(),
- error_description: z.string().optional(),
+ error: z.string().nullable().optional(),
+ error_description: z.string().nullable().optional(),
 })
 
 export async function GET(request: NextRequest) {
@@ -45,17 +45,28 @@ export async function GET(request: NextRequest) {
  })
 
  // Обмениваем authorization code на токены напрямую через Kommo API
+ const clientId = process.env.KOMMO_CLIENT_ID
+ const clientSecret = process.env.KOMMO_CLIENT_SECRET
+ const redirectUri = process.env.KOMMO_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/integrations/kommo/oauth/callback`
+
+ if (!clientId || !clientSecret) {
+ return NextResponse.json({
+ success: false,
+ error: 'Kommo OAuth credentials not configured',
+ }, { status: 500 })
+ }
+
  const tokenResponse = await fetch('https://kommo.com/oauth2/access_token', {
  method: 'POST',
  headers: {
  'Content-Type': 'application/x-www-form-urlencoded',
  },
  body: new URLSearchParams({
- client_id: '2a5c1463-43dd-4ccc-abd0-79516f785e57',
- client_secret: '6FhlKjCZehELKIShuUQcPHdrF9uUHKLQosf0tDsSvdTuUoahVz3EO44xzVinlbh7',
+ client_id: clientId,
+ client_secret: clientSecret,
  grant_type: 'authorization_code',
  code: query.code,
- redirect_uri: 'https://gpt-agent-kwid-43ii46hai-world-wide-services-62780b79.vercel.app/integrations/kommo/oauth/callback',
+ redirect_uri: redirectUri,
  }),
  })
 

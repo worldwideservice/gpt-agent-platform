@@ -1,0 +1,13 @@
+{
+  "updates": {
+    "data.title": "Test Article Snapshot",
+    "data.content": "Test content"
+  },
+  "calls": [
+    {
+      "path": "",
+      "method": "create",
+      "params": []
+    }
+  ]
+}

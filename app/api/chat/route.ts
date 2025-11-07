@@ -358,6 +358,24 @@ export const POST = async (request: NextRequest) => {
 
  if (useKnowledgeBase) {
  try {
+ // Собираем контекст для скриптов из conversation и lead данных
+ const agentData = agentId || conversation.agentId
+   ? await getAgentById(agentId || conversation.agentId || '', organizationId).catch(() => null)
+   : null
+
+ const scriptContext = {
+   leadId: conversation.leadId ? String(conversation.leadId) : undefined,
+   leadName: (conversation.metadata && typeof conversation.metadata === 'object' && 'leadName' in conversation.metadata)
+     ? String(conversation.metadata.leadName)
+     : undefined,
+   customerName: clientIdentifier || undefined,
+   agentName: (agentData && 'name' in agentData) ? agentData.name : 'Агент',
+   customVariables: {},
+   crmData: conversation.metadata && typeof conversation.metadata === 'object'
+     ? conversation.metadata as Record<string, any>
+     : {},
+ }
+
  fullSystemPrompt = await buildFullSystemPrompt({
  organizationId,
  agentId: agentId || conversation.agentId || null,
@@ -366,6 +384,7 @@ export const POST = async (request: NextRequest) => {
  conversationHistory,
  clientIdentifier: clientIdentifier || undefined,
  agentInstructions,
+ scriptContext,
  })
  } catch (error) {
  console.error('Failed to build agent context', error)
@@ -391,11 +410,28 @@ export const POST = async (request: NextRequest) => {
  fullSystemPrompt = agentInstructions
  }
 
+ // Проверяем лимиты сообщений перед генерацией ответа
+ const { checkUsageLimit: checkMessageLimit } = await import('@/lib/services/usage-tracker')
+ const messageLimitCheck = await checkMessageLimit(organizationId, 'messages', 1)
+
+ if (!messageLimitCheck.allowed && messageLimitCheck.limit !== -1) {
+   return NextResponse.json({
+     success: false,
+     error: `Лимит сообщений превышен. Использовано: ${messageLimitCheck.current}/${messageLimitCheck.limit}. Обновите план подписки.`,
+   }, { status: 403 })
+ }
+
  // Генерируем ответ от LLM с полным контекстом
  const llmResponse = await generateChatResponse(organizationId, message, {
  model: agentModel,
  systemPrompt: fullSystemPrompt ?? undefined,
  conversationHistory,
+ })
+
+ // Отслеживаем использование сообщений (асинхронно)
+ const { recordUsage } = await import('@/lib/services/usage-tracker')
+ recordUsage(organizationId, 'messages', 1, 'Сообщение в чате').catch((error) => {
+   console.error('Failed to track message usage', error)
  })
 
  // Вспомогательная функция для buildSystemPrompt (если не используется новый билдер)

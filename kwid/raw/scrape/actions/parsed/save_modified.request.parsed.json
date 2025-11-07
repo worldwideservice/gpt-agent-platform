@@ -1,0 +1,12 @@
+{
+  "updates_keys": [
+    "data.knowledge_base_fallback_message"
+  ],
+  "calls": [
+    {
+      "path": "",
+      "method": "save",
+      "params": []
+    }
+  ]
+}

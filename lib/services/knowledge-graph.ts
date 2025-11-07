@@ -32,43 +32,61 @@ export const extractKnowledgeFromText = async (
  text: string,
  agentId?: string | null,
 ): Promise<ExtractedKnowledge> => {
- const systemPrompt = `Ты специалист по извлечению структурированных знаний из текста.
+ const systemPrompt = `Ты специалист по извлечению структурированных знаний из текста для построения Knowledge Graph.
 
 Твоя задача:
-1. Найти все важные СУЩНОСТИ в тексте (люди, организации, продукты, услуги, концепции, события)
-2. Определить СВЯЗИ между этими сущностями
+1. Найти ВСЕ важные СУЩНОСТИ в тексте (люди, организации, продукты, услуги, процессы, концепции, события, места)
+2. Определить ВСЕ СВЯЗИ между этими сущностями для понимания бизнес-процессов и структуры компании
 
-Типы сущностей:
-- person: имена людей, роли, должности
-- organization: компании, организации, бренды
-- product: названия продуктов, товаров
-- service: услуги, сервисы
-- concept: концепции, идеи, темы
-- event: события, мероприятия, даты
+Типы сущностей (расширенный список):
+- person: имена людей, роли, должности, контакты
+- organization: компании, организации, бренды, отделы, подразделения
+- product: конкретные продукты, товары, решения
+- service: услуги, сервисы компании, предложения
+- process: бизнес-процессы, процедуры, workflows, алгоритмы
+- concept: концепции, методологии, подходы, принципы
+- feature: особенности продуктов/услуг, функции, возможности
+- event: события, мероприятия, даты, митинги, встречи
+- location: места, офисы, локации, адреса
+- technology: технологии, инструменты, платформы, системы
+- document: документы, файлы, отчеты, презентации
+- metric: метрики, KPI, показатели, измерения
 
-Типы связей:
-- works_for: человек работает в организации
+Типы связей (расширенный список):
+- works_for: человек работает в организации/отделе
+- manages: управляет (человек → человек/процесс/отдел)
 - provides: организация предоставляет услугу/продукт
-- uses: использование продукта/услуги
-- related_to: общая связь
-- part_of: часть целого
-- located_in: расположение
+- uses: использование продукта/услуги/процесса/технологии
+- related_to: общая связь, ассоциация
+- part_of: часть целого (отдел → компания, функция → продукт)
+- depends_on: зависимость (процесс зависит от процесса/ресурса)
+- requires: требует наличия (процесс требует ресурс/условие)
+- located_in: расположение (офис в городе, отдел в здании)
+- owns: владеет (компания владеет продуктом/активом)
+- collaborates_with: сотрудничает с (организация с организацией)
+- reports_to: подчиняется (сотрудник → руководитель)
+- responsible_for: отвечает за (роль → процесс/задача)
+- participates_in: участвует в (человек → событие/процесс)
+- contains: содержит (документ содержит информацию, продукт содержит функцию)
 
-Верни ответ ТОЛЬКО в формате JSON:
+Верни ответ ТОЛЬКО в формате JSON (без markdown, без комментариев):
 {
  "entities": [
- {"type": "person", "name": "Иван Петров", "value": "Иван Петров - менеджер", "confidence": 0.9},
- {"type": "organization", "name": "Компания ABC", "confidence": 0.95}
+ {"type": "person", "name": "Иван Петров", "value": "Иван Петров - менеджер по продажам", "confidence": 0.9},
+ {"type": "organization", "name": "Компания ABC", "value": "IT-компания", "confidence": 0.95}
  ],
  "relationships": [
  {"source": "Иван Петров", "target": "Компания ABC", "type": "works_for", "confidence": 0.9}
  ]
 }
 
-Важно:
-- Названия сущностей должны быть нормализованы (одинаковые написания объединяй)
-- confidence от 0 до 1 (уверенность в извлечении)
-- Только существенные сущности и связи`
+КРИТИЧЕСКИ ВАЖНО:
+- Нормализуй названия сущностей: "Иван Петров" = "И. Петров" = "Петров Иван" → "Иван Петров"
+- Извлекай ВСЕ связи, даже косвенные (через промежуточные сущности)
+- confidence от 0 до 1 (0.7+ для уверенных, 0.5-0.7 для вероятных)
+- Извлекай только существенные сущности (не стоп-слова, не общие понятия)
+- Для организаций используй полное название, если указано
+- Для людей используй полное ФИО, если указано`
 
  try {
  const response = await generateChatResponse(organizationId, text, {
@@ -111,13 +129,26 @@ export const saveEntities = async (
  return entityIds
  }
 
- // Группируем сущности по имени для дедупликации
- const uniqueEntities = new Map<string, Entity>()
- for (const entity of entities) {
- const key = `${entity.type}:${entity.name}`
- if (!uniqueEntities.has(key) || (entity.confidence ?? 0) > (uniqueEntities.get(key)?.confidence ?? 0)) {
- uniqueEntities.set(key, entity)
+ // Нормализуем и группируем сущности по имени для дедупликации
+ const normalizeEntityName = (name: string): string => {
+   // Приводим к нижнему регистру для сравнения
+   // Убираем лишние пробелы
+   // Убираем знаки препинания в конце
+   return name.trim().toLowerCase().replace(/[.,;:!?]+$/, '').replace(/\s+/g, ' ')
  }
+
+ const uniqueEntities = new Map<string, Entity>()
+ const normalizedToOriginal = new Map<string, string>()
+
+ for (const entity of entities) {
+   const normalizedName = normalizeEntityName(entity.name)
+   const key = `${entity.type}:${normalizedName}`
+   
+   // Проверяем, есть ли уже такая сущность
+   if (!uniqueEntities.has(key) || (entity.confidence ?? 0) > (uniqueEntities.get(key)?.confidence ?? 0)) {
+     uniqueEntities.set(key, { ...entity, name: normalizedToOriginal.get(normalizedName) || entity.name })
+     normalizedToOriginal.set(normalizedName, entity.name)
+   }
  }
 
  // Проверяем существующие сущности

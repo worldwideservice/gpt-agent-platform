@@ -27,31 +27,44 @@ const extractKnowledgeFromText = async (text: string): Promise<{
  throw new Error('OPENROUTER_API_KEY is not configured')
  }
 
- const systemPrompt = `Ты специалист по извлечению структурированных знаний из текста для обучения AI-агента как штатного сотрудника компании.
+ const systemPrompt = `Ты специалист по извлечению структурированных знаний из текста для построения Knowledge Graph компании.
 
 Твоя задача:
-1. Найти все важные СУЩНОСТИ (люди, организации, продукты, услуги, процессы, концепции)
-2. Определить СВЯЗИ между сущностями для понимания бизнес-процессов
+1. Найти ВСЕ важные СУЩНОСТИ (люди, организации, продукты, услуги, процессы, концепции, технологии, места)
+2. Определить ВСЕ СВЯЗИ между сущностями для полного понимания бизнес-процессов и структуры
 
-Типы сущностей:
-- person: имена людей, роли, должности
-- organization: компании, организации, бренды, отделы
-- product: конкретные продукты, товары
-- service: услуги, сервисы компании
-- process: бизнес-процессы, процедуры
-- concept: концепции, методологии, подходы
-- feature: особенности продуктов/услуг
+Типы сущностей (расширенный список):
+- person: имена людей, роли, должности, контакты
+- organization: компании, организации, бренды, отделы, подразделения
+- product: конкретные продукты, товары, решения
+- service: услуги, сервисы компании, предложения
+- process: бизнес-процессы, процедуры, workflows, алгоритмы
+- concept: концепции, методологии, подходы, принципы
+- feature: особенности продуктов/услуг, функции, возможности
+- event: события, мероприятия, даты, митинги
+- location: места, офисы, локации, адреса
+- technology: технологии, инструменты, платформы, системы
+- document: документы, файлы, отчеты, презентации
+- metric: метрики, KPI, показатели, измерения
 
-Типы связей:
-- works_for: человек работает в организации
+Типы связей (расширенный список):
+- works_for: человек работает в организации/отделе
+- manages: управляет (человек → человек/процесс/отдел)
 - provides: организация предоставляет услугу/продукт
-- uses: использование продукта/услуги/процесса
-- related_to: общая связь
-- part_of: часть целого
-- depends_on: зависимость
-- requires: требует наличия
+- uses: использование продукта/услуги/процесса/технологии
+- related_to: общая связь, ассоциация
+- part_of: часть целого (отдел → компания, функция → продукт)
+- depends_on: зависимость (процесс зависит от процесса/ресурса)
+- requires: требует наличия (процесс требует ресурс/условие)
+- located_in: расположение (офис в городе, отдел в здании)
+- owns: владеет (компания владеет продуктом/активом)
+- collaborates_with: сотрудничает с (организация с организацией)
+- reports_to: подчиняется (сотрудник → руководитель)
+- responsible_for: отвечает за (роль → процесс/задача)
+- participates_in: участвует в (человек → событие/процесс)
+- contains: содержит (документ содержит информацию, продукт содержит функцию)
 
-Верни ТОЛЬКО JSON:
+Верни ТОЛЬКО JSON (без markdown, без комментариев):
 {
  "entities": [
  {"type": "product", "name": "Продукт X", "value": "Описание продукта", "confidence": 0.95}
@@ -59,7 +72,13 @@ const extractKnowledgeFromText = async (text: string): Promise<{
  "relationships": [
  {"source": "Продукт X", "target": "Компания ABC", "type": "provides", "confidence": 0.9}
  ]
-}`
+}
+
+КРИТИЧЕСКИ ВАЖНО:
+- Нормализуй названия: "Иван Петров" = "И. Петров" = "Петров Иван" → "Иван Петров"
+- Извлекай ВСЕ связи, включая косвенные
+- confidence: 0.7+ (уверенные), 0.5-0.7 (вероятные), <0.5 (игнорировать)
+- Только существенные сущности (не стоп-слова, не общие понятия)`
 
  try {
  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -128,31 +147,62 @@ const saveEntities = async (
  return entityNameToId
  }
 
- // Дедупликация по имени
- const uniqueEntities = new Map<string, typeof entities[0]>()
- for (const entity of entities) {
- const key = `${entity.type}:${entity.name}`
- if (!uniqueEntities.has(key) || (entity.confidence ?? 0) > (uniqueEntities.get(key)?.confidence ?? 0)) {
- uniqueEntities.set(key, entity)
- }
+ // Нормализуем названия сущностей для дедупликации
+ const normalizeEntityName = (name: string): string => {
+   // Приводим к нижнему регистру, убираем лишние пробелы и знаки препинания
+   return name.trim().toLowerCase().replace(/[.,;:!?]+$/, '').replace(/\s+/g, ' ')
  }
 
- // Проверяем существующие сущности
+ // Дедупликация по нормализованному имени
+ const uniqueEntities = new Map<string, typeof entities[0]>()
+ const normalizedToOriginal = new Map<string, string>()
+
+ for (const entity of entities) {
+   const normalizedName = normalizeEntityName(entity.name)
+   const key = `${entity.type}:${normalizedName}`
+   
+   // Сохраняем оригинальное название (самое полное)
+   if (!normalizedToOriginal.has(normalizedName) || entity.name.length > (normalizedToOriginal.get(normalizedName)?.length || 0)) {
+     normalizedToOriginal.set(normalizedName, entity.name)
+   }
+   
+   if (!uniqueEntities.has(key) || (entity.confidence ?? 0) > (uniqueEntities.get(key)?.confidence ?? 0)) {
+     uniqueEntities.set(key, { ...entity, name: normalizedToOriginal.get(normalizedName) || entity.name })
+   }
+ }
+
+ // Проверяем существующие сущности (по нормализованным именам)
  const entityNames = Array.from(uniqueEntities.values()).map((e) => e.name)
+ const normalizedNames = Array.from(uniqueEntities.values()).map((e) => normalizeEntityName(e.name))
+ 
+ // Получаем все сущности организации для проверки нормализованных имен
  const { data: existing } = await supabase
  .from('knowledge_graph_entities')
  .select('id, entity_name')
  .eq('org_id', organizationId)
- .in('entity_name', entityNames)
-
- const existingMap = new Map((existing ?? []).map((e) => [e.entity_name, e.id]))
+ 
+ // Создаем мапу нормализованных имен к ID
+ const existingMap = new Map<string, string>()
+ if (existing) {
+   for (const entity of existing) {
+     const normalized = normalizeEntityName(entity.entity_name)
+     if (normalizedNames.includes(normalized)) {
+       existingMap.set(normalized, entity.id)
+     }
+   }
+ }
 
  // Сохраняем новые или обновляем существующие
  for (const entity of uniqueEntities.values()) {
- const existingId = existingMap.get(entity.name)
+   const normalized = normalizeEntityName(entity.name)
+   const existingId = existingMap.get(normalized)
 
  if (existingId) {
- entityNameToId.set(entity.name, existingId)
+   // Используем оригинальное название из БД, если оно есть
+   const existingEntity = existing?.find((e) => e.id === existingId)
+   const finalName = existingEntity?.entity_name || entity.name
+   entityNameToId.set(entity.name, existingId)
+   entityNameToId.set(finalName, existingId) // Также маппим по оригинальному названию
  
  // Обновляем если уверенность выше
  await supabase

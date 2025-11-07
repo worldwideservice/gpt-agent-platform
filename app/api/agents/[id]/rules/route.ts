@@ -47,8 +47,9 @@ const executeRulesSchema = z.object({
  */
 export const GET = async (
  request: NextRequest,
- { params }: { params: { id: string } },
+ { params }: { params: Promise<{ id: string }> },
 ) => {
+ const { id } = await params
  const session = await auth()
 
  if (!session?.user?.orgId) {
@@ -59,7 +60,7 @@ export const GET = async (
  const { searchParams } = new URL(request.url)
  const activeOnly = searchParams.get('active_only') !== 'false'
 
- const rules = await getRules(session.user.orgId, params.id, activeOnly)
+ const rules = await getRules(session.user.orgId, id, activeOnly)
 
  return NextResponse.json({
  success: true,
@@ -83,8 +84,9 @@ export const GET = async (
  */
 export const POST = async (
  request: NextRequest,
- { params }: { params: { id: string } },
+ { params }: { params: Promise<{ id: string }> },
 ) => {
+ const { id } = await params
  const session = await auth()
 
  if (!session?.user?.orgId) {
@@ -109,7 +111,7 @@ export const POST = async (
 
  const ruleData = {
  ...parsed.data,
- agent_id: params.id,
+ agent_id: id,
  metadata: {},
  }
 
@@ -121,6 +123,20 @@ export const POST = async (
  { status: 500 },
  )
  }
+
+ // Логируем создание правила
+ const { logActivity } = await import('@/lib/services/activity-logger')
+ await logActivity({
+   orgId: session.user.orgId,
+   userId: session.user.id,
+   agentId: id,
+   activityType: 'rule_created' as any,
+   title: `Создано правило: ${parsed.data.name}`,
+   description: `Пользователь создал новое правило автоматизации "${parsed.data.name}"`,
+   metadata: { rule_id: ruleId, rule_name: parsed.data.name },
+ }).catch((error) => {
+   console.error('Failed to log rule creation:', error)
+ })
 
  return NextResponse.json({
  success: true,
@@ -144,8 +160,9 @@ export const POST = async (
  */
 export const PUT = async (
  request: NextRequest,
- { params }: { params: { id: string } },
+ { params }: { params: Promise<{ id: string }> },
 ) => {
+ const { id } = await params
  const session = await auth()
 
  if (!session?.user?.orgId) {
@@ -173,7 +190,7 @@ export const PUT = async (
 
  const context: RuleExecutionContext = {
  organizationId: session.user.orgId,
- agentId: params.id,
+ agentId: id,
  ...parsed.data,
  }
 

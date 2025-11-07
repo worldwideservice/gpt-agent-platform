@@ -1,0 +1,42 @@
+[
+  {
+    "origin": "user",
+    "text": "hello",
+    "timestamp": "02:40"
+  },
+  {
+    "origin": "assistant",
+    "text": "Hello! How can I assist you today? Are you interested in a work visa for Poland, a seasonal visa, or partnership/agency cooperation? Please share your email so a personal consultant can contact you soon.",
+    "timestamp": "02:40Попробовать ещё раз"
+  },
+  {
+    "origin": "user",
+    "text": "i want to partnership with your company",
+    "timestamp": "02:41"
+  },
+  {
+    "origin": "assistant",
+    "text": "Great! Please share your email address, and our specialist will contact you soon to discuss partnership opportunities and details. Looking forward to working with you!",
+    "timestamp": "02:41Попробовать ещё раз"
+  },
+  {
+    "origin": "user",
+    "text": "i0934275393@gmail.com",
+    "timestamp": "02:41"
+  },
+  {
+    "origin": "assistant",
+    "text": "Thank you! Your email is received. Our personal consultant will contact you soon to discuss partnership options. If you have any specific questions or requests, please let me know!",
+    "timestamp": "02:41Попробовать ещё раз"
+  },
+  {
+    "origin": "user",
+    "text": "what is the cost ?",
+    "timestamp": "02:41"
+  },
+  {
+    "origin": "assistant",
+    "text": "Thank you for your interest! A personal consultant will contact you soon and provide all the details about partnership costs and conditions. If you have any other questions, feel free to ask!",
+    "timestamp": "02:41Попробовать ещё раз"
+  }
+]

@@ -80,8 +80,8 @@ jobs:
         run: npm run playwright:install
 
       - name: 🧪 Run Unit Tests
-        run: npm run test:unit || echo "⚠️ Unit tests failed, but continuing..."
-        continue-on-error: true
+        run: npm run test:unit
+        # Тесты теперь стабильны, убрали continue-on-error
         env:
           NODE_ENV: test
           E2E_ONBOARDING_FAKE: '1'

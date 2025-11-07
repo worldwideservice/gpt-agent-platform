@@ -73,6 +73,7 @@ export const ChannelsSettings = ({
             checked={allChannelsEnabled}
             onCheckedChange={(checked) => onAllChannelsToggle(checked)}
             disabled={disabled}
+            data-testid="channels-all-switch"
           />
         </div>
       </div>
@@ -91,6 +92,7 @@ export const ChannelsSettings = ({
                   checked={channel.isActive}
                   onCheckedChange={(enabled) => onChannelToggle(channel.id, enabled)}
                   disabled={disabled}
+                  data-testid={`channel-switch-${channel.id}`}
                 />
               </div>
             ))}

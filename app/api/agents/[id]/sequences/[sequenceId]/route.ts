@@ -19,8 +19,9 @@ const updateSequenceSchema = z.object({
  */
 export const PATCH = async (
   request: NextRequest,
-  { params }: { params: { id: string; sequenceId: string } },
+  { params }: { params: Promise<{ id: string; sequenceId: string }> },
 ) => {
+  const { id, sequenceId } = await params
   const session = await auth()
 
   if (!session?.user?.orgId) {
@@ -49,7 +50,7 @@ export const PATCH = async (
     }
 
     const success = await updateSequence(
-      params.sequenceId,
+      sequenceId,
       session.user.orgId,
       parsed.data
     )
@@ -80,8 +81,9 @@ export const PATCH = async (
  */
 export const DELETE = async (
   request: NextRequest,
-  { params }: { params: { id: string; sequenceId: string } },
+  { params }: { params: Promise<{ id: string; sequenceId: string }> },
 ) => {
+  const { id, sequenceId } = await params
   const session = await auth()
 
   if (!session?.user?.orgId) {
@@ -93,7 +95,7 @@ export const DELETE = async (
   }
 
   try {
-    const success = await deleteSequence(params.sequenceId, session.user.orgId)
+    const success = await deleteSequence(sequenceId, session.user.orgId)
 
     if (!success) {
       const { response, status } = createErrorResponse(

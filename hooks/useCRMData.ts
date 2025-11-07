@@ -48,8 +48,56 @@ export const useCRMData = (connection: CRMConnection | null): UseCRMDataReturn =
 
  const [provider, setProvider] = useState<KommoAPI | null>(null)
 
- // Инициализация провайдера
- useEffect(() => {
+ const loadFallbackPipelines = useCallback(async () => {
+ if (typeof fetch === 'undefined') {
+ return
+ }
+
+ try {
+ const response = await fetch('/api/crm/pipelines', { credentials: 'include' })
+ if (!response.ok) {
+ throw new Error('Failed to fetch CRM pipelines')
+ }
+
+ const payload = await response.json()
+ if (!payload?.success || !payload?.data) {
+ return
+ }
+
+ const pipelinesData = Array.isArray(payload.data.pipelines) ? payload.data.pipelines : []
+ const stagesData = Array.isArray(payload.data.stages) ? payload.data.stages : []
+
+ const universalPipelines: UniversalPipeline[] = pipelinesData.map((pipeline: any, index: number) => {
+ const pipelineId = pipeline.external_id || pipeline.id || `pipeline-${index}`
+ const relatedStages = stagesData
+ .filter((stage: any) => stage.pipeline_id === pipeline.id)
+ .map((stage: any, stageIndex: number) => ({
+ id: stage.external_id || stage.id || `${pipelineId}-stage-${stageIndex}`,
+ name: stage.name ?? `Этап ${stageIndex + 1}`,
+ pipelineId,
+ order: stage.sort_order ?? stageIndex,
+ isActive: true,
+ }))
+ .sort((a: { order?: number }, b: { order?: number }) => (a.order ?? 0) - (b.order ?? 0))
+
+ return {
+ id: pipelineId,
+ name: pipeline.name ?? 'Без названия',
+ isActive: pipeline.is_active ?? true,
+ stages: relatedStages,
+ }
+ })
+
+ setPipelines(universalPipelines)
+ } catch (error) {
+ if (process.env.NODE_ENV === 'development') {
+ console.error('Fallback CRM data load failed', error)
+ }
+ }
+ }, [])
+
+// Инициализация провайдера
+useEffect(() => {
  if (connection && connection.crmType === 'kommo') {
  try {
  const kommoAPI = new KommoAPI({
@@ -69,10 +117,32 @@ export const useCRMData = (connection: CRMConnection | null): UseCRMDataReturn =
  } else {
  setProvider(null)
  }
- }, [connection])
+}, [connection])
 
- // Синхронизация данных
- const syncData = useCallback(async (): Promise<SyncResult> => {
+ useEffect(() => {
+ if (provider) {
+ return
+ }
+
+ let isCancelled = false
+
+ const fetchFallback = async () => {
+ setIsLoading(true)
+ await loadFallbackPipelines()
+ if (!isCancelled) {
+ setIsLoading(false)
+ }
+ }
+
+ void fetchFallback()
+
+ return () => {
+ isCancelled = true
+ }
+ }, [provider, loadFallbackPipelines])
+
+// Синхронизация данных
+const syncData = useCallback(async (): Promise<SyncResult> => {
  if (!provider) {
  const error = 'CRM провайдер не инициализирован'
  setError(error)
@@ -144,6 +214,7 @@ export const useCRMData = (connection: CRMConnection | null): UseCRMDataReturn =
  } catch (err) {
  const error = `Ошибка синхронизации: ${err}`
  setError(error)
+ await loadFallbackPipelines()
  return {
  success: false,
  pipelines: [],
@@ -157,7 +228,7 @@ export const useCRMData = (connection: CRMConnection | null): UseCRMDataReturn =
  } finally {
  setIsLoading(false)
  }
- }, [provider])
+}, [provider, loadFallbackPipelines])
 
  // Обновление соединения
  const refreshConnection = useCallback(async (): Promise<void> => {

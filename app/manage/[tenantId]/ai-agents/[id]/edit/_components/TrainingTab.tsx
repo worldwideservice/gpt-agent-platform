@@ -3,11 +3,8 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { Upload, X, FileText, Loader2, Trash2, CheckCircle2, AlertCircle } from 'lucide-react'
-import { useFormContext } from 'react-hook-form'
 
 import { Button } from '@/components/ui/Button'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/Textarea'
 import { Badge } from '@/components/ui/Badge'
 import { Progress } from '@/components/ui/progress'
 import { ProgressRing } from '@/components/ui/progress-ring'
@@ -40,8 +37,6 @@ interface TrainingTabProps {
 export function TrainingTab({ agentId }: TrainingTabProps) {
   const params = useParams()
   const { push } = useToast()
-  const { register, formState: { errors }, watch, setValue } = useFormContext()
-  const instructions = watch('instructions')
 
   const [assets, setAssets] = useState<Asset[]>([])
   const [loading, setLoading] = useState(true)
@@ -286,41 +281,7 @@ export function TrainingTab({ agentId }: TrainingTabProps) {
 
   return (
     <div className="space-y-8 mt-6">
-      {/* Секция "Инструкции для агента" */}
       <div className="space-y-6">
-        <h2 className="text-lg font-semibold">Инструкции для агента</h2>
-
-        <div className="space-y-2">
-          <Label htmlFor="instructions">
-            Инструкции для агента <span className="text-red-500">*</span>
-          </Label>
-          <Textarea
-            id="instructions"
-            {...register('instructions', {
-              required: 'Инструкции для агента обязательны',
-            })}
-            placeholder="Начальные инструкции по тону, стилю и ответам вашего агента..."
-            rows={10}
-            value={instructions || ''}
-            onChange={(e) => setValue('instructions', e.target.value, { shouldValidate: true })}
-            className={errors.instructions ? 'border-red-500' : ''}
-          />
-          <p className="text-xs text-gray-500">
-            Вы также можете добавить общие сведения о компании, чтобы помочь агенту отвечать
-            более точно.
-          </p>
-          {errors.instructions && (
-            <p className="text-sm text-red-500">
-              {typeof errors.instructions.message === 'string'
-                ? errors.instructions.message
-                : 'Ошибка в поле инструкций'}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Секция "Файлы для обучения" */}
-      <div className="space-y-6 border-t pt-6">
         <div>
           <h2 className="text-lg font-semibold">Файлы для обучения</h2>
           <p className="text-sm text-gray-600 mt-1">
@@ -487,4 +448,3 @@ export function TrainingTab({ agentId }: TrainingTabProps) {
     </div>
   )
 }
-

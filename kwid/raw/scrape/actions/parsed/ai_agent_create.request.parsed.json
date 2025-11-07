@@ -1,0 +1,12 @@
+{
+  "updates": {
+    "data.name": "Temp Agent Snapshot 1762455223946"
+  },
+  "calls": [
+    {
+      "path": "",
+      "method": "create",
+      "params": []
+    }
+  ]
+}

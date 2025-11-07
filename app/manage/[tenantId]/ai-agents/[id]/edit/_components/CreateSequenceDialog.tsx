@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Plus, Trash2, GripVertical } from "lucide-react";
+import { DraggableSequenceStep } from "./DraggableSequenceStep";
 
 import {
   Dialog,
@@ -89,6 +90,7 @@ export function CreateSequenceDialog({
   const { push: pushToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [steps, setSteps] = useState<SequenceStep[]>([]);
+  const [draggedStepIndex, setDraggedStepIndex] = useState<number | null>(null);
 
   const {
     register,
@@ -150,6 +152,30 @@ export function CreateSequenceDialog({
     });
 
     setSteps(newSteps);
+  };
+
+  const handleStepDragStart = (index: number) => {
+    setDraggedStepIndex(index);
+  };
+
+  const handleStepDragEnd = () => {
+    setDraggedStepIndex(null);
+  };
+
+  const handleStepDrop = (targetIndex: number) => {
+    if (draggedStepIndex === null || draggedStepIndex === targetIndex) return;
+    
+    const newSteps = [...steps];
+    const [removed] = newSteps.splice(draggedStepIndex, 1);
+    newSteps.splice(targetIndex, 0, removed);
+    
+    // Обновляем порядок шагов
+    newSteps.forEach((step, i) => {
+      step.step_order = i + 1;
+    });
+    
+    setSteps(newSteps);
+    setDraggedStepIndex(null);
   };
 
   const onSubmit = async (data: CreateSequenceFormData) => {
@@ -296,182 +322,36 @@ export function CreateSequenceDialog({
                   Нет шагов. Добавьте хотя бы один шаг.
                 </p>
               ) : (
-                steps.map((step, index) => (
-                  <div
-                    key={index}
-                    className="border rounded-lg p-4 space-y-3"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <GripVertical className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm font-medium">
-                          Шаг {step.step_order}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {index > 0 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => moveStep(index, "up")}
-                          >
-                            ↑
-                          </Button>
-                        )}
-                        {index < steps.length - 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => moveStep(index, "down")}
-                          >
-                            ↓
-                          </Button>
-                        )}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeStep(index)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                <div className="space-y-4">
+                  {steps.map((step, index) => (
+                    <div
+                      key={index}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.add("border-blue-400");
+                      }}
+                      onDragLeave={(e) => {
+                        e.currentTarget.classList.remove("border-blue-400");
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.remove("border-blue-400");
+                        handleStepDrop(index);
+                      }}
+                    >
+                      <DraggableSequenceStep
+                        step={step}
+                        index={index}
+                        onUpdate={updateStep}
+                        onRemove={removeStep}
+                        onDragStart={handleStepDragStart}
+                        onDragEnd={handleStepDragEnd}
+                        isDragging={draggedStepIndex === index}
+                        isLast={index === steps.length - 1}
+                      />
                     </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label>Тип действия</Label>
-                        <Select
-                          value={step.action_type}
-                          onValueChange={(value) =>
-                            updateStep(index, { action_type: value })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {ACTION_TYPES.map((type) => (
-                              <SelectItem key={type.value} value={type.value}>
-                                {type.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Задержка (минуты)</Label>
-                        <Input
-                          type="number"
-                          min={0}
-                          value={step.delay_minutes}
-                          onChange={(e) =>
-                            updateStep(index, {
-                              delay_minutes: Number(e.target.value),
-                            })
-                          }
-                          placeholder="0"
-                        />
-                      </div>
-                    </div>
-
-                    {step.action_type === "send_message" && (
-                      <div className="space-y-2">
-                        <Label>Шаблон сообщения</Label>
-                        <Textarea
-                          value={step.template || ""}
-                          onChange={(e) =>
-                            updateStep(index, { template: e.target.value })
-                          }
-                          placeholder="Текст сообщения"
-                          rows={3}
-                        />
-                      </div>
-                    )}
-
-                    {step.action_type === "create_task" && (
-                      <>
-                        <div className="space-y-2">
-                          <Label>Название задачи</Label>
-                          <Input
-                            value={step.task_title || ""}
-                            onChange={(e) =>
-                              updateStep(index, { task_title: e.target.value })
-                            }
-                            placeholder="Название задачи"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Описание задачи</Label>
-                          <Textarea
-                            value={step.task_description || ""}
-                            onChange={(e) =>
-                              updateStep(index, { task_description: e.target.value })
-                            }
-                            placeholder="Описание задачи"
-                            rows={2}
-                          />
-                        </div>
-                      </>
-                    )}
-
-                    {step.action_type === "send_email" && (
-                      <>
-                        <div className="space-y-2">
-                          <Label>Получатель</Label>
-                          <Input
-                            value={step.recipient || ""}
-                            onChange={(e) =>
-                              updateStep(index, { recipient: e.target.value })
-                            }
-                            placeholder="email@example.com"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Текст письма</Label>
-                          <Textarea
-                            value={step.template || ""}
-                            onChange={(e) =>
-                              updateStep(index, { template: e.target.value })
-                            }
-                            placeholder="Текст письма"
-                            rows={3}
-                          />
-                        </div>
-                      </>
-                    )}
-
-                    {step.action_type === "webhook" && (
-                      <div className="space-y-2">
-                        <Label>URL Webhook</Label>
-                        <Input
-                          value={step.webhook_url || ""}
-                          onChange={(e) =>
-                            updateStep(index, { webhook_url: e.target.value })
-                          }
-                          placeholder="https://example.com/webhook"
-                        />
-                      </div>
-                    )}
-
-                    {step.action_type === "ai_response" && (
-                      <div className="space-y-2">
-                        <Label>Промпт для AI</Label>
-                        <Textarea
-                          value={step.ai_prompt || ""}
-                          onChange={(e) =>
-                            updateStep(index, { ai_prompt: e.target.value })
-                          }
-                          placeholder="Промпт для генерации ответа"
-                          rows={3}
-                        />
-                      </div>
-                    )}
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>

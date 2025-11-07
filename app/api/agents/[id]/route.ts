@@ -101,6 +101,17 @@ export const PATCH = async (
  settings: parsed.data.settings ?? {},
  })
 
+ // Логируем обновление агента
+ const { ActivityLogger } = await import('@/lib/services/activity-logger')
+ await ActivityLogger.agentUpdated(
+   session.user.orgId,
+   session.user.id,
+   agent.id,
+   agent.name
+ ).catch((error) => {
+   console.error('Failed to log agent update:', error)
+ })
+
  return NextResponse.json({
  success: true,
  data: agent,

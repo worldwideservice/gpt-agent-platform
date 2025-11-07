@@ -7,6 +7,7 @@ import { getCompanyKnowledgeForContext, getSalesScriptForStage, getObjectionResp
 import { getRelatedEntities } from './knowledge-graph'
 import { searchKnowledgeBase } from '@/lib/repositories/knowledge-search'
 import { getMemoryContext, formatMemoryContext, extractAndSaveMemoryFromConversation } from './agent-memory'
+import { processScript, type ScriptContext } from './script-processor'
 
 interface AgentContext {
  companyKnowledge: string
@@ -20,19 +21,20 @@ interface AgentContext {
 }
 
 interface ContextOptions {
- organizationId: string
- agentId: string | null
- pipelineStageId?: string | null
- userMessage?: string
- conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>
- clientIdentifier?: string // email, phone или другой идентификатор клиента для памяти
+  organizationId: string
+  agentId: string | null
+  pipelineStageId?: string | null
+  userMessage?: string
+  conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>
+  clientIdentifier?: string // email, phone или другой идентификатор клиента для памяти
+  scriptContext?: ScriptContext // Контекст для обработки переменных в скриптах
 }
 
 /**
  * Строит полный контекст для агента как штатного сотрудника
  */
 export const buildAgentContext = async (options: ContextOptions): Promise<AgentContext> => {
- const { organizationId, agentId, pipelineStageId, userMessage, clientIdentifier } = options
+  const { organizationId, agentId, pipelineStageId, userMessage, clientIdentifier, scriptContext } = options
 
  // Параллельно загружаем все источники знаний
  const [
@@ -79,8 +81,23 @@ if (userMessage) {
  // Форматируем знания компании
  const companyKnowledgeText = formatCompanyKnowledge(companyKnowledge)
  
- // Форматируем скрипты продаж
- const salesScriptsText = formatSalesScripts(salesScripts, pipelineStageId)
+ // Собираем контекст для обработки скриптов
+ // Получаем данные о лиде/клиенте из conversation или других источников
+ const scriptContext: ScriptContext = {
+   // TODO: Получить данные из conversation или CRM
+   agentName: 'Агент', // Можно получить из настроек агента
+   customVariables: {},
+   crmData: {},
+ }
+
+ // Форматируем скрипты продаж с обработкой переменных
+ // Используем переданный контекст или создаем базовый
+ const scriptContextForProcessing = scriptContext || {
+   agentName: 'Агент',
+   customVariables: {},
+   crmData: {},
+ }
+ const salesScriptsText = formatSalesScripts(salesScripts, pipelineStageId, scriptContextForProcessing)
  
  // Форматируем ответы на возражения
  const objectionResponsesText = formatObjectionResponses(objectionResponses)
@@ -140,40 +157,46 @@ const formatCompanyKnowledge = (knowledge: Awaited<ReturnType<typeof getCompanyK
 }
 
 /**
- * Форматирует скрипты продаж
+ * Форматирует скрипты продаж с обработкой переменных
  */
 const formatSalesScripts = (
- scripts: Awaited<ReturnType<typeof getSalesScriptForStage>>,
- stageId?: string | null,
+  scripts: Awaited<ReturnType<typeof getSalesScriptForStage>>,
+  stageId?: string | null,
+  scriptContext?: ScriptContext,
 ): string => {
- if (scripts.length === 0) {
- return ''
- }
+  if (scripts.length === 0) {
+    return ''
+  }
 
- let text = '\n## Скрипты продаж'
- if (stageId) {
- text += ` (для текущего этапа воронки)`
- }
- text += ':\n\n'
+  let text = '\n## Скрипты продаж'
+  if (stageId) {
+    text += ` (для текущего этапа воронки)`
+  }
+  text += ':\n\n'
 
- for (const script of scripts.slice(0, 5)) { // Топ-5 скриптов
- const typeNames: Record<string, string> = {
- greeting: '👋 Приветствие',
- qualification: '❓ Квалификация',
- presentation: '🎯 Презентация',
- objection_handling: '🛡️ Работа с возражениями',
- closing: '✅ Закрытие сделки',
- }
+  for (const script of scripts.slice(0, 5)) { // Топ-5 скриптов
+    const typeNames: Record<string, string> = {
+      greeting: '👋 Приветствие',
+      qualification: '❓ Квалификация',
+      presentation: '🎯 Презентация',
+      objection_handling: '🛡️ Работа с возражениями',
+      closing: '✅ Закрытие сделки',
+    }
 
- text += `### ${script.title} (${typeNames[script.scriptType] ?? script.scriptType})\n`
- text += `${script.content}\n\n`
- 
- if (Object.keys(script.variables).length > 0) {
- text += `*Переменные: ${Object.keys(script.variables).join(', ')}*\n\n`
- }
- }
+    // Обрабатываем скрипт с подстановкой переменных
+    const processedContent = scriptContext
+      ? processScript(script.content, scriptContext)
+      : script.content
 
- return text
+    text += `### ${script.title} (${typeNames[script.scriptType] ?? script.scriptType})\n`
+    text += `${processedContent}\n\n`
+    
+    if (Object.keys(script.variables || {}).length > 0) {
+      text += `*Доступные переменные: ${Object.keys(script.variables).join(', ')}*\n\n`
+    }
+  }
+
+  return text
 }
 
 /**

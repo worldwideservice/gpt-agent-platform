@@ -22,7 +22,9 @@ export type ActivityType =
   | 'integration_connected'
   | 'integration_synced'
   | 'rule_executed'
+  | 'rule_created'
   | 'sequence_executed'
+  | 'sequence_created'
 
 export interface ActivityLogData {
   orgId: string
@@ -78,6 +80,21 @@ export const ActivityLogger = {
       activityType: 'agent_created',
       title: `Создан новый агент: ${agentName}`,
       description: `Пользователь создал нового ИИ-агента "${agentName}"`,
+      metadata: { agent_name: agentName },
+    })
+  },
+
+  /**
+   * Логирование обновления агента
+   */
+  agentUpdated: async (orgId: string, userId: string, agentId: string, agentName: string) => {
+    await logActivity({
+      orgId,
+      userId,
+      agentId,
+      activityType: 'agent_updated',
+      title: `Агент обновлен: ${agentName}`,
+      description: `Пользователь обновил настройки агента "${agentName}"`,
       metadata: { agent_name: agentName },
     })
   },

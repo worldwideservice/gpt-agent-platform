@@ -713,11 +713,56 @@ async function handleCompanyEvent(
       companies = companyData
     }
 
+    const supabase = getSupabaseServiceRoleClient()
+
     for (const company of companies) {
       const companyId = String(company.id || '')
+      const companyName = String(company.name || 'Компания')
       if (!companyId) continue
 
-      console.log(`Company event processed: ${companyId}, subtype: ${eventSubtype}`)
+      // Сохраняем информацию о компании в БД (если есть таблица crm_companies)
+      try {
+        const { error: companyError } = await supabase
+          .from('crm_companies')
+          .upsert({
+            org_id: orgId,
+            company_id: companyId,
+            name: companyName,
+            metadata: company,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }, {
+            onConflict: 'org_id,company_id',
+          })
+
+        if (companyError && companyError.code !== '42P01') { // 42P01 = table doesn't exist
+          console.error(`Error saving company ${companyId}:`, companyError)
+        }
+      } catch (tableError) {
+        // Таблица может не существовать - это не критично
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Table crm_companies may not exist, skipping save for company ${companyId}`)
+        }
+      }
+
+      // Логируем событие компании
+      try {
+        const { logActivity } = await import('./activity-logger')
+        await logActivity({
+          orgId,
+          activityType: eventSubtype === 'company_created' ? 'lead_created' as any : 'lead_updated' as any,
+          title: `Компания ${eventSubtype === 'company_created' ? 'создана' : 'обновлена'}: ${companyName}`,
+          description: `Событие компании в Kommo: ${eventSubtype || 'unknown'}`,
+          metadata: { company_id: companyId, event_subtype: eventSubtype },
+        }).catch((error: unknown) => {
+          console.error('Failed to log company activity:', error)
+        })
+      } catch (error) {
+        // Не критично
+        console.error('Failed to import logActivity for company:', error)
+      }
+
+      console.log(`Company event processed: ${companyId}, name: ${companyName}, subtype: ${eventSubtype}`)
     }
 
     return true
@@ -742,8 +787,67 @@ async function handleCustomerEvent(
       return false
     }
 
-    // Обработка событий покупателей
-    console.log('Customer event processed:', customerData)
+    let customers: Array<Record<string, unknown>> = []
+
+    if ('add' in customerData && Array.isArray(customerData.add)) {
+      customers = customerData.add as Array<Record<string, unknown>>
+    } else if ('update' in customerData && Array.isArray(customerData.update)) {
+      customers = customerData.update as Array<Record<string, unknown>>
+    } else if (Array.isArray(customerData)) {
+      customers = customerData
+    }
+
+    const supabase = getSupabaseServiceRoleClient()
+
+    for (const customer of customers) {
+      const customerId = String(customer.id || '')
+      const customerName = String(customer.name || 'Покупатель')
+      if (!customerId) continue
+
+      // Сохраняем информацию о покупателе в БД (если есть таблица crm_customers)
+      try {
+        const { error: customerError } = await supabase
+          .from('crm_customers')
+          .upsert({
+            org_id: orgId,
+            customer_id: customerId,
+            name: customerName,
+            metadata: customer,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }, {
+            onConflict: 'org_id,customer_id',
+          })
+
+        if (customerError && customerError.code !== '42P01') { // 42P01 = table doesn't exist
+          console.error(`Error saving customer ${customerId}:`, customerError)
+        }
+      } catch (tableError) {
+        // Таблица может не существовать - это не критично
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Table crm_customers may not exist, skipping save for customer ${customerId}`)
+        }
+      }
+
+      // Логируем событие покупателя
+      try {
+        const { logActivity } = await import('./activity-logger')
+        await logActivity({
+          orgId,
+          activityType: 'lead_created' as any,
+          title: `Покупатель ${eventSubtype === 'customer_created' ? 'создан' : 'обновлен'}: ${customerName}`,
+          description: `Событие покупателя в Kommo: ${eventSubtype || 'unknown'}`,
+          metadata: { customer_id: customerId, event_subtype: eventSubtype },
+        }).catch((error: unknown) => {
+          console.error('Failed to log customer activity:', error)
+        })
+      } catch (error) {
+        // Не критично
+        console.error('Failed to import logActivity for customer:', error)
+      }
+
+      console.log(`Customer event processed: ${customerId}, name: ${customerName}, subtype: ${eventSubtype}`)
+    }
 
     return true
   } catch (error) {

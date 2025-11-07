@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { NextRequest } from 'next/server'
-import { GET, POST } from '@/app/api/agents/route'
 
 // Mock auth
 vi.mock('@/auth', () => ({
@@ -30,8 +29,9 @@ describe('API: /api/agents', () => {
       const { auth } = await import('@/auth')
       vi.mocked(auth).mockResolvedValue(null)
 
+      const route = await import('@/app/api/agents/route')
       const request = new NextRequest('http://localhost:3000/api/agents')
-      const response = await GET(request)
+      const response = await route.GET(request)
       const data = await response.json()
 
       expect(response.status).toBe(401)
@@ -62,13 +62,16 @@ describe('API: /api/agents', () => {
         total: 1,
       })
 
+      const route = await import('@/app/api/agents/route')
       const request = new NextRequest('http://localhost:3000/api/agents')
-      const response = await GET(request)
+      const response = await route.GET(request)
       const data = await response.json()
 
       expect(response.status).toBe(200)
       expect(data.success).toBe(true)
-      expect(data.agents).toHaveLength(1)
+      expect(data.data).toBeDefined()
+      expect(Array.isArray(data.data)).toBe(true)
+      expect(data.data).toHaveLength(1)
       expect(data.pagination).toBeDefined()
     })
 
@@ -85,8 +88,9 @@ describe('API: /api/agents', () => {
 
       vi.mocked(getAgents).mockRejectedValue(new Error('Database error'))
 
+      const route = await import('@/app/api/agents/route')
       const request = new NextRequest('http://localhost:3000/api/agents')
-      const response = await GET(request)
+      const response = await route.GET(request)
       const data = await response.json()
 
       expect(response.status).toBe(500)
@@ -108,7 +112,8 @@ describe('API: /api/agents', () => {
         }),
       })
 
-      const response = await POST(request)
+      const route = await import('@/app/api/agents/route')
+      const response = await route.POST(request)
       const data = await response.json()
 
       expect(response.status).toBe(401)
@@ -141,7 +146,8 @@ describe('API: /api/agents', () => {
         }),
       })
 
-      const response = await POST(request)
+      const route = await import('@/app/api/agents/route')
+      const response = await route.POST(request)
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -166,7 +172,8 @@ describe('API: /api/agents', () => {
         }),
       })
 
-      const response = await POST(request)
+      const route = await import('@/app/api/agents/route')
+      const response = await route.POST(request)
       const data = await response.json()
 
       expect(response.status).toBe(400)

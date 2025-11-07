@@ -1,0 +1,11 @@
+{
+  "fields": {
+    "_token": {
+      "type": "hidden",
+      "label": null,
+      "required": false,
+      "placeholder": null,
+      "helpText": null
+    }
+  }
+}

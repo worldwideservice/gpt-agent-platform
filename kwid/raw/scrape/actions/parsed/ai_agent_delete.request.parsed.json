@@ -1,0 +1,10 @@
+{
+  "updates": {},
+  "calls": [
+    {
+      "path": "",
+      "method": "callMountedTableAction",
+      "params": []
+    }
+  ]
+}

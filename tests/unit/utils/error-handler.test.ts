@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { createErrorResponse, classifyError, ErrorType, withErrorHandling, ApiErrorResponse } from '@/lib/utils/error-handler'
 import * as Sentry from '@sentry/nextjs'
+import * as errorHandler from '@/lib/utils/error-handler'
 
 vi.mock('@sentry/nextjs', () => ({
   captureException: vi.fn(),
@@ -14,49 +14,49 @@ describe('Error Handler', () => {
   describe('classifyError', () => {
     it('should classify validation errors', () => {
       const error = new Error('Validation error: invalid input')
-      expect(classifyError(error)).toBe(ErrorType.VALIDATION)
+      expect(errorHandler.classifyError(error)).toBe(errorHandler.ErrorType.VALIDATION)
     })
 
     it('should classify authentication errors', () => {
       const error = new Error('Unauthorized access')
-      expect(classifyError(error)).toBe(ErrorType.AUTHENTICATION)
+      expect(errorHandler.classifyError(error)).toBe(errorHandler.ErrorType.AUTHENTICATION)
     })
 
     it('should classify authorization errors', () => {
       const error = new Error('Forbidden: permission denied')
-      expect(classifyError(error)).toBe(ErrorType.AUTHORIZATION)
+      expect(errorHandler.classifyError(error)).toBe(errorHandler.ErrorType.AUTHORIZATION)
     })
 
     it('should classify not found errors', () => {
       const error = new Error('Resource not found')
-      expect(classifyError(error)).toBe(ErrorType.NOT_FOUND)
+      expect(errorHandler.classifyError(error)).toBe(errorHandler.ErrorType.NOT_FOUND)
     })
 
     it('should classify rate limit errors', () => {
       const error = new Error('Rate limit exceeded')
-      expect(classifyError(error)).toBe(ErrorType.RATE_LIMIT)
+      expect(errorHandler.classifyError(error)).toBe(errorHandler.ErrorType.RATE_LIMIT)
     })
 
     it('should classify database errors', () => {
       const error = new Error('Database connection failed')
-      expect(classifyError(error)).toBe(ErrorType.DATABASE)
+      expect(errorHandler.classifyError(error)).toBe(errorHandler.ErrorType.DATABASE)
     })
 
     it('should classify external service errors', () => {
       const error = new Error('External API error')
-      expect(classifyError(error)).toBe(ErrorType.EXTERNAL_SERVICE)
+      expect(errorHandler.classifyError(error)).toBe(errorHandler.ErrorType.EXTERNAL_SERVICE)
     })
 
     it('should default to internal error', () => {
       const error = new Error('Unknown error')
-      expect(classifyError(error)).toBe(ErrorType.INTERNAL)
+      expect(errorHandler.classifyError(error)).toBe(errorHandler.ErrorType.INTERNAL)
     })
   })
 
   describe('createErrorResponse', () => {
     it('should create error response with correct status', () => {
       const error = new Error('Validation error')
-      const { response, status } = createErrorResponse(error)
+      const { response, status } = errorHandler.createErrorResponse(error)
       
       expect(response.success).toBe(false)
       expect(response.error).toBe('Validation error')
@@ -65,21 +65,21 @@ describe('Error Handler', () => {
 
     it('should log to Sentry for internal errors', () => {
       const error = new Error('Internal error')
-      createErrorResponse(error, { logToSentry: true })
+      errorHandler.createErrorResponse(error, { logToSentry: true })
       
       expect(Sentry.captureException).toHaveBeenCalledWith(error, expect.any(Object))
     })
 
     it('should not log to Sentry if logToSentry is false', () => {
       const error = new Error('Validation error')
-      createErrorResponse(error, { logToSentry: false })
+      errorHandler.createErrorResponse(error, { logToSentry: false })
       
       expect(Sentry.captureException).not.toHaveBeenCalled()
     })
 
     it('should include custom code and details', () => {
       const error = new Error('Custom error')
-      const { response } = createErrorResponse(error, {
+      const { response } = errorHandler.createErrorResponse(error, {
         code: 'CUSTOM_ERROR',
         details: { field: 'test' },
       })
@@ -92,7 +92,7 @@ describe('Error Handler', () => {
   describe('withErrorHandling', () => {
     it('should return result on success', async () => {
       const fn = vi.fn().mockResolvedValue('success')
-      const result = await withErrorHandling(fn)
+      const result = await errorHandler.withErrorHandling(fn)
       
       expect(result).toBe('success')
     })
@@ -101,7 +101,7 @@ describe('Error Handler', () => {
       const error = new Error('Test error')
       const fn = vi.fn().mockRejectedValue(error)
       
-      await expect(withErrorHandling(fn)).rejects.toThrow(ApiErrorResponse)
+      await expect(errorHandler.withErrorHandling(fn)).rejects.toThrow(errorHandler.ApiErrorResponse)
     })
 
     it('should include context in error', async () => {
@@ -109,13 +109,93 @@ describe('Error Handler', () => {
       const fn = vi.fn().mockRejectedValue(error)
       
       try {
-        await withErrorHandling(fn, { code: 'TEST_ERROR' })
+        await errorHandler.withErrorHandling(fn, { code: 'TEST_ERROR' })
       } catch (e) {
-        expect(e).toBeInstanceOf(ApiErrorResponse)
-        if (e instanceof ApiErrorResponse) {
+        expect(e).toBeInstanceOf(errorHandler.ApiErrorResponse)
+        if (e instanceof errorHandler.ApiErrorResponse) {
           expect(e.response.code).toBe('TEST_ERROR')
         }
       }
+    })
+  })
+
+  describe('ApiErrorResponse', () => {
+    it('should create ApiErrorResponse instance', () => {
+      const errorResponse = {
+        success: false,
+        error: 'Test error',
+        code: 'TEST_ERROR',
+      }
+      
+      const apiError = new errorHandler.ApiErrorResponse(errorResponse, 400)
+      
+      expect(apiError).toBeInstanceOf(Error)
+      expect(apiError).toBeInstanceOf(errorHandler.ApiErrorResponse)
+      expect(apiError.response).toEqual(errorResponse)
+      expect(apiError.status).toBe(400)
+      expect(apiError.name).toBe('ApiErrorResponse')
+      expect(apiError.message).toBe('Test error')
+    })
+  })
+
+  describe('withGracefulDegradation', () => {
+    it('should return result on success', async () => {
+      const fn = vi.fn().mockResolvedValue('success')
+      const result = await errorHandler.withGracefulDegradation(fn, 'fallback')
+      
+      expect(result).toBe('success')
+      expect(fn).toHaveBeenCalled()
+    })
+
+    it('should return fallback on error', async () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const error = new Error('Test error')
+      const fn = vi.fn().mockRejectedValue(error)
+      
+      const result = await errorHandler.withGracefulDegradation(fn, 'fallback')
+      
+      expect(result).toBe('fallback')
+      expect(fn).toHaveBeenCalled()
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Graceful degradation: operation failed, using fallback',
+        error
+      )
+      
+      consoleWarnSpy.mockRestore()
+    })
+
+    it('should use custom error message', async () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const error = new Error('Test error')
+      const fn = vi.fn().mockRejectedValue(error)
+      
+      const result = await errorHandler.withGracefulDegradation(fn, 'fallback', 'Custom error message')
+      
+      expect(result).toBe('fallback')
+      expect(consoleWarnSpy).toHaveBeenCalledWith('Custom error message', error)
+      
+      consoleWarnSpy.mockRestore()
+    })
+
+    it('should work with different fallback types', async () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const error = new Error('Test error')
+      const fn = vi.fn().mockRejectedValue(error)
+      
+      // Test with number fallback
+      const numberResult = await errorHandler.withGracefulDegradation(fn, 42)
+      expect(numberResult).toBe(42)
+      
+      // Test with object fallback
+      const objectFallback = { data: 'test' }
+      const objectResult = await errorHandler.withGracefulDegradation(fn, objectFallback)
+      expect(objectResult).toEqual(objectFallback)
+      
+      // Test with null fallback
+      const nullResult = await errorHandler.withGracefulDegradation(fn, null)
+      expect(nullResult).toBeNull()
+      
+      consoleWarnSpy.mockRestore()
     })
   })
 })

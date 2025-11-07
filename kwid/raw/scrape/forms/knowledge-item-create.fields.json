@@ -1,0 +1,13 @@
+{
+  "url": "https://aai.widgets.wearekwid.com/manage/1000373-worldwideservices/knowledge-items/create",
+  "title": "Создать Статья - GPT Агент",
+  "fields": [
+    {
+      "label": null,
+      "tag": "TEXTAREA",
+      "type": null,
+      "name": null,
+      "placeholder": null
+    }
+  ]
+}

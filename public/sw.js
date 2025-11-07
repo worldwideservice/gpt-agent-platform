@@ -1,7 +1,7 @@
-// Service Worker for T11 Platform PWA
-const CACHE_NAME = 't11-platform-v1.0.0'
-const STATIC_CACHE = 't11-platform-static-v1.0.0'
-const API_CACHE = 't11-platform-api-v1.0.0'
+// Service Worker for TON 18 Platform PWA
+const CACHE_NAME = 'ton18-platform-v1.0.0'
+const STATIC_CACHE = 'ton18-platform-static-v1.0.0'
+const API_CACHE = 'ton18-platform-api-v1.0.0'
 
 // Resources to cache immediately
 const STATIC_ASSETS = [

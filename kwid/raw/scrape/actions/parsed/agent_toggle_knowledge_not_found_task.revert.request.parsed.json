@@ -1,0 +1,12 @@
+{
+  "updates": {
+    "data.knowledge_not_found_task": false
+  },
+  "calls": [
+    {
+      "path": "",
+      "method": "save",
+      "params": []
+    }
+  ]
+}
