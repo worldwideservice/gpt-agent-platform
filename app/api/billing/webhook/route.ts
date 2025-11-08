@@ -3,6 +3,10 @@ import { headers } from 'next/headers'
 import Stripe from 'stripe'
 import { handleStripeWebhook } from '@/lib/services/billing'
 
+// Force dynamic rendering (uses headers())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 const getStripe = () => {
  const secretKey = process.env.STRIPE_SECRET_KEY
  if (!secretKey) {
