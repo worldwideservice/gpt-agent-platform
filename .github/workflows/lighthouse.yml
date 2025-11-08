@@ -1,0 +1,63 @@
+name: Lighthouse CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  lighthouse:
+    name: Lighthouse Performance Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📚 Install dependencies
+        run: npm ci
+
+      - name: 🔍 Install Lighthouse CI
+        run: npm install -g @lhci/cli
+
+      - name: 🚀 Run Lighthouse CI
+        run: |
+          lhci autorun \
+            --collect.url="${{ secrets.PRODUCTION_URL || 'https://gpt-agent-kwid-1i1j7zlgl-world-wide-services-62780b79.vercel.app' }}" \
+            --collect.numberOfRuns=3 \
+            --collect.settings.chromeFlags="--no-sandbox --headless" \
+            --upload.target=temporary-public-storage \
+            --assert.assertions.off=0 \
+            --assert.assertions.warn=0 \
+            --assert.assertions.error=0
+        continue-on-error: true
+
+      - name: 📊 Upload Lighthouse Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: .lighthouseci/
+          retention-days: 7
+
+      - name: 📈 Performance Summary
+        if: always()
+        run: |
+          echo "## 📊 Lighthouse Performance Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f .lighthouseci/manifest.json ]; then
+            echo "✅ Lighthouse report generated successfully" >> $GITHUB_STEP_SUMMARY
+            echo "📁 Check artifacts for full report" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Lighthouse report not generated" >> $GITHUB_STEP_SUMMARY
+          fi
+

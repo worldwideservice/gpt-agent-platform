@@ -6,9 +6,17 @@
 
 Для работы CI/CD pipeline нужны следующие GitHub Secrets:
 
+### Обязательные для деплоя:
 1. `VERCEL_TOKEN` - токен доступа к Vercel API
 2. `VERCEL_ORG_ID` - ID организации Vercel
 3. `VERCEL_PROJECT_ID` - ID проекта Vercel
+4. `RAILWAY_TOKEN` - токен доступа к Railway API (для деплоя Worker)
+5. `SUPABASE_URL` - URL Supabase проекта (для миграций БД)
+6. `SUPABASE_SERVICE_ROLE_KEY` - Service Role Key Supabase (для миграций БД)
+
+### Опциональные:
+- `WORKER_HEALTH_CHECK_URL` - URL для health check Worker сервиса
+- `PRODUCTION_URL` - Production URL для Lighthouse CI (если отличается от дефолтного)
 
 ---
 
@@ -83,6 +91,42 @@ Vercel Token для CI/CD уже готов:
 - **Value:** `prj_oK3wwLSXPxenw9FvFZVeVp0xhGKv`
 - **Add secret**
 
+#### Secret 4: RAILWAY_TOKEN
+- **Name:** `RAILWAY_TOKEN`
+- **Value:** Ваш Railway API токен
+- **Как получить:**
+  1. Откройте [Railway Dashboard](https://railway.app)
+  2. Перейдите в **Settings** → **Tokens**
+  3. Нажмите **New Token**
+  4. Скопируйте токен
+- **Add secret**
+
+#### Secret 5: SUPABASE_URL
+- **Name:** `SUPABASE_URL`
+- **Value:** `https://rpzchsgutabxeabbnwas.supabase.co` (или ваш URL)
+- **Как получить:**
+  1. Откройте [Supabase Dashboard](https://app.supabase.com)
+  2. Выберите ваш проект
+  3. Перейдите в **Settings** → **API**
+  4. Скопируйте **Project URL**
+- **Add secret**
+
+#### Secret 6: SUPABASE_SERVICE_ROLE_KEY
+- **Name:** `SUPABASE_SERVICE_ROLE_KEY`
+- **Value:** Ваш Service Role Key
+- **Как получить:**
+  1. Откройте [Supabase Dashboard](https://app.supabase.com)
+  2. Выберите ваш проект
+  3. Перейдите в **Settings** → **API**
+  4. Скопируйте **service_role** key (⚠️ Секретный ключ!)
+- **Add secret**
+
+#### Secret 7: WORKER_HEALTH_CHECK_URL (Опционально)
+- **Name:** `WORKER_HEALTH_CHECK_URL`
+- **Value:** URL вашего Worker сервиса на Railway
+- **Пример:** `https://your-worker.railway.app`
+- **Add secret**
+
 ### Через GitHub CLI (опционально)
 
 Если у вас установлен GitHub CLI:
@@ -93,6 +137,9 @@ gh auth login  # Если еще не авторизованы
 gh secret set VERCEL_TOKEN --body "g5wBHt7TxDknUEIHchTJUHEK"
 gh secret set VERCEL_ORG_ID --body "team_eYhYqLCO9dqINAo5SeQGntIH"
 gh secret set VERCEL_PROJECT_ID --body "prj_oK3wwLSXPxenw9FvFZVeVp0xhGKv"
+gh secret set RAILWAY_TOKEN --body "your-railway-token"
+gh secret set SUPABASE_URL --body "https://your-project.supabase.co"
+gh secret set SUPABASE_SERVICE_ROLE_KEY --body "your-service-role-key"
 ```
 
 📋 **См. также:** [`docs/GITHUB_SECRETS_QUICK_SETUP.md`](./GITHUB_SECRETS_QUICK_SETUP.md) для быстрой настройки
@@ -104,10 +151,14 @@ gh secret set VERCEL_PROJECT_ID --body "prj_oK3wwLSXPxenw9FvFZVeVp0xhGKv"
 ### Проверка Secrets в GitHub
 
 1. Перейдите в **Settings** → **Secrets and variables** → **Actions**
-2. Убедитесь что все 3 secrets видны:
+2. Убедитесь что все необходимые secrets видны:
    - ✅ `VERCEL_TOKEN`
    - ✅ `VERCEL_ORG_ID`
    - ✅ `VERCEL_PROJECT_ID`
+   - ✅ `RAILWAY_TOKEN`
+   - ✅ `SUPABASE_URL`
+   - ✅ `SUPABASE_SERVICE_ROLE_KEY`
+   - ⚠️ `WORKER_HEALTH_CHECK_URL` (опционально)
 
 ### Тестирование CI/CD
 
@@ -177,12 +228,26 @@ Organization: world-wide-services-62780b79
 
 ## 📝 Чеклист
 
+### Vercel
 - [ ] Vercel Token создан
 - [ ] `VERCEL_TOKEN` добавлен в GitHub Secrets
 - [ ] `VERCEL_ORG_ID` добавлен в GitHub Secrets (`team_eYhYqLCO9dqINAo5SeQGntIH`)
 - [ ] `VERCEL_PROJECT_ID` добавлен в GitHub Secrets (`prj_oK3wwLSXPxenw9FvFZVeVp0xhGKv`)
+
+### Railway (Worker)
+- [ ] Railway Token создан
+- [ ] `RAILWAY_TOKEN` добавлен в GitHub Secrets
+- [ ] `WORKER_HEALTH_CHECK_URL` добавлен (опционально)
+
+### Supabase (Миграции)
+- [ ] `SUPABASE_URL` добавлен в GitHub Secrets
+- [ ] `SUPABASE_SERVICE_ROLE_KEY` добавлен в GitHub Secrets
+
+### Проверка
 - [ ] Тестовый workflow запущен и прошел успешно
 - [ ] Деплой на production работает автоматически
+- [ ] Миграции БД выполняются автоматически
+- [ ] Worker деплоится автоматически при изменении кода
 
 ---
 

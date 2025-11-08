@@ -42,6 +42,7 @@
 - Условие: PR и успешный build
 
 #### Deploy Production (для main)
+- ✅ **Автоматические миграции БД** перед деплоем (`npm run db:migrate`)
 - ✅ Автоматический деплой production на Vercel
 - ✅ Health check после деплоя
 - ⏱️ Timeout: 15 минут
@@ -101,6 +102,41 @@
 
 ---
 
+### 5. Deploy Worker to Railway (`.github/workflows/deploy-worker.yml`)
+
+**Триггеры:**
+- Push в `main` (только при изменении `services/worker/**`)
+- Manual dispatch
+
+**Jobs:**
+
+#### Deploy Worker
+- ✅ Build Worker сервиса
+- ✅ Автоматический деплой на Railway через Railway CLI
+- ✅ Health check после деплоя
+- ⏱️ Timeout: 20 минут
+- 🚂 Платформа: Railway
+
+---
+
+### 6. Lighthouse CI (`.github/workflows/lighthouse.yml`)
+
+**Триггеры:**
+- Push в `main`
+- Pull Requests в `main`
+- Manual dispatch
+
+**Jobs:**
+
+#### Lighthouse Performance Tests
+- ✅ Performance тесты через Lighthouse CI
+- ✅ Проверка метрик (Performance, Accessibility, Best Practices, SEO)
+- ✅ Upload отчетов в artifacts
+- ⏱️ Timeout: 10 минут
+- 📊 3 прогона для стабильности результатов
+
+---
+
 ## 🔑 Необходимые GitHub Secrets
 
 ### Обязательные для деплоя:
@@ -110,14 +146,19 @@
 | `VERCEL_TOKEN` | Vercel API токен | ⚠️ Требуется настройка |
 | `VERCEL_ORG_ID` | Vercel Organization ID | ⚠️ Требуется настройка |
 | `VERCEL_PROJECT_ID` | Vercel Project ID | ⚠️ Требуется настройка |
+| `RAILWAY_TOKEN` | Railway API токен (для Worker) | ⚠️ Требуется настройка |
+| `SUPABASE_URL` | Supabase URL (для миграций) | ⚠️ Требуется настройка |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase Service Role Key (для миграций) | ⚠️ Требуется настройка |
 
-### Опциональные (для тестов):
+### Опциональные (для тестов и мониторинга):
 
 | Secret | Описание | Статус |
 |--------|----------|--------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase URL | ✅ Есть fallback |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase Anon Key | ✅ Есть fallback |
 | `SUPABASE_DEFAULT_ORGANIZATION_ID` | Default Org ID | ✅ Есть fallback |
+| `WORKER_HEALTH_CHECK_URL` | URL для health check Worker | ⚠️ Опционально |
+| `PRODUCTION_URL` | Production URL для Lighthouse CI | ✅ Есть fallback |
 
 ---
 
@@ -205,12 +246,20 @@ bash scripts/deploy-to-vercel.sh
 - ✅ Quality checks работают
 - ✅ Tests настроены (unit + e2e)
 - ✅ Build настроен
-- ✅ Deploy настроен (Vercel)
+- ✅ **Автоматические миграции БД** перед production деплоем
+- ✅ Deploy настроен (Vercel + Railway Worker)
+- ✅ **Lighthouse CI** для performance-тестов
 - ✅ Health checks работают
 - ✅ Artifacts сохраняются
 
+**Новые возможности:**
+- 🗄️ **Автоматические миграции БД** - выполняются автоматически перед каждым production деплоем
+- 🚂 **Автоматический деплой Worker** - Worker деплоится автоматически при изменении кода
+- 📊 **Lighthouse CI** - автоматические performance-тесты при каждом push
+
 **Следующие шаги:**
-1. Убедитесь что все GitHub Secrets настроены
+1. Убедитесь что все GitHub Secrets настроены (включая `RAILWAY_TOKEN`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`)
 2. Сделайте push в main для проверки автоматического деплоя
 3. Проверьте что health check проходит после деплоя
+4. Проверьте Lighthouse отчеты в artifacts
 

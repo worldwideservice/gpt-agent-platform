@@ -39,14 +39,14 @@ jobs:
         env:
           NODE_ENV: production
 
+      - name: 📦 Install Railway CLI
+        run: npm install -g @railway/cli
+
       - name: 🚂 Deploy to Railway
-        uses: bervProject/railway-deploy@v0.3.0
-        with:
-          railway_token: ${{ secrets.RAILWAY_TOKEN }}
-          service: worker
-          detach: false
+        working-directory: ${{ env.WORKER_DIR }}
+        run: railway up --detach
         env:
-          RAILWAY_ENVIRONMENT: production
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
       - name: ⏳ Wait for deployment
         run: sleep 30
@@ -71,4 +71,5 @@ jobs:
           echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ Worker service deployed successfully!" >> $GITHUB_STEP_SUMMARY
+
 
