@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server'
 
-
 import { auth } from '@/auth'
 import {
   getMonthlyResponsesSeries,
-
-export const dynamic = 'force-dynamic'
   getDailyResponsesSeries,
   getWeeklyBarChartData,
 } from '@/lib/repositories/agents'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 export const GET = async (request: Request) => {
   const session = await auth()
