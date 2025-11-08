@@ -38,32 +38,29 @@ export const Logo = ({ className, showTagline = false, href }: LogoProps) => {
   const content = (
     <div className={cn('flex flex-col items-center', className)}>
       {/* Логотип */}
-      <div className="relative mb-2">
+      <div className="relative">
         {mounted ? (
           <Image
             src={logoSrc}
             alt="TON 18 Logo"
-            width={80}
-            height={40}
-            className="drop-shadow-sm"
+            width={120}
+            height={60}
+            className="drop-shadow-sm object-contain"
             priority
           />
         ) : (
-          <div className="w-20 h-10 bg-transparent" />
+          <div className="w-[120px] h-[60px] bg-transparent" />
         )}
       </div>
       
-      {/* Текст TON 18 */}
-      <div className="flex flex-col items-center">
-        <span className="text-lg font-bold tracking-tight text-black dark:text-white">
-          TON 18
-        </span>
-        {showTagline && (
-          <span className="text-[10px] font-normal tracking-wider text-black dark:text-white mt-0.5">
+      {/* Tagline только если нужно */}
+      {showTagline && (
+        <div className="flex flex-col items-center mt-2">
+          <span className="text-[10px] font-normal tracking-wider text-black dark:text-white">
             create infinity
           </span>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 
@@ -111,18 +108,15 @@ export const LogoCompact = ({ className, href }: { className?: string; href?: st
           <Image
             src={logoSrc}
             alt="TON 18 Logo"
-            width={48}
-            height={24}
+            width={64}
+            height={32}
             className="object-contain"
             priority
           />
         ) : (
-          <div className="w-12 h-6 bg-transparent" />
+          <div className="w-16 h-8 bg-transparent" />
         )}
       </div>
-      <span className="text-xl font-bold tracking-tight text-black dark:text-white">
-        TON 18
-      </span>
     </div>
   )
 
