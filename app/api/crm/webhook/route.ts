@@ -5,6 +5,10 @@ import { saveWebhookEvent, processWebhookEvent } from '@/lib/services/webhook-pr
 import { getCrmConnectionData } from '@/lib/repositories/crm-connection'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
+// Force dynamic rendering (uses request.headers)
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 /**
  * Webhook endpoint для получения событий от Kommo CRM
  * Настройка в Kommo: Настройки -> Интеграции -> Webhooks

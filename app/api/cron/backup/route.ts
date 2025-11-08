@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server'
 
+// Force dynamic rendering (uses request.headers)
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 /**
  * Cron endpoint для автоматических бэкапов Supabase БД
  * Вызывается Vercel Cron Jobs ежедневно в 2:00
