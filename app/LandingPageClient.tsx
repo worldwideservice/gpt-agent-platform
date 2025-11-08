@@ -13,7 +13,10 @@ import {
   Workflow,
   ArrowRight,
   Sparkles,
-  Loader2
+  Loader2,
+  Zap,
+  PlayCircle,
+  CreditCard
 } from 'lucide-react'
 
 import { Button } from '@/components/ui'
@@ -147,30 +150,39 @@ export function LandingPageClient() {
       <header className="sticky top-0 z-50 w-full border-b bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-gray-950/60 transition-colors">
         <div className="container mx-auto flex h-20 md:h-24 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Logo href="/" />
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex items-center gap-2">
             <Link 
               href="#features" 
-              className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-[#E63946] dark:hover:text-[#E63946] transition-all duration-300 relative group focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:ring-offset-2 rounded"
+              className="group relative flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#E63946] dark:hover:text-[#E63946] focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:ring-offset-2"
               aria-label="Перейти к разделу Возможности"
             >
-              Возможности
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#E63946] group-hover:w-full transition-all duration-300"></span>
+              <Zap className="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
+              <span className="relative">
+                Возможности
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#E63946] to-[#FF6B6B] group-hover:w-full transition-all duration-300"></span>
+              </span>
             </Link>
             <Link 
               href="#how-it-works" 
-              className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-[#E63946] dark:hover:text-[#E63946] transition-all duration-300 relative group focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:ring-offset-2 rounded"
+              className="group relative flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#E63946] dark:hover:text-[#E63946] focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:ring-offset-2"
               aria-label="Перейти к разделу Как это работает"
             >
-              Как это работает
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#E63946] group-hover:w-full transition-all duration-300"></span>
+              <PlayCircle className="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
+              <span className="relative">
+                Как это работает
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#E63946] to-[#FF6B6B] group-hover:w-full transition-all duration-300"></span>
+              </span>
             </Link>
             <Link 
               href="/pricing" 
-              className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-[#E63946] dark:hover:text-[#E63946] transition-all duration-300 relative group focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:ring-offset-2 rounded"
+              className="group relative flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#E63946] dark:hover:text-[#E63946] focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:ring-offset-2"
               aria-label="Перейти к разделу Тарифы"
             >
-              Тарифы
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#E63946] group-hover:w-full transition-all duration-300"></span>
+              <CreditCard className="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
+              <span className="relative">
+                Тарифы
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#E63946] to-[#FF6B6B] group-hover:w-full transition-all duration-300"></span>
+              </span>
             </Link>
           </nav>
           <div className="flex items-center gap-4">
