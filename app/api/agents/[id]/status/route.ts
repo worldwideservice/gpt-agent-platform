@@ -4,6 +4,7 @@ import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { updateAgentStatus } from '@/lib/repositories/agents'
+import { logger } from '@/lib/utils/logger'
 
 
 // Force dynamic rendering (uses headers from auth())

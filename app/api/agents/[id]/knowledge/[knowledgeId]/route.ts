@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils/logger'
 
 
 // Force dynamic rendering (uses headers from auth())

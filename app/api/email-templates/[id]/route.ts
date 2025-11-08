@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils/logger'
 
 
 

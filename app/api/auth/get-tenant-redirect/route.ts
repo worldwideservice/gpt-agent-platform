@@ -38,9 +38,8 @@ export async function GET() {
  const duration = Date.now() - startTime
  logger.debug("[get-tenant-redirect] Successfully got tenant-id", {
  tenantId: tenantId.substring(0, 8) + '...', // Partial for logging
+ duration: `${duration}ms`,
  })
- 
- logger.performance("get-tenant-redirect", duration)
  
  // Record metric for monitoring
  metrics.recordApiCall('/api/auth/get-tenant-redirect', duration, 200)

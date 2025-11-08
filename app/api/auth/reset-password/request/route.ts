@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { createPasswordReset } from '@/lib/repositories/passwordResets'
 import { UserRepository } from '@/lib/repositories/users'
+import { logger } from '@/lib/utils/logger'
 
 const requestSchema = z.object({
  email: z

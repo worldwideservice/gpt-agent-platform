@@ -16,8 +16,8 @@ export async function GET(
  request: Request,
  { params }: { params: Promise<{ id: string }> },
 ) {
- try {
  const { id: agentId } = await params
+ try {
  const session = await auth()
 
  if (!session?.user?.orgId) {

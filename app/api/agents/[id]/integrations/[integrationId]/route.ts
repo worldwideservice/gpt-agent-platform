@@ -14,9 +14,9 @@ interface RouteParams {
 
 // PATCH - Обновление настроек интеграции
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
- try {
  const resolvedParams = await params
  const { id: agentId, integrationId } = resolvedParams
+ try {
 
  const session = await auth()
 
@@ -96,9 +96,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
 // GET - Получение настроек интеграции
 export async function GET(request: NextRequest, { params }: RouteParams) {
- try {
  const resolvedParams = await params
  const { id: agentId, integrationId } = resolvedParams
+ try {
 
  const session = await auth()
 
