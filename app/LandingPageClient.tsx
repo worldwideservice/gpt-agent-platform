@@ -18,6 +18,7 @@ import {
 
 import { Button } from '@/components/ui'
 import { PublicHeader } from '@/components/layout/PublicHeader'
+import { Logo } from '@/components/ui/Logo'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/shadcn/card'
 import { Badge } from '@/components/ui'
 import { useToast } from '@/components/ui/toast-context'
