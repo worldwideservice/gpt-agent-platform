@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server'
 
-
 import { auth } from '@/auth'
-
 import { getSubscription } from '@/lib/repositories/subscriptions'
+import { logger } from '@/lib/utils/logger'
 
 
 
@@ -25,8 +24,11 @@ export const GET = async () => {
  success: true,
  data: subscription,
  })
- } catch (error) {
- console.error('Subscription API error', error)
+ } catch (error: unknown) {
+ logger.error('Subscription API error', error, {
+   endpoint: '/api/subscriptions',
+   method: 'GET',
+ })
 
  return NextResponse.json(
  {

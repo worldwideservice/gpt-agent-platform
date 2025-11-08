@@ -84,7 +84,10 @@ export const GET = async (request: NextRequest) => {
     const { data, error, count } = await query
 
     if (error) {
-      console.error('Failed to fetch webhook events', error)
+      logger.error('Failed to fetch webhook events', error, {
+        endpoint: '/api/webhooks/events',
+        method: 'GET',
+      })
       const { response, status } = createErrorResponse(
         new Error('Не удалось загрузить события'),
         { code: 'WEBHOOKS_FETCH_ERROR', logToSentry: true }

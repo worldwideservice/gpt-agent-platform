@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils/logger'
 
 import type { SalesScript } from '@/lib/repositories/company-knowledge'
 
@@ -54,7 +55,11 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
  const { data, error } = await query
 
  if (error) {
- console.error('Failed to fetch sales scripts', error)
+ logger.error('Failed to fetch sales scripts', error, {
+   endpoint: '/api/agents/[id]/scripts',
+   method: 'GET',
+   agentId,
+ })
  throw new Error('Не удалось загрузить скрипты')
  }
 
@@ -81,8 +86,12 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
  success: true,
  data: scripts,
  })
- } catch (error) {
- console.error('Scripts API error', error)
+ } catch (error: unknown) {
+ logger.error('Scripts API error', error, {
+   endpoint: '/api/agents/[id]/scripts',
+   method: 'GET',
+   agentId,
+ })
 
  return NextResponse.json(
  {
@@ -152,7 +161,11 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
  .single()
 
  if (error || !script) {
- console.error('Failed to create sales script', error)
+ logger.error('Failed to create sales script', error, {
+   endpoint: '/api/agents/[id]/scripts',
+   method: 'POST',
+   agentId,
+ })
  throw new Error('Не удалось создать скрипт')
  }
 
@@ -178,8 +191,12 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
  success: true,
  data: result,
  })
- } catch (error) {
- console.error('Script create API error', error)
+ } catch (error: unknown) {
+ logger.error('Script create API error', error, {
+   endpoint: '/api/agents/[id]/scripts',
+   method: 'POST',
+   agentId,
+ })
 
  return NextResponse.json(
  {

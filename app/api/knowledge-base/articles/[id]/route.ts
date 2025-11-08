@@ -37,8 +37,12 @@ export const GET = async (
  success: true,
  data: article,
  })
- } catch (error) {
- console.error('Article API error', error)
+ } catch (error: unknown) {
+ logger.error('Article API error', error, {
+   endpoint: '/api/knowledge-base/articles/[id]',
+   method: 'GET',
+   articleId: id,
+ })
 
  return NextResponse.json(
  {
@@ -91,8 +95,12 @@ export const PATCH = async (
  success: true,
  data: article,
  })
- } catch (error) {
- console.error('Article update API error', error)
+ } catch (error: unknown) {
+ logger.error('Article update API error', error, {
+   endpoint: '/api/knowledge-base/articles/[id]',
+   method: 'PATCH',
+   articleId: id,
+ })
 
  return NextResponse.json(
  {
@@ -121,8 +129,12 @@ export const DELETE = async (
  return NextResponse.json({
  success: true,
  })
- } catch (error) {
- console.error('Article delete API error', error)
+ } catch (error: unknown) {
+ logger.error('Article delete API error', error, {
+   endpoint: '/api/knowledge-base/articles/[id]',
+   method: 'DELETE',
+   articleId: id,
+ })
 
  return NextResponse.json(
  {

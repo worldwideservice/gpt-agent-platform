@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils/logger'
 
 
 // Force dynamic rendering (uses headers from auth())
@@ -57,7 +58,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
  .single()
 
  if (updateError) {
- console.error('Error updating integration:', updateError)
+ logger.error('Error updating integration:', updateError, {
+   endpoint: '/api/agents/[id]/integrations/[integrationId]/install',
+   method: 'POST',
+   agentId,
+   integrationId,
+ })
  return NextResponse.json(
  { success: false, error: 'Не удалось обновить интеграцию' },
  { status: 500 }
@@ -85,7 +91,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
  .single()
 
  if (createError) {
- console.error('Error creating integration:', createError)
+ logger.error('Error creating integration:', createError, {
+   endpoint: '/api/agents/[id]/integrations/[integrationId]/install',
+   method: 'POST',
+   agentId,
+   integrationId,
+ })
  return NextResponse.json(
  { success: false, error: 'Не удалось создать интеграцию' },
  { status: 500 }
@@ -96,8 +107,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
  success: true,
  integration: newIntegration,
  })
- } catch (error) {
- console.error('Agent integration install API error:', error)
+ } catch (error: unknown) {
+ logger.error('Agent integration install API error:', error, {
+   endpoint: '/api/agents/[id]/integrations/[integrationId]/install',
+   method: 'POST',
+   agentId,
+   integrationId,
+ })
  return NextResponse.json(
  { success: false, error: 'Внутренняя ошибка сервера' },
  { status: 500 }

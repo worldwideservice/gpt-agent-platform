@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-
 import { auth } from '@/auth'
+import { logger } from '@/lib/utils/logger'
 import {
   getBillingPlans,
   getOrganizationSubscription,
@@ -62,8 +62,11 @@ export const GET = async (request: NextRequest) => {
  { status: 400 },
  )
  }
- } catch (error) {
- console.error('Billing GET API error', error)
+ } catch (error: unknown) {
+ logger.error('Billing GET API error', error, {
+   endpoint: '/api/billing',
+   method: 'GET',
+ })
 
  return NextResponse.json(
  {
@@ -160,8 +163,11 @@ export const POST = async (request: NextRequest) => {
  { status: 400 },
  )
  }
- } catch (error) {
- console.error('Billing POST API error', error)
+ } catch (error: unknown) {
+ logger.error('Billing POST API error', error, {
+   endpoint: '/api/billing',
+   method: 'POST',
+ })
 
  return NextResponse.json(
  {

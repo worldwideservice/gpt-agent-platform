@@ -2,8 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 import { z } from 'zod'
 
-
 import { auth } from '@/auth'
+import { logger } from '@/lib/utils/logger'
 import {
   getKnowledgeBaseCategoryById,
   updateKnowledgeBaseCategory,
@@ -37,8 +37,12 @@ export const GET = async (
  success: true,
  data: category,
  })
- } catch (error) {
- console.error('Category API error', error)
+ } catch (error: unknown) {
+ logger.error('Category API error', error, {
+   endpoint: '/api/knowledge-base/categories/[id]',
+   method: 'GET',
+   categoryId: id,
+ })
 
  return NextResponse.json(
  {
@@ -89,8 +93,12 @@ export const PATCH = async (
  success: true,
  data: category,
  })
- } catch (error) {
- console.error('Category update API error', error)
+ } catch (error: unknown) {
+ logger.error('Category update API error', error, {
+   endpoint: '/api/knowledge-base/categories/[id]',
+   method: 'PATCH',
+   categoryId: id,
+ })
 
  return NextResponse.json(
  {
@@ -119,8 +127,12 @@ export const DELETE = async (
  return NextResponse.json({
  success: true,
  })
- } catch (error) {
- console.error('Category delete API error', error)
+ } catch (error: unknown) {
+ logger.error('Category delete API error', error, {
+   endpoint: '/api/knowledge-base/categories/[id]',
+   method: 'DELETE',
+   categoryId: id,
+ })
 
  return NextResponse.json(
  {

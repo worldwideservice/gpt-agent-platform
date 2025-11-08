@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils/logger'
 
 
 // Force dynamic rendering (uses headers from auth())
@@ -43,7 +44,10 @@ export const GET = async () => {
       .eq('org_id', session.user.orgId)
 
     if (connectionsError) {
-      console.error('[crm/pipelines] Failed to load connections', connectionsError)
+      logger.error('[crm/pipelines] Failed to load connections', connectionsError, {
+        endpoint: '/api/crm/pipelines',
+        method: 'GET',
+      })
       throw new Error('Не удалось загрузить подключения CRM')
     }
 
@@ -66,7 +70,10 @@ export const GET = async () => {
       .order('sort_order', { ascending: true })
 
     if (pipelinesError) {
-      console.error('[crm/pipelines] Failed to load pipelines', pipelinesError)
+      logger.error('[crm/pipelines] Failed to load pipelines', pipelinesError, {
+        endpoint: '/api/crm/pipelines',
+        method: 'GET',
+      })
       throw new Error('Не удалось загрузить воронки CRM')
     }
 
@@ -82,7 +89,10 @@ export const GET = async () => {
         .order('sort_order', { ascending: true })
 
       if (stagesError) {
-        console.error('[crm/pipelines] Failed to load stages', stagesError)
+        logger.error('[crm/pipelines] Failed to load stages', stagesError, {
+          endpoint: '/api/crm/pipelines',
+          method: 'GET',
+        })
         throw new Error('Не удалось загрузить этапы воронок')
       }
 
@@ -97,8 +107,11 @@ export const GET = async () => {
         connections,
       },
     })
-  } catch (error) {
-    console.error('[crm/pipelines] Unexpected error', error)
+  } catch (error: unknown) {
+    logger.error('[crm/pipelines] Unexpected error', error, {
+      endpoint: '/api/crm/pipelines',
+      method: 'GET',
+    })
 
     return NextResponse.json(
       {

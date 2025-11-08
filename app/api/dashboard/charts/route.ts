@@ -43,8 +43,11 @@ export const GET = async (request: Request) => {
       success: true,
       data,
     })
-  } catch (error) {
-    console.error('Failed to fetch chart data:', error)
+  } catch (error: unknown) {
+    logger.error('Failed to fetch chart data:', error, {
+      endpoint: '/api/dashboard/charts',
+      method: 'GET',
+    })
     return NextResponse.json(
       {
         success: false,

@@ -47,8 +47,13 @@ export const PATCH = async (
  })
 
  return NextResponse.json({ success: true, data: updated })
- } catch (error) {
- console.error('Agent channel PATCH error', error)
+ } catch (error: unknown) {
+ logger.error('Agent channel PATCH error', error, {
+   endpoint: '/api/agents/[id]/channels/[channel]',
+   method: 'PATCH',
+   agentId: id,
+   channel,
+ })
 
  return NextResponse.json(
  {
@@ -75,8 +80,13 @@ export const DELETE = async (
  await deleteAgentChannel(session.user.orgId, id, channel)
 
  return NextResponse.json({ success: true })
- } catch (error) {
- console.error('Agent channel DELETE error', error)
+ } catch (error: unknown) {
+ logger.error('Agent channel DELETE error', error, {
+   endpoint: '/api/agents/[id]/channels/[channel]',
+   method: 'DELETE',
+   agentId: id,
+   channel,
+ })
 
  return NextResponse.json(
  {

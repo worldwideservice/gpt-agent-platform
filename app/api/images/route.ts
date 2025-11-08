@@ -131,10 +131,12 @@ export async function GET(request: NextRequest) {
  },
  })
 
- } catch (error) {
- if (process.env.NODE_ENV === 'development') {
- console.error('Image optimization error:', error)
- }
+ } catch (error: unknown) {
+ const { logger } = await import('@/lib/utils/logger')
+ logger.error('Image optimization error:', error, {
+   endpoint: '/api/images',
+   method: 'GET',
+ })
  return NextResponse.json(
  { error: 'Failed to optimize image' },
  { status: 500 }

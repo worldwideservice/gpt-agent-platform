@@ -29,10 +29,8 @@ export const GET = async () => {
  const kommoApi = new KommoAPI(state.config)
 
  try {
- if (process.env.NODE_ENV === 'development') {
- console.log('🔍 Running Kommo API connectivity test...')
- console.log('🔧 API URL:', kommoApi.getBaseUrl())
- }
+ logger.log('🔍 Running Kommo API connectivity test...')
+ logger.log('🔧 API URL:', kommoApi.getBaseUrl())
 
  const [users, pipelines, stats] = await Promise.all([
  kommoApi.getUsers(),
@@ -49,12 +47,13 @@ export const GET = async () => {
  stats,
  },
  })
- } catch (error) {
+ } catch (error: unknown) {
  const errorMessage = error instanceof Error ? error.message : String(error)
 
- if (process.env.NODE_ENV === 'development') {
- console.error('❌ Kommo API test failed:', errorMessage)
- }
+ logger.error('❌ Kommo API test failed:', error, {
+   endpoint: '/api/test-kommo',
+   errorMessage,
+ })
 
  return NextResponse.json(
  {

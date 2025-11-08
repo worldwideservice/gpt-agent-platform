@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { auth } from '@/auth'
 import { backendFetch } from '@/lib/backend/client'
+import { logger } from '@/lib/utils/logger'
 
 
 
@@ -36,8 +37,10 @@ export async function GET() {
  })
 
  return NextResponse.json(result)
- } catch (error) {
- console.error('Kommo status error:', error)
+ } catch (error: unknown) {
+ logger.error('Kommo status error:', error, {
+   endpoint: '/api/integrations/kommo/status',
+ })
  return NextResponse.json(
  { success: false, error: 'Не удалось получить статус подключения Kommo' },
  { status: 500 },

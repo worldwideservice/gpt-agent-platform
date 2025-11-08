@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { z } from 'zod'
 
-
 import { auth } from '@/auth'
-
 import { backendFetch } from '@/lib/backend/client'
+import { logger } from '@/lib/utils/logger'
 
 
 
@@ -35,8 +34,10 @@ export async function POST(request: NextRequest) {
  })
 
  return NextResponse.json(result)
- } catch (error) {
- console.error('Kommo oauth start error:', error)
+ } catch (error: unknown) {
+ logger.error('Kommo oauth start error:', error, {
+   endpoint: '/api/integrations/kommo/oauth/start',
+ })
 
  return NextResponse.json(
  {

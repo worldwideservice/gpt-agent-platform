@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+
 import { UserRepository } from '@/lib/repositories/users'
 import { createNotification } from '@/lib/repositories/notifications'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { loadSupabaseServerEnv } from '@/lib/env/supabase'
+import { logger } from '@/lib/utils/logger'
 
 
 // Force dynamic rendering (uses headers from auth())
@@ -61,14 +63,20 @@ export async function POST(request: NextRequest) {
  })
 
  if (!user) {
- console.error('Registration: createUser returned null')
+ logger.error('Registration: createUser returned null', undefined, {
+   endpoint: '/api/auth/register',
+   email,
+ })
  return NextResponse.json(
- { error: 'Не удалось создать пользователя' },
- { status: 500 }
+   { error: 'Не удалось создать пользователя' },
+   { status: 500 }
  )
  }
- } catch (createError) {
- console.error('Registration: Error in createUser:', createError)
+ } catch (createError: unknown) {
+ logger.error('Registration: Error in createUser:', createError, {
+   endpoint: '/api/auth/register',
+   email,
+ })
  const errorMessage = createError instanceof Error ? createError.message : 'Неизвестная ошибка при создании пользователя'
  return NextResponse.json(
  { error: errorMessage },
@@ -80,9 +88,7 @@ export async function POST(request: NextRequest) {
 
  // Create organization for the user
  try {
- if (process.env.NODE_ENV === 'development') {
- console.log('Registration: Creating organization for user:', user.id)
- }
+ logger.log('Registration: Creating organization for user:', user.id)
 
  // Use validated Supabase client
  const client = getSupabaseServiceRoleClient()
@@ -134,9 +140,10 @@ export async function POST(request: NextRequest) {
  .eq('id', user.id)
 
  if (updateError) {
- if (process.env.NODE_ENV === 'development') {
- console.error('Registration: Failed to update user default organization:', updateError)
- }
+ logger.error('Registration: Failed to update user default organization:', updateError, {
+   endpoint: '/api/auth/register',
+   userId: user.id,
+ })
  }
 
  // Add user to organization
@@ -149,9 +156,11 @@ export async function POST(request: NextRequest) {
  })
 
  if (memberError) {
- if (process.env.NODE_ENV === 'development') {
- console.error('Registration: Failed to add user to organization:', memberError)
- }
+ logger.error('Registration: Failed to add user to organization:', memberError, {
+   endpoint: '/api/auth/register',
+   userId: user.id,
+   organizationId: organization.id,
+ })
  }
 
  // Create welcome notification
@@ -170,26 +179,28 @@ export async function POST(request: NextRequest) {
  organizationId: organization.id,
  },
  })
- } catch (notifError) {
- if (process.env.NODE_ENV === 'development') {
- console.error('Failed to create welcome notification:', notifError)
- }
+ } catch (notifError: unknown) {
+ logger.error('Failed to create welcome notification:', notifError, {
+   endpoint: '/api/auth/register',
+   userId: user.id,
+   organizationId,
+ })
  // Don't fail registration if notification fails
  }
  }
 
- if (process.env.NODE_ENV === 'development') {
- console.log('Registration: Organization created successfully:', organization.id)
- }
+ logger.log('Registration: Organization created successfully:', organization.id)
  } else {
- if (process.env.NODE_ENV === 'development') {
- console.error('Registration: Failed to create organization:', orgError)
+ logger.error('Registration: Failed to create organization:', orgError, {
+   endpoint: '/api/auth/register',
+   userId: user.id,
+ })
  }
- }
- } catch (orgError) {
- if (process.env.NODE_ENV === 'development') {
- console.error('Registration: Organization creation failed:', orgError)
- }
+ } catch (orgError: unknown) {
+ logger.error('Registration: Organization creation failed:', orgError, {
+   endpoint: '/api/auth/register',
+   userId: user.id,
+ })
  // Continue anyway - user is created
  }
 
@@ -203,13 +214,16 @@ export async function POST(request: NextRequest) {
  },
  organizationId,
  })
- } catch (error) {
+ } catch (error: unknown) {
  // Логируем ошибки в production тоже для диагностики
- console.error('Registration error:', error)
+ logger.error('Registration error:', error, {
+   endpoint: '/api/auth/register',
+ })
  if (error instanceof Error) {
- console.error('Registration error details:', {
- message: error.message,
- stack: error.stack,
+ logger.error('Registration error details:', error, {
+   endpoint: '/api/auth/register',
+   message: error.message,
+   stack: error.stack,
  })
  return NextResponse.json(
  { error: error.message },

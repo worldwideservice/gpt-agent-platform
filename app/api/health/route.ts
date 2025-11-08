@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+import { logger } from '@/lib/utils/logger'
+
 export const GET = async (request: NextRequest) => {
  try {
  // Basic health check
@@ -93,8 +95,11 @@ export const GET = async (request: NextRequest) => {
  const statusCode = hasErrors ? 200 : 200 // Still return 200, but with degraded status
 
  return NextResponse.json(health, { status: statusCode })
- } catch (error) {
- console.error('Health check error:', error)
+ } catch (error: unknown) {
+ logger.error('Health check error:', error, {
+   endpoint: '/api/health',
+   method: 'GET',
+ })
 
  return NextResponse.json(
  {

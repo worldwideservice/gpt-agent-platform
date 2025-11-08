@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import { getTriggers, createTrigger } from '@/lib/repositories/triggers'
+import { logger } from '@/lib/utils/logger'
 
 
 // Force dynamic rendering (uses headers from auth())
@@ -34,8 +35,12 @@ export const GET = async (
  success: true,
  data: triggers,
  })
- } catch (error) {
- console.error('Triggers API error', error)
+ } catch (error: unknown) {
+ logger.error('Triggers API error', error, {
+   endpoint: '/api/agents/[id]/triggers',
+   method: 'GET',
+   agentId: id,
+ })
 
  return NextResponse.json(
  {
@@ -106,8 +111,12 @@ export const POST = async (
  success: true,
  data: trigger,
  })
- } catch (error) {
- console.error('Trigger create API error', error)
+ } catch (error: unknown) {
+ logger.error('Trigger create API error', error, {
+   endpoint: '/api/agents/[id]/triggers',
+   method: 'POST',
+   agentId: id,
+ })
 
  return NextResponse.json(
  {

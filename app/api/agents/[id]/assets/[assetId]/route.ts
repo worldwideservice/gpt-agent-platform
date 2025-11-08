@@ -1,10 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { getAgentById } from '@/lib/repositories/agents'
+import { logger } from '@/lib/utils/logger'
 
 
 // Force dynamic rendering (uses headers from auth())
@@ -61,7 +61,12 @@ export const DELETE = async (
  .eq('org_id', session.user.orgId)
 
  if (deleteError) {
- console.error('Failed to delete asset', deleteError)
+ logger.error('Failed to delete asset', deleteError, {
+   endpoint: '/api/agents/[id]/assets/[assetId]',
+   method: 'DELETE',
+   agentId,
+   assetId,
+ })
  return NextResponse.json(
  { success: false, error: 'Не удалось удалить файл' },
  { status: 500 },
@@ -71,8 +76,13 @@ export const DELETE = async (
  return NextResponse.json({
  success: true,
  })
- } catch (error) {
- console.error('Asset delete API error', error)
+ } catch (error: unknown) {
+ logger.error('Asset delete API error', error, {
+   endpoint: '/api/agents/[id]/assets/[assetId]',
+   method: 'DELETE',
+   agentId,
+   assetId,
+ })
 
  return NextResponse.json(
  {

@@ -66,3 +66,4 @@ VALUES (
 )
 ON CONFLICT (version) DO NOTHING;
 
+

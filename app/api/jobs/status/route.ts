@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { auth } from '@/auth'
 import { supabase } from '@/lib/supabase/client'
+import { logger } from '@/lib/utils/logger'
 
 
 
@@ -49,8 +50,11 @@ export async function GET(request: NextRequest) {
 
  return NextResponse.json({ jobs: data })
  }
- } catch (error) {
- console.error('Jobs status API error:', error)
+ } catch (error: unknown) {
+ logger.error('Jobs status API error:', error, {
+   endpoint: '/api/jobs/status',
+   method: 'GET',
+ })
  return NextResponse.json(
  { error: 'Internal server error' },
  { status: 500 }

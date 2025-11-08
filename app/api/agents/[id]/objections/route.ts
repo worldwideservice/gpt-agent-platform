@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils/logger'
 
 import type { ObjectionResponse } from '@/lib/repositories/company-knowledge'
 
@@ -45,7 +46,11 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
  const { data, error } = await query
 
  if (error) {
- console.error('Failed to fetch objection responses', error)
+ logger.error('Failed to fetch objection responses', error, {
+   endpoint: '/api/agents/[id]/objections',
+   method: 'GET',
+   agentId,
+ })
  throw new Error('Не удалось загрузить ответы на возражения')
  }
 
@@ -69,8 +74,12 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
  success: true,
  data: objections,
  })
- } catch (error) {
- console.error('Objections API error', error)
+ } catch (error: unknown) {
+ logger.error('Objections API error', error, {
+   endpoint: '/api/agents/[id]/objections',
+   method: 'GET',
+   agentId,
+ })
 
  return NextResponse.json(
  {
@@ -135,7 +144,11 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
  .single()
 
  if (error || !objection) {
- console.error('Failed to create objection response', error)
+ logger.error('Failed to create objection response', error, {
+   endpoint: '/api/agents/[id]/objections',
+   method: 'POST',
+   agentId,
+ })
  throw new Error('Не удалось создать ответ на возражение')
  }
 
@@ -158,8 +171,12 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
  success: true,
  data: result,
  })
- } catch (error) {
- console.error('Objection create API error', error)
+ } catch (error: unknown) {
+ logger.error('Objection create API error', error, {
+   endpoint: '/api/agents/[id]/objections',
+   method: 'POST',
+   agentId,
+ })
 
  return NextResponse.json(
  {

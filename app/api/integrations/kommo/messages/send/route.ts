@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { backendFetch } from '@/lib/backend/client'
+import { logger } from '@/lib/utils/logger'
 
 
 
@@ -48,7 +50,7 @@ export const POST = async (request: NextRequest) => {
  })
 
  return NextResponse.json(response)
- } catch (error) {
+ } catch (error: unknown) {
  if (error instanceof z.ZodError) {
  return NextResponse.json(
  {
@@ -60,7 +62,9 @@ export const POST = async (request: NextRequest) => {
  )
  }
 
- console.error('Kommo send message error', error)
+ logger.error('Kommo send message error', error, {
+   endpoint: '/api/integrations/kommo/messages/send',
+ })
  return NextResponse.json({ success: false, error: 'Не удалось отправить сообщение через Kommo' }, { status: 500 })
  }
 }

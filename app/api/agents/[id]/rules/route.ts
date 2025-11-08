@@ -71,8 +71,12 @@ export const GET = async (
  success: true,
  data: rules,
  })
- } catch (error) {
- console.error('Get rules API error', error)
+ } catch (error: unknown) {
+ logger.error('Get rules API error', error, {
+   endpoint: '/api/agents/[id]/rules',
+   method: 'GET',
+   agentId: id,
+ })
 
  return NextResponse.json(
  {
@@ -139,16 +143,24 @@ export const POST = async (
    title: `Создано правило: ${parsed.data.name}`,
    description: `Пользователь создал новое правило автоматизации "${parsed.data.name}"`,
    metadata: { rule_id: ruleId, rule_name: parsed.data.name },
- }).catch((error) => {
-   console.error('Failed to log rule creation:', error)
+ }).catch((error: unknown) => {
+   logger.error('Failed to log rule creation:', error, {
+     endpoint: '/api/agents/[id]/rules',
+     method: 'POST',
+     agentId: id,
+   })
  })
 
  return NextResponse.json({
  success: true,
  data: { id: ruleId },
  })
- } catch (error) {
- console.error('Create rule API error', error)
+ } catch (error: unknown) {
+ logger.error('Create rule API error', error, {
+   endpoint: '/api/agents/[id]/rules',
+   method: 'POST',
+   agentId: id,
+ })
 
  return NextResponse.json(
  {
@@ -223,8 +235,13 @@ export const PUT = async (
  },
  })
  }
- } catch (error) {
- console.error('Execute rules API error', error)
+ } catch (error: unknown) {
+ logger.error('Execute rules API error', error, {
+   endpoint: '/api/agents/[id]/rules',
+   method: 'POST',
+   action: 'execute',
+   agentId: id,
+ })
 
  return NextResponse.json(
  {

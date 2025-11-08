@@ -2,10 +2,9 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 import { z } from 'zod'
 
-
 import { auth } from '@/auth'
-
 import { getOnboardingState, upsertOnboardingAgent } from '@/lib/onboarding/server'
+import { logger } from '@/lib/utils/logger'
 
 
 
@@ -49,8 +48,11 @@ export const POST = async (request: NextRequest) => {
  const state = await getOnboardingState(session.user.orgId)
 
  return NextResponse.json({ success: true, state })
- } catch (error) {
- console.error('Onboarding agent error:', error)
+ } catch (error: unknown) {
+ logger.error('Onboarding agent error:', error, {
+   endpoint: '/api/onboarding/agent',
+   method: 'POST',
+ })
  return NextResponse.json(
  { success: false, error: 'Не удалось создать агента' },
  { status: 500 },

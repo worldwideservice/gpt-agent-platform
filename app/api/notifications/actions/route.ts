@@ -1,8 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server'
+
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { markAllNotificationsAsRead, deleteAllNotifications } from '@/lib/repositories/notifications'
+import { logger } from '@/lib/utils/logger'
 
 
 
@@ -43,8 +45,11 @@ export const POST = async (request: NextRequest) => {
  return NextResponse.json({
  success: true,
  })
- } catch (error) {
- console.error('Notifications action API error', error)
+ } catch (error: unknown) {
+ logger.error('Notifications action API error', error, {
+   endpoint: '/api/notifications/actions',
+   method: 'POST',
+ })
 
  return NextResponse.json(
  {

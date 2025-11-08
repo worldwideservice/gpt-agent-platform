@@ -33,8 +33,11 @@ export const GET = async (request: NextRequest) => {
  data: notifications,
  unreadCount,
  })
- } catch (error) {
- console.error('Notifications API error', error)
+ } catch (error: unknown) {
+ logger.error('Notifications API error', error, {
+   endpoint: '/api/notifications',
+   method: 'GET',
+ })
 
  return NextResponse.json(
  {
