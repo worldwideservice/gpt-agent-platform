@@ -1,18 +1,16 @@
 # Multi-stage build для Worker сервиса
-# Этот Dockerfile запускается из корня проекта (Root Directory = /)
+# Этот Dockerfile запускается из services/worker (Root Directory = /services/worker)
+# Railway копирует содержимое services/worker в /app
 FROM node:20-alpine AS base
 
-# Устанавливаем рабочую директорию в корень проекта
+# Устанавливаем рабочую директорию в /app (Railway копирует сюда содержимое services/worker)
 WORKDIR /app
 
-# Копируем package.json Worker для установки зависимостей
-COPY services/worker/package.json services/worker/package-lock.json ./services/worker/
+# Копируем package.json для установки зависимостей
+COPY package.json package-lock.json ./
 
-# Копируем весь проект (включая lib/)
+# Копируем весь проект Worker
 COPY . .
-
-# Переходим в директорию Worker и собираем
-WORKDIR /app/services/worker
 
 # Устанавливаем зависимости и собираем
 RUN npm ci
@@ -27,24 +25,19 @@ RUN apk add --no-cache wget
 # Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем package.json Worker для production зависимостей
-COPY services/worker/package.json services/worker/package-lock.json ./services/worker/
+# Копируем package.json для production зависимостей
+COPY package.json package-lock.json ./
 
-# Копируем собранное приложение Worker
-COPY --from=base /app/services/worker/dist ./services/worker/dist
+# Копируем собранное приложение
+COPY --from=base /app/dist ./dist
 
-# Копируем локальный lib из services/worker/src/lib для резолва импортов ../lib/* из dist/index.js
-# Импорт ../lib/env.ts из dist/index.js резолвится как services/worker/lib/env.ts
-COPY --from=base /app/services/worker/src/lib ./services/worker/lib
+# Копируем локальный lib из src/lib для резолва импортов
+COPY --from=base /app/src/lib ./lib
 
-# Копируем lib и types директории из корня (могут быть нужны для динамических импортов)
-COPY --from=base /app/lib ./lib
-COPY --from=base /app/types ./types
-# Копируем tsconfig.json для правильного резолва path aliases
-COPY --from=base /app/tsconfig.json ./tsconfig.json
+# Копируем tsconfig.json для правильного резолва path aliases (если есть в корне)
+COPY --from=base /app/tsconfig.json ./tsconfig.json 2>/dev/null || echo "No tsconfig.json in worker dir"
 
-# Переходим в директорию Worker для установки production зависимостей
-WORKDIR /app/services/worker
+# Устанавливаем production зависимости
 RUN npm ci --only=production
 
 # Создаем пользователя для безопасности
@@ -61,9 +54,7 @@ USER worker
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3001}/health || exit 1
 
-# Запускаем worker напрямую через tsx из node_modules для поддержки TypeScript импортов из lib/
+# Запускаем worker напрямую через tsx из node_modules
 # tsx позволяет динамически импортировать .ts файлы во время выполнения
-# tsx автоматически резолвит path aliases из tsconfig.json при использовании tsImport
-# Запускаем из /app/services/worker, чтобы импорты ../lib/* из dist/index.js резолвились правильно
-WORKDIR /app/services/worker
-CMD ["node", "/app/services/worker/node_modules/.bin/tsx", "--tsconfig", "/app/tsconfig.json", "dist/index.js"]
+WORKDIR /app
+CMD ["node", "/app/node_modules/.bin/tsx", "--tsconfig", "/app/tsconfig.json", "dist/index.js"]
