@@ -7,11 +7,12 @@ import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
 
-const kommoSettingsSchema = z.object({
 
+// Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-// Force dynamic rendering (uses headers from auth())
+const kommoSettingsSchema = z.object({
+
  domain: z.string().min(1, 'Домен обязателен'),
  client_id: z.string().min(1, 'Client ID обязателен'),
  client_secret: z.string().min(1, 'Client Secret обязателен'),
