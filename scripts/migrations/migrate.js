@@ -20,6 +20,39 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 const MIGRATIONS_DIR = path.join(__dirname, '../../supabase/migrations')
 
+async function bootstrapMigrationSystem() {
+  console.log('🔧 Bootstrapping migration system...')
+  
+  // Check if schema_migrations table exists by trying to query it
+  const { error: tableError } = await supabase
+    .from('schema_migrations')
+    .select('version')
+    .limit(1)
+
+  if (tableError && tableError.code === 'PGRST205') {
+    console.log('⚠️  Migration system not initialized. Please run initial migration manually:')
+    console.log('   1. Open Supabase Dashboard → SQL Editor')
+    console.log(`   2. Run: supabase/migrations/000_init_migration_system.sql`)
+    console.log('   3. Or use Supabase CLI: supabase db push')
+    console.log('\n💡 Alternatively, you can use direct PostgreSQL connection if available.')
+    return false
+  }
+
+  // Check if execute_migration function exists
+  const { data: funcData, error: funcError } = await supabase.rpc('execute_migration', {
+    migration_version: '__test__',
+    migration_name: '__test__.sql',
+    migration_sql: 'SELECT 1;'
+  })
+
+  if (funcError && funcError.code === 'PGRST202') {
+    console.log('⚠️  execute_migration function not found. Please run initial migration manually.')
+    return false
+  }
+
+  return true
+}
+
 async function getExecutedMigrations() {
   const { data, error } = await supabase
     .from('schema_migrations')
@@ -27,6 +60,10 @@ async function getExecutedMigrations() {
     .order('version')
 
   if (error) {
+    // If table doesn't exist, return empty array (will be handled by bootstrap)
+    if (error.code === 'PGRST205') {
+      return []
+    }
     console.error('Failed to fetch executed migrations:', error)
     return []
   }
@@ -75,6 +112,14 @@ async function executeMigration(migration) {
 async function runMigrations() {
   try {
     console.log('🚀 Starting database migrations...')
+
+    // Bootstrap migration system if needed
+    const isBootstrapped = await bootstrapMigrationSystem()
+    if (!isBootstrapped) {
+      console.error('\n❌ Migration system not initialized. Please run initial migration first.')
+      console.error('   See instructions above or check docs/APPLY_MIGRATION.md')
+      process.exit(1)
+    }
 
     const executedMigrations = await getExecutedMigrations()
     const migrationFiles = await getMigrationFiles()
