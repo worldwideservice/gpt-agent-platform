@@ -26,10 +26,10 @@ import { createKommoApiForOrg } from '@/lib/repositories/crm-connection'
 
 import { isAgentConfiguredForStage } from '@/lib/repositories/agent-pipeline-settings'
 
+
 // Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-
 const sendMessageSchema = z.object({
 
  conversationId: z.string().uuid().optional(),
