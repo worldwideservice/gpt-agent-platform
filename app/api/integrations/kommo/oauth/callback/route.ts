@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+
 import { z } from 'zod'
+import { logger } from '@/lib/utils/logger'
 
 
 
@@ -25,7 +27,11 @@ export async function GET(request: NextRequest) {
 
  // Если есть ошибка от Kommo
  if (query.error) {
- console.error('Kommo OAuth error:', query.error, query.error_description)
+ logger.error('Kommo OAuth error:', undefined, {
+   endpoint: '/api/integrations/kommo/oauth/callback',
+   error: query.error,
+   errorDescription: query.error_description,
+ })
  return NextResponse.json({
  success: false,
  error: query.error,
@@ -41,7 +47,7 @@ export async function GET(request: NextRequest) {
  }, { status: 400 })
  }
 
- console.log('Processing Kommo OAuth callback:', {
+ logger.log('Processing Kommo OAuth callback:', {
  code: query.code.substring(0, 10) + '...',
  state: query.state,
  })
@@ -75,7 +81,7 @@ export async function GET(request: NextRequest) {
  const tokens = await tokenResponse.json()
 
  if (tokenResponse.ok && tokens.access_token) {
- console.log('Tokens received successfully')
+ logger.log('Tokens received successfully')
 
  // Возвращаем токены в JSON формате для обработки на frontend
  return NextResponse.json({
@@ -88,15 +94,20 @@ export async function GET(request: NextRequest) {
  account_id: tokens.account_id,
  })
  } else {
- console.error('Token exchange failed:', tokens)
+ logger.error('Token exchange failed:', undefined, {
+   endpoint: '/api/integrations/kommo/oauth/callback',
+   tokens,
+ })
  return NextResponse.json({
  success: false,
  error: tokens.error_description || tokens.error || 'Token exchange failed',
  }, { status: 400 })
  }
 
- } catch (error) {
- console.error('Kommo OAuth callback processing error:', error)
+ } catch (error: unknown) {
+ logger.error('Kommo OAuth callback processing error:', error, {
+   endpoint: '/api/integrations/kommo/oauth/callback',
+ })
 
  return NextResponse.json({
  success: false,

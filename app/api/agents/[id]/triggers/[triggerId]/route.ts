@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { z } from 'zod'
 
 import { auth } from '@/auth'
+import { logger } from '@/lib/utils/logger'
 import { getAgentById } from '@/lib/repositories/agents'
 import {
   getTriggerById,
@@ -43,8 +44,13 @@ export const GET = async (
  success: true,
  data: trigger,
  })
- } catch (error) {
- console.error('Trigger API error', error)
+ } catch (error: unknown) {
+ logger.error('Trigger API error', error, {
+   endpoint: '/api/agents/[id]/triggers/[triggerId]',
+   method: 'GET',
+   agentId: id,
+   triggerId,
+ })
 
  return NextResponse.json(
  {
@@ -134,8 +140,13 @@ export const PATCH = async (
  success: true,
  data: trigger,
  })
- } catch (error) {
- console.error('Trigger update API error', error)
+ } catch (error: unknown) {
+ logger.error('Trigger update API error', error, {
+   endpoint: '/api/agents/[id]/triggers/[triggerId]',
+   method: 'PUT',
+   agentId: id,
+   triggerId,
+ })
 
  return NextResponse.json(
  {
@@ -170,8 +181,13 @@ export const DELETE = async (
  return NextResponse.json({
  success: true,
  })
- } catch (error) {
- console.error('Trigger delete API error', error)
+ } catch (error: unknown) {
+ logger.error('Trigger delete API error', error, {
+   endpoint: '/api/agents/[id]/triggers/[triggerId]',
+   method: 'DELETE',
+   agentId: id,
+   triggerId,
+ })
 
  return NextResponse.json(
  {

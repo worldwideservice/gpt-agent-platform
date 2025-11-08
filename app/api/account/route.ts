@@ -1,8 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server'
+
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { UserRepository } from '@/lib/repositories/users'
+import { logger } from '@/lib/utils/logger'
 import type { User } from '@/types/user'
 
 
@@ -35,10 +37,11 @@ export const GET = async () => {
  locale: 'ru', // TODO: Add locale to User type if needed
  },
  })
- } catch (error) {
- if (process.env.NODE_ENV === 'development') {
- console.error('Account API error', error)
- }
+ } catch (error: unknown) {
+ logger.error('Account API error', error, {
+   endpoint: '/api/account',
+   method: 'GET',
+ })
 
  return NextResponse.json(
  {
@@ -120,8 +123,11 @@ export const PATCH = async (request: NextRequest) => {
  locale: 'ru', // TODO: Add locale to User type if needed
  },
  })
- } catch (error) {
- console.error('Account update API error', error)
+ } catch (error: unknown) {
+ logger.error('Account update API error', error, {
+   endpoint: '/api/account',
+   method: 'PATCH',
+ })
 
  return NextResponse.json(
  {

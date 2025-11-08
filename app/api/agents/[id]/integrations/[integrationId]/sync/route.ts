@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils/logger'
 
 
 // Force dynamic rendering (uses headers from auth())
@@ -96,7 +97,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
  .eq('id', integrationId)
 
  if (updateError) {
- console.error('Error updating sync timestamp:', updateError)
+ logger.error('Error updating sync timestamp:', updateError, {
+   endpoint: '/api/agents/[id]/integrations/[integrationId]/sync',
+   method: 'POST',
+   agentId,
+   integrationId,
+ })
  // Не прерываем выполнение, т.к. синхронизация уже запущена
  }
 
@@ -110,8 +116,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
  channels: 'Синхронизация каналов будет выполнена автоматически',
  },
  })
- } catch (syncError) {
- console.error('Failed to trigger CRM sync:', syncError)
+ } catch (syncError: unknown) {
+ logger.error('Failed to trigger CRM sync:', syncError, {
+   endpoint: '/api/agents/[id]/integrations/[integrationId]/sync',
+   method: 'POST',
+   agentId,
+   integrationId,
+ })
  
  // Обновляем статус ошибки
  await supabase
@@ -134,8 +145,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
  { status: 500 }
  )
  }
- } catch (error) {
- console.error('Agent integration sync API error:', error)
+ } catch (error: unknown) {
+ logger.error('Agent integration sync API error:', error, {
+   endpoint: '/api/agents/[id]/integrations/[integrationId]/sync',
+   method: 'POST',
+   agentId,
+   integrationId,
+ })
  return NextResponse.json(
  { success: false, error: 'Внутренняя ошибка сервера' },
  { status: 500 }

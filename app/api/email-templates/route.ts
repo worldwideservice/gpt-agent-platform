@@ -1,8 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server'
+
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils/logger'
 
 
 
@@ -49,7 +51,10 @@ export const GET = async (request: NextRequest) => {
  const { data: templates, error } = await query
 
  if (error) {
- console.error('Failed to fetch email templates:', error)
+ logger.error('Failed to fetch email templates:', error, {
+   endpoint: '/api/email-templates',
+   method: 'GET',
+ })
  return NextResponse.json(
  { success: false, error: 'Не удалось получить шаблоны' },
  { status: 500 },
@@ -60,8 +65,11 @@ export const GET = async (request: NextRequest) => {
  success: true,
  templates: templates || [],
  })
- } catch (error) {
- console.error('Email templates API error:', error)
+ } catch (error: unknown) {
+ logger.error('Email templates API error:', error, {
+   endpoint: '/api/email-templates',
+   method: 'GET',
+ })
  return NextResponse.json(
  { success: false, error: 'Внутренняя ошибка сервера' },
  { status: 500 },
@@ -110,7 +118,10 @@ export const POST = async (request: NextRequest) => {
  .single()
 
  if (error) {
- console.error('Failed to create email template:', error)
+ logger.error('Failed to create email template:', error, {
+   endpoint: '/api/email-templates',
+   method: 'POST',
+ })
  return NextResponse.json(
  { success: false, error: 'Не удалось создать шаблон' },
  { status: 500 },
@@ -121,8 +132,11 @@ export const POST = async (request: NextRequest) => {
  success: true,
  template,
  }, { status: 201 })
- } catch (error) {
- console.error('Create email template API error:', error)
+ } catch (error: unknown) {
+ logger.error('Create email template API error:', error, {
+   endpoint: '/api/email-templates',
+   method: 'POST',
+ })
  return NextResponse.json(
  { success: false, error: 'Внутренняя ошибка сервера' },
  { status: 500 },

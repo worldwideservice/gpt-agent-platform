@@ -113,8 +113,13 @@ export const PATCH = async (
    session.user.id,
    agent.id,
    agent.name
- ).catch((error) => {
-   console.error('Failed to log agent update:', error)
+ ).catch((error: unknown) => {
+   const { logger } = require('@/lib/utils/logger')
+   logger.error('Failed to log agent update:', error, {
+     endpoint: '/api/agents/[id]',
+     method: 'PATCH',
+     agentId: id,
+   })
  })
 
  return NextResponse.json({

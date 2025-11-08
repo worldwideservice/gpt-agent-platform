@@ -1,9 +1,8 @@
 import type { Metadata } from 'next'
 import { PricingPublic } from '@/components/pricing/PricingPublic'
+import { PublicHeader } from '@/components/layout/PublicHeader'
 import { Logo } from '@/components/ui/Logo'
 import Link from 'next/link'
-import { Button } from '@/components/ui'
-import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 export const metadata: Metadata = {
   title: 'Тарифы — TON 18',
@@ -14,22 +13,7 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 transition-colors">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-gray-950/60 transition-colors">
-        <div className="container mx-auto flex h-20 md:h-24 items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/">
-            <Logo href="/" />
-          </Link>
-          <div className="flex items-center gap-4">
-            <ThemeToggle />
-            <Link href="/login">
-              <Button variant="ghost" size="sm">Sign In</Button>
-            </Link>
-            <Link href="/register">
-              <Button size="sm">Sign Up</Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <PublicHeader showNav={true} />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">

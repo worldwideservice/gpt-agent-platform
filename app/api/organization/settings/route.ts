@@ -2,10 +2,9 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 import { z } from 'zod'
 
-
 import { auth } from '@/auth'
-
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils/logger'
 
 
 
@@ -39,8 +38,11 @@ export const GET = async () => {
  settings: org?.settings ?? {},
  },
  })
- } catch (error) {
- console.error('Organization settings API error', error)
+ } catch (error: unknown) {
+ logger.error('Organization settings API error', error, {
+   endpoint: '/api/organization/settings',
+   method: 'GET',
+ })
 
  return NextResponse.json(
  {
@@ -111,8 +113,11 @@ export const PATCH = async (request: NextRequest) => {
  settings: org?.settings ?? {},
  },
  })
- } catch (error) {
- console.error('Organization settings update API error', error)
+ } catch (error: unknown) {
+ logger.error('Organization settings update API error', error, {
+   endpoint: '/api/organization/settings',
+   method: 'PATCH',
+ })
 
  return NextResponse.json(
  {

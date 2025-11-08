@@ -1,9 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-
 import { auth } from '@/auth'
-
 import { backendFetch } from '@/lib/backend/client'
+import { logger } from '@/lib/utils/logger'
 
 
 
@@ -34,13 +33,18 @@ export const POST = async (request: NextRequest) => {
 
  // Логируем синхронизацию интеграции
  const { ActivityLogger } = await import('@/lib/services/activity-logger')
- await ActivityLogger.integrationSynced(session.user.orgId, 'kommo', true).catch((error) => {
-   console.error('Failed to log integration sync:', error)
+ await ActivityLogger.integrationSynced(session.user.orgId, 'kommo', true).catch((error: unknown) => {
+   logger.error('Failed to log integration sync:', error, {
+     endpoint: '/api/integrations/kommo/sync/pipelines',
+     organizationId: session.user.orgId,
+   })
  })
 
  return NextResponse.json({ success: true })
- } catch (error) {
- console.error('Kommo sync pipelines error', error)
+ } catch (error: unknown) {
+ logger.error('Kommo sync pipelines error', error, {
+   endpoint: '/api/integrations/kommo/sync/pipelines',
+ })
  return NextResponse.json({ success: false, error: 'Не удалось запустить синхронизацию Kommo' }, { status: 500 })
  }
 }

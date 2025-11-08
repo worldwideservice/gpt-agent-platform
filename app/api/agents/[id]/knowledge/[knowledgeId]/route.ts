@@ -48,15 +48,25 @@ export const DELETE = async (
  const { error } = await supabase.from('company_knowledge').delete().eq('id', knowledgeId).eq('org_id', session.user.orgId)
 
  if (error) {
- console.error('Failed to delete knowledge', error)
+ logger.error('Failed to delete knowledge', error, {
+   endpoint: '/api/agents/[id]/knowledge/[knowledgeId]',
+   method: 'DELETE',
+   agentId,
+   knowledgeId,
+ })
  throw new Error('Не удалось удалить знание')
  }
 
  return NextResponse.json({
  success: true,
  })
- } catch (error) {
- console.error('Knowledge delete API error', error)
+ } catch (error: unknown) {
+ logger.error('Knowledge delete API error', error, {
+   endpoint: '/api/agents/[id]/knowledge/[knowledgeId]',
+   method: 'DELETE',
+   agentId,
+   knowledgeId,
+ })
 
  return NextResponse.json(
  {

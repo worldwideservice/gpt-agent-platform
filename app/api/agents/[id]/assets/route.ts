@@ -6,6 +6,7 @@ import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { getAgentById } from '@/lib/repositories/agents'
+import { logger } from '@/lib/utils/logger'
 
 
 // Force dynamic rendering (uses headers from auth())
@@ -77,7 +78,11 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
  })
 
  if (uploadError) {
- console.error('Failed to upload file to storage', uploadError)
+ logger.error('Failed to upload file to storage', uploadError, {
+   endpoint: '/api/agents/[id]/assets',
+   method: 'POST',
+   agentId,
+ })
  return NextResponse.json(
  { success: false, error: 'Не удалось загрузить файл' },
  { status: 500 },
@@ -102,7 +107,11 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
  .single()
 
  if (assetError || !assetData) {
- console.error('Failed to create asset record', assetError)
+ logger.error('Failed to create asset record', assetError, {
+   endpoint: '/api/agents/[id]/assets',
+   method: 'POST',
+   agentId,
+ })
  
  // Удаляем загруженный файл если не удалось создать запись
  await supabaseClient.storage.from('agent-assets').remove([storagePath])
@@ -125,9 +134,14 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
  organizationId: session.user.orgId,
  }),
  })
- } catch (queueError) {
+ } catch (queueError: unknown) {
  // Логируем ошибку, но не прерываем загрузку файла
- console.error('Failed to queue asset processing job', queueError)
+ logger.error('Failed to queue asset processing job', queueError, {
+   endpoint: '/api/agents/[id]/assets',
+   method: 'POST',
+   agentId,
+   assetId: assetData.id,
+ })
  // Можно отправить уведомление пользователю или обработать позже
  }
 
@@ -141,8 +155,12 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
  status: 'pending',
  },
  })
- } catch (error) {
- console.error('Asset upload API error', error)
+ } catch (error: unknown) {
+ logger.error('Asset upload API error', error, {
+   endpoint: '/api/agents/[id]/assets',
+   method: 'POST',
+   agentId,
+ })
 
  const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка'
 
@@ -184,7 +202,11 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
  .order('created_at', { ascending: false })
 
  if (error) {
- console.error('Failed to fetch assets', error)
+   logger.error('Failed to fetch assets', error, {
+     endpoint: '/api/agents/[id]/assets',
+     method: 'GET',
+     agentId,
+   })
  return NextResponse.json(
  { success: false, error: 'Не удалось загрузить файлы' },
  { status: 500 },
@@ -195,8 +217,12 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
  success: true,
  data: assets ?? [],
  })
- } catch (error) {
- console.error('Assets GET API error', error)
+ } catch (error: unknown) {
+ logger.error('Assets GET API error', error, {
+   endpoint: '/api/agents/[id]/assets',
+   method: 'GET',
+   agentId,
+ })
 
  return NextResponse.json(
  {

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 
-
 import { auth } from '@/auth'
 import { getConversations } from '@/lib/repositories/conversations'
+import { logger } from '@/lib/utils/logger'
 
 
 
@@ -36,8 +36,11 @@ export const GET = async (request: Request) => {
         total: result.total,
       },
     })
-  } catch (error) {
-    console.error('Failed to fetch conversations:', error)
+  } catch (error: unknown) {
+    logger.error('Failed to fetch conversations:', error, {
+      endpoint: '/api/chat/conversations',
+      method: 'GET',
+    })
     return NextResponse.json(
       {
         success: false,

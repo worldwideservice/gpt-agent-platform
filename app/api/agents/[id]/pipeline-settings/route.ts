@@ -1,9 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
 import { z } from 'zod'
+
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils/logger'
 
 
 // Force dynamic rendering (uses headers from auth())
@@ -43,7 +45,11 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
  .eq('org_id', session.user.orgId)
 
  if (error) {
- console.error('Failed to fetch pipeline settings', error)
+ logger.error('Failed to fetch pipeline settings', error, {
+   endpoint: '/api/agents/[id]/pipeline-settings',
+   method: 'GET',
+   agentId,
+ })
  throw new Error('Не удалось загрузить настройки воронок')
  }
 
@@ -51,8 +57,12 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
  success: true,
  data: data ?? [],
  })
- } catch (error) {
- console.error('Pipeline settings API error', error)
+ } catch (error: unknown) {
+ logger.error('Pipeline settings API error', error, {
+   endpoint: '/api/agents/[id]/pipeline-settings',
+   method: 'GET',
+   agentId,
+ })
 
  return NextResponse.json(
  {
@@ -121,7 +131,11 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
  .select()
 
  if (error) {
- console.error('Failed to save pipeline settings', error)
+ logger.error('Failed to save pipeline settings', error, {
+   endpoint: '/api/agents/[id]/pipeline-settings',
+   method: 'POST',
+   agentId,
+ })
  throw new Error('Не удалось сохранить настройки воронок')
  }
 
@@ -129,8 +143,12 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
  success: true,
  data,
  })
- } catch (error) {
- console.error('Pipeline settings save API error', error)
+ } catch (error: unknown) {
+ logger.error('Pipeline settings save API error', error, {
+   endpoint: '/api/agents/[id]/pipeline-settings',
+   method: 'POST',
+   agentId,
+ })
 
  return NextResponse.json(
  {

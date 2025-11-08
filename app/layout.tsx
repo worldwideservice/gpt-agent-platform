@@ -78,7 +78,8 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
  
  // Temporarily disable next-intl to isolate the issue
  // Will re-enable once the base layout works
- const messages: Record<string, any> = {}
+ // Используем unknown вместо any согласно Context7 best practices
+ const messages: Record<string, unknown> = {}
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',

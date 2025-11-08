@@ -4,9 +4,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+
 import { z } from 'zod'
+
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils/logger'
 
 
 
@@ -88,7 +91,10 @@ export async function GET(request: NextRequest) {
  const { data: events, error, count } = await query
 
  if (error) {
- console.error('Error fetching webhook events:', error)
+ logger.error('Error fetching webhook events:', error, {
+   endpoint: '/api/webhooks',
+   method: 'GET',
+ })
  return NextResponse.json(
  { success: false, error: 'Не удалось получить события' },
  { status: 500 }
@@ -123,8 +129,11 @@ export async function GET(request: NextRequest) {
  totalPages: Math.ceil((count || 0) / limit),
  },
  })
- } catch (error) {
- console.error('Webhooks API error:', error)
+ } catch (error: unknown) {
+ logger.error('Webhooks API error:', error, {
+   endpoint: '/api/webhooks',
+   method: 'GET',
+ })
  return NextResponse.json(
  { success: false, error: 'Внутренняя ошибка сервера' },
  { status: 500 }

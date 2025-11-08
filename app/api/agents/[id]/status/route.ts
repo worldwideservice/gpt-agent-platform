@@ -46,8 +46,12 @@ export const PATCH = async (
  success: true,
  data: agent,
  })
- } catch (error) {
- console.error('Agent status update API error', error)
+ } catch (error: unknown) {
+ logger.error('Agent status update API error', error, {
+   endpoint: '/api/agents/[id]/status',
+   method: 'PATCH',
+   agentId: id,
+ })
 
  return NextResponse.json(
  {

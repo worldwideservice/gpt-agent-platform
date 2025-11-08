@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { backendFetch } from '@/lib/backend/client'
+import { logger } from '@/lib/utils/logger'
 
 
 
@@ -36,8 +38,10 @@ export async function POST(request: NextRequest) {
  })
 
  return NextResponse.json({ success: true })
- } catch (error) {
- console.error('Kommo credentials error:', error)
+ } catch (error: unknown) {
+ logger.error('Kommo credentials error:', error, {
+   endpoint: '/api/integrations/kommo/credentials',
+ })
  return NextResponse.json(
  {
  success: false,

@@ -1,9 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-
 import { z } from 'zod'
 
 import { auth } from '@/auth'
+import { logger } from '@/lib/utils/logger'
 import { getAgentById } from '@/lib/repositories/agents'
 import {
 
@@ -45,8 +45,12 @@ export const GET = async (
       success: true,
       data: channels,
     })
-  } catch (error) {
-    console.error('Agent channels GET error', error)
+  } catch (error: unknown) {
+    logger.error('Agent channels GET error', error, {
+      endpoint: '/api/agents/[id]/channels',
+      method: 'GET',
+      agentId: id,
+    })
 
     return NextResponse.json(
       {
@@ -109,8 +113,12 @@ export const POST = async (
     }
 
     return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Agent channels POST error', error)
+  } catch (error: unknown) {
+    logger.error('Agent channels POST error', error, {
+      endpoint: '/api/agents/[id]/channels',
+      method: 'POST',
+      agentId: id,
+    })
 
     return NextResponse.json(
       {

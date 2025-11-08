@@ -4,8 +4,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils/logger'
 
 
 
@@ -67,8 +69,12 @@ export async function GET(
  nextRetryAt: event.next_retry_at,
  },
  })
- } catch (error) {
- console.error('Webhook detail API error:', error)
+ } catch (error: unknown) {
+ logger.error('Webhook detail API error:', error, {
+   endpoint: '/api/webhooks/[id]',
+   method: 'GET',
+   eventId: params.id,
+ })
  return NextResponse.json(
  { success: false, error: 'Внутренняя ошибка сервера' },
  { status: 500 }
@@ -147,8 +153,13 @@ export async function POST(
  success: true,
  message: 'Событие поставлено в очередь для повторной обработки',
  })
- } catch (error) {
- console.error('Webhook retry API error:', error)
+ } catch (error: unknown) {
+ logger.error('Webhook retry API error:', error, {
+   endpoint: '/api/webhooks/[id]',
+   method: 'POST',
+   action: 'retry',
+   eventId: params.id,
+ })
  return NextResponse.json(
  { success: false, error: 'Внутренняя ошибка сервера' },
  { status: 500 }

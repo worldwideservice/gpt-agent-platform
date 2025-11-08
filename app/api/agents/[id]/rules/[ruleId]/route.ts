@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { createErrorResponse } from '@/lib/utils/error-handler'
+import { logger } from '@/lib/utils/logger'
 
 
 // Force dynamic rendering (uses headers from auth())
@@ -72,7 +73,12 @@ export const PATCH = async (
       .single()
 
     if (error) {
-      console.error('Failed to update rule', error)
+      logger.error('Failed to update rule', error, {
+        endpoint: '/api/agents/[id]/rules/[ruleId]',
+        method: 'PATCH',
+        agentId: id,
+        ruleId,
+      })
       const { response, status } = createErrorResponse(
         new Error('Не удалось обновить правило'),
         { code: 'RULE_UPDATE_ERROR', logToSentry: true }
@@ -123,7 +129,12 @@ export const DELETE = async (
       .eq('agent_id', id)
 
     if (error) {
-      console.error('Failed to delete rule', error)
+      logger.error('Failed to delete rule', error, {
+        endpoint: '/api/agents/[id]/rules/[ruleId]',
+        method: 'DELETE',
+        agentId: id,
+        ruleId,
+      })
       const { response, status } = createErrorResponse(
         new Error('Не удалось удалить правило'),
         { code: 'RULE_DELETE_ERROR', logToSentry: true }

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 import { auth } from '@/auth'
 import { markNotificationAsRead, deleteNotification } from '@/lib/repositories/notifications'
+import { logger } from '@/lib/utils/logger'
 
 
 
@@ -37,8 +38,12 @@ export const PATCH = async (
  },
  { status: 400 },
  )
- } catch (error) {
- console.error('Notification update API error', error)
+ } catch (error: unknown) {
+ logger.error('Notification update API error', error, {
+   endpoint: '/api/notifications/[id]',
+   method: 'PATCH',
+   notificationId: id,
+ })
 
  return NextResponse.json(
  {
@@ -67,8 +72,12 @@ export const DELETE = async (
  return NextResponse.json({
  success: true,
  })
- } catch (error) {
- console.error('Notification delete API error', error)
+ } catch (error: unknown) {
+ logger.error('Notification delete API error', error, {
+   endpoint: '/api/notifications/[id]',
+   method: 'DELETE',
+   notificationId: id,
+ })
 
  return NextResponse.json(
  {

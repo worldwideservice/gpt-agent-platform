@@ -61,3 +61,4 @@ jobs:
             echo "⚠️ Lighthouse report not generated" >> $GITHUB_STEP_SUMMARY
           fi
 
+

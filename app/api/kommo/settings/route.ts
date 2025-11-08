@@ -40,7 +40,10 @@ export const GET = async () => {
  .single()
 
  if (error && error.code !== 'PGRST116') {
- console.error('Failed to fetch Kommo settings:', error)
+ logger.error('Failed to fetch Kommo settings:', error, {
+   endpoint: '/api/kommo/settings',
+   method: 'GET',
+ })
  return NextResponse.json(
  { success: false, error: 'Не удалось получить настройки' },
  { status: 500 },
@@ -51,8 +54,11 @@ export const GET = async () => {
  success: true,
  settings: settings || null,
  })
- } catch (error) {
- console.error('Get Kommo settings API error:', error)
+ } catch (error: unknown) {
+ logger.error('Get Kommo settings API error:', error, {
+   endpoint: '/api/kommo/settings',
+   method: 'GET',
+ })
  return NextResponse.json(
  { success: false, error: 'Внутренняя ошибка сервера' },
  { status: 500 },
@@ -108,7 +114,10 @@ export const POST = async (request: Request) => {
  .single()
 
  if (error) {
- console.error('Failed to save Kommo settings:', error)
+ logger.error('Failed to save Kommo settings:', error, {
+   endpoint: '/api/kommo/settings',
+   method: 'POST',
+ })
  return NextResponse.json(
  { success: false, error: 'Не удалось сохранить настройки' },
  { status: 500 },
@@ -120,8 +129,11 @@ export const POST = async (request: Request) => {
  settings: data,
  message: 'Настройки Kommo сохранены успешно',
  })
- } catch (error) {
- console.error('Save Kommo settings API error:', error)
+ } catch (error: unknown) {
+ logger.error('Save Kommo settings API error:', error, {
+   endpoint: '/api/kommo/settings',
+   method: 'POST',
+ })
  return NextResponse.json(
  { success: false, error: 'Внутренняя ошибка сервера' },
  { status: 500 },

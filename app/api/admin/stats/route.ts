@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { auth } from '@/auth'
 import { getAdminStats, checkAdminAccess } from '@/lib/admin'
+import { logger } from '@/lib/utils/logger'
 
 
 
@@ -25,8 +26,11 @@ export async function GET(request: NextRequest) {
  const stats = await getAdminStats()
 
  return NextResponse.json(stats)
- } catch (error) {
- console.error('Admin stats API error:', error)
+ } catch (error: unknown) {
+ logger.error('Admin stats API error:', error, {
+   endpoint: '/api/admin/stats',
+   method: 'GET',
+ })
  return NextResponse.json(
  { error: 'Internal server error' },
  { status: 500 }

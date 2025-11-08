@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { z } from 'zod'
 
 import { auth } from '@/auth'
+import { logger } from '@/lib/utils/logger'
 import { getAgentById } from '@/lib/repositories/agents'
 import {
   getCompanyKnowledgeForContext,
@@ -47,8 +48,12 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
  success: true,
  data: knowledge,
  })
- } catch (error) {
- console.error('Knowledge API error', error)
+ } catch (error: unknown) {
+ logger.error('Knowledge API error', error, {
+   endpoint: '/api/agents/[id]/knowledge',
+   method: 'GET',
+   agentId,
+ })
 
  return NextResponse.json(
  {
@@ -111,8 +116,12 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
  success: true,
  data: knowledge,
  })
- } catch (error) {
- console.error('Knowledge create API error', error)
+ } catch (error: unknown) {
+ logger.error('Knowledge create API error', error, {
+   endpoint: '/api/agents/[id]/knowledge',
+   method: 'POST',
+   agentId,
+ })
 
  return NextResponse.json(
  {

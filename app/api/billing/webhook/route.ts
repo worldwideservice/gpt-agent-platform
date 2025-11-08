@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { headers } from 'next/headers'
 import Stripe from 'stripe'
+
 import { handleStripeWebhook } from '@/lib/services/billing'
+import { logger } from '@/lib/utils/logger'
 
 // Force dynamic rendering (uses headers())
 export const dynamic = 'force-dynamic'
@@ -36,8 +38,12 @@ export const POST = async (request: NextRequest) => {
 
  try {
  event = getStripe().webhooks.constructEvent(body, sig, endpointSecret)
- } catch (err: any) {
- console.error('Webhook signature verification failed:', err.message)
+ } catch (err: unknown) {
+ const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+ logger.error('Webhook signature verification failed:', err, {
+   endpoint: '/api/billing/webhook',
+   errorMessage,
+ })
  return NextResponse.json({ success: false, error: 'Invalid signature' }, { status: 400 })
  }
 
@@ -49,11 +55,13 @@ export const POST = async (request: NextRequest) => {
  }
 
  return NextResponse.json({ success: true, received: true })
- } catch (error) {
- console.error('Stripe webhook error:', error)
+ } catch (error: unknown) {
+ logger.error('Stripe webhook error:', error, {
+   endpoint: '/api/billing/webhook',
+ })
  return NextResponse.json(
- { success: false, error: 'Internal server error' },
- { status: 500 },
+   { success: false, error: 'Internal server error' },
+   { status: 500 },
  )
  }
 }

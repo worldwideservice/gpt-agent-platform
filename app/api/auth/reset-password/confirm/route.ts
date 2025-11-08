@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server'
+
 import { hash } from 'bcryptjs'
 import { z } from 'zod'
 
 import { findValidPasswordResetByToken, markPasswordResetAsUsed } from '@/lib/repositories/passwordResets'
 import { UserRepository } from '@/lib/repositories/users'
+import { logger } from '@/lib/utils/logger'
 
 const confirmSchema = z.object({
  token: z
@@ -35,12 +37,15 @@ export const POST = async (request: Request) => {
  await markPasswordResetAsUsed(resetEntry.id, resetEntry.user_id)
 
  return NextResponse.json({ success: true })
- } catch (error) {
+ } catch (error: unknown) {
  if (error instanceof z.ZodError) {
  return NextResponse.json({ success: false, error: 'Некорректные данные' }, { status: 400 })
  }
 
- console.error('Password reset confirm error', error)
+ logger.error('Password reset confirm error', error, {
+   endpoint: '/api/auth/reset-password/confirm',
+   method: 'POST',
+ })
  return NextResponse.json({ success: false, error: 'Не удалось обновить пароль' }, { status: 500 })
  }
 }

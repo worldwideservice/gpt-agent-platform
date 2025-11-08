@@ -1,9 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
 import { z } from 'zod'
+
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils/logger'
 
 
 // Force dynamic rendering (uses headers from auth())
@@ -42,8 +44,12 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
  contactFields,
  },
  })
- } catch (error) {
- console.error('Fields API error', error)
+ } catch (error: unknown) {
+ logger.error('Fields API error', error, {
+   endpoint: '/api/agents/[id]/fields',
+   method: 'GET',
+   agentId,
+ })
 
  return NextResponse.json(
  {
@@ -103,15 +109,23 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
  .eq('org_id', session.user.orgId)
 
  if (error) {
- console.error('Failed to save fields', error)
+ logger.error('Failed to save fields', error, {
+   endpoint: '/api/agents/[id]/fields',
+   method: 'POST',
+   agentId,
+ })
  throw new Error('Не удалось сохранить поля')
  }
 
  return NextResponse.json({
  success: true,
  })
- } catch (error) {
- console.error('Fields save API error', error)
+ } catch (error: unknown) {
+ logger.error('Fields save API error', error, {
+   endpoint: '/api/agents/[id]/fields',
+   method: 'POST',
+   agentId,
+ })
 
  return NextResponse.json(
  {

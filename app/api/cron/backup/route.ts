@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+import { logger } from '@/lib/utils/logger'
+
 // Force dynamic rendering (uses request.headers)
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -25,7 +27,7 @@ export async function GET(request: Request) {
     const timestamp = new Date().toISOString()
 
     // Логируем запрос на бэкап
-    console.log(`[Cron Backup] Backup request logged at ${timestamp} for project ${supabaseProjectRef}`)
+    logger.log(`[Cron Backup] Backup request logged at ${timestamp} for project ${supabaseProjectRef}`)
 
     // Supabase автоматически создает бэкапы на Pro плане
     // Для Free плана нужно использовать Supabase Dashboard или pg_dump
@@ -41,12 +43,20 @@ export async function GET(request: Request) {
       projectRef: supabaseProjectRef,
       note: 'Supabase automatically creates backups on Pro plan. For Free plan, use Supabase Dashboard or manual pg_dump.',
     })
-  } catch (error: any) {
-    console.error('[Cron Backup] Error:', error)
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : 'Failed to process backup request'
+    
+    logger.error('[Cron Backup] Error:', error, {
+      timestamp: new Date().toISOString(),
+      endpoint: '/api/cron/backup',
+    })
+    
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to process backup request',
+        error: errorMessage,
       },
       { status: 500 },
     )

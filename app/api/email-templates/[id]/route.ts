@@ -48,7 +48,11 @@ export const GET = async (
  { status: 404 },
  )
  }
- console.error('Failed to fetch email template:', error)
+ logger.error('Failed to fetch email template:', error, {
+   endpoint: '/api/email-templates/[id]',
+   method: 'GET',
+   templateId: params.id,
+ })
  return NextResponse.json(
  { success: false, error: 'Не удалось получить шаблон' },
  { status: 500 },
@@ -59,8 +63,12 @@ export const GET = async (
  success: true,
  template,
  })
- } catch (error) {
- console.error('Get email template API error:', error)
+ } catch (error: unknown) {
+ logger.error('Get email template API error:', error, {
+   endpoint: '/api/email-templates/[id]',
+   method: 'GET',
+   templateId: params.id,
+ })
  return NextResponse.json(
  { success: false, error: 'Внутренняя ошибка сервера' },
  { status: 500 },
@@ -119,7 +127,11 @@ export const PUT = async (
  { status: 404 },
  )
  }
- console.error('Failed to update email template:', error)
+ logger.error('Failed to update email template:', error, {
+   endpoint: '/api/email-templates/[id]',
+   method: 'PATCH',
+   templateId: params.id,
+ })
  return NextResponse.json(
  { success: false, error: 'Не удалось обновить шаблон' },
  { status: 500 },
@@ -130,8 +142,12 @@ export const PUT = async (
  success: true,
  template,
  })
- } catch (error) {
- console.error('Update email template API error:', error)
+ } catch (error: unknown) {
+ logger.error('Update email template API error:', error, {
+   endpoint: '/api/email-templates/[id]',
+   method: 'PATCH',
+   templateId: params.id,
+ })
  return NextResponse.json(
  { success: false, error: 'Внутренняя ошибка сервера' },
  { status: 500 },
@@ -161,7 +177,11 @@ export const DELETE = async (
  .eq('org_id', session.user.orgId)
 
  if (error) {
- console.error('Failed to delete email template:', error)
+ logger.error('Failed to delete email template:', error, {
+   endpoint: '/api/email-templates/[id]',
+   method: 'DELETE',
+   templateId: params.id,
+ })
  return NextResponse.json(
  { success: false, error: 'Не удалось удалить шаблон' },
  { status: 500 },
@@ -172,8 +192,12 @@ export const DELETE = async (
  success: true,
  message: 'Шаблон удален успешно',
  })
- } catch (error) {
- console.error('Delete email template API error:', error)
+ } catch (error: unknown) {
+ logger.error('Delete email template API error:', error, {
+   endpoint: '/api/email-templates/[id]',
+   method: 'DELETE',
+   templateId: params.id,
+ })
  return NextResponse.json(
  { success: false, error: 'Внутренняя ошибка сервера' },
  { status: 500 },

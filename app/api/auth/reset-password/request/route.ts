@@ -36,19 +36,26 @@ export const POST = async (request: NextRequest) => {
  try {
  const { sendPasswordResetEmail } = await import('@/lib/services/email')
  await sendPasswordResetEmail(normalizedEmail, token, resetUrl)
- console.info(`Password reset email sent to ${normalizedEmail}`)
- } catch (error) {
- console.error('Failed to send password reset email:', error)
+ logger.info(`Password reset email sent to ${normalizedEmail}`)
+ } catch (error: unknown) {
+ logger.error('Failed to send password reset email:', error, {
+   endpoint: '/api/auth/reset-password/request',
+   method: 'POST',
+   email: normalizedEmail,
+ })
  // Продолжаем выполнение даже если email не отправился
  }
 
  return NextResponse.json({ success: true })
- } catch (error) {
+ } catch (error: unknown) {
  if (error instanceof z.ZodError) {
  return NextResponse.json({ success: false, error: 'Некорректные данные' }, { status: 400 })
  }
 
- console.error('Password reset request error', error)
+ logger.error('Password reset request error', error, {
+   endpoint: '/api/auth/reset-password/request',
+   method: 'POST',
+ })
  return NextResponse.json({ success: false, error: 'Не удалось создать запрос на сброс пароля' }, { status: 500 })
  }
 }

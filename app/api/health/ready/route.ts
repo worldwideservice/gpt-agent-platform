@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+import { logger } from '@/lib/utils/logger'
+
 
 
 // Force dynamic rendering (uses headers from auth())
@@ -16,8 +18,11 @@ export const GET = async (request: NextRequest) => {
  }
 
  return NextResponse.json(ready, { status: 200 })
- } catch (error) {
- console.error('Readiness check error:', error)
+ } catch (error: unknown) {
+ logger.error('Readiness check error:', error, {
+   endpoint: '/api/health/ready',
+   method: 'GET',
+ })
 
  return NextResponse.json(
  {

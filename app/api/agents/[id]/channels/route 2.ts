@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 import { auth } from '@/auth'
 import { getAgentChannels } from '@/lib/repositories/agent-sequences'
+import { logger } from '@/lib/utils/logger'
 
 export const GET = async (
  request: NextRequest,
@@ -21,8 +22,12 @@ export const GET = async (
  success: true,
  data: channels,
  })
- } catch (error) {
- console.error('Agent channels GET error', error)
+ } catch (error: unknown) {
+ logger.error('Agent channels GET error', error, {
+   endpoint: '/api/agents/[id]/channels',
+   method: 'GET',
+   agentId: id,
+ })
 
  return NextResponse.json(
  {

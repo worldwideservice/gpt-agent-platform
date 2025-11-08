@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils/logger'
 
 
 
@@ -150,8 +150,11 @@ export const GET = async (request: NextRequest) => {
       success: true,
       data: [],
     })
-  } catch (error) {
-    console.error('Failed to fetch dashboard updates:', error)
+  } catch (error: unknown) {
+    logger.error('Failed to fetch dashboard updates:', error, {
+      endpoint: '/api/dashboard/updates',
+      method: 'GET',
+    })
     return NextResponse.json(
       {
         success: false,

@@ -4,6 +4,7 @@ import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { createSequence, getSequences, startSequence, deleteSequence } from '@/lib/services/sequences'
+import { logger } from '@/lib/utils/logger'
 
 
 // Force dynamic rendering (uses headers from auth())
@@ -65,8 +66,12 @@ export const GET = async (
  success: true,
  data: sequences,
  })
- } catch (error) {
- console.error('Get sequences API error', error)
+ } catch (error: unknown) {
+ logger.error('Get sequences API error', error, {
+   endpoint: '/api/agents/[id]/sequences',
+   method: 'GET',
+   agentId: id,
+ })
 
  return NextResponse.json(
  {
@@ -133,16 +138,24 @@ export const POST = async (
    title: `Создана последовательность: ${parsed.data.name}`,
    description: `Пользователь создал новую последовательность действий "${parsed.data.name}"`,
    metadata: { sequence_id: sequenceId, sequence_name: parsed.data.name },
- }).catch((error) => {
-   console.error('Failed to log sequence creation:', error)
+ }).catch((error: unknown) => {
+   logger.error('Failed to log sequence creation:', error, {
+     endpoint: '/api/agents/[id]/sequences',
+     method: 'POST',
+     agentId: id,
+   })
  })
 
  return NextResponse.json({
  success: true,
  data: { id: sequenceId },
  })
- } catch (error) {
- console.error('Create sequence API error', error)
+ } catch (error: unknown) {
+ logger.error('Create sequence API error', error, {
+   endpoint: '/api/agents/[id]/sequences',
+   method: 'POST',
+   agentId: id,
+ })
 
  return NextResponse.json(
  {
@@ -213,8 +226,13 @@ export const PUT = async (
  success: true,
  data: { execution_id: executionId },
  })
- } catch (error) {
- console.error('Start sequence API error', error)
+ } catch (error: unknown) {
+ logger.error('Start sequence API error', error, {
+   endpoint: '/api/agents/[id]/sequences',
+   method: 'POST',
+   action: 'start',
+   agentId: id,
+ })
 
  return NextResponse.json(
  {

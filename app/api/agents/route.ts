@@ -330,15 +330,26 @@ export const POST = async (request: NextRequest) => {
  // Отслеживаем использование агентов
  // eslint-disable-next-line react-hooks/rules-of-hooks
  const { useResource } = await import('@/lib/services/usage-tracker')
- await useResource(session.user.orgId, 'agents', 1, `Создан агент: ${agent.name}`).catch((error) => {
-   console.error('Failed to track agent usage', error)
+ await useResource(session.user.orgId, 'agents', 1, `Создан агент: ${agent.name}`).catch((error: unknown) => {
+   const { logger } = require('@/lib/utils/logger')
+   logger.error('Failed to track agent usage', error, {
+     endpoint: '/api/agents',
+     method: 'POST',
+     organizationId: session.user.orgId,
+   })
  })
 
  // Логируем создание агента
  const { ActivityLogger } = await import('@/lib/services/activity-logger')
  await ActivityLogger.agentCreated(session.user.orgId, session.user.id, agent.id, agent.name).catch(
- (error) => {
- console.error('Failed to log agent creation:', error)
+ (error: unknown) => {
+   const { logger } = require('@/lib/utils/logger')
+   logger.error('Failed to log agent creation:', error, {
+     endpoint: '/api/agents',
+     method: 'POST',
+     organizationId: session.user.orgId,
+     agentId: agent.id,
+   })
  },
  )
 

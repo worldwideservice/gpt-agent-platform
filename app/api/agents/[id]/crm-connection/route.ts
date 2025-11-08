@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import { backendFetch } from '@/lib/backend/client'
+import { logger } from '@/lib/utils/logger'
 
 
 // Force dynamic rendering (uses headers from auth())
@@ -82,8 +83,12 @@ export async function GET(
  success: true,
  data: connection,
  })
- } catch (error) {
- console.error('CRM connection API error', error)
+ } catch (error: unknown) {
+ logger.error('CRM connection API error', error, {
+   endpoint: '/api/agents/[id]/crm-connection',
+   method: 'GET',
+   agentId,
+ })
 
  return NextResponse.json(
  {
