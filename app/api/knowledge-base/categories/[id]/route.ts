@@ -4,16 +4,15 @@ import { z } from 'zod'
 
 
 import { auth } from '@/auth'
-
 import {
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
   getKnowledgeBaseCategoryById,
   updateKnowledgeBaseCategory,
   deleteKnowledgeBaseCategory,
 } from '@/lib/repositories/knowledge-base'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 
 export const GET = async (
