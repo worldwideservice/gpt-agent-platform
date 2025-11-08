@@ -5,15 +5,15 @@ import { z } from 'zod'
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import {
+  getTriggerById,
+  updateTrigger,
+  deleteTrigger,
+  updateTriggerStatus,
+} from '@/lib/repositories/triggers'
 
 // Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
- getTriggerById,
- updateTrigger,
- deleteTrigger,
- updateTriggerStatus,
-} from '@/lib/repositories/triggers'
 
 export const GET = async (
  request: NextRequest,
