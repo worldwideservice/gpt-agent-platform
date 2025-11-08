@@ -5,14 +5,14 @@ import { z } from 'zod'
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import {
+  getCompanyKnowledgeForContext,
+  createCompanyKnowledge,
+  type CompanyKnowledge,
+} from '@/lib/repositories/company-knowledge'
 
 // Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
- getCompanyKnowledgeForContext,
- createCompanyKnowledge,
- type CompanyKnowledge,
-} from '@/lib/repositories/company-knowledge'
 
 /**
  * GET /api/agents/[id]/knowledge - Получение знаний для агента
