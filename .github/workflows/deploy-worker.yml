@@ -34,10 +34,8 @@ jobs:
       - name: 🔨 Build Worker
         run: |
           cd ${{ env.WORKER_DIR }}
-          npm ci
+          npm ci --include=dev
           npm run build
-        env:
-          NODE_ENV: production
 
       - name: 📦 Install Railway CLI
         run: npm install -g @railway/cli
