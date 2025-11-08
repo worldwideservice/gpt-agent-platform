@@ -1,18 +1,15 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-
 import { auth } from '@/auth'
-
 import { markNotificationAsRead, deleteNotification } from '@/lib/repositories/notifications'
 
-
-export const PATCH = async (
-
+// Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-// Force dynamic rendering (uses headers from auth())
- request: NextRequest,
- { params }: { params: Promise<{ id: string }> },
+
+export const PATCH = async (
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
 ) => {
  const { id } = await params
  const session = await auth()
