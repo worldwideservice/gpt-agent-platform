@@ -1,5 +1,5 @@
 -- Создание таблицы для долгосрочной памяти агентов
-CREATE TABLE agent_memory (
+CREATE TABLE IF NOT EXISTS agent_memory (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
   agent_id UUID REFERENCES agents(id) ON DELETE CASCADE,
@@ -16,14 +16,20 @@ CREATE TABLE agent_memory (
 );
 
 -- Индексы для производительности
-CREATE INDEX idx_agent_memory_org_client ON agent_memory(org_id, client_identifier);
-CREATE INDEX idx_agent_memory_agent ON agent_memory(agent_id);
-CREATE INDEX idx_agent_memory_type ON agent_memory(memory_type);
-CREATE INDEX idx_agent_memory_importance ON agent_memory(importance DESC);
-CREATE INDEX idx_agent_memory_expires ON agent_memory(expires_at) WHERE expires_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_agent_memory_org_client ON agent_memory(org_id, client_identifier);
+CREATE INDEX IF NOT EXISTS idx_agent_memory_agent ON agent_memory(agent_id);
+CREATE INDEX IF NOT EXISTS idx_agent_memory_type ON agent_memory(memory_type);
+CREATE INDEX IF NOT EXISTS idx_agent_memory_importance ON agent_memory(importance DESC);
+CREATE INDEX IF NOT EXISTS idx_agent_memory_expires ON agent_memory(expires_at) WHERE expires_at IS NOT NULL;
 
 -- RLS политика: пользователи видят только память своей организации
 ALTER TABLE agent_memory ENABLE ROW LEVEL SECURITY;
+
+-- Удаляем существующие политики если они есть (для идемпотентности)
+DROP POLICY IF EXISTS "Users can view memory from their organization" ON agent_memory;
+DROP POLICY IF EXISTS "Users can insert memory for their organization" ON agent_memory;
+DROP POLICY IF EXISTS "Users can update memory from their organization" ON agent_memory;
+DROP POLICY IF EXISTS "Users can delete memory from their organization" ON agent_memory;
 
 CREATE POLICY "Users can view memory from their organization" ON agent_memory
   FOR SELECT USING (auth.uid() IN (
@@ -80,6 +86,9 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+-- Удаляем триггер если он существует (для идемпотентности)
+DROP TRIGGER IF EXISTS trigger_update_agent_memory_updated_at ON agent_memory;
 
 CREATE TRIGGER trigger_update_agent_memory_updated_at
   BEFORE UPDATE ON agent_memory
