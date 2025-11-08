@@ -1,19 +1,15 @@
 import { NextResponse, type NextRequest } from 'next/server'
-
 import { z } from 'zod'
 
-
 import { auth } from '@/auth'
-
 import { markAllNotificationsAsRead, deleteAllNotifications } from '@/lib/repositories/notifications'
 
-
-const actionSchema = z.object({
-
+// Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-// Force dynamic rendering (uses headers from auth())
- action: z.enum(['mark_all_read', 'delete_all']),
+
+const actionSchema = z.object({
+  action: z.enum(['mark_all_read', 'delete_all']),
 })
 
 export const POST = async (request: NextRequest) => {
