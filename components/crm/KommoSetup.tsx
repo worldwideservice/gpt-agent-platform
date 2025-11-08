@@ -5,7 +5,7 @@ import { ExternalLink, CheckCircle, AlertCircle, Loader2, Send, RefreshCw } from
 
 import { Button, Input } from '@/components/ui'
 import { Textarea } from '@/components/ui/shadcn/textarea'
-import { Select } from '@/components/ui/Select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select'
 
 import type { CrmConnectionRow } from '@/types/supabase'
 
@@ -445,13 +445,17 @@ export const KommoSetup = ({ connection, onConnectionEstablished, onError }: Kom
  onChange={(event) => setMessageDealId(event.target.value)}
  />
  <Select
- options={[
- { value: 'chat', label: 'Чат / заметка' },
- { value: 'email', label: 'Email' },
- ]}
  value={messageChannel}
- onChange={(value) => setMessageChannel(value as 'email' | 'chat')}
- />
+ onValueChange={(value: string) => setMessageChannel(value as 'email' | 'chat')}
+ >
+ <SelectTrigger>
+ <SelectValue />
+ </SelectTrigger>
+ <SelectContent>
+ <SelectItem value="chat">Чат / заметка</SelectItem>
+ <SelectItem value="email">Email</SelectItem>
+ </SelectContent>
+ </Select>
  </div>
 
  {messageChannel === 'email' && (

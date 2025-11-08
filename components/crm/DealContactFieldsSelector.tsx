@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Briefcase, Users, RefreshCw, Edit, ChevronDown, ChevronUp, GripVertical, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui'
-import { Select } from '@/components/ui/Select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select'
 import { useToast } from '@/components/ui'
 
 interface Field {
@@ -265,20 +265,27 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  {/* Выбор поля */}
  <div className="relative">
  <Select
- options={[
- { value: '', label: 'Выберите поля, к которым агент сможет получить доступ...' },
- ...availableDealFields
- .filter(field => !dealFields.includes(field.id))
- .map((field) => ({ value: field.id, label: field.name })),
- ]}
  value=""
- onChange={(value) => {
+ onValueChange={(value: string) => {
  if (value) {
  addDealField(value)
  }
  }}
- placeholder="Выберите поля, к которым агент сможет получить доступ..."
- />
+ >
+ <SelectTrigger>
+ <SelectValue placeholder="Выберите поля, к которым агент сможет получить доступ..." />
+ </SelectTrigger>
+ <SelectContent>
+ <SelectItem value="">Выберите поля, к которым агент сможет получить доступ...</SelectItem>
+ {availableDealFields
+ .filter(field => !dealFields.includes(field.id))
+ .map((field) => (
+ <SelectItem key={field.id} value={field.id}>
+ {field.name}
+ </SelectItem>
+ ))}
+ </SelectContent>
+ </Select>
  </div>
  <p className="fi-fo-field-wrp-helper-text break-words text-sm text-gray-500 mt-1">
  Выбирайте только необходимые поля. Дополнительные поля добавляют лишний контекст и могут снизить точность ответов
@@ -360,20 +367,27 @@ export const DealContactFieldsSelector = ({ agentId, onFieldsChange }: DealConta
  {/* Выбор поля */}
  <div className="relative">
  <Select
- options={[
- { value: '', label: 'Выберите поля, к которым агент сможет получить доступ...' },
- ...availableContactFields
- .filter(field => !contactFields.includes(field.id))
- .map((field) => ({ value: field.id, label: field.name })),
- ]}
  value=""
- onChange={(value) => {
+ onValueChange={(value: string) => {
  if (value) {
  addContactField(value)
  }
  }}
- placeholder="Выберите поля, к которым агент сможет получить доступ..."
- />
+ >
+ <SelectTrigger>
+ <SelectValue placeholder="Выберите поля, к которым агент сможет получить доступ..." />
+ </SelectTrigger>
+ <SelectContent>
+ <SelectItem value="">Выберите поля, к которым агент сможет получить доступ...</SelectItem>
+ {availableContactFields
+ .filter(field => !contactFields.includes(field.id))
+ .map((field) => (
+ <SelectItem key={field.id} value={field.id}>
+ {field.name}
+ </SelectItem>
+ ))}
+ </SelectContent>
+ </Select>
  </div>
  <p className="fi-fo-field-wrp-helper-text break-words text-sm text-gray-500 mt-1">
  Выбирайте только необходимые поля. Большее количество полей добавляет дополнительный контекст и может снизить точность ответов.

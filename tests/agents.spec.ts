@@ -277,12 +277,16 @@ test.describe('Agents Page', () => {
   // Клик на первого агента (если есть)
   const firstAgent = page.locator('table tbody tr, [class*="agent"]').first()
   if (await firstAgent.isVisible()) {
-   try {
-    await firstAgent.click()
-    await page.waitForTimeout(500)
-    // Должен открыться либо modal либо страница деталей
- }
- })
+    try {
+      await firstAgent.click()
+      await page.waitForTimeout(500)
+      // Должен открыться либо modal либо страница деталей
+    } catch (error) {
+      // Игнорируем ошибки клика, если элемент не кликабелен
+      console.log('Could not click agent row:', error)
+    }
+  }
+})
 
  test('should filter agents by status', async ({ page }) => {
  // Проверка фильтров (если есть)

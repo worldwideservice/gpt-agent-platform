@@ -81,15 +81,6 @@ if (userMessage) {
  // Форматируем знания компании
  const companyKnowledgeText = formatCompanyKnowledge(companyKnowledge)
  
- // Собираем контекст для обработки скриптов
- // Получаем данные о лиде/клиенте из conversation или других источников
- const scriptContext: ScriptContext = {
-   // TODO: Получить данные из conversation или CRM
-   agentName: 'Агент', // Можно получить из настроек агента
-   customVariables: {},
-   crmData: {},
- }
-
  // Форматируем скрипты продаж с обработкой переменных
  // Используем переданный контекст или создаем базовый
  const scriptContextForProcessing = scriptContext || {

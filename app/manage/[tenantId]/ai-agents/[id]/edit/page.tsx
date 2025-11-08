@@ -740,7 +740,6 @@ export default function EditAIAgentPage() {
                           shouldValidate: true,
                         })
                       }
-                      defaultChecked={agentData?.status === "active"}
                     />
                     <Label htmlFor="status" className="cursor-pointer">
                       Активно
@@ -1070,7 +1069,6 @@ export default function EditAIAgentPage() {
                       onCheckedChange={(checked) =>
                         setValue("settings.enableMarkdown", checked, { shouldValidate: true })
                       }
-                      defaultChecked={agentData?.settings?.enableMarkdown || false}
                     />
                     <Label htmlFor="enableMarkdown" className="cursor-pointer">
                       Разрешить форматирование Markdown

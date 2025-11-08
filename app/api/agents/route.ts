@@ -325,6 +325,7 @@ export const POST = async (request: NextRequest) => {
  })
 
  // Отслеживаем использование агентов
+ // eslint-disable-next-line react-hooks/rules-of-hooks
  const { useResource } = await import('@/lib/services/usage-tracker')
  await useResource(session.user.orgId, 'agents', 1, `Создан агент: ${agent.name}`).catch((error) => {
    console.error('Failed to track agent usage', error)

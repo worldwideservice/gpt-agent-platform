@@ -230,7 +230,6 @@ export default function EditKnowledgeItemPage() {
               id="isPublished"
               checked={isPublished}
               onCheckedChange={(checked) => setValue("isPublished", checked)}
-              defaultChecked={articleData?.isPublished || false}
             />
             <Label htmlFor="isPublished" className="cursor-pointer">
               Опубликовано

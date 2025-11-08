@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
 
 import { AppProviders } from '@/components/AppProviders'
 
@@ -115,6 +116,7 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
  </head>
  <body className={inter.className}>
  <AppProviders>{children}</AppProviders>
+ <Analytics />
  </body>
  </html>
  )

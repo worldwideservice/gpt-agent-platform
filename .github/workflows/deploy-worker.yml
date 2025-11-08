@@ -1,0 +1,74 @@
+name: Deploy Worker to Railway
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/worker/**'
+      - '.github/workflows/deploy-worker.yml'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+  WORKER_DIR: 'services/worker'
+
+jobs:
+  deploy-worker:
+    name: Deploy Worker to Railway
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📚 Install dependencies
+        run: npm ci
+
+      - name: 🔨 Build Worker
+        run: |
+          cd ${{ env.WORKER_DIR }}
+          npm ci
+          npm run build
+        env:
+          NODE_ENV: production
+
+      - name: 🚂 Deploy to Railway
+        uses: bervProject/railway-deploy@v0.3.0
+        with:
+          railway_token: ${{ secrets.RAILWAY_TOKEN }}
+          service: worker
+          detach: false
+        env:
+          RAILWAY_ENVIRONMENT: production
+
+      - name: ⏳ Wait for deployment
+        run: sleep 30
+
+      - name: 🏥 Health Check
+        run: |
+          if [ -n "${{ secrets.WORKER_HEALTH_CHECK_URL }}" ]; then
+            curl -f ${{ secrets.WORKER_HEALTH_CHECK_URL }}/health || echo "⚠️ Health check failed (non-blocking)"
+          else
+            echo "⚠️ WORKER_HEALTH_CHECK_URL not set, skipping health check"
+          fi
+        continue-on-error: true
+
+      - name: 📊 Deployment Summary
+        if: success()
+        run: |
+          echo "## ✅ Worker Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Service:** Worker" >> $GITHUB_STEP_SUMMARY
+          echo "**Platform:** Railway" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Worker service deployed successfully!" >> $GITHUB_STEP_SUMMARY
+

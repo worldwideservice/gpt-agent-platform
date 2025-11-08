@@ -5,7 +5,7 @@ import { RefreshCw, ChevronDown, ChevronUp, X, Plus } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/shadcn/textarea'
-import { Select } from '@/components/ui/Select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/shadcn/badge'
 import { useCRMData } from '@/hooks/useCRMData'
 import type { UniversalPipeline, UniversalStage, CRMConnection } from '@/types/crm'
@@ -192,19 +192,27 @@ export const CRMSync = ({ connection, pipelineSettings, onPipelineUpdate }: CRMS
 
  {/* Available Stages Dropdown */}
  <Select
- options={[
- { value: '', label: 'Выбрать вариант' },
- ...pipeline.stages
- .filter(stage => !settings.selectedStages.includes(stage.id))
- .map((stage) => ({ value: stage.id, label: stage.name })),
- ]}
  value=""
- onChange={(value) => {
+ onValueChange={(value) => {
  if (value) {
  toggleStage(pipeline.id, value)
  }
  }}
- />
+ >
+ <SelectTrigger>
+ <SelectValue placeholder="Выбрать вариант" />
+ </SelectTrigger>
+ <SelectContent>
+ <SelectItem value="">Выбрать вариант</SelectItem>
+ {pipeline.stages
+ .filter(stage => !settings.selectedStages.includes(stage.id))
+ .map((stage) => (
+ <SelectItem key={stage.id} value={stage.id}>
+ {stage.name}
+ </SelectItem>
+ ))}
+ </SelectContent>
+ </Select>
  </div>
  )}
 

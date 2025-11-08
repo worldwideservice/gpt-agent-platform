@@ -59,17 +59,13 @@ vi.mock('@/components/ui/switch', () => ({
 }))
 
 vi.mock('@/components/ui/Select', () => ({
-  Select: ({ label, options, value, onChange }: any) => (
-    <div data-testid="select-mock">
-      {label && <label>{label}</label>}
-      <select value={value || ''} onChange={(e) => onChange?.(e.target.value)}>
-        <option value="">Выберите...</option>
-        {options?.map((opt: any) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
+  Select: ({ children }: any) => <div data-testid="select-mock">{children}</div>,
+  SelectTrigger: ({ children }: any) => <div data-testid="select-trigger">{children}</div>,
+  SelectValue: ({ placeholder }: any) => <div data-testid="select-value">{placeholder || 'Select'}</div>,
+  SelectContent: ({ children }: any) => <div data-testid="select-content">{children}</div>,
+  SelectItem: ({ value, children, onValueChange }: any) => (
+    <div data-testid={`select-item-${value}`} onClick={() => onValueChange?.(value)}>
+      {children}
     </div>
   ),
 }))

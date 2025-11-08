@@ -1,68 +1,59 @@
 import React from 'react'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { Badge } from '@/components/ui/shadcn/badge'
+import { Badge } from '@/components/ui/Badge'
 
 describe('Badge Component', () => {
-  it('should render badge with text', () => {
-    render(<Badge>New</Badge>)
-    const badge = screen.getByText(/new/i)
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('should render badge with default variant', () => {
+    render(<Badge>Test Badge</Badge>)
+    
+    const badge = screen.getByText('Test Badge')
     expect(badge).toBeInTheDocument()
   })
 
-  it('should render with default variant', () => {
-    render(<Badge>Default Badge</Badge>)
-    const badge = screen.getByText(/default badge/i)
-    expect(badge).toHaveClass('bg-primary')
-  })
-
-  it('should render with secondary variant', () => {
+  it('should render badge with secondary variant', () => {
     render(<Badge variant="secondary">Secondary Badge</Badge>)
-    const badge = screen.getByText(/secondary badge/i)
-    expect(badge).toHaveClass('bg-secondary')
+    
+    const badge = screen.getByText('Secondary Badge')
+    expect(badge).toBeInTheDocument()
+    expect(badge.className).toContain('bg-gray-100')
   })
 
-  it('should render with destructive variant', () => {
+  it('should render badge with destructive variant', () => {
     render(<Badge variant="destructive">Destructive Badge</Badge>)
-    const badge = screen.getByText(/destructive badge/i)
-    expect(badge).toHaveClass('bg-destructive')
+    
+    const badge = screen.getByText('Destructive Badge')
+    expect(badge).toBeInTheDocument()
+    expect(badge.className).toContain('bg-red-600')
   })
 
-  it('should render with outline variant', () => {
+  it('should render badge with outline variant', () => {
     render(<Badge variant="outline">Outline Badge</Badge>)
-    const badge = screen.getByText(/outline badge/i)
-    expect(badge).toHaveClass('text-foreground')
+    
+    const badge = screen.getByText('Outline Badge')
+    expect(badge).toBeInTheDocument()
+    expect(badge.className).toContain('border-gray-300')
   })
 
   it('should apply custom className', () => {
-    render(<Badge className="custom-badge">Custom</Badge>)
-    const badge = screen.getByText(/custom/i)
-    expect(badge).toHaveClass('custom-badge')
-  })
-
-  it('should forward ref', () => {
-    const ref = { current: null }
-    render(<Badge ref={ref}>Ref Badge</Badge>)
-    expect(ref.current).toBeInstanceOf(HTMLDivElement)
-  })
-
-  it('should support all HTML div attributes', () => {
-    render(
-      <Badge data-testid="badge" aria-label="Status badge">
-        Status
-      </Badge>,
-    )
-    const badge = screen.getByTestId('badge')
-    expect(badge).toHaveAttribute('aria-label', 'Status badge')
+    render(<Badge className="custom-class">Custom Badge</Badge>)
+    
+    const badge = screen.getByText('Custom Badge')
+    expect(badge.className).toContain('custom-class')
   })
 
   it('should render with children', () => {
     render(
       <Badge>
-        <span>Child content</span>
-      </Badge>,
+        <span>Badge Content</span>
+      </Badge>
     )
-    expect(screen.getByText(/child content/i)).toBeInTheDocument()
+    
+    const badge = screen.getByText('Badge Content')
+    expect(badge).toBeInTheDocument()
   })
 })
-

@@ -23,7 +23,8 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": [
+    "exclude": [
+      "code-v0",
     "node_modules",
     "services/**/*",
     "stories/**/*",

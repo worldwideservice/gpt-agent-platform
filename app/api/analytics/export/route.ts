@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { auth } from '@/auth'
-import { generateDashboardStats, generateAnalyticsReport, exportAnalyticsData } from '@/lib/services/analytics'
+import { generateDashboardStats, generateAnalyticsReport, exportAnalyticsData, type DashboardStats } from '@/lib/services/analytics'
 import { createErrorResponse } from '@/lib/utils/error-handler'
 
 const querySchema = z.object({
@@ -73,7 +73,7 @@ export const GET = async (request: NextRequest) => {
     )
 
     // Если указан тип отчёта, генерируем детальный отчёт
-    let exportData = stats
+    let exportData: DashboardStats | Record<string, any> = stats
     if (parsed.data.reportType) {
       const report = await generateAnalyticsReport(
         session.user.orgId,

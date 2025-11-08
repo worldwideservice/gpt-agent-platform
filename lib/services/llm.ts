@@ -121,6 +121,7 @@ const buildSystemPrompt = (
  */
 const trackTokenUsage = async (orgId: string, tokens: number): Promise<void> => {
   try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const { useResource } = await import('./usage-tracker')
     await useResource(orgId, 'tokens', tokens, `Использовано ${tokens} токенов`)
   } catch (error) {

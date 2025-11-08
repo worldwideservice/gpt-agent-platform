@@ -136,7 +136,9 @@ export const checkUsageLimit = async (
 
 /**
  * Проверяет и записывает использование с проверкой лимитов
+ * @note Это НЕ React hook, а обычная async функция для отслеживания использования ресурсов
  */
+// eslint-disable-next-line react-hooks/rules-of-hooks
 export const useResource = async (
   orgId: string,
   resourceType: ResourceType,

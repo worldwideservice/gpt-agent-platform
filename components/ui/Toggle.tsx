@@ -1,90 +1,47 @@
+'use client'
+
 import * as React from 'react'
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import * as TogglePrimitive from '@radix-ui/react-toggle'
+import { cva, type VariantProps } from 'class-variance-authority'
 
 import { cn } from '@/lib/utils'
 
-export interface ToggleProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onChange'> {
- checked?: boolean
- onChange?: (checked: boolean) => void
- /**
- * Radix UI compatible props (pressed/onPressedChange) to simplify migration.
- */
- pressed?: boolean
- onPressedChange?: (pressed: boolean) => void
- label?: string
- description?: string
- children?: ReactNode
-}
-
-export const Toggle = React.forwardRef<HTMLButtonElement, ToggleProps>(
- (
- {
- checked,
- onChange,
- pressed,
- onPressedChange,
- label,
- description,
- className,
- disabled = false,
- children,
- ...props
- },
- _ref,
- ) => {
- const toggleId = React.useId()
- const isChecked = typeof checked === 'boolean' ? checked : Boolean(pressed)
-
- const handleToggle = () => {
- if (disabled) {
- return
- }
-
- const nextValue = !isChecked
- onChange?.(nextValue)
- onPressedChange?.(nextValue)
- }
-
- return (
- <div className={cn('flex items-start space-x-3', className)}>
- {(label || description) && (
- <div className="flex-1">
- {label && (
- <label htmlFor={toggleId} className="block cursor-pointer text-sm font-medium text-slate-700">
- {label}
- </label>
- )}
- {description && <p className="mt-1 text-sm text-slate-500">{description}</p>}
- </div>
- )}
-
- <div className="flex items-center space-x-2">
- <button
- id={toggleId}
- type="button"
- role="switch"
- aria-checked={isChecked}
- disabled={disabled}
- onClick={handleToggle}
- className={cn(
- 'relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
- isChecked ? 'bg-primary-600' : 'bg-slate-200',
- disabled && 'cursor-not-allowed opacity-50',
- )}
- {...props}
- >
- <span
- className={cn(
- 'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
- isChecked ? 'translate-x-5' : 'translate-x-0',
- )}
- />
- </button>
- {children ? <span className="text-sm text-slate-600">{children}</span> : null}
- </div>
- </div>
- )
- },
+const toggleVariants = cva(
+  "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium hover:bg-muted hover:text-muted-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-accent data-[state=on]:text-accent-foreground [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none transition-[color,box-shadow] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive whitespace-nowrap",
+  {
+    variants: {
+      variant: {
+        default: 'bg-transparent',
+        outline:
+          'border border-input bg-transparent shadow-xs hover:bg-accent hover:text-accent-foreground',
+      },
+      size: {
+        default: 'h-9 px-2 min-w-9',
+        sm: 'h-8 px-1.5 min-w-8',
+        lg: 'h-10 px-2.5 min-w-10',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default',
+    },
+  },
 )
 
-Toggle.displayName = 'Toggle'
+function Toggle({
+  className,
+  variant,
+  size,
+  ...props
+}: React.ComponentProps<typeof TogglePrimitive.Root> &
+  VariantProps<typeof toggleVariants>) {
+  return (
+    <TogglePrimitive.Root
+      data-slot="toggle"
+      className={cn(toggleVariants({ variant, size, className }))}
+      {...props}
+    />
+  )
+}
+
+export { Toggle, toggleVariants }

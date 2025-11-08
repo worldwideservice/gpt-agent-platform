@@ -12,7 +12,9 @@ export default defineConfig({
  testIgnore: [
    '**/unit/**',
    '**/integration/**',
+   '**/components/**', // Исключаем компонентные тесты (vitest)
    '**/*.test.ts', // Исключаем файлы с расширением .test.ts (vitest тесты)
+   '**/*.test.tsx', // Исключаем файлы с расширением .test.tsx (vitest тесты)
  ],
  
  // Папка для скриншотов и артефактов

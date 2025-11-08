@@ -4,7 +4,7 @@ import { useState, KeyboardEvent } from 'react'
 import { Send } from 'lucide-react'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
-import { Select } from '@/components/ui/Select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select'
 
 interface Agent {
   id: string
@@ -60,10 +60,18 @@ export const ChatInput = ({
           <Select
             value={selectedAgentId || undefined}
             onValueChange={(value) => onAgentChange(value || null)}
-            disabled={disabled || activeAgents.length === 0}
-            options={activeAgents.map((agent) => ({ value: agent.id, label: agent.name }))}
-            placeholder="Выберите агента ИИ"
-          />
+          >
+            <SelectTrigger className={disabled || activeAgents.length === 0 ? "opacity-50 cursor-not-allowed" : ""}>
+              <SelectValue placeholder="Выберите агента ИИ" />
+            </SelectTrigger>
+            <SelectContent>
+              {activeAgents.map((agent) => (
+                <SelectItem key={agent.id} value={agent.id}>
+                  {agent.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {activeAgents.length === 0 && (
             <p className="mt-1 text-xs text-gray-500">
               Нет активных агентов. Создайте агента в разделе AI Agents.

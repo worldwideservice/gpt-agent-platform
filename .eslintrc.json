@@ -1,9 +1,21 @@
 {
-  "extends": [
-    "next/core-web-vitals",
-    "plugin:storybook/recommended"
-  ],
+  "extends": "next/core-web-vitals",
   "rules": {
-    "react/no-unescaped-entities": "off"
-  }
+    "react-hooks/rules-of-hooks": [
+      "error",
+      {
+        "additionalHooks": "^(useResource)$"
+      }
+    ],
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@next/next/no-img-element": "warn"
+  },
+  "overrides": [
+    {
+      "files": ["lib/services/usage-tracker.ts", "lib/services/llm.ts", "app/api/**/*.ts"],
+      "rules": {
+        "react-hooks/rules-of-hooks": "off"
+      }
+    }
+  ]
 }
