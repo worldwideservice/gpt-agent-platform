@@ -37,23 +37,41 @@ jobs:
           npm ci --include=dev
           npm run build
 
-      - name: 📦 Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: 🚂 Deploy to Railway
+      - name: 🚂 Deploy to Railway via API
         working-directory: ${{ env.WORKER_DIR }}
         run: |
           echo "🚀 Deploying to Railway..."
-          if [ -n "${{ secrets.RAILWAY_TOKEN }}" ]; then
-            # Используем Railway CLI для деплоя
-            railway up --detach --token ${{ secrets.RAILWAY_TOKEN }} || {
-              echo "⚠️ Railway CLI deployment failed, trying alternative method..."
-              # Альтернатива: Railway автоматически деплоит через GitHub integration
-              echo "✅ Build completed - Railway will deploy via GitHub integration"
-            }
+          
+          if [ -z "${{ secrets.RAILWAY_TOKEN }}" ]; then
+            echo "⚠️ RAILWAY_TOKEN not set - Railway will deploy via GitHub integration"
+            exit 0
+          fi
+          
+          # Используем Railway API для создания деплоя
+          if [ -n "${{ secrets.RAILWAY_PROJECT_ID }}" ] && [ -n "${{ secrets.RAILWAY_SERVICE_ID }}" ]; then
+            echo "📦 Creating deployment via Railway API..."
+            
+            DEPLOYMENT_RESPONSE=$(curl -s -X POST \
+              -H "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              "https://api.railway.app/v1/deployments" \
+              -d "{
+                \"projectId\": \"${{ secrets.RAILWAY_PROJECT_ID }}\",
+                \"serviceId\": \"${{ secrets.RAILWAY_SERVICE_ID }}\",
+                \"source\": \"github\",
+                \"branch\": \"main\"
+              }" || echo "")
+            
+            if [ -n "$DEPLOYMENT_RESPONSE" ]; then
+              echo "✅ Deployment triggered via Railway API"
+              echo "$DEPLOYMENT_RESPONSE" | jq '.' || echo "$DEPLOYMENT_RESPONSE"
+            else
+              echo "⚠️ API deployment failed, Railway will deploy via GitHub integration"
+            fi
           else
-            echo "⚠️ RAILWAY_TOKEN not set"
+            echo "⚠️ RAILWAY_PROJECT_ID or RAILWAY_SERVICE_ID not set"
             echo "✅ Build completed - Railway will deploy via GitHub integration"
+            echo "💡 To use API deployment, set RAILWAY_PROJECT_ID and RAILWAY_SERVICE_ID secrets"
           fi
         continue-on-error: true
         env:
