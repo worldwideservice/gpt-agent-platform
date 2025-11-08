@@ -25,10 +25,14 @@ export const PricingPublic = () => {
  )
 
  const formatPrice = (plan: PricingPlan) => {
+   let price: number
    if (plan.calculatePrice) {
-     return plan.calculatePrice(selectedResponsesNum, billingCycle)
+     price = plan.calculatePrice(selectedResponsesNum, billingCycle)
+   } else {
+     price = billingCycle === 'monthly' ? plan.priceMonthly : plan.priceYearly
    }
-   return billingCycle === 'monthly' ? plan.priceMonthly : plan.priceYearly
+   // Форматируем число с запятыми для больших сумм
+   return price.toLocaleString('en-US')
  }
 
  const isUnavailableForPlan = (plan: PricingPlan) =>
