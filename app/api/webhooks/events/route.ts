@@ -5,6 +5,10 @@ import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { createErrorResponse } from '@/lib/utils/error-handler'
 
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 const querySchema = z.object({
   status: z.enum(['pending', 'processing', 'completed', 'failed', 'retrying']).optional(),
   event_type: z.string().optional(),
