@@ -194,10 +194,10 @@ export function LandingPageClient() {
             ) : (
               <>
                 <Link href="/login">
-                  <Button variant="ghost" size="sm">Войти</Button>
+                  <Button variant="ghost" size="sm">Sign In</Button>
                 </Link>
                 <Link href="/register">
-                  <Button size="sm">Начать бесплатно</Button>
+                  <Button size="sm">Sign Up</Button>
                 </Link>
               </>
             )}
@@ -545,61 +545,66 @@ export function LandingPageClient() {
       </section>
 
       {/* Footer Section */}
-      <footer className="border-t py-12 md:py-20 bg-white dark:bg-gray-950 transition-colors">
+      <footer className="border-t py-16 md:py-20 bg-white dark:bg-gray-950 transition-colors">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-8 md:flex-row md:gap-16">
-            <div className="flex flex-col gap-4 md:max-w-xs">
-              <Logo showTagline />
-              <p className="text-sm text-gray-600">
+          <div className="grid grid-cols-1 gap-12 md:grid-cols-12 md:gap-8">
+            {/* Логотип и описание */}
+            <div className="md:col-span-4 lg:col-span-3">
+              <div className="mb-6">
+                <Logo showTagline />
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 max-w-xs">
                 create infinity — Платформа для создания и автоматизации работы с AI-агентами
               </p>
             </div>
-            <div className="grid flex-1 grid-cols-2 gap-8 sm:grid-cols-3 md:grid-cols-4">
+            
+            {/* Навигация */}
+            <div className="grid grid-cols-2 gap-8 md:col-span-8 lg:col-span-9 sm:grid-cols-3 lg:grid-cols-4">
               <div className="flex flex-col gap-4">
-                <h4 className="text-sm font-medium">Продукт</h4>
-                <ul className="flex flex-col gap-2">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Продукт</h4>
+                <ul className="flex flex-col gap-3">
                   <li>
-                    <Link href="#features" className="text-sm text-gray-600 hover:text-gray-900">
+                    <Link href="#features" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#E63946] dark:hover:text-[#E63946] transition-colors">
                       Возможности
                     </Link>
                   </li>
                   <li>
-                    <Link href="/pricing" className="text-sm text-gray-600 hover:text-gray-900">
+                    <Link href="/pricing" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#E63946] dark:hover:text-[#E63946] transition-colors">
                       Тарифы
                     </Link>
                   </li>
                 </ul>
               </div>
               <div className="flex flex-col gap-4">
-                <h4 className="text-sm font-medium">Аккаунт</h4>
-                <ul className="flex flex-col gap-2">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Аккаунт</h4>
+                <ul className="flex flex-col gap-3">
                   <li>
-                    <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900">
-                      Войти
+                    <Link href="/login" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#E63946] dark:hover:text-[#E63946] transition-colors">
+                      Sign In
                     </Link>
                   </li>
                   <li>
-                    <Link href="/register" className="text-sm text-gray-600 hover:text-gray-900">
-                      Регистрация
+                    <Link href="/register" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#E63946] dark:hover:text-[#E63946] transition-colors">
+                      Sign Up
                     </Link>
                   </li>
                   <li>
-                    <Link href="/reset-password/request" className="text-sm text-gray-600 hover:text-gray-900">
+                    <Link href="/reset-password/request" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#E63946] dark:hover:text-[#E63946] transition-colors">
                       Восстановить пароль
                     </Link>
                   </li>
                 </ul>
               </div>
               <div className="flex flex-col gap-4">
-                <h4 className="text-sm font-medium">Поддержка</h4>
-                <ul className="flex flex-col gap-2">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Поддержка</h4>
+                <ul className="flex flex-col gap-3">
                   <li>
-                    <Link href="/support" className="text-sm text-gray-600 hover:text-gray-900">
+                    <Link href="/support" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#E63946] dark:hover:text-[#E63946] transition-colors">
                       Помощь
                     </Link>
                   </li>
                   <li>
-                    <Link href="/docs" className="text-sm text-gray-600 hover:text-gray-900">
+                    <Link href="/docs" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#E63946] dark:hover:text-[#E63946] transition-colors">
                       Документация
                     </Link>
                   </li>
@@ -607,10 +612,22 @@ export function LandingPageClient() {
               </div>
             </div>
           </div>
-          <div className="mt-8 border-t pt-8">
-            <p className="text-xs text-gray-500">
-              © {new Date().getFullYear()} TON 18. Все права защищены.
-            </p>
+          
+          {/* Разделитель и копирайт */}
+          <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                © {new Date().getFullYear()} TON 18. Все права защищены.
+              </p>
+              <div className="flex gap-6">
+                <Link href="/privacy" className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
+                  Политика конфиденциальности
+                </Link>
+                <Link href="/terms" className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
+                  Условия использования
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </footer>
