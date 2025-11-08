@@ -15,6 +15,21 @@ CREATE TABLE IF NOT EXISTS agent_memory (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Добавляем недостающие колонки если таблица уже существует
+DO $$
+BEGIN
+  -- Проверяем и добавляем client_identifier если его нет
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'agent_memory' AND column_name = 'client_identifier'
+  ) THEN
+    ALTER TABLE agent_memory ADD COLUMN client_identifier TEXT;
+    -- Обновляем существующие записи (если есть)
+    UPDATE agent_memory SET client_identifier = COALESCE(metadata->>'client_id', 'unknown') WHERE client_identifier IS NULL;
+    ALTER TABLE agent_memory ALTER COLUMN client_identifier SET NOT NULL;
+  END IF;
+END $$;
+
 -- Индексы для производительности
 CREATE INDEX IF NOT EXISTS idx_agent_memory_org_client ON agent_memory(org_id, client_identifier);
 CREATE INDEX IF NOT EXISTS idx_agent_memory_agent ON agent_memory(agent_id);
