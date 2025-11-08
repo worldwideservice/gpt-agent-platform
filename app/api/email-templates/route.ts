@@ -1,19 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { z } from 'zod'
 
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
-
 import { auth } from '@/auth'
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
 // Force dynamic rendering (uses headers from auth())

@@ -1,11 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server'
-
 import { z } from 'zod'
 
-
 import { auth } from '@/auth'
-
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 
 const updateTemplateSchema = z.object({
