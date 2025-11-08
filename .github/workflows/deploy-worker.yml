@@ -37,26 +37,12 @@ jobs:
           npm ci --include=dev
           npm run build
 
-      - name: 🚂 Deploy to Railway via API
+      - name: 🚂 Deploy to Railway
         run: |
-          # Railway автоматически деплоит при push через GitHub integration
-          # Если нужно принудительно запустить деплой, используем Railway API
-          if [ -n "${{ secrets.RAILWAY_PROJECT_ID }}" ] && [ -n "${{ secrets.RAILWAY_TOKEN }}" ]; then
-            echo "🚀 Triggering Railway deployment via API..."
-            curl -X POST \
-              -H "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
-              -H "Content-Type: application/json" \
-              "https://api.railway.app/v1/deployments" \
-              -d "{\"projectId\":\"${{ secrets.RAILWAY_PROJECT_ID }}\",\"serviceId\":\"${{ secrets.RAILWAY_SERVICE_ID }}\"}" \
-              || echo "⚠️ Railway API deployment failed, but Railway GitHub integration should handle it automatically"
-          else
-            echo "ℹ️ Railway will deploy automatically via GitHub integration when code is pushed"
-            echo "⚠️ To use API deployment, set RAILWAY_PROJECT_ID and RAILWAY_SERVICE_ID secrets"
-          fi
+          echo "🚀 Railway will deploy automatically via GitHub integration"
+          echo "✅ Worker build completed successfully"
+          echo "📦 Railway will pick up the changes and deploy automatically"
         continue-on-error: true
-
-      - name: ⏳ Wait for deployment
-        run: sleep 30
 
       - name: 🏥 Health Check
         run: |
