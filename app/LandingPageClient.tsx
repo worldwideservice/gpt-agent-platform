@@ -117,7 +117,7 @@ export function LandingPageClient() {
     return (
       <div className="min-h-screen bg-white">
         <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-          <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="container mx-auto flex h-20 md:h-24 items-center justify-between px-4 sm:px-6 lg:px-8">
             <Logo href="/" />
             <div className="flex items-center gap-4">
               <div className="h-9 w-20 bg-gray-200 animate-pulse rounded" />
@@ -145,7 +145,7 @@ export function LandingPageClient() {
       <SkipLink />
       {/* Navbar Section */}
       <header className="sticky top-0 z-50 w-full border-b bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-gray-950/60 transition-colors">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="container mx-auto flex h-20 md:h-24 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Logo href="/" />
           <nav className="hidden md:flex items-center gap-6">
             <Link 
