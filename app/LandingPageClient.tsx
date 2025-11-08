@@ -26,6 +26,8 @@ import { ScrollAnimation } from '@/components/ui/scroll-animation'
 import { AnimatedCounter } from '@/components/ui/animated-counter'
 import { GlassCard } from '@/components/ui/glass-card'
 import { SkipLink } from '@/components/ui/skip-link'
+import BlurText from '@/components/ui/BlurText'
+import { AuroraBackground } from '@/components/ui/aurora-background'
 
 export function LandingPageClient() {
   const router = useRouter()
@@ -423,44 +425,49 @@ export function LandingPageClient() {
 
       {/* CTA Section */}
       <section className="relative overflow-hidden">
-        {/* Gradient Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#E63946]/10 via-purple-50/50 to-blue-50 dark:from-[#E63946]/20 dark:via-purple-950/50 dark:to-blue-950/50 -z-10" />
-        
-        <div className="container mx-auto space-y-6 py-8 md:py-12 lg:py-24 px-4 sm:px-6 lg:px-8 relative">
-          <ScrollAnimation direction="fade" delay={100}>
-            <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
-              <h2 className="text-3xl font-bold leading-[1.1] sm:text-3xl md:text-4xl bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
-                Готовы начать автоматизацию?
-              </h2>
-              <p className="max-w-[85%] leading-normal text-gray-600 dark:text-gray-400 sm:text-lg sm:leading-7">
-                Присоединяйтесь к TON 18 и создайте своего первого AI-агента уже сегодня. 
-                Бесплатная регистрация, без кредитной карты.
-              </p>
-              <div className="flex w-full items-center justify-center space-x-4 py-4">
-                <Link href="/register">
-                  <Button 
-                    size="lg" 
-                    className="text-base group hover:scale-105 hover:shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:ring-offset-2"
-                    aria-label="Начать бесплатную регистрацию"
-                  >
-                    Начать бесплатно
-                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" aria-hidden="true" />
-                  </Button>
-                </Link>
-                <Link href="/login">
-                  <Button 
-                    variant="outline" 
-                    size="lg" 
-                    className="text-base hover:scale-105 hover:border-[#E63946] hover:text-[#E63946] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:ring-offset-2"
-                    aria-label="Войти в аккаунт"
-                  >
-                    Войти в аккаунт
-                  </Button>
-                </Link>
+        <AuroraBackground className="min-h-[500px] md:min-h-[600px]">
+          <div className="container mx-auto space-y-6 py-8 md:py-12 lg:py-24 px-4 sm:px-6 lg:px-8 relative z-10">
+            <ScrollAnimation direction="fade" delay={100}>
+              <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
+                <div className="text-3xl font-bold leading-[1.1] sm:text-3xl md:text-4xl">
+                  <BlurText
+                    text="Готовы начать автоматизацию?"
+                    delay={150}
+                    animateBy="words"
+                    direction="top"
+                    className="bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent"
+                  />
+                </div>
+                <p className="max-w-[85%] leading-normal text-gray-600 dark:text-gray-400 sm:text-lg sm:leading-7">
+                  Присоединяйтесь к TON 18 и создайте своего первого AI-агента уже сегодня. 
+                  Бесплатная регистрация, без кредитной карты.
+                </p>
+                <div className="flex w-full items-center justify-center space-x-4 py-4">
+                  <Link href="/register">
+                    <Button 
+                      size="lg" 
+                      className="text-base group hover:scale-105 hover:shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:ring-offset-2"
+                      aria-label="Начать бесплатную регистрацию"
+                    >
+                      Начать бесплатно
+                      <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" aria-hidden="true" />
+                    </Button>
+                  </Link>
+                  <Link href="/login">
+                    <Button 
+                      variant="outline" 
+                      size="lg" 
+                      className="text-base hover:scale-105 hover:border-[#E63946] hover:text-[#E63946] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:ring-offset-2"
+                      aria-label="Войти в аккаунт"
+                    >
+                      Войти в аккаунт
+                    </Button>
+                  </Link>
+                </div>
               </div>
-            </div>
-          </ScrollAnimation>
-        </div>
+            </ScrollAnimation>
+          </div>
+        </AuroraBackground>
       </section>
 
       {/* Footer Section */}
