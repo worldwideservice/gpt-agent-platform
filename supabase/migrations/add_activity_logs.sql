@@ -24,6 +24,10 @@ CREATE INDEX IF NOT EXISTS idx_activity_logs_org_created ON activity_logs(org_id
 -- RLS политики
 ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
 
+-- Удаляем существующие политики если они есть (для идемпотентности)
+DROP POLICY IF EXISTS "Users can view activity logs of their organization" ON activity_logs;
+DROP POLICY IF EXISTS "Service role can do everything" ON activity_logs;
+
 -- Пользователи могут видеть только логи своей организации
 CREATE POLICY "Users can view activity logs of their organization"
   ON activity_logs
