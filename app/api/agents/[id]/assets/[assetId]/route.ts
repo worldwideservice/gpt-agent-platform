@@ -1,14 +1,15 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { getAgentById } from '@/lib/repositories/agents'
 
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 /**
  * DELETE /api/agents/[id]/assets/[assetId] - Удаление файла агента
  */

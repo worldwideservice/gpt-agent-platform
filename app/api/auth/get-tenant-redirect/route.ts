@@ -4,9 +4,11 @@ import { getTenantIdFromSession } from "@/lib/utils/getTenantRedirect";
 import { logger } from "@/lib/utils/logger";
 import { metrics } from "@/lib/utils/metrics";
 
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
 
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 /**
  * API endpoint для получения tenant-id из текущей сессии
  * Используется клиентским компонентом после логина для редиректа

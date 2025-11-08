@@ -11,11 +11,12 @@ import { KommoAPI } from '@/lib/crm/kommo'
 import { createErrorResponse } from '@/lib/utils/error-handler'
 
 
-/**
 
 // Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
+/**
+
  * API endpoint для работы с Kommo CRM
  */
 

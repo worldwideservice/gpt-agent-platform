@@ -4,10 +4,11 @@ import { z } from 'zod'
 import { auth } from '@/auth'
 import { backendFetch } from '@/lib/backend/client'
 
+
+
 // Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-
 const bodySchema = z.object({
   clientId: z.string().min(1),
   clientSecret: z.string().min(1),

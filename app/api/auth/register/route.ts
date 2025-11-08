@@ -4,9 +4,11 @@ import { createNotification } from '@/lib/repositories/notifications'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { loadSupabaseServerEnv } from '@/lib/env/supabase'
 
-// API routes should always be dynamic
+
+// Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
+// API routes should always be dynamic
 
 export async function POST(request: NextRequest) {
  try {

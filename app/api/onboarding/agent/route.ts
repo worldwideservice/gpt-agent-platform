@@ -8,11 +8,12 @@ import { auth } from '@/auth'
 import { getOnboardingState, upsertOnboardingAgent } from '@/lib/onboarding/server'
 
 
-const agentSchema = z.object({
 
+// Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-// Force dynamic rendering (uses headers from auth())
+const agentSchema = z.object({
+
  name: z.string().min(2, 'Имя агента слишком короткое'),
  model: z.string().min(1, 'Укажите модель агента'),
  goal: z.string().min(10, 'Опишите задачи агента подробнее'),

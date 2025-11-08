@@ -4,7 +4,10 @@ import { auth } from '@/auth'
 import { supabase } from '@/lib/supabase/client'
 
 
+
+// Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 export async function GET(request: NextRequest) {
  try {
  const session = await auth()

@@ -4,10 +4,11 @@ import { z } from 'zod'
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
+
+
 // Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-
 const createTemplateSchema = z.object({
  name: z.string().min(1, 'Название обязательно').max(255),
  subject: z.string().min(1, 'Тема обязательна'),

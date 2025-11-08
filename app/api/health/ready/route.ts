@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-export const dynamic = 'force-dynamic'
 
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 export const GET = async (request: NextRequest) => {
  try {
  // Quick readiness check - just verify the app can start

@@ -1,14 +1,15 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { createErrorResponse } from '@/lib/utils/error-handler'
 
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 const updateRuleSchema = z.object({
   name: z.string().min(1).optional(),
   description: z.string().optional(),

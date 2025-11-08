@@ -1,13 +1,14 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { updateAgentStatus } from '@/lib/repositories/agents'
 
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 const statusSchema = z.object({
  status: z.enum(['active', 'inactive', 'draft']),
 })

@@ -1,14 +1,15 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { createRule, getRules, executeRules } from '@/lib/services/rule-engine'
 import type { AutomationRule, RuleExecutionContext } from '@/lib/services/rule-engine'
 
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 const createRuleSchema = z.object({
  name: z.string().min(1, 'Название правила обязательно'),
  description: z.string().optional(),

@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
 
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import { backendFetch } from '@/lib/backend/client'
 
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 /**
  * GET /api/agents/[id]/crm-connection - Получение подключения CRM для агента
  */

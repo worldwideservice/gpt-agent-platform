@@ -5,7 +5,10 @@ import { auth } from '@/auth'
 import { getConversations } from '@/lib/repositories/conversations'
 
 
+
+// Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 export const GET = async (request: Request) => {
   const session = await auth()
 

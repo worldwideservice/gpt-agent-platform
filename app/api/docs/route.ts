@@ -2,9 +2,11 @@ import { NextResponse } from 'next/server'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 
+
+
+// Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-
 let cachedSpec: unknown
 
 async function loadSpec() {

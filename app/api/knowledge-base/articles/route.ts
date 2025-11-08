@@ -10,10 +10,11 @@ import { getKnowledgeBaseArticles, createKnowledgeBaseArticle } from '@/lib/repo
 import { createErrorResponse } from '@/lib/utils/error-handler'
 
 
+
+
 // Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-
 const querySchema = z.object({
   categoryId: z.string().uuid().optional(),
   search: z.string().optional(), // Добавляем поддержку поиска

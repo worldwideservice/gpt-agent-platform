@@ -5,9 +5,11 @@ import { checkTierRateLimit } from '@/lib/rate-limit'
 import { addJobToQueue } from '@/lib/queue'
 import { createErrorResponse } from '@/lib/utils/error-handler'
 
-// API routes should always be dynamic
+
+// Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
+// API routes should always be dynamic
 
 const jobSchema = z.object({
   type: z.string().min(1, 'Job type is required'),

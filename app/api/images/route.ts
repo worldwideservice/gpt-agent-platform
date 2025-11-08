@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import sharp from 'sharp'
 import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
 
-export const dynamic = 'force-dynamic'
 
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 export async function GET(request: NextRequest) {
  try {
  // Rate limiting

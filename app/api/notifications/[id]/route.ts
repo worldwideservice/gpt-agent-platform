@@ -3,10 +3,11 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { auth } from '@/auth'
 import { markNotificationAsRead, deleteNotification } from '@/lib/repositories/notifications'
 
+
+
 // Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-
 export const PATCH = async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },

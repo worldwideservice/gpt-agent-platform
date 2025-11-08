@@ -1,8 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { z } from 'zod'
 
 import { auth } from '@/auth'
@@ -11,6 +8,10 @@ import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
 import type { ObjectionResponse } from '@/lib/repositories/company-knowledge'
 
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 /**
  * GET /api/agents/[id]/objections - Получение ответов на возражения
  */

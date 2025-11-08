@@ -1,14 +1,15 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import { getTriggers, createTrigger } from '@/lib/repositories/triggers'
 
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 export const GET = async (
  request: NextRequest,
  { params }: { params: Promise<{ id: string }> },

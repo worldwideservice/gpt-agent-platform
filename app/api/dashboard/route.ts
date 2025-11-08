@@ -5,7 +5,10 @@ import { auth } from '@/auth'
 import { getDashboardStats } from '@/lib/repositories/agents'
 
 
+
+// Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 export const GET = async () => {
  const session = await auth()
 

@@ -5,10 +5,11 @@ import { auth } from '@/auth'
 import { getAgents, createAgent } from '@/lib/repositories/agents'
 import { createErrorResponse } from '@/lib/utils/error-handler'
 
+
+
 // Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-
 const querySchema = z.object({
  search: z.string().optional(),
  status: z.enum(['active', 'inactive', 'draft']).optional(),

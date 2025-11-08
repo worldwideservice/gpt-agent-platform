@@ -8,11 +8,12 @@ import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
 
-export const GET = async () => {
 
+// Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-// Force dynamic rendering (uses headers from auth())
+export const GET = async () => {
+
  const session = await auth()
 
  if (!session?.user?.orgId) {

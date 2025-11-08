@@ -1,13 +1,14 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { AgentActionsService } from '@/lib/services/agent-actions'
 
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 const analyzeActionsSchema = z.object({
  leadId: z.number().optional(),
  message: z.string().min(1, 'Сообщение обязательно'),

@@ -5,7 +5,10 @@ import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
 
+
+// Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 interface UpdateItem {
   id: string
   message: string

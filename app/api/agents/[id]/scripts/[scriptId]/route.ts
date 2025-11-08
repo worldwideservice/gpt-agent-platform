@@ -1,8 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { z } from 'zod'
 
 import { auth } from '@/auth'
@@ -10,6 +7,10 @@ import { getAgentById } from '@/lib/repositories/agents'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { createErrorResponse } from '@/lib/utils/error-handler'
 
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 const updateScriptSchema = z.object({
   title: z.string().min(1).optional(),
   scriptType: z.enum(['greeting', 'qualification', 'presentation', 'objection_handling', 'closing']).optional(),

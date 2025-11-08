@@ -1,13 +1,14 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { createSequence, getSequences, startSequence, deleteSequence } from '@/lib/services/sequences'
 
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 const createSequenceSchema = z.object({
  name: z.string().min(1, 'Название последовательности обязательно'),
  description: z.string().optional(),

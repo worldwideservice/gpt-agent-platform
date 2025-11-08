@@ -3,8 +3,11 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { backendFetch } from '@/lib/backend/client'
 
-export const dynamic = 'force-dynamic'
 
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 export async function GET() {
  try {
  const session = await auth()

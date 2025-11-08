@@ -10,11 +10,12 @@ import { generateDashboardStats, generateAnalyticsReport, exportAnalyticsData, t
 import { createErrorResponse } from '@/lib/utils/error-handler'
 
 
-const querySchema = z.object({
 
+// Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-// Force dynamic rendering (uses headers from auth())
+const querySchema = z.object({
+
   range: z.enum(['7d', '30d', '90d', '1y']).optional().default('7d'),
   format: z.enum(['csv', 'json', 'pdf']).optional().default('csv'),
   reportType: z.enum(['usage', 'performance', 'engagement', 'revenue']).optional(),

@@ -3,9 +3,11 @@ import { auth } from '@/auth'
 import { metrics } from '@/lib/utils/metrics'
 import { logger } from '@/lib/utils/logger'
 
+
+
+// Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-
 /**
  * API endpoint для получения метрик приложения
  * Используется для мониторинга и аналитики

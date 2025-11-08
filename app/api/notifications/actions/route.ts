@@ -4,10 +4,11 @@ import { z } from 'zod'
 import { auth } from '@/auth'
 import { markAllNotificationsAsRead, deleteAllNotifications } from '@/lib/repositories/notifications'
 
+
+
 // Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-
 const actionSchema = z.object({
   action: z.enum(['mark_all_read', 'delete_all']),
 })

@@ -1,13 +1,14 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { deleteAgentChannel, upsertAgentChannel } from '@/lib/repositories/agent-sequences'
 
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 const updateSchema = z.object({
  isEnabled: z.boolean(),
  settings: z.record(z.string(), z.unknown()).optional(),

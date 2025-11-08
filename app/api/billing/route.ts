@@ -4,13 +4,14 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { auth } from '@/auth'
 
 import {
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
  getBillingPlans,
  getOrganizationSubscription,
  createSubscriptionSession,
 
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
-// Force dynamic rendering (uses headers from auth())
  cancelSubscription,
  resumeSubscription,
  getUsageStats,

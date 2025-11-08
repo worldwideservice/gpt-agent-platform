@@ -3,8 +3,11 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { getOnboardingState } from '@/lib/onboarding/server'
 
-export const dynamic = 'force-dynamic'
 
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 export const GET = async () => {
  try {
  const session = await auth()
