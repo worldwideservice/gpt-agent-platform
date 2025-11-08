@@ -6,16 +6,11 @@ import { z } from 'zod'
 import { auth } from '@/auth'
 
 import { createErrorResponse } from '@/lib/utils/error-handler'
-
 import {
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
- createConversation,
- getConversationById,
- addMessageToConversation,
- getConversationMessages,
+  createConversation,
+  getConversationById,
+  addMessageToConversation,
+  getConversationMessages,
 } from '@/lib/repositories/conversations'
 import { searchKnowledgeBase, formatKnowledgeContext } from '@/lib/repositories/knowledge-search'
 
@@ -31,6 +26,9 @@ import { createKommoApiForOrg } from '@/lib/repositories/crm-connection'
 
 import { isAgentConfiguredForStage } from '@/lib/repositories/agent-pipeline-settings'
 
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 const sendMessageSchema = z.object({
 
