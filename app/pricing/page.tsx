@@ -24,15 +24,15 @@ export default function PricingPage() {
       <footer className="border-t bg-white dark:bg-gray-950 transition-colors mt-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
           <div className="grid grid-cols-1 gap-12 md:grid-cols-12 md:gap-8">
-            {/* Логотип и описание */}
-            <div className="md:col-span-4 lg:col-span-3">
-              <div className="mb-6">
-                <Logo showTagline />
-              </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 max-w-xs">
-                create infinity — Платформа для создания и автоматизации работы с AI-агентами
-              </p>
-            </div>
+                    {/* Логотип и описание */}
+                    <div className="md:col-span-4 lg:col-span-3 flex flex-col">
+                      <div className="mb-5">
+                        <Logo showTagline />
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 max-w-xs leading-relaxed mt-2">
+                        create infinity — Платформа для создания и автоматизации работы с AI-агентами
+                      </p>
+                    </div>
             
             {/* Навигация */}
             <div className="grid grid-cols-2 gap-8 md:col-span-8 lg:col-span-9 sm:grid-cols-3 lg:grid-cols-4">
@@ -56,12 +56,12 @@ export default function PricingPage() {
                 <ul className="flex flex-col gap-3">
                   <li>
                     <Link href="/login" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#E63946] dark:hover:text-[#E63946] transition-colors">
-                      Sign In
+                      Войти
                     </Link>
                   </li>
                   <li>
                     <Link href="/register" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#E63946] dark:hover:text-[#E63946] transition-colors">
-                      Sign Up
+                      Зарегистрироваться
                     </Link>
                   </li>
                   <li>

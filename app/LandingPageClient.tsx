@@ -224,18 +224,6 @@ export function LandingPageClient() {
               </>
             )}
           </div>
-          {status !== 'authenticated' && (
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <span>Уже есть аккаунт?</span>
-              <Link href="/login" className="font-medium text-[#E63946] hover:underline">
-                Войти
-              </Link>
-              <span>или</span>
-              <Link href="/reset-password/request" className="font-medium text-[#E63946] hover:underline">
-                восстановить пароль
-              </Link>
-            </div>
-          )}
         </div>
       </section>
 
@@ -470,16 +458,6 @@ export function LandingPageClient() {
                   </Button>
                 </Link>
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <span>Уже есть аккаунт?</span>
-                <Link href="/login" className="font-medium text-[#E63946] hover:underline focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:ring-offset-2 rounded">
-                  Войти
-                </Link>
-                <span>или</span>
-                <Link href="/reset-password/request" className="font-medium text-[#E63946] hover:underline focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:ring-offset-2 rounded">
-                  восстановить пароль
-                </Link>
-              </div>
             </div>
           </ScrollAnimation>
         </div>
@@ -490,11 +468,11 @@ export function LandingPageClient() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-12 md:grid-cols-12 md:gap-8">
             {/* Логотип и описание */}
-            <div className="md:col-span-4 lg:col-span-3">
-              <div className="mb-6">
+            <div className="md:col-span-4 lg:col-span-3 flex flex-col">
+              <div className="mb-5">
                 <Logo showTagline />
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 max-w-xs">
+              <p className="text-sm text-gray-600 dark:text-gray-400 max-w-xs leading-relaxed mt-2">
                 create infinity — Платформа для создания и автоматизации работы с AI-агентами
               </p>
             </div>
@@ -521,12 +499,12 @@ export function LandingPageClient() {
                 <ul className="flex flex-col gap-3">
                   <li>
                     <Link href="/login" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#E63946] dark:hover:text-[#E63946] transition-colors">
-                      Sign In
+                      Войти
                     </Link>
                   </li>
                   <li>
                     <Link href="/register" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#E63946] dark:hover:text-[#E63946] transition-colors">
-                      Sign Up
+                      Зарегистрироваться
                     </Link>
                   </li>
                   <li>
