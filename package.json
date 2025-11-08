@@ -110,6 +110,7 @@
     "@types/nodemailer": "^7.0.3",
     "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.6",
+    "@vercel/analytics": "^1.5.0",
     "autoprefixer": "^10.4.0",
     "bcryptjs": "^3.0.2",
     "bullmq": "^5.62.0",
@@ -121,6 +122,7 @@
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.2.0",
     "eslint-plugin-storybook": "^10.0.2",
+    "framer-motion": "^12.23.24",
     "input-otp": "^1.4.1",
     "ioredis": "^5.8.2",
     "lucide-react": "^0.344.0",
@@ -149,8 +151,7 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
     "web-vitals": "^5.1.0",
-    "zod": "^4.1.12",
-    "@vercel/analytics": "^1.5.0"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.2",
