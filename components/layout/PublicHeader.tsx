@@ -95,10 +95,10 @@ export function PublicHeader({ showNav = true }: PublicHeaderProps) {
           ) : (
             <>
               <Link href="/login">
-                <Button variant="ghost" size="sm">Sign In</Button>
+                <Button variant="ghost" size="sm">Войти</Button>
               </Link>
               <Link href="/register">
-                <Button size="sm">Sign Up</Button>
+                <Button size="sm">Зарегистрироваться</Button>
               </Link>
             </>
           )}

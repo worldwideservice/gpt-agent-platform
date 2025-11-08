@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-import { Button, Input } from '@/components/ui'
+import { Button, Input, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui'
 import { useToast } from '@/components/ui/toast-context'
 
 export const RegisterClient = () => {
@@ -76,10 +76,15 @@ export const RegisterClient = () => {
  }
 
  return (
- <div className="min-h-screen flex items-center justify-center p-4">
- <div className="w-full max-w-md">
- <h1 className="text-2xl font-bold mb-6 text-center">Регистрация</h1>
-
+ <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
+ <Card className="w-full max-w-md shadow-lg">
+ <CardHeader className="space-y-1">
+ <CardTitle className="text-2xl font-bold text-center">Регистрация</CardTitle>
+ <CardDescription className="text-center">
+ Создайте новый аккаунт для начала работы
+ </CardDescription>
+ </CardHeader>
+ <CardContent>
  <form className="space-y-4" onSubmit={handleSubmit}>
  <div className="grid grid-cols-2 gap-4">
  <Input
@@ -152,13 +157,14 @@ export const RegisterClient = () => {
  </Button>
  </form>
 
- <div className="mt-4 text-center text-sm">
- <span className="text-gray-600">Уже есть аккаунт? </span>
- <Link href="/login" className="text-blue-600 hover:underline">
+ <div className="mt-6 text-center text-sm">
+ <span className="text-gray-600 dark:text-gray-400">Уже есть аккаунт? </span>
+ <Link href="/login" className="text-primary hover:underline">
  Войти
  </Link>
  </div>
- </div>
+ </CardContent>
+ </Card>
  </div>
  )
 }
