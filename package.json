@@ -149,7 +149,8 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
     "web-vitals": "^5.1.0",
-    "zod": "^4.1.12"
+    "zod": "^4.1.12",
+    "@vercel/analytics": "^1.5.0"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.2",
@@ -166,7 +167,6 @@
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@types/swagger-ui-react": "^5.18.0",
-    "@vercel/analytics": "^1.5.0",
     "@vitest/browser-playwright": "^4.0.5",
     "@vitest/coverage-v8": "^4.0.5",
     "jsdom": "^27.1.0",
