@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { z } from 'zod'
 
-// Force dynamic rendering (uses headers from auth())
 
 import { auth } from '@/auth'
 
@@ -14,6 +11,10 @@ import { createErrorResponse } from '@/lib/utils/error-handler'
 
 
 const querySchema = z.object({
+
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+// Force dynamic rendering (uses headers from auth())
   range: z.enum(['7d', '30d', '90d', '1y']).optional().default('7d'),
 })
 

@@ -1,15 +1,16 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 
 import { auth } from '@/auth'
 
-// Force dynamic rendering (uses headers from auth())
 import { getNotifications, getUnreadCount } from '@/lib/repositories/notifications'
 
 
 export const GET = async (request: NextRequest) => {
+
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+// Force dynamic rendering (uses headers from auth())
  const session = await auth()
 
  if (!session?.user?.orgId) {

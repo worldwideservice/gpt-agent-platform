@@ -1,10 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { z } from 'zod'
 
-// Force dynamic rendering (uses headers from auth())
 
 import { auth } from '@/auth'
 
@@ -12,6 +9,10 @@ import {
  getKnowledgeBaseCategoryById,
  updateKnowledgeBaseCategory,
  deleteKnowledgeBaseCategory,
+
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+// Force dynamic rendering (uses headers from auth())
 } from '@/lib/repositories/knowledge-base'
 
 export const GET = async (

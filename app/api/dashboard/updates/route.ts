@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-export const dynamic = 'force-dynamic'
 
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
+
+export const dynamic = 'force-dynamic'
 interface UpdateItem {
   id: string
   message: string

@@ -1,10 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { z } from 'zod'
 
-// Force dynamic rendering (uses headers from auth())
 
 import { auth } from '@/auth'
 
@@ -16,6 +13,10 @@ import { createErrorResponse } from '@/lib/utils/error-handler'
 
 
 export const GET = async () => {
+
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+// Force dynamic rendering (uses headers from auth())
  const session = await auth()
 
  if (!session?.user?.orgId) {

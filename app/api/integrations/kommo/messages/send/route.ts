@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { z } from 'zod'
 
-// Force dynamic rendering (uses headers from auth())
 
 import { auth } from '@/auth'
 
@@ -12,6 +9,10 @@ import { backendFetch } from '@/lib/backend/client'
 
 
 const bodySchema = z.object({
+
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+// Force dynamic rendering (uses headers from auth())
  dealId: z.string().min(1),
  channel: z.enum(['email', 'chat']),
  message: z.object({

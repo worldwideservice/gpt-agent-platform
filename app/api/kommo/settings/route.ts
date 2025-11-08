@@ -1,16 +1,17 @@
 import { NextResponse } from 'next/server'
 
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { z } from 'zod'
 
-// Force dynamic rendering (uses headers from auth())
 import { auth } from '@/auth'
 
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
 
 const kommoSettingsSchema = z.object({
+
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+// Force dynamic rendering (uses headers from auth())
  domain: z.string().min(1, 'Домен обязателен'),
  client_id: z.string().min(1, 'Client ID обязателен'),
  client_secret: z.string().min(1, 'Client Secret обязателен'),

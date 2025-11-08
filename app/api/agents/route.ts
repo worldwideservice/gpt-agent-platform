@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { z } from 'zod'
 
 import { auth } from '@/auth'
-import { getAgents } from '@/lib/repositories/agents'
+import { getAgents, createAgent } from '@/lib/repositories/agents'
 import { createErrorResponse } from '@/lib/utils/error-handler'
 
 // Force dynamic rendering (uses headers from auth())
@@ -23,8 +23,6 @@ const querySchema = z.object({
  .transform((value) => Number.parseInt(value, 10))
  .optional(),
 })
-
-import { createAgent } from '@/lib/repositories/agents'
 
 /**
  * @swagger

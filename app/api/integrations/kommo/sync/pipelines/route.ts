@@ -1,15 +1,16 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 
 import { auth } from '@/auth'
 
-// Force dynamic rendering (uses headers from auth())
 import { backendFetch } from '@/lib/backend/client'
 
 
 export const POST = async (request: NextRequest) => {
+
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+// Force dynamic rendering (uses headers from auth())
  const session = await auth()
 
  if (!session?.user?.orgId) {

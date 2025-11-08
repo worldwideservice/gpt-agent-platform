@@ -1,10 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { z } from 'zod'
 
-// Force dynamic rendering (uses headers from auth())
 
 import { auth } from '@/auth'
 
@@ -12,6 +9,10 @@ import { getOnboardingState, upsertOnboardingAgent } from '@/lib/onboarding/serv
 
 
 const agentSchema = z.object({
+
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+// Force dynamic rendering (uses headers from auth())
  name: z.string().min(2, 'Имя агента слишком короткое'),
  model: z.string().min(1, 'Укажите модель агента'),
  goal: z.string().min(10, 'Опишите задачи агента подробнее'),

@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 
-export const dynamic = 'force-dynamic'
 
 import { auth } from '@/auth'
 import {
   getMonthlyResponsesSeries,
+
+export const dynamic = 'force-dynamic'
   getDailyResponsesSeries,
   getWeeklyBarChartData,
 } from '@/lib/repositories/agents'

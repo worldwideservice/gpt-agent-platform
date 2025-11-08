@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-export const dynamic = 'force-dynamic'
 import { auth } from '@/auth'
 import { getAdminStats, checkAdminAccess } from '@/lib/admin'
 
+
+export const dynamic = 'force-dynamic'
 export async function GET(request: NextRequest) {
  try {
  const session = await auth()

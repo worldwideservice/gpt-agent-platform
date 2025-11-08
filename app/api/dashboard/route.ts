@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 
-export const dynamic = 'force-dynamic'
 
 import { auth } from '@/auth'
 import { getDashboardStats } from '@/lib/repositories/agents'
 
+
+export const dynamic = 'force-dynamic'
 export const GET = async () => {
  const session = await auth()
 
