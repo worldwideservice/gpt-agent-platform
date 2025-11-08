@@ -2,19 +2,44 @@
 
 import { useState, useTransition, useEffect } from 'react'
 import Link from 'next/link'
-import { signIn } from 'next-auth/react'
+import { signIn, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
-import { Button, Input } from '@/components/ui'
+import { Button, Input, Label, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui'
+import { Checkbox } from '@/components/ui/checkbox'
 import { useToast } from '@/components/ui/toast-context'
 
 export const LoginClient = () => {
  const router = useRouter()
  const { push: pushToast } = useToast()
+ const { data: session, status } = useSession()
  const [email, setEmail] = useState('founder@example.com')
  const [password, setPassword] = useState('Demo1234!')
+ const [rememberMe, setRememberMe] = useState(false)
  const [error, setError] = useState<string | null>(null)
  const [isPending, startTransition] = useTransition()
+
+ // Проверяем, авторизован ли пользователь и есть ли rememberMe
+ useEffect(() => {
+ if (status === 'authenticated' && session) {
+ // Проверяем, есть ли rememberMe через API
+ fetch('/api/auth/check-session', { cache: 'no-store' })
+ .then((res) => res.json())
+ .then((data) => {
+ if (data.success && data.hasRememberMe) {
+ // Если есть rememberMe, редиректим на платформу
+ fetch('/api/auth/get-tenant-redirect', { cache: 'no-store' })
+ .then((res) => res.json())
+ .then((redirectData) => {
+ if (redirectData.success && redirectData.tenantId) {
+ router.push(`/manage/${redirectData.tenantId}`)
+ router.refresh()
+ }
+ })
+ }
+ })
+ }
+ }, [status, session, router])
 
  useEffect(() => {
  const params = new URLSearchParams(window.location.search)
@@ -35,6 +60,11 @@ export const LoginClient = () => {
  setError(null)
 
  try {
+ // Устанавливаем rememberMe cookie перед signIn
+ if (rememberMe) {
+ document.cookie = `rememberMe=true; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`
+ }
+
  const result = await signIn('credentials', {
  email,
  password,
@@ -47,6 +77,19 @@ export const LoginClient = () => {
  }
 
  if (result?.ok) {
+      // Если rememberMe установлен, вызываем API для установки долгосрочной сессии
+      if (rememberMe) {
+        try {
+          await fetch('/api/auth/set-remember-me', {
+            method: 'POST',
+            cache: 'no-store',
+          })
+        } catch (rememberMeError) {
+          console.error('[LoginClient] Failed to set remember me:', rememberMeError)
+          // Не блокируем вход, если не удалось установить rememberMe
+        }
+      }
+
       // Ждем немного, чтобы сессия успела обновиться
       await new Promise(resolve => setTimeout(resolve, 500))
 
@@ -98,10 +141,15 @@ export const LoginClient = () => {
  }
 
  return (
- <div className="min-h-screen flex items-center justify-center p-4">
- <div className="w-full max-w-md">
- <h1 className="text-2xl font-bold mb-6 text-center">Вход</h1>
-
+ <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
+ <Card className="w-full max-w-md shadow-lg">
+ <CardHeader className="space-y-1">
+ <CardTitle className="text-2xl font-bold text-center">Вход</CardTitle>
+ <CardDescription className="text-center">
+ Войдите в свой аккаунт для продолжения
+ </CardDescription>
+ </CardHeader>
+ <CardContent>
  <form className="space-y-4" onSubmit={handleSubmit}>
  <Input
  id="email"
@@ -125,6 +173,20 @@ export const LoginClient = () => {
  required
  />
 
+ <div className="flex items-center space-x-2">
+ <Checkbox
+ id="rememberMe"
+ checked={rememberMe}
+ onCheckedChange={(checked) => setRememberMe(checked === true)}
+ />
+ <Label
+ htmlFor="rememberMe"
+ className="text-sm font-normal cursor-pointer"
+ >
+ Запомнить меня
+ </Label>
+ </div>
+
  {error && (
  <div className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700">
  {error}
@@ -136,23 +198,24 @@ export const LoginClient = () => {
  </Button>
  </form>
 
- <div className="mt-4 flex items-center justify-between text-sm">
- <Link href="/reset-password/request" className="text-blue-600 hover:underline">
+ <div className="mt-6 flex items-center justify-between text-sm">
+ <Link href="/reset-password/request" className="text-primary hover:underline">
  Забыли пароль?
  </Link>
- <Link href="/register" className="text-blue-600 hover:underline">
+ <Link href="/register" className="text-primary hover:underline">
  Зарегистрироваться
  </Link>
  </div>
 
  {process.env.NODE_ENV === 'development' && (
- <div className="mt-6 rounded border border-gray-300 bg-gray-50 p-4 text-xs">
- <p className="mb-2 font-medium">Демо данные:</p>
- <p>Email: <span className="font-mono">founder@example.com</span></p>
- <p>Пароль: <span className="font-mono">Demo1234!</span></p>
+ <div className="mt-6 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800 p-4 text-xs">
+ <p className="mb-2 font-medium text-gray-900 dark:text-gray-100">Демо данные:</p>
+ <p className="text-gray-600 dark:text-gray-400">Email: <span className="font-mono text-gray-900 dark:text-gray-100">founder@example.com</span></p>
+ <p className="text-gray-600 dark:text-gray-400">Пароль: <span className="font-mono text-gray-900 dark:text-gray-100">Demo1234!</span></p>
  </div>
  )}
- </div>
+ </CardContent>
+ </Card>
  </div>
  )
 }

@@ -21,6 +21,7 @@ export const {
 } = NextAuth({
  session: {
  strategy: 'jwt',
+ maxAge: 30 * 24 * 60 * 60, // 30 дней по умолчанию (будет переопределено для rememberMe)
  },
  pages: {
  signIn: '/login',

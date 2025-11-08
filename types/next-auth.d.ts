@@ -20,8 +20,9 @@ declare module 'next-auth' {
 }
 
 declare module 'next-auth/jwt' {
- interface JWT {
- orgId?: string
- }
+  interface JWT {
+    orgId?: string
+    rememberMe?: boolean
+  }
 }
 
