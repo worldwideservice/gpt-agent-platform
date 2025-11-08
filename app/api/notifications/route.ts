@@ -1,19 +1,13 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 import { auth } from '@/auth'
 
 // Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { getNotifications, getUnreadCount } from '@/lib/repositories/notifications'
 
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 
 export const GET = async (request: NextRequest) => {
  const session = await auth()
