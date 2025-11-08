@@ -39,7 +39,7 @@ export async function getTenantIdFromSession(): Promise<string | null> {
  orgId: session.user.orgId,
  duration: `${duration}ms`,
  })
- logger.performance("getTenantIdFromSession (cached)", duration)
+ logger.debug("[getTenantIdFromSession] Performance (cached)", { duration: `${duration}ms` })
  return cachedTenantId
  }
 
@@ -177,7 +177,8 @@ export async function getTenantIdFromSession(): Promise<string | null> {
  });
  
  // Log performance if operation took longer than expected
- logger.performance("getTenantIdFromSession", duration, {
+ logger.debug("[getTenantIdFromSession] Performance", {
+ duration: `${duration}ms`,
  orgId: activeOrganization.id,
  hasSlugInCache: !!activeOrganization.slug,
  })

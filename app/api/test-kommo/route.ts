@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { KommoAPI } from '@/lib/crm/kommo'
 import { evaluateKommoTestConfig } from '@/lib/env/kommo-test'
+import { logger } from '@/lib/utils/logger'
 
 
 // Force dynamic rendering (uses headers from auth())

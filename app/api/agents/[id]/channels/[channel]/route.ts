@@ -4,6 +4,7 @@ import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { deleteAgentChannel, upsertAgentChannel } from '@/lib/repositories/agent-sequences'
+import { logger } from '@/lib/utils/logger'
 
 
 // Force dynamic rendering (uses headers from auth())

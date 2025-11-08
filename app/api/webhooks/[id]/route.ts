@@ -89,8 +89,8 @@ export async function POST(
  request: NextRequest,
  { params }: { params: Promise<{ id: string }> }
 ) {
- try {
  const { id } = await params
+ try {
  const session = await auth()
 
  if (!session?.user?.orgId) {
@@ -158,7 +158,7 @@ export async function POST(
    endpoint: '/api/webhooks/[id]',
    method: 'POST',
    action: 'retry',
-   eventId: params.id,
+   eventId: id,
  })
  return NextResponse.json(
  { success: false, error: 'Внутренняя ошибка сервера' },

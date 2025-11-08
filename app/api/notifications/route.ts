@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 import { auth } from '@/auth'
 import { getNotifications, getUnreadCount } from '@/lib/repositories/notifications'
+import { logger } from '@/lib/utils/logger'
 
 
 

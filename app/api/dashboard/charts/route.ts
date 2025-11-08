@@ -6,6 +6,7 @@ import {
   getDailyResponsesSeries,
   getWeeklyBarChartData,
 } from '@/lib/repositories/agents'
+import { logger } from '@/lib/utils/logger'
 
 // Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'

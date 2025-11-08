@@ -14,9 +14,9 @@ interface RouteParams {
 
 // GET - Получение списка интеграций агента
 export async function GET(request: NextRequest, { params }: RouteParams) {
- try {
  const resolvedParams = await params
  const { id: agentId } = resolvedParams
+ try {
 
  const session = await auth()
 

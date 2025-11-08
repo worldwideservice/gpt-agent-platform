@@ -117,7 +117,7 @@ export const POST = async (
     logger.error('Agent channels POST error', error, {
       endpoint: '/api/agents/[id]/channels',
       method: 'POST',
-      agentId: id,
+      agentId,
     })
 
     return NextResponse.json(

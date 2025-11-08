@@ -9,6 +9,7 @@ import {
   updateKnowledgeBaseArticle,
   deleteKnowledgeBaseArticle,
 } from '@/lib/repositories/knowledge-base'
+import { logger } from '@/lib/utils/logger'
 
 // Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'

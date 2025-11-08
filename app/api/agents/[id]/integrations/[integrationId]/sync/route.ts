@@ -14,9 +14,9 @@ interface RouteParams {
 
 // POST - Синхронизация настроек CRM
 export async function POST(request: NextRequest, { params }: RouteParams) {
- try {
  const resolvedParams = await params
  const { id: agentId, integrationId } = resolvedParams
+ try {
 
  const session = await auth()
 

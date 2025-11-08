@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { auth } from '@/auth'
 import { createRule, getRules, executeRules } from '@/lib/services/rule-engine'
 import type { AutomationRule, RuleExecutionContext } from '@/lib/services/rule-engine'
+import { logger } from '@/lib/utils/logger'
 
 
 // Force dynamic rendering (uses headers from auth())

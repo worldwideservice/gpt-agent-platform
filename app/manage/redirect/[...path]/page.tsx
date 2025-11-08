@@ -59,7 +59,10 @@ export default async function RedirectPage({ params }: RedirectPageProps) {
     const redirectTime = Date.now() - startTime
     
     // Логируем успешный редирект с метриками
-    logger.redirect(fromPath, redirectPath, redirectTime, true, {
+    logger.debug("[redirect] Success", {
+      fromPath,
+      redirectPath,
+      duration: `${redirectTime}ms`,
       pathKey,
       tenantId: tenantId.substring(0, 8) + '...', // Partial tenantId for logging
     })
@@ -73,9 +76,11 @@ export default async function RedirectPage({ params }: RedirectPageProps) {
     const redirectTime = Date.now() - startTime
     const errorInstance = error instanceof Error ? error : new Error(String(error))
     
-    logger.redirect(fromPath, '/login', redirectTime, false, {
+    logger.error("[redirect] Failed", errorInstance, {
+      fromPath,
+      redirectPath: '/login',
+      duration: `${redirectTime}ms`,
       pathKey,
-      error: errorInstance.message,
     })
     
     // Record error metric
