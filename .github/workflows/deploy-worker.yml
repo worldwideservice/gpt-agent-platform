@@ -37,41 +37,56 @@ jobs:
           npm ci --include=dev
           npm run build
 
-      - name: 🚂 Deploy to Railway via API
+      - name: 🚂 Deploy to Railway
         working-directory: ${{ env.WORKER_DIR }}
         run: |
           echo "🚀 Deploying to Railway..."
           
           if [ -z "${{ secrets.RAILWAY_TOKEN }}" ]; then
-            echo "⚠️ RAILWAY_TOKEN not set - Railway will deploy via GitHub integration"
+            echo "⚠️ RAILWAY_TOKEN not set"
+            echo "✅ Build completed - Railway will deploy via GitHub integration"
             exit 0
           fi
           
-          # Используем Railway API для создания деплоя
-          if [ -n "${{ secrets.RAILWAY_PROJECT_ID }}" ] && [ -n "${{ secrets.RAILWAY_SERVICE_ID }}" ]; then
-            echo "📦 Creating deployment via Railway API..."
+          # Получаем Project ID и Service ID через Railway GraphQL API
+          echo "📦 Getting Railway project and service IDs..."
+          
+          RAILWAY_RESPONSE=$(curl -s -X POST https://backboard.railway.com/graphql/v2 \
+            -H "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"query":"query { projects { edges { node { id name services { edges { node { id name } } } } } } } }"}' || echo "")
+          
+          if [ -n "$RAILWAY_RESPONSE" ]; then
+            echo "✅ Got Railway projects"
+            # Пытаемся найти worker сервис
+            PROJECT_ID=$(echo "$RAILWAY_RESPONSE" | jq -r '.data.projects.edges[0].node.id // empty' 2>/dev/null || echo "")
+            SERVICE_ID=$(echo "$RAILWAY_RESPONSE" | jq -r '.data.projects.edges[0].node.services.edges[] | select(.node.name | contains("worker") or contains("Worker")) | .node.id' 2>/dev/null | head -1 || echo "")
             
-            DEPLOYMENT_RESPONSE=$(curl -s -X POST \
-              -H "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
-              -H "Content-Type: application/json" \
-              "https://api.railway.app/v1/deployments" \
-              -d "{
-                \"projectId\": \"${{ secrets.RAILWAY_PROJECT_ID }}\",
-                \"serviceId\": \"${{ secrets.RAILWAY_SERVICE_ID }}\",
-                \"source\": \"github\",
-                \"branch\": \"main\"
-              }" || echo "")
-            
-            if [ -n "$DEPLOYMENT_RESPONSE" ]; then
-              echo "✅ Deployment triggered via Railway API"
-              echo "$DEPLOYMENT_RESPONSE" | jq '.' || echo "$DEPLOYMENT_RESPONSE"
+            if [ -n "$PROJECT_ID" ] && [ -n "$SERVICE_ID" ]; then
+              echo "✅ Found Project ID: ${PROJECT_ID:0:20}..."
+              echo "✅ Found Service ID: ${SERVICE_ID:0:20}..."
+              
+              # Создаем деплой через Railway GraphQL API
+              echo "📦 Creating deployment..."
+              DEPLOY_RESPONSE=$(curl -s -X POST https://backboard.railway.com/graphql/v2 \
+                -H "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
+                -H "Content-Type: application/json" \
+                -d "{\"query\":\"mutation { deploymentCreate(input: {projectId: \\\"$PROJECT_ID\\\", serviceId: \\\"$SERVICE_ID\\\"}) { id } }\"}" || echo "")
+              
+              if [ -n "$DEPLOY_RESPONSE" ]; then
+                echo "✅ Deployment triggered!"
+                echo "$DEPLOY_RESPONSE" | jq '.' || echo "$DEPLOY_RESPONSE"
+              else
+                echo "⚠️ Deployment API call failed, Railway will deploy via GitHub integration"
+              fi
             else
-              echo "⚠️ API deployment failed, Railway will deploy via GitHub integration"
+              echo "⚠️ Could not find project or service"
+              echo "✅ Build completed - Railway will deploy via GitHub integration"
             fi
           else
-            echo "⚠️ RAILWAY_PROJECT_ID or RAILWAY_SERVICE_ID not set"
+            echo "⚠️ Could not get Railway projects"
             echo "✅ Build completed - Railway will deploy via GitHub integration"
-            echo "💡 To use API deployment, set RAILWAY_PROJECT_ID and RAILWAY_SERVICE_ID secrets"
+            echo "💡 Make sure Railway project is connected to GitHub repo: worldwideservice/gpt-agent-platform"
           fi
         continue-on-error: true
         env:
