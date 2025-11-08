@@ -8,15 +8,12 @@ import { auth } from '@/auth'
 import { backendFetch } from '@/lib/backend/client'
 
 
-const bodySchema = z.object({
 
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 // Force dynamic rendering (uses headers from auth())
- clientId: z.string().min(1),
- clientSecret: z.string().min(1),
- redirectUri: z.string().url(),
-})
+// Force dynamic rendering (uses headers from auth())
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+const bodySchema = z.object({
 
 export async function POST(request: NextRequest) {
  try {
