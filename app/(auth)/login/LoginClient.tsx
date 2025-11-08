@@ -4,219 +4,335 @@ import { useState, useTransition, useEffect } from 'react'
 import Link from 'next/link'
 import { signIn, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 
-import { Button, Input, Label, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui'
+import { Button } from '@/components/ui/button'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
+import { Logo } from '@/components/ui/Logo'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/toast-context'
 
+const formSchema = z.object({
+  email: z.string().email('Введите корректный email'),
+  password: z.string().min(6, 'Пароль должен содержать минимум 6 символов'),
+  rememberMe: z.boolean().default(false),
+})
+
 export const LoginClient = () => {
- const router = useRouter()
- const { push: pushToast } = useToast()
- const { data: session, status } = useSession()
- const [email, setEmail] = useState('founder@example.com')
- const [password, setPassword] = useState('Demo1234!')
- const [rememberMe, setRememberMe] = useState(false)
- const [error, setError] = useState<string | null>(null)
- const [isPending, startTransition] = useTransition()
+  const router = useRouter()
+  const { push: pushToast } = useToast()
+  const { data: session, status } = useSession()
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
 
- // Проверяем, авторизован ли пользователь и есть ли rememberMe
- useEffect(() => {
- if (status === 'authenticated' && session) {
- // Проверяем, есть ли rememberMe через API
- fetch('/api/auth/check-session', { cache: 'no-store' })
- .then((res) => res.json())
- .then((data) => {
- if (data.success && data.hasRememberMe) {
- // Если есть rememberMe, редиректим на платформу
- fetch('/api/auth/get-tenant-redirect', { cache: 'no-store' })
- .then((res) => res.json())
- .then((redirectData) => {
- if (redirectData.success && redirectData.tenantId) {
- router.push(`/manage/${redirectData.tenantId}`)
- router.refresh()
- }
- })
- }
- })
- }
- }, [status, session, router])
+  const form = useForm<z.infer<typeof formSchema>>({
+    defaultValues: {
+      email: process.env.NODE_ENV === 'development' ? 'founder@example.com' : '',
+      password: process.env.NODE_ENV === 'development' ? 'Demo1234!' : '',
+      rememberMe: false,
+    },
+    resolver: zodResolver(formSchema),
+  })
 
- useEffect(() => {
- const params = new URLSearchParams(window.location.search)
- if (params.get('registered') === 'true') {
- pushToast({
- title: 'Регистрация завершена! ✅',
- description: 'Войдите в систему используя ваш email и пароль.',
- variant: 'success',
- })
- router.replace('/login')
- }
- }, [pushToast, router])
+  // Проверяем, авторизован ли пользователь и есть ли rememberMe
+  useEffect(() => {
+    if (status === 'authenticated' && session) {
+      // Проверяем, есть ли rememberMe через API
+      fetch('/api/auth/check-session', { cache: 'no-store' })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.hasRememberMe) {
+            // Если есть rememberMe, редиректим на платформу
+            fetch('/api/auth/get-tenant-redirect', { cache: 'no-store' })
+              .then((res) => res.json())
+              .then((redirectData) => {
+                if (redirectData.success && redirectData.tenantId) {
+                  router.push(`/manage/${redirectData.tenantId}`)
+                  router.refresh()
+                }
+              })
+          }
+        })
+    }
+  }, [status, session, router])
 
- const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
- event.preventDefault()
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('registered') === 'true') {
+      pushToast({
+        title: 'Регистрация завершена! ✅',
+        description: 'Войдите в систему используя ваш email и пароль.',
+        variant: 'success',
+      })
+      router.replace('/login')
+    }
+  }, [pushToast, router])
 
- startTransition(async () => {
- setError(null)
-
- try {
- // Устанавливаем rememberMe cookie перед signIn
- if (rememberMe) {
- document.cookie = `rememberMe=true; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`
- }
-
- const result = await signIn('credentials', {
- email,
- password,
- redirect: false,
- })
-
- if (result?.error) {
- setError('Неверные email или пароль')
- return
- }
-
- if (result?.ok) {
-      // Если rememberMe установлен, вызываем API для установки долгосрочной сессии
-      if (rememberMe) {
-        try {
-          await fetch('/api/auth/set-remember-me', {
-            method: 'POST',
-            cache: 'no-store',
-          })
-        } catch (rememberMeError) {
-          console.error('[LoginClient] Failed to set remember me:', rememberMeError)
-          // Не блокируем вход, если не удалось установить rememberMe
-        }
-      }
-
-      // Ждем немного, чтобы сессия успела обновиться
-      await new Promise(resolve => setTimeout(resolve, 500))
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    startTransition(async () => {
+      setError(null)
 
       try {
-        // Получаем tenant-id для редиректа
-        const redirectResponse = await fetch('/api/auth/get-tenant-redirect', {
-          cache: 'no-store',
-        })
-        
-        if (!redirectResponse.ok) {
-          throw new Error('Failed to get redirect URL')
+        // Устанавливаем rememberMe cookie перед signIn
+        if (data.rememberMe) {
+          document.cookie = `rememberMe=true; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`
         }
-        
-        const redirectData = await redirectResponse.json()
 
-        if (redirectData.success && redirectData.tenantId) {
-          pushToast({
-            title: 'Вход выполнен! ✅',
-            description: `Добро пожаловать, ${email}!`,
-            variant: 'success',
-          })
-          // Используем router.push вместо window.location.href для лучшей навигации
-          router.push(`/manage/${redirectData.tenantId}`)
-          router.refresh()
-        } else {
-          pushToast({
-            title: 'Ошибка входа',
-            description: redirectData.error || 'Не удалось определить вашу организацию. Попробуйте войти заново.',
-            variant: 'error',
-          })
-        }
-      } catch (redirectError) {
-        console.error('[LoginClient] Redirect error:', redirectError)
-        pushToast({
-          title: 'Ошибка входа',
-          description: 'Не удалось определить вашу организацию. Попробуйте войти заново.',
-          variant: 'error',
+        const result = await signIn('credentials', {
+          email: data.email,
+          password: data.password,
+          redirect: false,
         })
+
+        if (result?.error) {
+          setError('Неверные email или пароль')
+          form.setError('password', { message: 'Неверные email или пароль' })
+          return
+        }
+
+        if (result?.ok) {
+          // Если rememberMe установлен, вызываем API для установки долгосрочной сессии
+          if (data.rememberMe) {
+            try {
+              await fetch('/api/auth/set-remember-me', {
+                method: 'POST',
+                cache: 'no-store',
+              })
+            } catch (rememberMeError) {
+              console.error('[LoginClient] Failed to set remember me:', rememberMeError)
+              // Не блокируем вход, если не удалось установить rememberMe
+            }
+          }
+
+          // Ждем немного, чтобы сессия успела обновиться
+          await new Promise(resolve => setTimeout(resolve, 500))
+
+          try {
+            // Получаем tenant-id для редиректа
+            const redirectResponse = await fetch('/api/auth/get-tenant-redirect', {
+              cache: 'no-store',
+            })
+            
+            if (!redirectResponse.ok) {
+              throw new Error('Failed to get redirect URL')
+            }
+            
+            const redirectData = await redirectResponse.json()
+
+            if (redirectData.success && redirectData.tenantId) {
+              pushToast({
+                title: 'Вход выполнен! ✅',
+                description: `Добро пожаловать, ${data.email}!`,
+                variant: 'success',
+              })
+              router.push(`/manage/${redirectData.tenantId}`)
+              router.refresh()
+            } else {
+              pushToast({
+                title: 'Ошибка входа',
+                description: redirectData.error || 'Не удалось определить вашу организацию. Попробуйте войти заново.',
+                variant: 'error',
+              })
+            }
+          } catch (redirectError) {
+            console.error('[LoginClient] Redirect error:', redirectError)
+            pushToast({
+              title: 'Ошибка входа',
+              description: 'Не удалось определить вашу организацию. Попробуйте войти заново.',
+              variant: 'error',
+            })
+          }
+          return
+        }
+
+        setError('Неверные email или пароль')
+        form.setError('password', { message: 'Неверные email или пароль' })
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Неверные email или пароль'
+        setError(errorMessage)
+        form.setError('password', { message: errorMessage })
       }
-      return
-    }
+    })
+  }
 
- setError('Неверные email или пароль')
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
+      <div className="relative max-w-sm w-full border rounded-xl px-8 py-8 shadow-lg/5 dark:shadow-xl bg-gradient-to-b from-muted/50 dark:from-transparent to-card overflow-hidden">
+        <div
+          className="absolute inset-0 z-0 -top-px -left-px"
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, color-mix(in srgb, var(--card-foreground) 8%, transparent) 1px, transparent 1px),
+              linear-gradient(to bottom, color-mix(in srgb, var(--card-foreground) 8%, transparent) 1px, transparent 1px)
+            `,
+            backgroundSize: '20px 20px',
+            backgroundPosition: '0 0, 0 0',
+            maskImage: `
+              repeating-linear-gradient(
+                to right,
+                black 0px,
+                black 3px,
+                transparent 3px,
+                transparent 8px
+              ),
+              repeating-linear-gradient(
+                to bottom,
+                black 0px,
+                black 3px,
+                transparent 3px,
+                transparent 8px
+              ),
+              radial-gradient(ellipse 70% 50% at 50% 0%, #000 60%, transparent 100%)
+            `,
+            WebkitMaskImage: `
+              repeating-linear-gradient(
+                to right,
+                black 0px,
+                black 3px,
+                transparent 3px,
+                transparent 8px
+              ),
+              repeating-linear-gradient(
+                to bottom,
+                black 0px,
+                black 3px,
+                transparent 3px,
+                transparent 8px
+              ),
+              radial-gradient(ellipse 70% 50% at 50% 0%, #000 60%, transparent 100%)
+            `,
+            maskComposite: 'intersect',
+            WebkitMaskComposite: 'source-in',
+          }}
+        />
 
- } catch (error) {
- setError(error instanceof Error ? error.message : 'Неверные email или пароль')
- }
- })
- }
+        <div className="relative isolate flex flex-col items-center">
+          <div className="h-9 w-9 flex items-center justify-center">
+            <Logo />
+          </div>
 
- return (
- <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
- <Card className="w-full max-w-md shadow-lg">
- <CardHeader className="space-y-1">
- <CardTitle className="text-2xl font-bold text-center">Вход</CardTitle>
- <CardDescription className="text-center">
- Войдите в свой аккаунт для продолжения
- </CardDescription>
- </CardHeader>
- <CardContent>
- <form className="space-y-4" onSubmit={handleSubmit}>
- <Input
- id="email"
- name="email"
- type="email"
- label="Email"
- autoComplete="email"
- value={email}
- onChange={(event) => setEmail(event.target.value)}
- required
- />
+          <p className="mt-4 text-xl font-semibold tracking-tight">
+            Вход в TON 18
+          </p>
 
- <Input
- id="password"
- name="password"
- type="password"
- label="Пароль"
- autoComplete="current-password"
- value={password}
- onChange={(event) => setPassword(event.target.value)}
- required
- />
+          <Form {...form}>
+            <form
+              className="w-full space-y-6 mt-8"
+              onSubmit={form.handleSubmit(onSubmit)}
+            >
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="Email"
+                        className="w-full"
+                        autoComplete="email"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
- <div className="flex items-center space-x-2">
- <Checkbox
- id="rememberMe"
- checked={rememberMe}
- onCheckedChange={(checked) => setRememberMe(checked === true)}
- />
- <Label
- htmlFor="rememberMe"
- className="text-sm font-normal cursor-pointer"
- >
- Запомнить меня
- </Label>
- </div>
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Пароль</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Пароль"
+                        className="w-full"
+                        autoComplete="current-password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
- {error && (
- <div className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700">
- {error}
- </div>
- )}
+              <FormField
+                control={form.control}
+                name="rememberMe"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center space-x-2">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="!mt-0 cursor-pointer">
+                        Запомнить меня
+                      </FormLabel>
+                    </div>
+                  </FormItem>
+                )}
+              />
 
- <Button type="submit" className="w-full" disabled={isPending}>
- {isPending ? 'Входим...' : 'Войти'}
- </Button>
- </form>
+              {error && (
+                <div className="rounded border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-3 text-sm text-red-700 dark:text-red-300">
+                  {error}
+                </div>
+              )}
 
- <div className="mt-6 flex items-center justify-between text-sm">
- <Link href="/reset-password/request" className="text-primary hover:underline">
- Забыли пароль?
- </Link>
- <Link href="/register" className="text-primary hover:underline">
- Зарегистрироваться
- </Link>
- </div>
+              <Button type="submit" className="w-full" disabled={isPending}>
+                {isPending ? 'Входим...' : 'Войти'}
+              </Button>
+            </form>
+          </Form>
 
- {process.env.NODE_ENV === 'development' && (
- <div className="mt-6 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800 p-4 text-xs">
- <p className="mb-2 font-medium text-gray-900 dark:text-gray-100">Демо данные:</p>
- <p className="text-gray-600 dark:text-gray-400">Email: <span className="font-mono text-gray-900 dark:text-gray-100">founder@example.com</span></p>
- <p className="text-gray-600 dark:text-gray-400">Пароль: <span className="font-mono text-gray-900 dark:text-gray-100">Demo1234!</span></p>
- </div>
- )}
- </CardContent>
- </Card>
- </div>
- )
+          <div className="mt-5 space-y-5 w-full">
+            <Link
+              href="/reset-password/request"
+              className="text-sm block underline text-muted-foreground text-center"
+            >
+              Забыли пароль?
+            </Link>
+            <p className="text-sm text-center">
+              Нет аккаунта?{' '}
+              <Link href="/register" className="ml-1 underline text-muted-foreground">
+                Зарегистрироваться
+              </Link>
+            </p>
+          </div>
+
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-6 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800 p-4 text-xs w-full">
+              <p className="mb-2 font-medium text-gray-900 dark:text-gray-100">Демо данные:</p>
+              <p className="text-gray-600 dark:text-gray-400">
+                Email: <span className="font-mono text-gray-900 dark:text-gray-100">founder@example.com</span>
+              </p>
+              <p className="text-gray-600 dark:text-gray-400">
+                Пароль: <span className="font-mono text-gray-900 dark:text-gray-100">Demo1234!</span>
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
 
