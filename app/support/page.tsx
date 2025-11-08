@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { PublicHeader } from '@/components/layout/PublicHeader'
 import { Logo } from '@/components/ui/Logo'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
 import { HelpCircle, Mail, MessageSquare, BookOpen, FileText, Search } from 'lucide-react'
 
