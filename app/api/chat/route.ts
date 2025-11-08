@@ -76,7 +76,6 @@ async function analyzeAndExecuteActions(context: {
 
  logger.log(`✅ Действие выполнено: ${action.type}`)
  }
- }
  } catch (error: unknown) {
  logger.error('Failed to analyze and execute actions:', error, {
  organizationId: context.organizationId,
