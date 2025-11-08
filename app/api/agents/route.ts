@@ -3,19 +3,13 @@ import { z } from 'zod'
 
 import { auth } from '@/auth'
 
-// Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 import { getAgents } from '@/lib/repositories/agents'
 
 // Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { createErrorResponse } from '@/lib/utils/error-handler'
 
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 
 const querySchema = z.object({
  search: z.string().optional(),
@@ -34,9 +28,6 @@ const querySchema = z.object({
 
 import { createAgent } from '@/lib/repositories/agents'
 
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 
 /**
  * @swagger

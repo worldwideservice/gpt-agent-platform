@@ -1,24 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 import { z } from 'zod'
 
 // Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 
 import { auth } from '@/auth'
 
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { backendFetch } from '@/lib/backend/client'
 
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 
 const bodySchema = z.object({
  baseDomain: z.string().min(1),
