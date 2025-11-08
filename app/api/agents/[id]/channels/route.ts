@@ -7,14 +7,14 @@ import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import {
 
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
   getAgentChannels,
   upsertAgentChannel,
 } from '@/lib/repositories/agent-sequences'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 const updateChannelsSchema = z.object({
   allChannelsEnabled: z.boolean(),
   channels: z
