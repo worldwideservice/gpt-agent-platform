@@ -2,20 +2,18 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 
 import { auth } from '@/auth'
-
 import {
+  getBillingPlans,
+  getOrganizationSubscription,
+  createSubscriptionSession,
+  cancelSubscription,
+  resumeSubscription,
+  getUsageStats,
+} from '@/lib/services/billing'
 
 // Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
- getBillingPlans,
- getOrganizationSubscription,
- createSubscriptionSession,
-
- cancelSubscription,
- resumeSubscription,
- getUsageStats,
-} from '@/lib/services/billing'
 
 /**
  * GET /api/billing - Получение информации о биллинге
