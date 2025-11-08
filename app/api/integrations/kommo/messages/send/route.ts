@@ -8,11 +8,12 @@ import { auth } from '@/auth'
 import { backendFetch } from '@/lib/backend/client'
 
 
-const bodySchema = z.object({
 
+// Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-// Force dynamic rendering (uses headers from auth())
+const bodySchema = z.object({
+
  dealId: z.string().min(1),
  channel: z.enum(['email', 'chat']),
  message: z.object({
