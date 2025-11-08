@@ -14,6 +14,9 @@ create table if not exists agent_integrations (
   unique (agent_id, integration_type)
 );
 
+-- Удаляем триггер если он существует (для идемпотентности)
+drop trigger if exists agent_integrations_updated_at on agent_integrations;
+
 create trigger agent_integrations_updated_at
 before update on agent_integrations
 for each row execute procedure trigger_set_timestamp();
@@ -24,6 +27,13 @@ create index if not exists idx_agent_integrations_type on agent_integrations(int
 
 -- RLS политики для agent_integrations
 alter table agent_integrations enable row level security;
+
+-- Удаляем существующие политики если они есть (для идемпотентности)
+drop policy if exists "Users can view agent integrations" on agent_integrations;
+drop policy if exists "Users can create agent integrations" on agent_integrations;
+drop policy if exists "Users can update agent integrations" on agent_integrations;
+drop policy if exists "Users can delete agent integrations" on agent_integrations;
+drop policy if exists "Service role can manage agent integrations" on agent_integrations;
 
 -- Политика SELECT: пользователи видят интеграции своих агентов
 create policy "Users can view agent integrations"
