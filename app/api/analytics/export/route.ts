@@ -1,9 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 import { z } from 'zod'
 
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 import { auth } from '@/auth'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 import { generateDashboardStats, generateAnalyticsReport, exportAnalyticsData, type DashboardStats } from '@/lib/services/analytics'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 import { createErrorResponse } from '@/lib/utils/error-handler'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 const querySchema = z.object({
   range: z.enum(['7d', '30d', '90d', '1y']).optional().default('7d'),

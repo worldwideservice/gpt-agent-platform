@@ -1,12 +1,28 @@
 import { NextResponse, type NextRequest } from 'next/server'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 import { z } from 'zod'
 
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 import { auth } from '@/auth'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 import {
  getKnowledgeBaseCategories,
  createKnowledgeBaseCategory,
 } from '@/lib/repositories/knowledge-base'
 import { createErrorResponse } from '@/lib/utils/error-handler'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 export const GET = async () => {
  const session = await auth()

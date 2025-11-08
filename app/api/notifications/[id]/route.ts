@@ -1,7 +1,19 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 import { auth } from '@/auth'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 import { markNotificationAsRead, deleteNotification } from '@/lib/repositories/notifications'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 export const PATCH = async (
  request: NextRequest,

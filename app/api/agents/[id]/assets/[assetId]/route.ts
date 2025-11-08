@@ -1,5 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { getSupabaseServerClient } from '@/lib/supabase/server'

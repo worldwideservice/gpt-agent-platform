@@ -1,8 +1,24 @@
 import { NextResponse, type NextRequest } from 'next/server'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 import { z } from 'zod'
 
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 import { auth } from '@/auth'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 import { createErrorResponse } from '@/lib/utils/error-handler'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 import {
  createConversation,
  getConversationById,
@@ -10,12 +26,40 @@ import {
  getConversationMessages,
 } from '@/lib/repositories/conversations'
 import { searchKnowledgeBase, formatKnowledgeContext } from '@/lib/repositories/knowledge-search'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 import { getAgentById } from '@/lib/repositories/agents'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 import { generateChatResponse } from '@/lib/services/llm'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 import { buildFullSystemPrompt, processConversationMemory } from '@/lib/services/agent-context-builder'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 import { AgentActionsService } from '@/lib/services/agent-actions'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 import { createKommoApiForOrg } from '@/lib/repositories/crm-connection'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 import { isAgentConfiguredForStage } from '@/lib/repositories/agent-pipeline-settings'
+
+// Force dynamic rendering (uses headers from auth())
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 const sendMessageSchema = z.object({
  conversationId: z.string().uuid().optional(),
