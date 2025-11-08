@@ -6,12 +6,12 @@ import { auth } from '@/auth'
 import { backendFetch } from '@/lib/backend/client'
 
 
-export const POST = async (request: NextRequest) => {
-
+// Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-// Force dynamic rendering (uses headers from auth())
- const session = await auth()
+
+export const POST = async (request: NextRequest) => {
+  const session = await auth()
 
  if (!session?.user?.orgId) {
  return NextResponse.json({ success: false, error: 'Не авторизовано' }, { status: 401 })
