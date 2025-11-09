@@ -75,6 +75,25 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
  // Валидируем tenant-id и находим организацию
  const validation = await validateTenantIdAccess(tenantId, session.user.id);
  
+ // Если валидация не прошла, но есть организации - используем первую доступную
+ if (!validation.valid && organizations.length > 0) {
+   console.log("[manage layout] Tenant-id validation failed, using first available organization", {
+     invalidTenantId: tenantId,
+     userId: session.user.id,
+     organizationsCount: organizations.length,
+   });
+   
+   // Используем первую организацию из списка
+   activeOrganization = organizations[0];
+   const correctTenantId = generateTenantId(activeOrganization.id, activeOrganization.slug);
+   console.log("[manage layout] Redirecting to correct tenant-id", {
+     correctTenantId,
+     orgId: activeOrganization.id,
+     orgSlug: activeOrganization.slug,
+   });
+   redirect(`/manage/${correctTenantId}`);
+ }
+ 
  if (validation.valid && validation.organization) {
  // Организация найдена и доступна пользователю
  activeOrganization = {
