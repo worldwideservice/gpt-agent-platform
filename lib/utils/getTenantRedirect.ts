@@ -152,7 +152,7 @@ export async function getTenantIdFromSession(): Promise<string | null> {
         name: 'Demo Organization',
         slug: '',
         role: 'owner',
-      };
+      } as typeof activeOrganization;
  }
 
  if (!activeOrganization) {
