@@ -77,7 +77,7 @@ export function PublicHeader({ showNav = true, alwaysShowAuthButtons = false }: 
         )}
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          {alwaysShowAuthButtons || status !== 'authenticated' ? (
+          {alwaysShowAuthButtons || isHomePage ? (
             <>
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/login">Войти</Link>
@@ -86,7 +86,7 @@ export function PublicHeader({ showNav = true, alwaysShowAuthButtons = false }: 
                 <Link href="/register">Зарегистрироваться</Link>
               </Button>
             </>
-          ) : (
+          ) : status === 'authenticated' ? (
             <Button 
               variant="ghost" 
               size="sm"
@@ -104,6 +104,15 @@ export function PublicHeader({ showNav = true, alwaysShowAuthButtons = false }: 
                 )}
               </Link>
             </Button>
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/login">Войти</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link href="/register">Зарегистрироваться</Link>
+              </Button>
+            </>
           )}
         </div>
       </div>
