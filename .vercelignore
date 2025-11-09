@@ -47,5 +47,6 @@ yarn-error.log*
 # KWID data
 kwid/raw
 
-# Scripts (not needed in production)
-scripts
+# Scripts (but keep postbuild.js)
+scripts/*
+!scripts/postbuild.js
