@@ -64,30 +64,11 @@ export async function getTenantIdFromSession(): Promise<string | null> {
          });
        }
      } else {
-       logger.warn("[getTenantIdFromSession] No organizations found for user", {
+       logger.error("[getTenantIdFromSession] User has no organizations - cannot resolve tenant-id", {
          userId: session.user.id,
          email: session.user.email,
        });
-       
-       // Для демо-пользователя создаем организацию если её нет
-       if (session.user.id === '00000000-0000-4000-8000-0000000000ff') {
-         logger.debug("[getTenantIdFromSession] Demo user detected, checking for default org");
-         const defaultOrgId = process.env.SUPABASE_DEFAULT_ORGANIZATION_ID;
-         if (defaultOrgId) {
-           orgId = defaultOrgId;
-           logger.debug("[getTenantIdFromSession] Using default orgId for demo user", { orgId: defaultOrgId });
-         } else {
-           logger.error("[getTenantIdFromSession] No default orgId for demo user");
-           return null;
-         }
-       } else {
-         // Для реального пользователя без организации - это ошибка
-         logger.error("[getTenantIdFromSession] Real user has no organizations - this should not happen", {
-           userId: session.user.id,
-           email: session.user.email,
-         });
-         return null;
-       }
+       return null;
      }
    } catch (error) {
      logger.error("[getTenantIdFromSession] Error fetching organizations from DB",
@@ -139,21 +120,6 @@ export async function getTenantIdFromSession(): Promise<string | null> {
  ) ??
  organizations[0] ??
  null;
-
- // Если организация не найдена, но есть orgId (для демо-пользователя)
- if (!activeOrganization && orgId) {
- logger.debug("[getTenantIdFromSession] Organization not in list, creating minimal org object", {
- userId: session.user.id,
- orgId: orgId,
- });
-      // Создаем минимальный объект организации для демо-пользователя
-      activeOrganization = {
-        id: orgId,
-        name: 'Demo Organization',
-        slug: '',
-        role: 'owner',
-      } as typeof activeOrganization;
- }
 
  if (!activeOrganization) {
  logger.warn("[getTenantIdFromSession] No active organization found", {
@@ -323,4 +289,3 @@ export async function redirectToTenantPath(
 
  redirect(fallbackPath);
 }
-

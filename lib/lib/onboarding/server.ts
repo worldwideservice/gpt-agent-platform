@@ -5,7 +5,6 @@ import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import type { Database } from '@/types/supabase'
 
 const CRM_PROVIDER = 'kommo'
-const isE2EMode = process.env.E2E_ONBOARDING_FAKE === '1'
 
 const isRecord = (value: unknown): value is Record<string, unknown> => {
  return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -112,21 +111,6 @@ type CrmCredentialsRow = Database['public']['Tables']['crm_credentials']['Row']
 
 type CrmConnectionRow = Database['public']['Tables']['crm_connections']['Row']
 
-const buildEmptyState = (orgId: string): OnboardingState => {
- return {
- crm: {
- provider: CRM_PROVIDER,
- credentialsConfigured: false,
- connectionConfigured: false,
- credentials: null,
- connection: null,
- sync: null,
- },
- agent: null,
- isCompleted: false,
- }
-}
-
 const fetchCrmCredentials = async (orgId: string) => {
  const supabase = getSupabase()
  const { data, error } = await supabase
@@ -179,10 +163,6 @@ const fetchExistingAgent = async (orgId: string) => {
 }
 
 export const getOnboardingState = async (orgId: string): Promise<OnboardingState> => {
- if (isE2EMode) {
- return buildEmptyState(orgId)
- }
-
  const [credentials, connection, agent] = await Promise.all([
  fetchCrmCredentials(orgId),
  fetchCrmConnection(orgId),
@@ -261,28 +241,6 @@ export const upsertOnboardingAgent = async (
  input: CreateOnboardingAgentInput,
 ): Promise<AgentRow> => {
  const supabase = getSupabase()
-
- if (isE2EMode) {
- return {
- id: 'agent-e2e',
- org_id: input.orgId,
- name: input.name,
- status: 'active',
- connection_id: null,
- default_model: input.model,
- owner_name: null,
- messages_total: 0,
- last_activity_at: null,
- temperature: 0.7,
- max_tokens: 2048,
- instructions: input.goal,
- system_prompt: input.goal,
- response_delay_seconds: 0,
- settings: buildAgentSettings(input),
- created_at: new Date().toISOString(),
- updated_at: new Date().toISOString(),
- }
- }
 
  const connection = await fetchCrmConnection(input.orgId)
 

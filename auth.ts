@@ -42,38 +42,9 @@ export const {
  const email = rawEmail?.toLowerCase().trim()
  const password = rawPassword?.trim()
 
- // Специальная обработка для E2E тестирования и демо-пользователя (НЕ для admin@worldwideservice.eu - он проверяется в базе)
- if (process.env.E2E_ONBOARDING_FAKE === '1' || email === 'founder@example.com') {
- const fallbackOrgId = process.env.SUPABASE_DEFAULT_ORGANIZATION_ID || '550e8400-e29b-41d4-a716-446655440000'
-
- return {
- id: '00000000-0000-4000-8000-0000000000ff',
- email: email || 'founder@example.com',
- name: 'Demo Founder',
- orgId: fallbackOrgId,
- }
- }
-
  if (!email || !password) {
  console.log('NextAuth: Missing email or password')
  return null
- }
-
- const createDemoUser = () => {
- const fallbackOrgId = process.env.SUPABASE_DEFAULT_ORGANIZATION_ID
-
- if (!fallbackOrgId) {
- throw new Error('SUPABASE_DEFAULT_ORGANIZATION_ID is required for demo login')
- }
-
- const demoUser: AuthenticatedUser = {
- id: '00000000-0000-4000-8000-0000000000ff',
- email,
- name: 'Demo Founder',
- orgId: fallbackOrgId,
- }
-
- return demoUser
  }
 
  let user: DatabaseUser | null = null
@@ -96,25 +67,12 @@ export const {
  if (error instanceof Error) {
  console.error('[NextAuth] Error details:', error.message, error.stack)
  }
- if (process.env.NODE_ENV !== 'production' && email === 'founder@example.com' && password === 'Demo1234!') {
- console.log('[NextAuth] Using demo user fallback')
- return createDemoUser()
- }
-
  // Если это таймаут или ошибка БД, возвращаем null вместо throw
  console.log('[NextAuth] Database error, returning null')
  return null
  }
 
  if (!user || !user.password_hash) {
- if (
- process.env.NODE_ENV !== 'production' &&
- email === 'founder@example.com' &&
- password === 'Demo1234!'
- ) {
- return createDemoUser()
- }
-
  console.log('NextAuth: User not found or no password hash')
  return null
  }

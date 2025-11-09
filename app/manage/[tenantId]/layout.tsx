@@ -116,24 +116,6 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
          errorCode: orgError.code,
          errorDetails: orgError,
        });
-       // Если организация не найдена в БД (PGRST116 = no rows returned), но есть orgId - создаем минимальный объект
-       if (orgError.code === 'PGRST116' || orgError.message?.includes('No rows') || orgError.message?.includes('not found')) {
-         console.log("[manage layout] Organization not found in DB, creating minimal org object", {
-           orgId: normalizedOrgId,
-           errorCode: orgError.code,
-         });
-         activeOrganization = {
-           id: normalizedOrgId,
-           name: 'Demo Organization',
-           slug: 'demo-organization',
-         };
-         const correctTenantId = generateTenantId(activeOrganization.id, activeOrganization.slug);
-         console.log("[manage layout] Created minimal org object, redirecting", {
-           correctTenantId,
-           orgId: normalizedOrgId,
-         });
-         redirect(`/manage/${correctTenantId}`);
-       }
      } else if (orgData) {
        activeOrganization = {
          id: orgData.id,
@@ -253,23 +235,6 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
          orgId: normalizedOrgId,
          errorCode: orgError.code,
        });
-       // Если организация не найдена в БД, но есть orgId - создаем минимальный объект
-       if (orgError.code === 'PGRST116' || orgError.message?.includes('No rows') || orgError.message?.includes('not found')) {
-         console.log("[manage layout] Organization not found in DB (post-validation), creating minimal org object", {
-           orgId: normalizedOrgId,
-         });
-         activeOrganization = {
-           id: normalizedOrgId,
-           name: 'Demo Organization',
-           slug: 'demo-organization',
-         };
-         const correctTenantId = generateTenantId(activeOrganization.id, activeOrganization.slug);
-         console.log("[manage layout] Created minimal org object (post-validation), redirecting", {
-           correctTenantId,
-           orgId: normalizedOrgId,
-         });
-         redirect(`/manage/${correctTenantId}`);
-       }
      } else if (orgData) {
        activeOrganization = {
          id: orgData.id,
@@ -352,23 +317,6 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
          orgId: normalizedOrgId,
          errorCode: orgError.code,
        });
-       // Если организация не найдена в БД, но есть orgId - создаем минимальный объект
-       if (orgError.code === 'PGRST116' || orgError.message?.includes('No rows') || orgError.message?.includes('not found')) {
-         console.log("[manage layout] Organization not found in DB (else branch), creating minimal org object", {
-           orgId: normalizedOrgId,
-         });
-         activeOrganization = {
-           id: normalizedOrgId,
-           name: 'Demo Organization',
-           slug: 'demo-organization',
-         };
-         const correctTenantId = generateTenantId(activeOrganization.id, activeOrganization.slug);
-         console.log("[manage layout] Created minimal org object (else branch), redirecting", {
-           correctTenantId,
-           orgId: normalizedOrgId,
-         });
-         redirect(`/manage/${correctTenantId}`);
-       }
      } else if (orgData) {
        activeOrganization = {
          id: orgData.id,
@@ -515,4 +463,3 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
 };
 
 export default ManageLayout;
-
