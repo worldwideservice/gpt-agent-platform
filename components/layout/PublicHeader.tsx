@@ -13,9 +13,10 @@ import { Loader2 } from 'lucide-react'
 
 interface PublicHeaderProps {
   showNav?: boolean
+  alwaysShowAuthButtons?: boolean
 }
 
-export function PublicHeader({ showNav = true }: PublicHeaderProps) {
+export function PublicHeader({ showNav = true, alwaysShowAuthButtons = false }: PublicHeaderProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
   const pathname = usePathname()
@@ -76,7 +77,16 @@ export function PublicHeader({ showNav = true }: PublicHeaderProps) {
         )}
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          {status === 'authenticated' ? (
+          {alwaysShowAuthButtons || status !== 'authenticated' ? (
+            <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/login">Войти</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link href="/register">Зарегистрироваться</Link>
+              </Button>
+            </>
+          ) : (
             <Button 
               variant="ghost" 
               size="sm"
@@ -94,15 +104,6 @@ export function PublicHeader({ showNav = true }: PublicHeaderProps) {
                 )}
               </Link>
             </Button>
-          ) : (
-            <>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/login">Войти</Link>
-              </Button>
-              <Button size="sm" asChild>
-                <Link href="/register">Зарегистрироваться</Link>
-              </Button>
-            </>
           )}
         </div>
       </div>
