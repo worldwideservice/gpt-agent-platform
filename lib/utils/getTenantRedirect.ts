@@ -146,12 +146,13 @@ export async function getTenantIdFromSession(): Promise<string | null> {
  userId: session.user.id,
  orgId: orgId,
  });
- // Создаем минимальный объект организации для демо-пользователя
- activeOrganization = {
- id: orgId,
- name: 'Demo Organization',
- slug: '',
- };
+      // Создаем минимальный объект организации для демо-пользователя
+      activeOrganization = {
+        id: orgId,
+        name: 'Demo Organization',
+        slug: '',
+        role: 'owner',
+      };
  }
 
  if (!activeOrganization) {
