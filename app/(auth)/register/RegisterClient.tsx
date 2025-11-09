@@ -149,7 +149,7 @@ export const RegisterClient = () => {
         />
 
         <div className="relative isolate flex flex-col items-center">
-          <div className="flex items-center justify-center mb-4 scale-150">
+          <div className="flex items-center justify-center mb-6 scale-[2] md:scale-[2.5]">
             <Logo />
           </div>
 
