@@ -77,21 +77,23 @@ export function PublicHeader({ showNav = true }: PublicHeaderProps) {
         <div className="flex items-center gap-4">
           <ThemeToggle />
           {status === 'authenticated' ? (
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={handleGoToPlatform}
-              disabled={isRedirecting}
-            >
-              {isRedirecting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Переход...
-                </>
-              ) : (
-                'Перейти на платформу'
-              )}
-            </Button>
+            <Link href="/manage">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handleGoToPlatform}
+                disabled={isRedirecting}
+              >
+                {isRedirecting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Переход...
+                  </>
+                ) : (
+                  'Войти'
+                )}
+              </Button>
+            </Link>
           ) : (
             <>
               <Link href="/login">
