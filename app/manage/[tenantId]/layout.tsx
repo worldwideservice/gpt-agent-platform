@@ -115,11 +115,46 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
  console.log("[manage layout] Invalid tenant-id, redirecting to correct", {
  invalid: tenantId,
  correct: correctTenantId,
+ userId: session.user.id,
+ organizationsCount: organizations.length,
  });
  redirect(`/manage/${correctTenantId}`);
  } else {
+ // Если нет организаций, но есть orgId в сессии - пробуем найти организацию напрямую
+ if (session.user.orgId) {
+   try {
+     const { getSupabaseServiceRoleClient } = await import('@/lib/supabase/admin');
+     const supabase = getSupabaseServiceRoleClient();
+     const { data: orgData } = await supabase
+       .from('organizations')
+       .select('id, name, slug')
+       .eq('id', session.user.orgId)
+       .single();
+     
+     if (orgData) {
+       activeOrganization = {
+         id: orgData.id,
+         name: orgData.name,
+         slug: orgData.slug,
+       };
+       const correctTenantId = generateTenantId(activeOrganization.id, activeOrganization.slug);
+       console.log("[manage layout] Found organization by orgId, redirecting", {
+         orgId: orgData.id,
+         correctTenantId,
+       });
+       redirect(`/manage/${correctTenantId}`);
+     }
+   } catch (error) {
+     console.error("[manage layout] Error fetching organization by orgId", error);
+   }
+ }
+ 
  // Организация не найдена - редирект на логин
- console.error("[manage layout] No organization found for user");
+ console.error("[manage layout] No organization found for user", {
+   userId: session.user.id,
+   orgId: session.user.orgId,
+   organizationsCount: organizations.length,
+ });
  redirect("/login");
  }
  }
