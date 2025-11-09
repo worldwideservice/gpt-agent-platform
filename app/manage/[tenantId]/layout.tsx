@@ -203,6 +203,42 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
    redirect(`/manage/${correctTenantId}`);
  }
  
+ // Если валидация не прошла И список организаций пуст, но есть orgId в сессии - используем его напрямую
+ if (!validation.valid && organizations.length === 0 && session.user.orgId) {
+   console.log("[manage layout] Validation failed and no organizations, but orgId in session - using it directly", {
+     invalidTenantId: tenantId,
+     userId: session.user.id,
+     orgId: session.user.orgId,
+   });
+   
+   try {
+     const { getSupabaseServiceRoleClient } = await import('@/lib/supabase/admin');
+     const supabase = getSupabaseServiceRoleClient();
+     const { data: orgData, error: orgError } = await supabase
+       .from('organizations')
+       .select('id, name, slug')
+       .eq('id', session.user.orgId)
+       .single();
+     
+     if (!orgError && orgData) {
+       activeOrganization = {
+         id: orgData.id,
+         name: orgData.name,
+         slug: orgData.slug || `org-${orgData.id.substring(0, 8)}`,
+       };
+       const correctTenantId = generateTenantId(activeOrganization.id, activeOrganization.slug);
+       console.log("[manage layout] Found organization by orgId (post-validation fallback), redirecting", {
+         correctTenantId,
+         orgId: orgData.id,
+         slug: activeOrganization.slug,
+       });
+       redirect(`/manage/${correctTenantId}`);
+     }
+   } catch (error) {
+     console.error("[manage layout] Error in post-validation orgId fallback", error);
+   }
+ }
+ 
  if (validation.valid && validation.organization) {
    // Организация найдена и доступна пользователю
    activeOrganization = {
