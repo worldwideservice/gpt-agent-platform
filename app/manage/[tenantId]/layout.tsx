@@ -204,30 +204,30 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
  }
  
  if (validation.valid && validation.organization) {
- // Организация найдена и доступна пользователю
- activeOrganization = {
- id: validation.organization.id,
- name: validation.organization.name,
- slug: validation.organization.slug,
- };
- 
- // Проверяем, соответствует ли tenant-id организации
- const expectedTenantId = generateTenantId(activeOrganization.id, activeOrganization.slug);
- 
- if (tenantId !== expectedTenantId) {
- // Tenant-id не соответствует - редиректим на правильный
- console.log("[manage layout] Tenant-id mismatch, redirecting to correct tenant-id", {
- current: tenantId,
- expected: expectedTenantId,
- });
- redirect(`/manage/${expectedTenantId}`);
- }
- 
- // Обновляем session.user.orgId если нужно
- if (session.user.orgId !== activeOrganization.id) {
- // Организация не совпадает с сессией, но это нормально если пользователь имеет доступ
- // Можно обновить сессию, но лучше просто использовать активную организацию
- }
+   // Организация найдена и доступна пользователю
+   activeOrganization = {
+     id: validation.organization.id,
+     name: validation.organization.name,
+     slug: validation.organization.slug,
+   };
+
+   // Проверяем, соответствует ли tenant-id организации
+   const expectedTenantId = generateTenantId(activeOrganization.id, activeOrganization.slug);
+
+   if (tenantId !== expectedTenantId) {
+     // Tenant-id не соответствует - редиректим на правильный
+     console.log("[manage layout] Tenant-id mismatch, redirecting to correct tenant-id", {
+       current: tenantId,
+       expected: expectedTenantId,
+     });
+     redirect(`/manage/${expectedTenantId}`);
+   }
+
+   // Обновляем session.user.orgId если нужно
+   if (session.user.orgId !== activeOrganization.id) {
+     // Организация не совпадает с сессией, но это нормально если пользователь имеет доступ
+     // Можно обновить сессию, но лучше просто использовать активную организацию
+   }
  } else {
  // Tenant-id невалиден или недоступен - пробуем найти организацию по orgId из сессии
  activeOrganization =
@@ -290,33 +290,43 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
      // Пробуем найти организацию через organization_members
      const { data: memberData, error: memberError } = await supabase
        .from('organization_members')
-       .select('org_id, organizations:organizations(id, name, slug)')
+       .select('org_id')
        .eq('user_id', session.user.id)
        .eq('status', 'active')
        .limit(1)
        .single();
      
-     if (!memberError && memberData?.organizations) {
-       const org = memberData.organizations as { id: string; name: string; slug: string | null };
-       activeOrganization = {
-         id: org.id,
-         name: org.name,
-         slug: org.slug || `org-${org.id.substring(0, 8)}`,
-       };
-       const correctTenantId = generateTenantId(activeOrganization.id, activeOrganization.slug);
-       console.log("[manage layout] Found organization via final fallback, redirecting", {
-         correctTenantId,
-         orgId: org.id,
-         slug: activeOrganization.slug,
-       });
-       redirect(`/manage/${correctTenantId}`);
+     if (!memberError && memberData?.org_id) {
+       // Теперь получаем данные организации по org_id
+       const { data: orgData, error: orgError } = await supabase
+         .from('organizations')
+         .select('id, name, slug')
+         .eq('id', memberData.org_id)
+         .single();
+       
+       if (!orgError && orgData) {
+         activeOrganization = {
+           id: orgData.id,
+           name: orgData.name,
+           slug: orgData.slug || `org-${orgData.id.substring(0, 8)}`,
+         };
+         const correctTenantId = generateTenantId(activeOrganization.id, activeOrganization.slug);
+         console.log("[manage layout] Found organization via final fallback, redirecting", {
+           correctTenantId,
+           orgId: orgData.id,
+           slug: activeOrganization.slug,
+         });
+         redirect(`/manage/${correctTenantId}`);
+       }
      }
    } catch (finalError) {
      console.error("[manage layout] Final fallback error", finalError);
    }
+   }
+ }
  }
  
- // Организация не найдена - редирект на логин
+ // Организация не найдена - редирект на логин (проверка после всех fallback-логик)
  if (!activeOrganization) {
    console.error("[manage layout] No organization found for user after all fallbacks", {
      userId: session.user.id,
@@ -325,7 +335,6 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
      tenantId,
    });
    redirect("/login");
- }
  }
  } catch (orgError) {
     console.error("[manage layout] Error getting organizations", orgError);
