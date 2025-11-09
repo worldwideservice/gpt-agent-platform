@@ -19,7 +19,6 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui'
 import { Separator } from '@/components/ui/separator'
-import { Logo } from '@/components/ui/Logo'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/toast-context'
@@ -219,11 +218,7 @@ export const LoginClient = () => {
         />
 
         <div className="relative isolate flex flex-col items-center">
-          <div className="flex items-center justify-center mb-6 scale-[2] md:scale-[2.5]">
-            <Logo />
-          </div>
-
-          <p className="mt-4 text-xl font-semibold tracking-tight">
+          <p className="text-xl font-semibold tracking-tight">
             Вход в TON 18
           </p>
 
