@@ -27,7 +27,7 @@ import { useToast } from '@/components/ui/toast-context'
 const formSchema = z.object({
   email: z.string().email('Введите корректный email'),
   password: z.string().min(6, 'Пароль должен содержать минимум 6 символов'),
-  rememberMe: z.boolean().default(false),
+  rememberMe: z.boolean(),
 })
 
 export const LoginClient = () => {
