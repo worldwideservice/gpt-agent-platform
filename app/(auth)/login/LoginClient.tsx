@@ -38,8 +38,8 @@ export const LoginClient = () => {
 
   const form = useForm<z.infer<typeof formSchema>>({
     defaultValues: {
-      email: process.env.NODE_ENV === 'development' ? 'founder@example.com' : '',
-      password: process.env.NODE_ENV === 'development' ? 'Demo1234!' : '',
+      email: '',
+      password: '',
       rememberMe: false,
     },
     resolver: zodResolver(formSchema),
@@ -425,20 +425,8 @@ export const LoginClient = () => {
             </p>
           </div>
 
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mt-6 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800 p-4 text-xs w-full">
-              <p className="mb-2 font-medium text-gray-900 dark:text-gray-100">Демо данные:</p>
-              <p className="text-gray-600 dark:text-gray-400">
-                Email: <span className="font-mono text-gray-900 dark:text-gray-100">founder@example.com</span>
-              </p>
-              <p className="text-gray-600 dark:text-gray-400">
-                Пароль: <span className="font-mono text-gray-900 dark:text-gray-100">Demo1234!</span>
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </div>
   )
 }
-
