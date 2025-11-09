@@ -93,8 +93,17 @@ export default function ApiPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="bg-gray-900 dark:bg-gray-800 rounded-lg p-4 font-mono text-sm text-gray-100">
-              https://gpt-agent-kwid.vercel.app
+            <p className="text-gray-700 dark:text-gray-300 mb-4">
+              Базовый URL для API запросов необходимо уточнить у службы поддержки.
+            </p>
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <p className="text-sm text-blue-800 dark:text-blue-300">
+                Для получения актуального базового URL и настройки интеграции, пожалуйста, обратитесь в{' '}
+                <Link href="/support" className="underline hover:text-blue-600 dark:hover:text-blue-400 font-medium">
+                  службу поддержки
+                </Link>
+                .
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -159,7 +168,7 @@ export default function ApiPage() {
               <div className="mt-2">
                 <div className="text-purple-400">curl</div>
                 <div className="text-blue-400"> -X POST</div>
-                <div className="text-green-400"> https://gpt-agent-kwid.vercel.app/api/agents</div>
+                <div className="text-green-400"> {`{BASE_URL}`}/api/agents</div>
                 <div className="text-yellow-400"> -H "Authorization: Bearer YOUR_TOKEN"</div>
                 <div className="text-yellow-400"> -H "Content-Type: application/json"</div>
                 <div className="text-blue-400"> -d</div>
@@ -168,6 +177,9 @@ export default function ApiPage() {
                 <div className="text-gray-300 ml-4">  "description": "Описание агента",</div>
                 <div className="text-gray-300 ml-4">  "model": "gpt-4o"</div>
                 <div className="text-gray-300"> {`}`}'</div>
+              </div>
+              <div className="text-gray-500 text-xs mt-3">
+                * Замените {`{BASE_URL}`} на актуальный базовый URL, полученный у поддержки
               </div>
             </div>
           </CardContent>
