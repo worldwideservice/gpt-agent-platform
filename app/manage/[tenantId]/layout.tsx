@@ -340,7 +340,7 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
    try {
      const { getSupabaseServiceRoleClient } = await import('@/lib/supabase/admin');
      const supabase = getSupabaseServiceRoleClient();
-     const { data: orgData } = await supabase
+     const { data: orgData, error: orgError } = await supabase
        .from('organizations')
        .select('id, name, slug')
        .eq('id', normalizedOrgId)
