@@ -139,13 +139,14 @@ export const LoginClient = () => {
           await new Promise(resolve => setTimeout(resolve, 500))
 
           try {
-            // Retry логика для получения tenant-id (до 5 попыток с интервалом 1.5 секунды)
+            // Retry логика для получения tenant-id (до 8 попыток с интервалом 2 секунды)
+            // Увеличено количество попыток и время ожидания, так как сессия может обновляться медленно
             let redirectData: { success: boolean; tenantId?: string; error?: string } | null = null
             let lastError: Error | null = null
-            const maxRetries = 5
-            const retryDelay = 1500 // 1.5 секунды
+            const maxRetries = 8
+            const retryDelay = 2000 // 2 секунды
 
-            console.log(`[LoginClient] Starting tenant-id retrieval with ${maxRetries} retries`)
+            console.log(`[LoginClient] Starting tenant-id retrieval with ${maxRetries} retries (${retryDelay}ms delay)`)
 
             for (let attempt = 1; attempt <= maxRetries; attempt++) {
               try {
@@ -175,11 +176,25 @@ export const LoginClient = () => {
                     error: redirectData?.error,
                     response: redirectData,
                   })
-                  await new Promise(resolve => setTimeout(resolve, retryDelay))
+                  
                   // Обновляем сессию перед следующей попыткой
                   console.log(`[LoginClient] Refreshing router before attempt ${attempt + 1}...`)
                   router.refresh()
-                  await new Promise(resolve => setTimeout(resolve, 500))
+                  
+                  // Ждем дольше для обновления сессии
+                  await new Promise(resolve => setTimeout(resolve, retryDelay))
+                  
+                  // Дополнительно обновляем сессию через getSession
+                  try {
+                    const updatedSession = await getSession()
+                    console.log(`[LoginClient] Session after refresh (attempt ${attempt + 1}):`, {
+                      hasSession: !!updatedSession,
+                      hasOrgId: !!updatedSession?.user?.orgId,
+                      userId: updatedSession?.user?.id,
+                    })
+                  } catch (sessionError) {
+                    console.warn(`[LoginClient] Error fetching session before attempt ${attempt + 1}:`, sessionError)
+                  }
                 }
               } catch (fetchError) {
                 lastError = fetchError instanceof Error ? fetchError : new Error(String(fetchError))
