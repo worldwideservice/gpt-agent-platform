@@ -58,8 +58,8 @@ export const LoginClient = () => {
               .then((res) => res.json())
               .then((redirectData) => {
                 if (redirectData.success && redirectData.tenantId) {
-                  router.push(`/manage/${redirectData.tenantId}`)
-                  router.refresh()
+                  // Используем window.location.href для гарантированного редиректа
+                  window.location.href = `/manage/${redirectData.tenantId}`
                 }
               })
           }
