@@ -213,13 +213,26 @@ export const LoginClient = () => {
             }
 
             if (redirectData?.success && redirectData.tenantId) {
+              console.log('[LoginClient] Successfully got tenant-id, redirecting...', {
+                tenantId: redirectData.tenantId,
+              })
+              
               pushToast({
                 title: 'Вход выполнен! ✅',
                 description: `Добро пожаловать, ${data.email}!`,
                 variant: 'success',
               })
-              router.push(`/manage/${redirectData.tenantId}`)
-              router.refresh()
+              
+              // Используем window.location.href для гарантированного полного редиректа
+              // Это обновляет всю страницу и гарантирует корректную работу сессии
+              const redirectUrl = `/manage/${redirectData.tenantId}`
+              console.log('[LoginClient] Redirecting to:', redirectUrl)
+              
+              // Небольшая задержка для отображения toast
+              await new Promise(resolve => setTimeout(resolve, 300))
+              
+              window.location.href = redirectUrl
+              return
             } else {
               const errorMessage = redirectData?.error || lastError?.message || 'Не удалось определить вашу организацию'
               console.error('[LoginClient] Failed to get tenant-id after all retries', {
