@@ -34,6 +34,12 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
  // Получаем список организаций пользователя
  try {
  organizations = await getOrganizationsForUser(session.user.id);
+ console.log("[manage layout] Organizations fetched", {
+   userId: session.user.id,
+   organizationsCount: organizations.length,
+   orgIdInSession: session.user.orgId,
+   organizations: organizations.map(org => ({ id: org.id, name: org.name, slug: org.slug })),
+ });
  
  // Если orgId отсутствует в сессии, но есть организации - используем первую
  if (!session.user.orgId && organizations.length > 0) {
@@ -50,21 +56,28 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
    try {
      const { getSupabaseServiceRoleClient } = await import('@/lib/supabase/admin');
      const supabase = getSupabaseServiceRoleClient();
-     const { data: orgData } = await supabase
+     const { data: orgData, error: orgError } = await supabase
        .from('organizations')
        .select('id, name, slug')
        .eq('id', session.user.orgId)
        .single();
      
-     if (orgData) {
+     if (orgError) {
+       console.error("[manage layout] Error fetching organization by orgId", {
+         error: orgError.message,
+         orgId: session.user.orgId,
+         userId: session.user.id,
+       });
+     } else if (orgData) {
        organizations = [{
          id: orgData.id,
          name: orgData.name,
-         slug: orgData.slug,
+         slug: orgData.slug || `org-${orgData.id.substring(0, 8)}`,
        }];
        console.log("[manage layout] Found organization by orgId from session", {
          orgId: orgData.id,
          userId: session.user.id,
+         slug: orgData.slug,
        });
      }
    } catch (error) {
