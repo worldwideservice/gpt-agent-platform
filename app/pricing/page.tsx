@@ -25,7 +25,7 @@ export default function PricingPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
           <div className="grid grid-cols-1 gap-12 md:grid-cols-12 md:gap-8">
                     {/* Логотип и описание */}
-                    <div className="md:col-span-5 lg:col-span-4 flex flex-col -ml-2 md:-ml-4">
+                    <div className="md:col-span-5 lg:col-span-4 flex flex-col -ml-4 md:-ml-8 lg:-ml-12">
                       <div className="mb-5 scale-125 md:scale-150 origin-left">
                         <Logo showTagline />
                       </div>

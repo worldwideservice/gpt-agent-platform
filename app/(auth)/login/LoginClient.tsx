@@ -219,7 +219,7 @@ export const LoginClient = () => {
         />
 
         <div className="relative isolate flex flex-col items-center">
-          <div className="h-9 w-9 flex items-center justify-center">
+          <div className="flex items-center justify-center mb-4 scale-150">
             <Logo />
           </div>
 
