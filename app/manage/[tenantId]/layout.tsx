@@ -41,6 +41,11 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
    organizations: organizations.map(org => ({ id: org.id, name: org.name, slug: org.slug })),
  });
  
+ // Нормализуем orgId - убираем пробелы и символы новой строки
+ if (session.user.orgId) {
+   session.user.orgId = session.user.orgId.trim();
+ }
+
  // Если orgId отсутствует в сессии, но есть организации - используем первую
  if (!session.user.orgId && organizations.length > 0) {
    // Обновляем сессию с orgId из первой организации
@@ -87,8 +92,9 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
  
  // Если список организаций пуст, но есть orgId в сессии - используем его напрямую
  if (organizations.length === 0 && session.user.orgId) {
+   const normalizedOrgId = session.user.orgId.trim();
    console.log("[manage layout] No organizations in list, but orgId in session - using it directly", {
-     orgId: session.user.orgId,
+     orgId: normalizedOrgId,
      userId: session.user.id,
      tenantId,
    });
@@ -100,14 +106,32 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
      const { data: orgData, error: orgError } = await supabase
        .from('organizations')
        .select('id, name, slug')
-       .eq('id', session.user.orgId)
+       .eq('id', normalizedOrgId)
        .single();
      
      if (orgError) {
        console.error("[manage layout] Error fetching organization by orgId (fallback)", {
          error: orgError.message,
-         orgId: session.user.orgId,
+         orgId: normalizedOrgId,
+         errorCode: orgError.code,
        });
+       // Если организация не найдена в БД, но есть orgId - создаем минимальный объект
+       if (orgError.code === 'PGRST116') {
+         console.log("[manage layout] Organization not found in DB, creating minimal org object", {
+           orgId: normalizedOrgId,
+         });
+         activeOrganization = {
+           id: normalizedOrgId,
+           name: 'Demo Organization',
+           slug: 'demo-organization',
+         };
+         const correctTenantId = generateTenantId(activeOrganization.id, activeOrganization.slug);
+         console.log("[manage layout] Created minimal org object, redirecting", {
+           correctTenantId,
+           orgId: normalizedOrgId,
+         });
+         redirect(`/manage/${correctTenantId}`);
+       }
      } else if (orgData) {
        activeOrganization = {
          id: orgData.id,
@@ -205,10 +229,11 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
  
  // Если валидация не прошла И список организаций пуст, но есть orgId в сессии - используем его напрямую
  if (!validation.valid && organizations.length === 0 && session.user.orgId) {
+   const normalizedOrgId = session.user.orgId.trim();
    console.log("[manage layout] Validation failed and no organizations, but orgId in session - using it directly", {
      invalidTenantId: tenantId,
      userId: session.user.id,
-     orgId: session.user.orgId,
+     orgId: normalizedOrgId,
    });
    
    try {
@@ -217,7 +242,7 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
      const { data: orgData, error: orgError } = await supabase
        .from('organizations')
        .select('id, name, slug')
-       .eq('id', session.user.orgId)
+       .eq('id', normalizedOrgId)
        .single();
      
      if (!orgError && orgData) {
@@ -286,13 +311,14 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
  } else {
  // Если нет организаций, но есть orgId в сессии - пробуем найти организацию напрямую
  if (session.user.orgId) {
+   const normalizedOrgId = session.user.orgId.trim();
    try {
      const { getSupabaseServiceRoleClient } = await import('@/lib/supabase/admin');
      const supabase = getSupabaseServiceRoleClient();
      const { data: orgData } = await supabase
        .from('organizations')
        .select('id, name, slug')
-       .eq('id', session.user.orgId)
+       .eq('id', normalizedOrgId)
        .single();
      
      if (orgData) {
