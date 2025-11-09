@@ -22,9 +22,9 @@ export function PublicHeader({ showNav = true }: PublicHeaderProps) {
   const [isRedirecting, setIsRedirecting] = useState(false)
   const isHomePage = pathname === '/'
 
-  const handleGoToPlatform = async () => {
+  const handleGoToPlatform = () => {
     setIsRedirecting(true)
-    router.push('/manage')
+    // Router navigation is handled by Link, we just set loading state
   }
 
   return (
@@ -77,13 +77,13 @@ export function PublicHeader({ showNav = true }: PublicHeaderProps) {
         <div className="flex items-center gap-4">
           <ThemeToggle />
           {status === 'authenticated' ? (
-            <Link href="/manage">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={handleGoToPlatform}
-                disabled={isRedirecting}
-              >
+            <Button 
+              variant="ghost" 
+              size="sm"
+              disabled={isRedirecting}
+              asChild
+            >
+              <Link href="/manage" onClick={handleGoToPlatform}>
                 {isRedirecting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -92,16 +92,16 @@ export function PublicHeader({ showNav = true }: PublicHeaderProps) {
                 ) : (
                   'Войти'
                 )}
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           ) : (
             <>
-              <Link href="/login">
-                <Button variant="ghost" size="sm">Войти</Button>
-              </Link>
-              <Link href="/register">
-                <Button size="sm">Зарегистрироваться</Button>
-              </Link>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/login">Войти</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link href="/register">Зарегистрироваться</Link>
+              </Button>
             </>
           )}
         </div>
