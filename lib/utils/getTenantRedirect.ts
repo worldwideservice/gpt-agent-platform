@@ -21,8 +21,47 @@ export async function getTenantIdFromSession(): Promise<string | null> {
  try {
  const session = await auth();
 
- if (!session?.user?.orgId || !session?.user?.id) {
- logger.warn("[getTenantIdFromSession] No session or orgId found", {
+ if (!session?.user?.id) {
+ logger.warn("[getTenantIdFromSession] No session or userId found", {
+ hasSession: !!session,
+ hasUserId: !!session?.user?.id,
+ });
+ return null;
+ }
+
+ // Если orgId нет в сессии, пытаемся получить его из базы данных
+ let orgId = session?.user?.orgId;
+ if (!orgId && session.user.id) {
+ logger.debug("[getTenantIdFromSession] orgId not in session, fetching from DB", {
+ userId: session.user.id,
+ });
+ 
+ try {
+ const organizations = await getOrganizationsForUser(session.user.id);
+ if (organizations.length > 0) {
+ orgId = organizations[0].id;
+ logger.debug("[getTenantIdFromSession] Found orgId from DB", {
+ userId: session.user.id,
+ orgId,
+ organizationsCount: organizations.length,
+ });
+ } else {
+ logger.warn("[getTenantIdFromSession] No organizations found for user", {
+ userId: session.user.id,
+ });
+ return null;
+ }
+ } catch (error) {
+ logger.error("[getTenantIdFromSession] Error fetching organizations from DB", 
+  error instanceof Error ? error : new Error(String(error)),
+  { userId: session.user.id }
+ );
+ return null;
+ }
+ }
+
+ if (!orgId) {
+ logger.warn("[getTenantIdFromSession] No orgId found after fallback", {
  hasSession: !!session,
  hasOrgId: !!session?.user?.orgId,
  hasUserId: !!session?.user?.id,
@@ -31,12 +70,12 @@ export async function getTenantIdFromSession(): Promise<string | null> {
  }
 
  // Check cache first
- const cachedTenantId = tenantCache.get(session.user.id, session.user.orgId)
+ const cachedTenantId = tenantCache.get(session.user.id, orgId)
  if (cachedTenantId) {
  const duration = Date.now() - startTime
  logger.debug("[getTenantIdFromSession] Tenant-id from cache", {
  userId: session.user.id,
- orgId: session.user.orgId,
+ orgId: orgId,
  duration: `${duration}ms`,
  })
  logger.debug("[getTenantIdFromSession] Performance (cached)", { duration: `${duration}ms` })
@@ -45,13 +84,13 @@ export async function getTenantIdFromSession(): Promise<string | null> {
 
  logger.debug("[getTenantIdFromSession] Getting organizations for user", {
  userId: session.user.id,
- orgId: session.user.orgId,
+ orgId: orgId,
  });
 
  const organizations = await getOrganizationsForUser(session.user.id);
  const activeOrganization =
  organizations.find(
- (organization) => organization.id === session.user.orgId,
+ (organization) => organization.id === orgId,
  ) ??
  organizations[0] ??
  null;
@@ -60,7 +99,7 @@ export async function getTenantIdFromSession(): Promise<string | null> {
  logger.warn("[getTenantIdFromSession] No active organization found", {
  userId: session.user.id,
  organizationsCount: organizations.length,
- orgId: session.user.orgId,
+ orgId: orgId,
  });
  return null;
  }
@@ -184,7 +223,7 @@ export async function getTenantIdFromSession(): Promise<string | null> {
  })
  
  // Cache the result for future requests
- tenantCache.set(session.user.id, session.user.orgId, tenantId)
+ tenantCache.set(session.user.id, orgId, tenantId)
  
  return tenantId;
  }
