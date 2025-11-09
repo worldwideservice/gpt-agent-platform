@@ -277,13 +277,54 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
    }
  }
  
+ // Финальная попытка: если ничего не помогло, но пользователь авторизован - пробуем найти ЛЮБУЮ организацию пользователя
+ if (!activeOrganization && session.user.id) {
+   console.log("[manage layout] Final fallback: trying to find ANY organization for user", {
+     userId: session.user.id,
+   });
+   
+   try {
+     const { getSupabaseServiceRoleClient } = await import('@/lib/supabase/admin');
+     const supabase = getSupabaseServiceRoleClient();
+     
+     // Пробуем найти организацию через organization_members
+     const { data: memberData, error: memberError } = await supabase
+       .from('organization_members')
+       .select('org_id, organizations:organizations(id, name, slug)')
+       .eq('user_id', session.user.id)
+       .eq('status', 'active')
+       .limit(1)
+       .single();
+     
+     if (!memberError && memberData?.organizations) {
+       const org = memberData.organizations as { id: string; name: string; slug: string | null };
+       activeOrganization = {
+         id: org.id,
+         name: org.name,
+         slug: org.slug || `org-${org.id.substring(0, 8)}`,
+       };
+       const correctTenantId = generateTenantId(activeOrganization.id, activeOrganization.slug);
+       console.log("[manage layout] Found organization via final fallback, redirecting", {
+         correctTenantId,
+         orgId: org.id,
+         slug: activeOrganization.slug,
+       });
+       redirect(`/manage/${correctTenantId}`);
+     }
+   } catch (finalError) {
+     console.error("[manage layout] Final fallback error", finalError);
+   }
+ }
+ 
  // Организация не найдена - редирект на логин
- console.error("[manage layout] No organization found for user", {
-   userId: session.user.id,
-   orgId: session.user.orgId,
-   organizationsCount: organizations.length,
- });
- redirect("/login");
+ if (!activeOrganization) {
+   console.error("[manage layout] No organization found for user after all fallbacks", {
+     userId: session.user.id,
+     orgId: session.user.orgId,
+     organizationsCount: organizations.length,
+     tenantId,
+   });
+   redirect("/login");
  }
  }
  } catch (orgError) {
