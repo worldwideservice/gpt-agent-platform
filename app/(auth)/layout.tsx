@@ -11,7 +11,7 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
  return (
  <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
   <PublicHeader showNav={false} alwaysShowAuthButtons={true} />
-  <div className="flex items-center justify-center px-4 py-12">
+  <div className="flex items-start justify-center px-4 pt-4 pb-8">
    {children}
   </div>
  </div>

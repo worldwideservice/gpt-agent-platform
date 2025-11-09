@@ -115,22 +115,27 @@ export const LoginClient = () => {
             }
           }
 
-          // Ждем немного, чтобы сессия успела обновиться
-          await new Promise(resolve => setTimeout(resolve, 500))
+          // Ждем, чтобы сессия успела обновиться (увеличено до 1000ms)
+          console.log('[LoginClient] Waiting for session to update...')
+          await new Promise(resolve => setTimeout(resolve, 1000))
           
           // Обновляем сессию на клиенте
+          console.log('[LoginClient] Refreshing router...')
           router.refresh()
           await new Promise(resolve => setTimeout(resolve, 500))
 
           try {
-            // Retry логика для получения tenant-id (до 3 попыток с интервалом 1 секунда)
+            // Retry логика для получения tenant-id (до 5 попыток с интервалом 1.5 секунды)
             let redirectData: { success: boolean; tenantId?: string; error?: string } | null = null
             let lastError: Error | null = null
-            const maxRetries = 3
-            const retryDelay = 1000 // 1 секунда
+            const maxRetries = 5
+            const retryDelay = 1500 // 1.5 секунды
+
+            console.log(`[LoginClient] Starting tenant-id retrieval with ${maxRetries} retries`)
 
             for (let attempt = 1; attempt <= maxRetries; attempt++) {
               try {
+                console.log(`[LoginClient] Attempt ${attempt}/${maxRetries}: Fetching tenant-id...`)
                 const redirectResponse = await fetch('/api/auth/get-tenant-redirect', {
                   cache: 'no-store',
                 })
@@ -140,23 +145,38 @@ export const LoginClient = () => {
                 }
                 
                 redirectData = await redirectResponse.json()
+                console.log(`[LoginClient] Attempt ${attempt} response:`, {
+                  success: redirectData?.success,
+                  hasTenantId: !!redirectData?.tenantId,
+                  error: redirectData?.error,
+                })
 
                 if (redirectData?.success && redirectData?.tenantId) {
                   // Успешно получили tenant-id
+                  console.log(`[LoginClient] Successfully got tenant-id on attempt ${attempt}`)
                   break
                 } else if (attempt < maxRetries) {
                   // Еще есть попытки, ждем перед следующей
-                  console.log(`[LoginClient] Attempt ${attempt} failed, retrying...`, redirectData?.error)
+                  console.warn(`[LoginClient] Attempt ${attempt} failed, retrying in ${retryDelay}ms...`, {
+                    error: redirectData?.error,
+                    response: redirectData,
+                  })
                   await new Promise(resolve => setTimeout(resolve, retryDelay))
                   // Обновляем сессию перед следующей попыткой
+                  console.log(`[LoginClient] Refreshing router before attempt ${attempt + 1}...`)
                   router.refresh()
                   await new Promise(resolve => setTimeout(resolve, 500))
                 }
               } catch (fetchError) {
                 lastError = fetchError instanceof Error ? fetchError : new Error(String(fetchError))
+                console.error(`[LoginClient] Attempt ${attempt} error:`, {
+                  error: lastError.message,
+                  stack: lastError.stack,
+                })
                 if (attempt < maxRetries) {
-                  console.log(`[LoginClient] Attempt ${attempt} error, retrying...`, lastError.message)
+                  console.log(`[LoginClient] Retrying in ${retryDelay}ms...`)
                   await new Promise(resolve => setTimeout(resolve, retryDelay))
+                  console.log(`[LoginClient] Refreshing router before retry...`)
                   router.refresh()
                   await new Promise(resolve => setTimeout(resolve, 500))
                 }
@@ -173,14 +193,24 @@ export const LoginClient = () => {
               router.refresh()
             } else {
               const errorMessage = redirectData?.error || lastError?.message || 'Не удалось определить вашу организацию'
-              console.error('[LoginClient] Failed to get tenant-id after retries', {
+              console.error('[LoginClient] Failed to get tenant-id after all retries', {
                 error: errorMessage,
                 redirectData,
                 lastError: lastError?.message,
+                attempts: maxRetries,
+                email: data.email,
               })
+              
+              // Более детальное сообщение об ошибке
+              const detailedError = redirectData?.error 
+                ? `Ошибка: ${redirectData.error}. Попробуйте обновить страницу и войти заново.`
+                : lastError?.message
+                ? `Ошибка сети: ${lastError.message}. Проверьте подключение к интернету.`
+                : 'Не удалось определить вашу организацию. Убедитесь, что вы зарегистрированы и ваша учетная запись активна. Если проблема сохраняется, обратитесь в поддержку.'
+              
               pushToast({
                 title: 'Ошибка входа',
-                description: errorMessage || 'Не удалось определить вашу организацию. Попробуйте войти заново.',
+                description: detailedError,
                 variant: 'error',
               })
             }
@@ -207,7 +237,7 @@ export const LoginClient = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
+    <div className="flex items-start justify-center pt-8 w-full">
       <div className="relative max-w-sm w-full border rounded-xl px-8 py-8 shadow-lg/5 dark:shadow-xl bg-gradient-to-b from-muted/50 dark:from-transparent to-card overflow-hidden">
         <div
           className="absolute inset-0 z-0 -top-px -left-px"
