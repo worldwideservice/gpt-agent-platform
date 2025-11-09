@@ -5,7 +5,7 @@ import type React from "react"
 import { Button } from "@/components/ui/Button"
 import { ChevronDownIcon, InfoIcon, CheckCircleIcon } from "@/components/icons"
 
-export function GettingStartedContent() {
+export default function GettingStartedContent() {
   return (
     <div className="flex-1 overflow-y-auto bg-gray-50">
       <div className="flex h-full">

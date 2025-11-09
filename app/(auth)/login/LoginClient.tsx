@@ -117,20 +117,53 @@ export const LoginClient = () => {
 
           // Ждем немного, чтобы сессия успела обновиться
           await new Promise(resolve => setTimeout(resolve, 500))
+          
+          // Обновляем сессию на клиенте
+          router.refresh()
+          await new Promise(resolve => setTimeout(resolve, 500))
 
           try {
-            // Получаем tenant-id для редиректа
-            const redirectResponse = await fetch('/api/auth/get-tenant-redirect', {
-              cache: 'no-store',
-            })
-            
-            if (!redirectResponse.ok) {
-              throw new Error('Failed to get redirect URL')
-            }
-            
-            const redirectData = await redirectResponse.json()
+            // Retry логика для получения tenant-id (до 3 попыток с интервалом 1 секунда)
+            let redirectData: { success: boolean; tenantId?: string; error?: string } | null = null
+            let lastError: Error | null = null
+            const maxRetries = 3
+            const retryDelay = 1000 // 1 секунда
 
-            if (redirectData.success && redirectData.tenantId) {
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+              try {
+                const redirectResponse = await fetch('/api/auth/get-tenant-redirect', {
+                  cache: 'no-store',
+                })
+                
+                if (!redirectResponse.ok) {
+                  throw new Error(`HTTP ${redirectResponse.status}: Failed to get redirect URL`)
+                }
+                
+                redirectData = await redirectResponse.json()
+
+                if (redirectData.success && redirectData.tenantId) {
+                  // Успешно получили tenant-id
+                  break
+                } else if (attempt < maxRetries) {
+                  // Еще есть попытки, ждем перед следующей
+                  console.log(`[LoginClient] Attempt ${attempt} failed, retrying...`, redirectData.error)
+                  await new Promise(resolve => setTimeout(resolve, retryDelay))
+                  // Обновляем сессию перед следующей попыткой
+                  router.refresh()
+                  await new Promise(resolve => setTimeout(resolve, 500))
+                }
+              } catch (fetchError) {
+                lastError = fetchError instanceof Error ? fetchError : new Error(String(fetchError))
+                if (attempt < maxRetries) {
+                  console.log(`[LoginClient] Attempt ${attempt} error, retrying...`, lastError.message)
+                  await new Promise(resolve => setTimeout(resolve, retryDelay))
+                  router.refresh()
+                  await new Promise(resolve => setTimeout(resolve, 500))
+                }
+              }
+            }
+
+            if (redirectData?.success && redirectData.tenantId) {
               pushToast({
                 title: 'Вход выполнен! ✅',
                 description: `Добро пожаловать, ${data.email}!`,
@@ -139,17 +172,24 @@ export const LoginClient = () => {
               router.push(`/manage/${redirectData.tenantId}`)
               router.refresh()
             } else {
+              const errorMessage = redirectData?.error || lastError?.message || 'Не удалось определить вашу организацию'
+              console.error('[LoginClient] Failed to get tenant-id after retries', {
+                error: errorMessage,
+                redirectData,
+                lastError: lastError?.message,
+              })
               pushToast({
                 title: 'Ошибка входа',
-                description: redirectData.error || 'Не удалось определить вашу организацию. Попробуйте войти заново.',
+                description: errorMessage || 'Не удалось определить вашу организацию. Попробуйте войти заново.',
                 variant: 'error',
               })
             }
           } catch (redirectError) {
             console.error('[LoginClient] Redirect error:', redirectError)
+            const errorMessage = redirectError instanceof Error ? redirectError.message : 'Не удалось определить вашу организацию'
             pushToast({
               title: 'Ошибка входа',
-              description: 'Не удалось определить вашу организацию. Попробуйте войти заново.',
+              description: errorMessage || 'Не удалось определить вашу организацию. Попробуйте войти заново.',
               variant: 'error',
             })
           }
