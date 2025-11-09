@@ -45,27 +45,26 @@ export const LoginClient = () => {
     resolver: zodResolver(formSchema),
   })
 
-  // Проверяем, авторизован ли пользователь и есть ли rememberMe
+  // Редирект если пользователь уже авторизован (например, через rememberMe или прямую ссылку)
   useEffect(() => {
-    if (status === 'authenticated' && session) {
-      // Проверяем, есть ли rememberMe через API
-      fetch('/api/auth/check-session', { cache: 'no-store' })
+    if (status === 'authenticated' && session?.user?.id) {
+      // Если пользователь уже авторизован, сразу редиректим на платформу
+      fetch('/api/auth/get-tenant-redirect', { cache: 'no-store' })
         .then((res) => res.json())
-        .then((data) => {
-          if (data.success && data.hasRememberMe) {
-            // Если есть rememberMe, редиректим на платформу
-            fetch('/api/auth/get-tenant-redirect', { cache: 'no-store' })
-              .then((res) => res.json())
-              .then((redirectData) => {
-                if (redirectData.success && redirectData.tenantId) {
-                  // Используем window.location.href для гарантированного редиректа
-                  window.location.href = `/manage/${redirectData.tenantId}`
-                }
-              })
+        .then((redirectData) => {
+          if (redirectData.success && redirectData.tenantId) {
+            console.log('[LoginClient] User already authenticated, redirecting...', {
+              tenantId: redirectData.tenantId,
+            })
+            // Используем window.location.href для гарантированного редиректа
+            window.location.href = `/manage/${redirectData.tenantId}`
           }
         })
+        .catch((error) => {
+          console.warn('[LoginClient] Error getting tenant redirect for authenticated user:', error)
+        })
     }
-  }, [status, session, router])
+  }, [status, session])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
