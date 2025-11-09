@@ -127,6 +127,60 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
    }
  }
  
+ // Если список организаций пуст И orgId отсутствует в сессии - пробуем найти default_org_id из users
+ if (organizations.length === 0 && !session.user.orgId) {
+   console.log("[manage layout] No organizations and no orgId in session - checking default_org_id from users", {
+     userId: session.user.id,
+     tenantId,
+   });
+   
+   try {
+     const { getSupabaseServiceRoleClient } = await import('@/lib/supabase/admin');
+     const supabase = getSupabaseServiceRoleClient();
+     const { data: userData, error: userError } = await supabase
+       .from('users')
+       .select('default_org_id')
+       .eq('id', session.user.id)
+       .single();
+     
+     if (userError) {
+       console.error("[manage layout] Error fetching user default_org_id", {
+         error: userError.message,
+         userId: session.user.id,
+       });
+     } else if (userData?.default_org_id) {
+       // Пробуем найти организацию по default_org_id
+       const { data: orgData, error: orgError } = await supabase
+         .from('organizations')
+         .select('id, name, slug')
+         .eq('id', userData.default_org_id)
+         .single();
+       
+       if (orgError) {
+         console.error("[manage layout] Error fetching organization by default_org_id", {
+           error: orgError.message,
+           defaultOrgId: userData.default_org_id,
+         });
+       } else if (orgData) {
+         activeOrganization = {
+           id: orgData.id,
+           name: orgData.name,
+           slug: orgData.slug || `org-${orgData.id.substring(0, 8)}`,
+         };
+         const correctTenantId = generateTenantId(activeOrganization.id, activeOrganization.slug);
+         console.log("[manage layout] Found organization by default_org_id, redirecting", {
+           correctTenantId,
+           orgId: orgData.id,
+           slug: activeOrganization.slug,
+         });
+         redirect(`/manage/${correctTenantId}`);
+       }
+     }
+   } catch (error) {
+     console.error("[manage layout] Error in default_org_id fallback", error);
+   }
+ }
+ 
  // Валидируем tenant-id и находим организацию
  const validation = await validateTenantIdAccess(tenantId, session.user.id);
  
