@@ -13,6 +13,8 @@ export interface PricingPlan {
   calculatePrice?: (responses: number, billingCycle: 'monthly' | 'yearly') => number;
   features: PricingPlanFeature[];
   perConversation?: string;
+  // Динамический расчет цены за разговор на основе количества ответов
+  calculatePerConversation?: (responses: number, billingCycle: 'monthly' | 'yearly') => string | null;
   availableModels?: string[];
   unavailableForResponses?: number[];
 }
@@ -26,6 +28,14 @@ export const PRICING_PLANS: PricingPlan[] = [
     // Launch - фиксированная цена $18, не зависит от количества ответов
     calculatePrice: (responses: number, billingCycle: 'monthly' | 'yearly') => {
       return billingCycle === 'monthly' ? 18 : 13;
+    },
+    perConversation: "Около $0.06 за разговор", // Fallback для старых версий
+    calculatePerConversation: (responses: number, billingCycle: 'monthly' | 'yearly') => {
+      // Данные из PricingContentV0.tsx - Launch доступен только для 1,000 ответов
+      if (responses > 1000) return null; // Недоступно для большего количества
+      
+      const cost = billingCycle === 'monthly' ? "0.06" : "0.05";
+      return `Около $${cost} за разговор`;
     },
     features: [
       { label: "1 агентов" },
@@ -62,7 +72,32 @@ export const PRICING_PLANS: PricingPlan[] = [
       const calculated = basePrice + (responses * pricePerResponse);
       return Math.round(calculated);
     },
-    perConversation: "Около $0.13 за разговор",
+    perConversation: "Около $0.13 за разговор", // Fallback для старых версий
+    calculatePerConversation: (responses: number, billingCycle: 'monthly' | 'yearly') => {
+      // Данные из PricingContentV0.tsx
+      const COST_PER_CONVERSATION: Record<string, Record<string, Record<number, string | null>>> = {
+        Scale: {
+          monthly: { 1000: "0.16", 2500: "0.15", 5000: "0.14", 10000: "0.14", 15000: "0.13", 20000: "0.13" },
+          yearly: { 1000: "0.13", 2500: "0.12", 5000: "0.12", 10000: "0.11", 15000: "0.11", 20000: "0.11" },
+        },
+      };
+      
+      const costs = COST_PER_CONVERSATION.Scale[billingCycle];
+      // Находим ближайшее значение или используем последнее доступное
+      const responseKeys = Object.keys(costs).map(Number).sort((a, b) => a - b);
+      let selectedKey = responseKeys[0];
+      
+      for (const key of responseKeys) {
+        if (responses <= key) {
+          selectedKey = key;
+          break;
+        }
+        selectedKey = key; // Используем последнее доступное
+      }
+      
+      const cost = costs[selectedKey];
+      return cost ? `Около $${cost} за разговор` : null;
+    },
     features: [
       { label: "10 агентов" },
       { label: "100,000 статей базы знаний" },
@@ -101,7 +136,32 @@ export const PRICING_PLANS: PricingPlan[] = [
       const calculated = basePrice + (responses * pricePerResponse);
       return Math.round(calculated);
     },
-    perConversation: "Около $0.23 за разговор",
+    perConversation: "Около $0.23 за разговор", // Fallback для старых версий
+    calculatePerConversation: (responses: number, billingCycle: 'monthly' | 'yearly') => {
+      // Данные из PricingContentV0.tsx
+      const COST_PER_CONVERSATION: Record<string, Record<string, Record<number, string | null>>> = {
+        Max: {
+          monthly: { 1000: "0.32", 2500: "0.26", 5000: "0.25", 10000: "0.23", 15000: "0.23", 20000: "0.22" },
+          yearly: { 1000: "0.26", 2500: "0.22", 5000: "0.20", 10000: "0.19", 15000: "0.19", 20000: "0.19" },
+        },
+      };
+      
+      const costs = COST_PER_CONVERSATION.Max[billingCycle];
+      // Находим ближайшее значение или используем последнее доступное
+      const responseKeys = Object.keys(costs).map(Number).sort((a, b) => a - b);
+      let selectedKey = responseKeys[0];
+      
+      for (const key of responseKeys) {
+        if (responses <= key) {
+          selectedKey = key;
+          break;
+        }
+        selectedKey = key; // Используем последнее доступное
+      }
+      
+      const cost = costs[selectedKey];
+      return cost ? `Около $${cost} за разговор` : null;
+    },
     features: [
       { label: "Неограниченное количество агентов" },
       { label: "Неограниченное количество статей базы знаний" },

@@ -13,7 +13,7 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 transition-colors">
       {/* Header */}
-      <PublicHeader showNav={true} />
+      <PublicHeader showNav={true} alwaysShowAuthButtons={true} />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">

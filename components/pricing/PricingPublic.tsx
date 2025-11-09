@@ -126,11 +126,18 @@ export const PricingPublic = () => {
               </span>
  <span className="text-sm text-slate-500 dark:text-gray-400">/мес</span>
  </div>
- {plan.perConversation && (
- <p className="mt-2 inline-flex items-center rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
-   {plan.perConversation}
- </p>
- )}
+            {(() => {
+              // Используем динамический расчет если доступен, иначе статическое значение
+              const perConversationText = plan.calculatePerConversation
+                ? plan.calculatePerConversation(selectedResponsesNum, billingCycle)
+                : plan.perConversation;
+              
+              return perConversationText ? (
+                <p className="mt-2 inline-flex items-center rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
+                  {perConversationText}
+                </p>
+              ) : null;
+            })()}
             {isUnavailable && (
               <p className="mt-2 text-sm text-red-500">
                 Недоступно для выбранного количества ответов
