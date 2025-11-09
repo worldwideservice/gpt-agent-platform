@@ -25,8 +25,8 @@ export default function PricingPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
           <div className="grid grid-cols-1 gap-12 md:grid-cols-12 md:gap-8">
                     {/* Логотип и описание */}
-                    <div className="md:col-span-5 lg:col-span-4 flex flex-col -ml-8 md:-ml-16 lg:-ml-24 pl-0">
-                      <div className="mb-5 scale-125 md:scale-150 origin-left">
+                    <div className="md:col-span-4 lg:col-span-3 flex flex-col">
+                      <div className="mb-5">
                         <Logo showTagline />
                       </div>
                       <p className="text-sm text-gray-600 dark:text-gray-400 max-w-xs leading-relaxed mt-2">
@@ -35,7 +35,7 @@ export default function PricingPage() {
                     </div>
             
             {/* Навигация */}
-            <div className="grid grid-cols-2 gap-8 md:col-span-7 lg:col-span-8 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-8 md:col-span-8 lg:col-span-9 sm:grid-cols-3 lg:grid-cols-4">
               <div className="flex flex-col gap-4">
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Продукт</h4>
                 <ul className="flex flex-col gap-3">

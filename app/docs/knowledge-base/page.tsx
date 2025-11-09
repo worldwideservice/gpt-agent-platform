@@ -178,8 +178,8 @@ export default function KnowledgeBasePage() {
       <footer className="border-t bg-white dark:bg-gray-950 transition-colors mt-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
           <div className="grid grid-cols-1 gap-12 md:grid-cols-12 md:gap-8">
-            <div className="md:col-span-5 lg:col-span-4 flex flex-col -ml-8 md:-ml-16 lg:-ml-24 pl-0">
-              <div className="mb-5 scale-125 md:scale-150 origin-left">
+            <div className="md:col-span-4 lg:col-span-3 flex flex-col">
+              <div className="mb-5">
                 <Logo showTagline />
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 max-w-xs leading-relaxed mt-2">

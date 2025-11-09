@@ -2,7 +2,7 @@
 
 import { HeaderV0 } from "@/components/layout/HeaderV0"
 import { SidebarV0 } from "@/components/layout/SidebarV0"
-import { GettingStartedContent } from "@/components/docs/GettingStartedContent"
+import GettingStartedContent from "@/components/docs/GettingStartedContent"
 
 export default function GettingStartedPage() {
   return (
