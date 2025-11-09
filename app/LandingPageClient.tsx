@@ -81,14 +81,16 @@ export function LandingPageClient() {
         )
         
         if (data.success && data.tenantId) {
-          router.push(`/manage/${data.tenantId}`)
+          // Используем window.location.href для гарантированного редиректа
+          window.location.href = `/manage/${data.tenantId}`
         } else {
           toast({
             title: 'Ошибка',
             description: 'Не удалось получить доступ к платформе. Пожалуйста, войдите снова.',
             variant: 'error',
           })
-          router.push('/login')
+          // Используем window.location.href для гарантированного редиректа
+          window.location.href = '/login'
         }
       } catch (error) {
         const errorInstance = error instanceof Error ? error : new Error(String(error))
