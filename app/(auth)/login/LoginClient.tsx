@@ -141,12 +141,12 @@ export const LoginClient = () => {
                 
                 redirectData = await redirectResponse.json()
 
-                if (redirectData.success && redirectData.tenantId) {
+                if (redirectData?.success && redirectData?.tenantId) {
                   // Успешно получили tenant-id
                   break
                 } else if (attempt < maxRetries) {
                   // Еще есть попытки, ждем перед следующей
-                  console.log(`[LoginClient] Attempt ${attempt} failed, retrying...`, redirectData.error)
+                  console.log(`[LoginClient] Attempt ${attempt} failed, retrying...`, redirectData?.error)
                   await new Promise(resolve => setTimeout(resolve, retryDelay))
                   // Обновляем сессию перед следующей попыткой
                   router.refresh()
