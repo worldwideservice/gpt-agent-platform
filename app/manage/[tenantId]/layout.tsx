@@ -85,6 +85,48 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
    }
  }
  
+ // Если список организаций пуст, но есть orgId в сессии - используем его напрямую
+ if (organizations.length === 0 && session.user.orgId) {
+   console.log("[manage layout] No organizations in list, but orgId in session - using it directly", {
+     orgId: session.user.orgId,
+     userId: session.user.id,
+     tenantId,
+   });
+   
+   // Пробуем найти организацию по orgId из сессии
+   try {
+     const { getSupabaseServiceRoleClient } = await import('@/lib/supabase/admin');
+     const supabase = getSupabaseServiceRoleClient();
+     const { data: orgData, error: orgError } = await supabase
+       .from('organizations')
+       .select('id, name, slug')
+       .eq('id', session.user.orgId)
+       .single();
+     
+     if (orgError) {
+       console.error("[manage layout] Error fetching organization by orgId (fallback)", {
+         error: orgError.message,
+         orgId: session.user.orgId,
+       });
+     } else if (orgData) {
+       activeOrganization = {
+         id: orgData.id,
+         name: orgData.name,
+         slug: orgData.slug || `org-${orgData.id.substring(0, 8)}`,
+       };
+       const correctTenantId = generateTenantId(activeOrganization.id, activeOrganization.slug);
+       console.log("[manage layout] Found organization by orgId (fallback), redirecting", {
+         correctTenantId,
+         orgId: orgData.id,
+         slug: activeOrganization.slug,
+       });
+       redirect(`/manage/${correctTenantId}`);
+     }
+   } catch (error) {
+     console.error("[manage layout] Error in fallback organization fetch", error);
+   }
+ }
+ 
  // Валидируем tenant-id и находим организацию
  const validation = await validateTenantIdAccess(tenantId, session.user.id);
  
