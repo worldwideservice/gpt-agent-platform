@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect } from 'react'
 import Link from 'next/link'
-import { signIn, useSession } from 'next-auth/react'
+import { signIn, useSession, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -119,7 +119,21 @@ export const LoginClient = () => {
           console.log('[LoginClient] Waiting for session to update...')
           await new Promise(resolve => setTimeout(resolve, 1000))
           
-          // Обновляем сессию на клиенте
+          // Обновляем сессию на клиенте через getSession
+          console.log('[LoginClient] Fetching session...')
+          try {
+            const session = await getSession()
+            console.log('[LoginClient] Session fetched:', {
+              hasSession: !!session,
+              hasUser: !!session?.user,
+              hasOrgId: !!session?.user?.orgId,
+              userId: session?.user?.id,
+            })
+          } catch (sessionError) {
+            console.warn('[LoginClient] Error fetching session:', sessionError)
+          }
+          
+          // Обновляем роутер
           console.log('[LoginClient] Refreshing router...')
           router.refresh()
           await new Promise(resolve => setTimeout(resolve, 500))
