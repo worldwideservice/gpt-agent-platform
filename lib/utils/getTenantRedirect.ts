@@ -32,32 +32,70 @@ export async function getTenantIdFromSession(): Promise<string | null> {
  // Если orgId нет в сессии, пытаемся получить его из базы данных
  let orgId = session?.user?.orgId;
  if (!orgId && session.user.id) {
- logger.debug("[getTenantIdFromSession] orgId not in session, fetching from DB", {
- userId: session.user.id,
- });
- 
- try {
- const organizations = await getOrganizationsForUser(session.user.id);
- if (organizations.length > 0) {
- orgId = organizations[0].id;
- logger.debug("[getTenantIdFromSession] Found orgId from DB", {
- userId: session.user.id,
- orgId,
- organizationsCount: organizations.length,
- });
- } else {
- logger.warn("[getTenantIdFromSession] No organizations found for user", {
- userId: session.user.id,
- });
- return null;
- }
- } catch (error) {
- logger.error("[getTenantIdFromSession] Error fetching organizations from DB", 
-  error instanceof Error ? error : new Error(String(error)),
-  { userId: session.user.id }
- );
- return null;
- }
+   logger.debug("[getTenantIdFromSession] orgId not in session, fetching from DB", {
+     userId: session.user.id,
+     email: session.user.email,
+   });
+   
+   try {
+     const organizations = await getOrganizationsForUser(session.user.id);
+     logger.debug("[getTenantIdFromSession] Organizations fetched from DB", {
+       userId: session.user.id,
+       organizationsCount: organizations.length,
+       organizations: organizations.map(org => ({ id: org.id, name: org.name, slug: org.slug })),
+     });
+     
+     if (organizations.length > 0) {
+       // Используем первую организацию как orgId
+       orgId = organizations[0].id;
+       logger.debug("[getTenantIdFromSession] Found orgId from DB", {
+         userId: session.user.id,
+         orgId,
+         organizationsCount: organizations.length,
+       });
+       
+       // ВАЖНО: Обновляем кэш tenant-id с новым orgId
+       // Это нужно для того, чтобы последующие запросы использовали правильный orgId
+       const cachedTenantId = tenantCache.get(session.user.id, orgId);
+       if (cachedTenantId) {
+         logger.debug("[getTenantIdFromSession] Found cached tenant-id for resolved orgId", {
+           orgId,
+           tenantId: cachedTenantId.substring(0, 8) + '...',
+         });
+       }
+     } else {
+       logger.warn("[getTenantIdFromSession] No organizations found for user", {
+         userId: session.user.id,
+         email: session.user.email,
+       });
+       
+       // Для демо-пользователя создаем организацию если её нет
+       if (session.user.id === '00000000-0000-4000-8000-0000000000ff') {
+         logger.debug("[getTenantIdFromSession] Demo user detected, checking for default org");
+         const defaultOrgId = process.env.SUPABASE_DEFAULT_ORGANIZATION_ID;
+         if (defaultOrgId) {
+           orgId = defaultOrgId;
+           logger.debug("[getTenantIdFromSession] Using default orgId for demo user", { orgId: defaultOrgId });
+         } else {
+           logger.error("[getTenantIdFromSession] No default orgId for demo user");
+           return null;
+         }
+       } else {
+         // Для реального пользователя без организации - это ошибка
+         logger.error("[getTenantIdFromSession] Real user has no organizations - this should not happen", {
+           userId: session.user.id,
+           email: session.user.email,
+         });
+         return null;
+       }
+     }
+   } catch (error) {
+     logger.error("[getTenantIdFromSession] Error fetching organizations from DB",
+       error instanceof Error ? error : new Error(String(error)),
+       { userId: session.user.id, email: session.user.email }
+     );
+     return null;
+   }
  }
 
  if (!orgId) {
@@ -88,18 +126,40 @@ export async function getTenantIdFromSession(): Promise<string | null> {
  });
 
  const organizations = await getOrganizationsForUser(session.user.id);
- const activeOrganization =
+ logger.debug("[getTenantIdFromSession] All organizations for user", {
+ userId: session.user.id,
+ orgId: orgId,
+ organizationsCount: organizations.length,
+ organizations: organizations.map(org => ({ id: org.id, name: org.name, slug: org.slug })),
+ });
+ 
+ let activeOrganization =
  organizations.find(
  (organization) => organization.id === orgId,
  ) ??
  organizations[0] ??
  null;
 
+ // Если организация не найдена, но есть orgId (для демо-пользователя)
+ if (!activeOrganization && orgId) {
+ logger.debug("[getTenantIdFromSession] Organization not in list, creating minimal org object", {
+ userId: session.user.id,
+ orgId: orgId,
+ });
+ // Создаем минимальный объект организации для демо-пользователя
+ activeOrganization = {
+ id: orgId,
+ name: 'Demo Organization',
+ slug: '',
+ };
+ }
+
  if (!activeOrganization) {
  logger.warn("[getTenantIdFromSession] No active organization found", {
  userId: session.user.id,
  organizationsCount: organizations.length,
  orgId: orgId,
+ email: session.user.email,
  });
  return null;
  }
