@@ -36,7 +36,16 @@ export function DashboardClient() {
   })
 
   if (isLoadingStats || isLoadingCharts || isLoadingUpdates) {
-    return <LoadingOverlay />
+    return (
+      <LoadingOverlay>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <p className="text-sm text-gray-600">Загрузка данных...</p>
+          </div>
+        </div>
+      </LoadingOverlay>
+    )
   }
 
   return (
