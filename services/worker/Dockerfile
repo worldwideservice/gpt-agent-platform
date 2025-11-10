@@ -27,8 +27,9 @@ RUN apk add --no-cache wget
 # Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем package.json Worker для production зависимостей
+# Копируем package.json и package-lock.json Worker для production зависимостей
 COPY --from=base /app/services/worker/package.json ./services/worker/
+COPY --from=base /app/services/worker/package-lock.json* ./services/worker/
 
 # Копируем собранное приложение Worker
 COPY --from=base /app/services/worker/dist ./services/worker/dist
