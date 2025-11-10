@@ -31,7 +31,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     },
     perConversation: "Около $0.06 за разговор", // Fallback для старых версий
     calculatePerConversation: (responses: number, billingCycle: 'monthly' | 'yearly') => {
-      // Данные из PricingContentV0.tsx - Launch доступен только для 1,000 ответов
+      // Launch доступен только для 1,000 ответов
       if (responses > 1000) return null; // Недоступно для большего количества
       
       const cost = billingCycle === 'monthly' ? "0.06" : "0.05";
@@ -74,7 +74,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     },
     perConversation: "Около $0.13 за разговор", // Fallback для старых версий
     calculatePerConversation: (responses: number, billingCycle: 'monthly' | 'yearly') => {
-      // Данные из PricingContentV0.tsx
+      // Данные тарифного плана
       const COST_PER_CONVERSATION: Record<string, Record<string, Record<number, string | null>>> = {
         Scale: {
           monthly: { 1000: "0.16", 2500: "0.15", 5000: "0.14", 10000: "0.14", 15000: "0.13", 20000: "0.13" },
@@ -138,7 +138,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     },
     perConversation: "Около $0.23 за разговор", // Fallback для старых версий
     calculatePerConversation: (responses: number, billingCycle: 'monthly' | 'yearly') => {
-      // Данные из PricingContentV0.tsx
+      // Данные тарифного плана
       const COST_PER_CONVERSATION: Record<string, Record<string, Record<number, string | null>>> = {
         Max: {
           monthly: { 1000: "0.32", 2500: "0.26", 5000: "0.25", 10000: "0.23", 15000: "0.23", 20000: "0.22" },
