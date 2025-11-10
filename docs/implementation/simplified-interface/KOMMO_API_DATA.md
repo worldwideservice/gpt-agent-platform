@@ -457,10 +457,10 @@ const outgoingEmails = emails.filter(
 - `color` - Цвет тега
 
 **Методы в коде:**
-- `getCompanies()` - Получить список компаний
-- `getCompany(companyId)` - Получить компанию по ID
-- `createCompany(company)` - Создать компанию
-- `updateCompany(companyId, company)` - Обновить компанию
+- `getTags(entityType?)` - Получить список тегов (опционально по типу сущности)
+- `addTags(entityType, tags)` - Добавить теги для типа сущности
+- `updateEntityTags(entityType, entityId, tags)` - Обновить теги одной сущности
+- `updateMultipleEntityTags(entityType, updates)` - Обновить теги нескольких сущностей
 
 **Использование:**
 
@@ -484,10 +484,7 @@ const outgoingEmails = emails.filter(
 - `timezone_offset` - Смещение часового пояса
 
 **Методы в коде:**
-- `getCompanies()` - Получить список компаний
-- `getCompany(companyId)` - Получить компанию по ID
-- `createCompany(company)` - Создать компанию
-- `updateCompany(companyId, company)` - Обновить компанию
+- `getAccount()` - Получить информацию об аккаунте
 
 **Использование:**
 
@@ -537,10 +534,14 @@ const outgoingEmails = emails.filter(
 - `metadata` - Метаданные лида
 
 **Методы в коде:**
-- `getCompanies()` - Получить список компаний
-- `getCompany(companyId)` - Получить компанию по ID
-- `createCompany(company)` - Создать компанию
-- `updateCompany(companyId, company)` - Обновить компанию
+- `getIncomingLeads()` - Получить список входящих лидов
+- `getIncomingLead(uid)` - Получить входящий лид по UID
+- `addIncomingLead(lead)` - Добавить входящий лид
+- `addIncomingLeadFromSip(sipData)` - Добавить входящий лид из звонка
+- `addIncomingLeadFromForm(formData)` - Добавить входящий лид из формы
+- `acceptIncomingLead(uid, leadData?)` - Принять входящий лид
+- `declineIncomingLead(uid)` - Отклонить входящий лид
+- `linkIncomingLead(uid, entityType, entityId)` - Привязать входящий лид к сделке/контакту
 
 **Использование:**
 
@@ -570,10 +571,13 @@ const outgoingEmails = emails.filter(
 - `external_id` - Внешний ID
 
 **Методы в коде:**
-- `getCompanies()` - Получить список компаний
-- `getCompany(companyId)` - Получить компанию по ID
-- `createCompany(company)` - Создать компанию
-- `updateCompany(companyId, company)` - Обновить компанию
+- `getSources()` - Получить список источников
+- `getSource(sourceId)` - Получить источник по ID
+- `addSource(source)` - Добавить источник
+- `updateSource(sourceId, source)` - Обновить источник
+- `updateSources(updates)` - Массовое обновление источников
+- `deleteSource(sourceId)` - Удалить источник
+- `deleteSources(sourceIds)` - Массовое удаление источников
 
 **Использование:**
 
@@ -609,6 +613,15 @@ const outgoingEmails = emails.filter(
 
 **Методы в коде:**
 
+- `getTemplates()` - Получить список шаблонов
+- `getTemplate(templateId)` - Получить шаблон по ID
+- `addTemplate(template)` - Добавить шаблон
+- `updateTemplate(templateId, template)` - Обновить шаблон
+- `updateTemplates(updates)` - Массовое обновление шаблонов
+- `submitTemplate(templateId)` - Отправить WhatsApp шаблон на модерацию
+- `updateTemplateStatus(templateId, status)` - Изменить статус WhatsApp шаблона
+- `deleteTemplate(templateId)` - Удалить шаблон
+- `deleteTemplates(templateIds)` - Массовое удаление шаблонов
 - `getEmailTemplates()` - Получить шаблоны писем (заглушка, возвращает пустой массив)
 
 **Использование:**
@@ -636,10 +649,8 @@ const outgoingEmails = emails.filter(
 - `messages` - Сообщения в разговоре
 
 **Методы в коде:**
-- `getCompanies()` - Получить список компаний
-- `getCompany(companyId)` - Получить компанию по ID
-- `createCompany(company)` - Создать компанию
-- `updateCompany(companyId, company)` - Обновить компанию
+- `getConversation(conversationId)` - Получить разговор по ID
+- `closeConversation(conversationId)` - Закрыть разговор
 
 **Использование:**
 
@@ -667,10 +678,9 @@ const outgoingEmails = emails.filter(
 - `user_id` - ID пользователя
 
 **Методы в коде:**
-- `getCompanies()` - Получить список компаний
-- `getCompany(companyId)` - Получить компанию по ID
-- `createCompany(company)` - Создать компанию
-- `updateCompany(companyId, company)` - Обновить компанию
+- `getEvents(filters?)` - Получить список событий (с фильтрами)
+- `getEvent(eventId)` - Получить событие по ID
+- `getEventTypes()` - Получить типы событий
 
 **Использование:**
 
@@ -703,10 +713,16 @@ const outgoingEmails = emails.filter(
 - `elements` - Элементы списка
 
 **Методы в коде:**
-- `getCompanies()` - Получить список компаний
-- `getCompany(companyId)` - Получить компанию по ID
-- `createCompany(company)` - Создать компанию
-- `updateCompany(companyId, company)` - Обновить компанию
+- `getLists()` - Получить список списков
+- `getList(listId)` - Получить список по ID
+- `addList(list)` - Добавить список
+- `updateList(listId, list)` - Обновить список
+- `updateLists(updates)` - Массовое обновление списков
+- `getListElements(listId)` - Получить элементы списка
+- `getListElement(listId, elementId)` - Получить элемент списка по ID
+- `addListElements(listId, elements)` - Добавить элементы в список
+- `updateListElements(listId, updates)` - Обновить элементы списка (массово)
+- `updateListElement(listId, elementId, element)` - Обновить элемент списка
 
 **Использование:**
 
@@ -730,10 +746,9 @@ const outgoingEmails = emails.filter(
 - `to_entity_type` - Тип связанной сущности
 
 **Методы в коде:**
-- `getCompanies()` - Получить список компаний
-- `getCompany(companyId)` - Получить компанию по ID
-- `createCompany(company)` - Создать компанию
-- `updateCompany(companyId, company)` - Обновить компанию
+- `getLinks(entityType, entityId)` - Получить список связей сущности
+- `createLink(entityType, entityId, link)` - Создать связь между сущностями
+- `deleteLink(entityType, entityId, link)` - Удалить связь между сущностями
 
 **Использование:**
 
@@ -760,10 +775,11 @@ const outgoingEmails = emails.filter(
 - `rights` - Права доступа
 
 **Методы в коде:**
-- `getCompanies()` - Получить список компаний
-- `getCompany(companyId)` - Получить компанию по ID
-- `createCompany(company)` - Создать компанию
-- `updateCompany(companyId, company)` - Обновить компанию
+- `getRoles()` - Получить список ролей
+- `getRole(roleId)` - Получить роль по ID
+- `addRole(role)` - Добавить роль
+- `updateRole(roleId, role)` - Обновить роль
+- `deleteRole(roleId)` - Удалить роль
 
 **Использование:**
 
@@ -789,10 +805,10 @@ const outgoingEmails = emails.filter(
 - `settings` - Настройки виджета
 
 **Методы в коде:**
-- `getCompanies()` - Получить список компаний
-- `getCompany(companyId)` - Получить компанию по ID
-- `createCompany(company)` - Создать компанию
-- `updateCompany(companyId, company)` - Обновить компанию
+- `getWidgets()` - Получить список виджетов
+- `getWidget(widgetCode)` - Получить виджет по коду
+- `installWidget(widgetCode, settings?)` - Установить виджет в аккаунт
+- `uninstallWidget(widgetCode)` - Удалить виджет из аккаунта
 
 **Использование:**
 
@@ -814,10 +830,7 @@ const outgoingEmails = emails.filter(
 - `entity_type` - Тип сущности
 
 **Методы в коде:**
-- `getCompanies()` - Получить список компаний
-- `getCompany(companyId)` - Получить компанию по ID
-- `createCompany(company)` - Создать компанию
-- `updateCompany(companyId, company)` - Обновить компанию
+- `launchSalesbot(launchData)` - Запустить Salesbot
 
 **Использование:**
 
