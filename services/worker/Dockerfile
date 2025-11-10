@@ -6,7 +6,7 @@ FROM node:20-alpine AS base
 WORKDIR /app
 
 # Копируем package.json Worker для установки зависимостей
-COPY services/worker/package.json services/worker/package-lock.json ./services/worker/
+COPY services/worker/package.json ./services/worker/
 
 # Копируем весь проект (включая lib/)
 COPY . .
