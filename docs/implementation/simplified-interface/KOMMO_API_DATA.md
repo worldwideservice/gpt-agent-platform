@@ -434,6 +434,7 @@ const outgoingEmails = emails.filter(
 - `_embedded.tags` - Теги
 
 **Методы в коде:**
+
 - `getCompanies()` - Получить список компаний
 - `getCompany(companyId)` - Получить компанию по ID
 - `createCompany(company)` - Создать компанию
@@ -457,6 +458,7 @@ const outgoingEmails = emails.filter(
 - `color` - Цвет тега
 
 **Методы в коде:**
+
 - `getTags(entityType?)` - Получить список тегов (опционально по типу сущности)
 - `addTags(entityType, tags)` - Добавить теги для типа сущности
 - `updateEntityTags(entityType, entityId, tags)` - Обновить теги одной сущности
@@ -484,6 +486,7 @@ const outgoingEmails = emails.filter(
 - `timezone_offset` - Смещение часового пояса
 
 **Методы в коде:**
+
 - `getAccount()` - Получить информацию об аккаунте
 
 **Использование:**
@@ -534,6 +537,7 @@ const outgoingEmails = emails.filter(
 - `metadata` - Метаданные лида
 
 **Методы в коде:**
+
 - `getIncomingLeads()` - Получить список входящих лидов
 - `getIncomingLead(uid)` - Получить входящий лид по UID
 - `addIncomingLead(lead)` - Добавить входящий лид
@@ -571,6 +575,7 @@ const outgoingEmails = emails.filter(
 - `external_id` - Внешний ID
 
 **Методы в коде:**
+
 - `getSources()` - Получить список источников
 - `getSource(sourceId)` - Получить источник по ID
 - `addSource(source)` - Добавить источник
@@ -649,6 +654,7 @@ const outgoingEmails = emails.filter(
 - `messages` - Сообщения в разговоре
 
 **Методы в коде:**
+
 - `getConversation(conversationId)` - Получить разговор по ID
 - `closeConversation(conversationId)` - Закрыть разговор
 
@@ -678,6 +684,7 @@ const outgoingEmails = emails.filter(
 - `user_id` - ID пользователя
 
 **Методы в коде:**
+
 - `getEvents(filters?)` - Получить список событий (с фильтрами)
 - `getEvent(eventId)` - Получить событие по ID
 - `getEventTypes()` - Получить типы событий
@@ -713,6 +720,7 @@ const outgoingEmails = emails.filter(
 - `elements` - Элементы списка
 
 **Методы в коде:**
+
 - `getLists()` - Получить список списков
 - `getList(listId)` - Получить список по ID
 - `addList(list)` - Добавить список
@@ -746,6 +754,7 @@ const outgoingEmails = emails.filter(
 - `to_entity_type` - Тип связанной сущности
 
 **Методы в коде:**
+
 - `getLinks(entityType, entityId)` - Получить список связей сущности
 - `createLink(entityType, entityId, link)` - Создать связь между сущностями
 - `deleteLink(entityType, entityId, link)` - Удалить связь между сущностями
@@ -775,6 +784,7 @@ const outgoingEmails = emails.filter(
 - `rights` - Права доступа
 
 **Методы в коде:**
+
 - `getRoles()` - Получить список ролей
 - `getRole(roleId)` - Получить роль по ID
 - `addRole(role)` - Добавить роль
@@ -805,6 +815,7 @@ const outgoingEmails = emails.filter(
 - `settings` - Настройки виджета
 
 **Методы в коде:**
+
 - `getWidgets()` - Получить список виджетов
 - `getWidget(widgetCode)` - Получить виджет по коду
 - `installWidget(widgetCode, settings?)` - Установить виджет в аккаунт
@@ -830,6 +841,7 @@ const outgoingEmails = emails.filter(
 - `entity_type` - Тип сущности
 
 **Методы в коде:**
+
 - `launchSalesbot(launchData)` - Запустить Salesbot
 
 **Использование:**
@@ -1122,72 +1134,109 @@ const emails = notes.filter(
 
 ---
 
-### ⚠️ Не реализовано, но доступно через API
+### ✅ Все методы реализованы!
 
-#### 1. **Компании (Companies)**
+Все методы Kommo API теперь реализованы в классе `KommoAPI`. См. разделы выше для детального описания каждого метода.
 
-- Получение списка компаний
-- Создание/обновление компаний
-- Связывание с контактами и сделками
+#### 10. **Компании (Companies)** ✅
 
-#### 2. **Теги (Tags)**
+- ✅ `getCompanies()` - Получение списка компаний
+- ✅ `getCompany(companyId)` - Получение компании по ID
+- ✅ `createCompany(company)` - Создание компании
+- ✅ `updateCompany(companyId, company)` - Обновление компании
 
-- Получение тегов
-- Добавление/обновление тегов для сущностей
+#### 11. **Теги (Tags)** ✅
 
-#### 3. **Аккаунт (Account)**
+- ✅ `getTags(entityType?)` - Получение тегов
+- ✅ `addTags(entityType, tags)` - Добавление тегов для типа сущности
+- ✅ `updateEntityTags(entityType, entityId, tags)` - Обновление тегов одной сущности
+- ✅ `updateMultipleEntityTags(entityType, updates)` - Обновление тегов нескольких сущностей
 
-- Получение информации об аккаунте
-- Проверка подключения
+#### 12. **Аккаунт (Account)** ✅
 
-#### 4. **Входящие лиды (Incoming Leads)**
+- ✅ `getAccount()` - Получение информации об аккаунте
 
-- Обработка входящих заявок
-- Принятие/отклонение лидов
-- Привязка к сделкам
+#### 13. **Входящие лиды (Incoming Leads)** ✅
 
-#### 5. **Источники (Sources)**
+- ✅ `getIncomingLeads()` - Получение списка входящих лидов
+- ✅ `getIncomingLead(uid)` - Получение входящего лида по UID
+- ✅ `addIncomingLead(lead)` - Добавление входящего лида
+- ✅ `addIncomingLeadFromSip(sipData)` - Добавление входящего лида из звонка
+- ✅ `addIncomingLeadFromForm(formData)` - Добавление входящего лида из формы
+- ✅ `acceptIncomingLead(uid, leadData?)` - Принятие входящего лида
+- ✅ `declineIncomingLead(uid)` - Отклонение входящего лида
+- ✅ `linkIncomingLead(uid, entityType, entityId)` - Привязка входящего лида к сделке/контакту
 
-- Управление источниками сделок
-- Аналитика по источникам
+#### 14. **Источники (Sources)** ✅
 
-#### 6. **Шаблоны (Templates)**
+- ✅ `getSources()` - Получение списка источников
+- ✅ `getSource(sourceId)` - Получение источника по ID
+- ✅ `addSource(source)` - Добавление источника
+- ✅ `updateSource(sourceId, source)` - Обновление источника
+- ✅ `updateSources(updates)` - Массовое обновление источников
+- ✅ `deleteSource(sourceId)` - Удаление источника
+- ✅ `deleteSources(sourceIds)` - Массовое удаление источников
 
-- Управление шаблонами писем
-- WhatsApp шаблоны
+#### 15. **Шаблоны (Templates)** ✅
 
-#### 7. **Разговоры (Conversations)**
+- ✅ `getTemplates()` - Получение списка шаблонов
+- ✅ `getTemplate(templateId)` - Получение шаблона по ID
+- ✅ `addTemplate(template)` - Добавление шаблона
+- ✅ `updateTemplate(templateId, template)` - Обновление шаблона
+- ✅ `updateTemplates(updates)` - Массовое обновление шаблонов
+- ✅ `submitTemplate(templateId)` - Отправка WhatsApp шаблона на модерацию
+- ✅ `updateTemplateStatus(templateId, status)` - Изменение статуса WhatsApp шаблона
+- ✅ `deleteTemplate(templateId)` - Удаление шаблона
+- ✅ `deleteTemplates(templateIds)` - Массовое удаление шаблонов
 
-- Управление разговорами
-- Закрытие разговоров
+#### 16. **Разговоры (Conversations)** ✅
 
-#### 8. **События (Events)**
+- ✅ `getConversation(conversationId)` - Получение разговора по ID
+- ✅ `closeConversation(conversationId)` - Закрытие разговора
 
-- Отслеживание событий
-- Аналитика действий
+#### 17. **События (Events)** ✅
 
-#### 9. **Списки (Lists)**
+- ✅ `getEvents(filters?)` - Получение списка событий (с фильтрами)
+- ✅ `getEvent(eventId)` - Получение события по ID
+- ✅ `getEventTypes()` - Получение типов событий
 
-- Работа со списками контактов
-- Сегментация
+#### 18. **Списки (Lists)** ✅
 
-#### 10. **Связи между сущностями (Links)**
+- ✅ `getLists()` - Получение списка списков
+- ✅ `getList(listId)` - Получение списка по ID
+- ✅ `addList(list)` - Добавление списка
+- ✅ `updateList(listId, list)` - Обновление списка
+- ✅ `updateLists(updates)` - Массовое обновление списков
+- ✅ `getListElements(listId)` - Получение элементов списка
+- ✅ `getListElement(listId, elementId)` - Получение элемента списка по ID
+- ✅ `addListElements(listId, elements)` - Добавление элементов в список
+- ✅ `updateListElements(listId, updates)` - Обновление элементов списка (массово)
+- ✅ `updateListElement(listId, elementId, element)` - Обновление элемента списка
 
-- Связывание сущностей
-- Построение связей
+#### 19. **Связи между сущностями (Links)** ✅
 
-#### 11. **Роли пользователей (Roles)**
+- ✅ `getLinks(entityType, entityId)` - Получение списка связей сущности
+- ✅ `createLink(entityType, entityId, link)` - Создание связи между сущностями
+- ✅ `deleteLink(entityType, entityId, link)` - Удаление связи между сущностями
 
-- Управление ролями
-- Права доступа
+#### 20. **Роли пользователей (Roles)** ✅
 
-#### 12. **Виджеты (Widgets)**
+- ✅ `getRoles()` - Получение списка ролей
+- ✅ `getRole(roleId)` - Получение роли по ID
+- ✅ `addRole(role)` - Добавление роли
+- ✅ `updateRole(roleId, role)` - Обновление роли
+- ✅ `deleteRole(roleId)` - Удаление роли
 
-- Установка/удаление виджетов
+#### 21. **Виджеты (Widgets)** ✅
 
-#### 13. **Salesbot**
+- ✅ `getWidgets()` - Получение списка виджетов
+- ✅ `getWidget(widgetCode)` - Получение виджета по коду
+- ✅ `installWidget(widgetCode, settings?)` - Установка виджета в аккаунт
+- ✅ `uninstallWidget(widgetCode)` - Удаление виджета из аккаунта
 
-- Запуск Salesbot
+#### 22. **Salesbot** ✅
+
+- ✅ `launchSalesbot(launchData)` - Запуск Salesbot
 
 ---
 
