@@ -94,7 +94,3 @@ export {
  PopoverAnchor,
 } from './popover'
 
-// Layout компоненты
-// Старые компоненты удалены - используйте Shadcn Sidebar из './sidebar'
-
-// CRM и Dashboard компоненты удалены - проект теперь только публичные страницы

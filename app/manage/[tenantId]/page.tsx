@@ -1,7 +1,7 @@
-export default function PlatformPage() {
+export default function AppPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950">
-      {/* Пустая страница платформы */}
+      {/* Пустая страница приложения */}
     </div>
   )
 }

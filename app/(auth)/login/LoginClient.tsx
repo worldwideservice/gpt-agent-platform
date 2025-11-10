@@ -48,7 +48,7 @@ export const LoginClient = () => {
   // Редирект если пользователь уже авторизован (например, через rememberMe или прямую ссылку)
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.id) {
-      // Если пользователь уже авторизован, сразу редиректим на платформу
+      // Если пользователь уже авторизован, сразу редиректим в приложение
       fetch('/api/auth/get-tenant-redirect', { cache: 'no-store' })
         .then((res) => res.json())
         .then((redirectData) => {

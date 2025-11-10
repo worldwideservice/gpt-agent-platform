@@ -1,12 +1,11 @@
 {
-  "name": "gpt-agent-platform",
+  "name": "ton18-agent",
   "version": "1.0.5",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "dev:demo": "DEMO_MODE=true next dev",
     "test:build": "bash scripts/quick-test.sh",
-    "test:platform": "bash scripts/test-platform.sh",
     "generate:openapi": "node scripts/generate-openapi.js",
     "prebuild": "echo '⚠️ Skipping OpenAPI generation for now' || true",
     "build": "next build && node scripts/postbuild.js",

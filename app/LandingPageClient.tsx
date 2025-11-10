@@ -35,7 +35,7 @@ export function LandingPageClient() {
   const [isRedirecting, setIsRedirecting] = useState(false)
   const { push: toast } = useToast()
 
-  const handleGoToPlatform = async () => {
+  const handleGoToApp = async () => {
     if (isRedirecting) return // Prevent double clicks
 
     if (status === 'authenticated' && session?.user) {
@@ -86,7 +86,7 @@ export function LandingPageClient() {
         } else {
           toast({
             title: 'Ошибка',
-            description: 'Не удалось получить доступ к платформе. Пожалуйста, войдите снова.',
+            description: 'Не удалось получить доступ к приложению. Пожалуйста, войдите снова.',
             variant: 'error',
           })
           // Используем window.location.href для гарантированного редиректа
@@ -175,7 +175,7 @@ export function LandingPageClient() {
                 </span>
               </h1>
               <p className="max-w-[750px] text-lg text-gray-600 sm:text-xl">
-                TON 18 — это платформа для создания умных виртуальных сотрудников, 
+                TON 18 — это приложение для создания умных виртуальных сотрудников, 
                 которые автоматизируют общение с клиентами, обработку сделок и 
                 выполнение задач через интеграцию с CRM системами.
               </p>
@@ -187,7 +187,7 @@ export function LandingPageClient() {
                 <Button 
                   size="lg" 
                   className="text-base"
-                  onClick={handleGoToPlatform}
+                  onClick={handleGoToApp}
                   disabled={isRedirecting}
                 >
                   {isRedirecting ? (
@@ -239,7 +239,7 @@ export function LandingPageClient() {
               Всё что нужно для работы с AI-агентами
             </h2>
             <p className="max-w-[85%] leading-normal text-gray-600 sm:text-lg sm:leading-7">
-              Мощная платформа с полным набором инструментов для создания, обучения и управления AI-агентами
+              Мощное приложение с полным набором инструментов для создания, обучения и управления AI-агентами
             </p>
           </div>
         </ScrollAnimation>

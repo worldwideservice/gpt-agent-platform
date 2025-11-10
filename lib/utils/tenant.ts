@@ -1,5 +1,5 @@
 /**
- * Утилиты для работы с tenant-id в формате Kwid
+ * Утилиты для работы с tenant-id
  * Формат: {id}-{slug} (например: 1000373-worldwideservices)
  */
 

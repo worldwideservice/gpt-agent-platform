@@ -1,7 +1,7 @@
-// Service Worker for TON 18 Platform PWA
-const CACHE_NAME = 'ton18-platform-v1.0.0'
-const STATIC_CACHE = 'ton18-platform-static-v1.0.0'
-const API_CACHE = 'ton18-platform-api-v1.0.0'
+// Service Worker for TON 18 PWA
+const CACHE_NAME = 'ton18-app-v1.0.0'
+const STATIC_CACHE = 'ton18-app-static-v1.0.0'
+const API_CACHE = 'ton18-app-api-v1.0.0'
 
 // Resources to cache immediately
 const STATIC_ASSETS = [
@@ -14,7 +14,6 @@ const STATIC_ASSETS = [
 
 // API endpoints to cache (with short TTL)
 const API_ENDPOINTS = [
-  '/api/dashboard',
   '/api/agents',
 ]
 
@@ -136,7 +135,7 @@ async function handleStaticRequest(request) {
         <!DOCTYPE html>
         <html>
           <head>
-            <title>GPT Agent - Offline</title>
+            <title>TON 18 - Offline</title>
             <meta charset="utf-8">
             <style>
               body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; text-align: center; padding: 50px; }

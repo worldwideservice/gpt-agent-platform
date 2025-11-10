@@ -33,7 +33,7 @@ export const metadata: Metadata = {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'TON 18 Platform',
+        alt: 'TON 18',
       },
     ],
   },

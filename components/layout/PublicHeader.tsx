@@ -23,7 +23,7 @@ export function PublicHeader({ showNav = true, alwaysShowAuthButtons = false }: 
   const [isRedirecting, setIsRedirecting] = useState(false)
   const isHomePage = pathname === '/'
 
-  const handleGoToPlatform = () => {
+  const handleGoToApp = () => {
     setIsRedirecting(true)
     // Router navigation is handled by Link, we just set loading state
   }
@@ -93,7 +93,7 @@ export function PublicHeader({ showNav = true, alwaysShowAuthButtons = false }: 
               disabled={isRedirecting}
               asChild
             >
-              <Link href="/manage" onClick={handleGoToPlatform}>
+              <Link href="/manage" onClick={handleGoToApp}>
                 {isRedirecting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

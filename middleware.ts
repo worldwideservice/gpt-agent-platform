@@ -18,7 +18,7 @@ export async function middleware(request: NextRequest) {
  return NextResponse.next()
  }
 
-  // Разрешаем /manage/[tenantId] - это страница платформы
+  // Разрешаем /manage/[tenantId] - это страница приложения
   if (pathname.startsWith('/manage/')) {
     return NextResponse.next()
   }

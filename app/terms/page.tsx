@@ -7,7 +7,7 @@ import { FileText, Calendar, Shield } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Условия использования — TON 18',
-  description: 'Условия использования платформы TON 18',
+  description: 'Условия использования приложения TON 18',
 }
 
 export default function TermsPage() {
@@ -42,7 +42,7 @@ export default function TermsPage() {
                   1. Принятие условий
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-                  Используя платформу TON 18, вы соглашаетесь с настоящими Условиями использования. 
+                  Используя приложение TON 18, вы соглашаетесь с настоящими Условиями использования. 
                   Если вы не согласны с какими-либо условиями, пожалуйста, не используйте наш сервис.
                 </p>
                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -56,7 +56,7 @@ export default function TermsPage() {
                   2. Описание сервиса
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-                  TON 18 — это платформа для создания и управления AI-агентами, которая позволяет:
+                  TON 18 — это приложение для создания и управления AI-агентами, которое позволяет:
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-400 ml-4">
                   <li>Создавать и настраивать AI-агентов с использованием различных моделей LLM</li>
@@ -71,7 +71,7 @@ export default function TermsPage() {
                   3. Регистрация и учетная запись
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-                  Для использования платформы необходимо создать учетную запись. Вы обязуетесь:
+                  Для использования приложения необходимо создать учетную запись. Вы обязуетесь:
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-400 ml-4">
                   <li>Предоставлять точную и актуальную информацию при регистрации</li>
@@ -86,7 +86,7 @@ export default function TermsPage() {
                   4. Использование сервиса
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-                  Вы соглашаетесь использовать платформу только в законных целях и в соответствии с настоящими условиями. 
+                  Вы соглашаетесь использовать приложение только в законных целях и в соответствии с настоящими условиями. 
                   Запрещается:
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-400 ml-4">
@@ -103,7 +103,7 @@ export default function TermsPage() {
                   5. Тарифы и оплата
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-                  Доступ к платформе предоставляется на основе выбранного тарифного плана. 
+                  Доступ к приложению предоставляется на основе выбранного тарифного плана. 
                   Подробная информация о тарифах доступна на странице{' '}
                   <Link href="/pricing" className="text-primary hover:underline">
                     тарифов
@@ -124,12 +124,12 @@ export default function TermsPage() {
                   6. Интеллектуальная собственность
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-                  Все права на платформу TON 18, включая дизайн, функциональность и контент, принадлежат нам 
+                  Все права на приложение TON 18, включая дизайн, функциональность и контент, принадлежат нам 
                   или нашим лицензиарам. Вы получаете ограниченную, неисключительную, непередаваемую лицензию 
                   на использование сервиса в соответствии с настоящими условиями.
                 </p>
                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                  Контент, созданный вами с использованием платформы, остается вашей собственностью. 
+                  Контент, созданный вами с использованием приложения, остается вашей собственностью. 
                   Вы предоставляете нам лицензию на использование такого контента для предоставления услуг.
                 </p>
               </section>
@@ -139,7 +139,7 @@ export default function TermsPage() {
                   7. Ограничение ответственности
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-                  Платформа предоставляется &quot;как есть&quot; без каких-либо гарантий. Мы не гарантируем, что:
+                  Приложение предоставляется &quot;как есть&quot; без каких-либо гарантий. Мы не гарантируем, что:
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-400 ml-4">
                   <li>Сервис будет работать без перерывов или ошибок</li>
@@ -193,7 +193,7 @@ export default function TermsPage() {
                 <Logo showTagline />
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 max-w-xs leading-relaxed mt-2">
-                create infinity — Платформа для создания и автоматизации работы с AI-агентами
+                create infinity — Приложение для создания и автоматизации работы с AI-агентами
               </p>
             </div>
             

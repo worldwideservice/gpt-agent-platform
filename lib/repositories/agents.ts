@@ -346,7 +346,7 @@ const loadDashboardStatsFromView = async (
 
  const totalAgents = await countAgents(supabase, organizationId)
 
- // Kwid: Получаем todayChange из view или вычисляем (если есть поле today_change)
+ // Получаем todayChange из view или вычисляем (если есть поле today_change)
  const todayChange = (row as any).today_change ?? 0
 
  return {
@@ -380,7 +380,7 @@ const loadDashboardStatsFromFunction = async (
 
  const totalAgents = await countAgents(supabase, organizationId)
 
- // Kwid: Получаем todayChange из функции или вычисляем
+ // Получаем todayChange из функции или вычисляем
  const todayChange = (result as any).today_change ?? 0
 
  return {
@@ -456,7 +456,7 @@ const buildDashboardStatsFromAgents = async (
  const previousMonthResponses = calculatePreviousMonthTotal(metrics, now)
  const monthlyChange = calculatePercentageChange(previousMonthResponses, monthlyResponses)
 
- // Kwid: Расчет изменения для "Today's AI Responses" vs yesterday
+ // Расчет изменения для "Today's AI Responses" vs yesterday
  const yesterday = new Date(now)
  yesterday.setUTCDate(yesterday.getUTCDate() - 1)
  let yesterdayResponses = 0
