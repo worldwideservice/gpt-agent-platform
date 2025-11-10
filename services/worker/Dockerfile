@@ -1,18 +1,18 @@
 # Multi-stage build для Worker сервиса
-# Railway запускает сборку из корня проекта
+# Railway может запускать сборку из разных директорий
 FROM node:20-alpine AS base
 
-# Устанавливаем рабочую директорию в корень проекта
+# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем package.json Worker для установки зависимостей
-# Railway использует root directory = /, поэтому путь должен быть относительно корня
-COPY services/worker/package.json services/worker/package-lock.json* ./services/worker/
+# Копируем package.json и package-lock.json (если есть)
+COPY package.json package-lock.json* ./
 
-# Копируем весь проект (включая lib/)
+# Копируем весь проект
 COPY . .
 
-# Переходим в директорию Worker и собираем
+# Переходим в директорию Worker (если запускаем из корня)
+# Или остаемся здесь (если запускаем из services/worker)
 WORKDIR /app/services/worker
 
 # Устанавливаем зависимости и собираем
@@ -29,13 +29,12 @@ RUN apk add --no-cache wget
 WORKDIR /app
 
 # Копируем package.json Worker для production зависимостей
-COPY services/worker/package.json services/worker/package-lock.json* ./services/worker/
+COPY --from=base /app/services/worker/package.json ./services/worker/
 
 # Копируем собранное приложение Worker
 COPY --from=base /app/services/worker/dist ./services/worker/dist
 
 # Копируем локальный lib из services/worker/src/lib для резолва импортов ../lib/* из dist/index.js
-# Импорт ../lib/env.ts из dist/index.js резолвится как services/worker/lib/env.ts
 COPY --from=base /app/services/worker/src/lib ./services/worker/lib
 
 # Копируем lib и types директории из корня (могут быть нужны для динамических импортов)
@@ -63,8 +62,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3001}/health || exit 1
 
 # Запускаем worker напрямую через tsx из node_modules для поддержки TypeScript импортов из lib/
-# tsx позволяет динамически импортировать .ts файлы во время выполнения
-# tsx автоматически резолвит path aliases из tsconfig.json при использовании tsImport
-# Запускаем из /app/services/worker, чтобы импорты ../lib/* из dist/index.js резолвились правильно
 WORKDIR /app/services/worker
 CMD ["node", "node_modules/.bin/tsx", "--tsconfig", "/app/tsconfig.json", "dist/index.js"]
