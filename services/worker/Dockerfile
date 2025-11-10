@@ -28,7 +28,7 @@ RUN apk add --no-cache wget
 WORKDIR /app
 
 # Копируем package.json Worker для production зависимостей
-COPY services/worker/package.json services/worker/package-lock.json ./services/worker/
+COPY services/worker/package.json ./services/worker/
 
 # Копируем собранное приложение Worker
 COPY --from=base /app/services/worker/dist ./services/worker/dist
@@ -66,4 +66,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 # tsx автоматически резолвит path aliases из tsconfig.json при использовании tsImport
 # Запускаем из /app/services/worker, чтобы импорты ../lib/* из dist/index.js резолвились правильно
 WORKDIR /app/services/worker
-CMD ["node", "/app/services/worker/node_modules/.bin/tsx", "--tsconfig", "/app/tsconfig.json", "dist/index.js"]
+CMD ["node", "/app/services/worker/node_modules/.bin/tsx", "--tsconfig", "/app/tsconfig.json", "/app/services/worker/dist/index.js"]
