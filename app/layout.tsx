@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { SessionProviderWrapper } from '@/components/providers/SessionProviderWrapper'
 
 import './globals.css'
 
@@ -114,7 +115,9 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
  />
  </head>
  <body className={inter.className}>
+ <SessionProviderWrapper>
  {children}
+ </SessionProviderWrapper>
  <Analytics />
  </body>
  </html>
