@@ -95,18 +95,6 @@ export {
 } from './popover'
 
 // Layout компоненты
-export { Sidebar } from '../layout/Sidebar'
-export { Header } from '../layout/Header'
+// Старые компоненты удалены - используйте Shadcn Sidebar из './sidebar'
 
-// CRM компоненты
-export { CRMSync } from '../crm/CRMSync'
-export { ChannelsSettings } from '../crm/ChannelsSettings'
-export { KnowledgeBaseSettings } from '../crm/KnowledgeBaseSettings'
-export { InteractionSettings } from '../crm/InteractionSettings'
-export { CRMSelector } from '../crm/CRMSelector'
-export { UniversalSync } from '../crm/UniversalSync'
-export { KommoSetup } from '../crm/KommoSetup'
-export { KommoAPIDebugger } from '../crm/KommoAPIDebugger'
-
-// Dashboard компоненты
-export { StatCard } from '../dashboard/StatCard'
+// CRM и Dashboard компоненты удалены - проект теперь только публичные страницы
