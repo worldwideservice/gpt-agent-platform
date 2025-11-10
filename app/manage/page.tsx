@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 
-export default function ManageRedirect() {
+export default function ManageRootRedirect() {
   redirect('/')
 }
+

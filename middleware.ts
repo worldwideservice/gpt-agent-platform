@@ -19,9 +19,9 @@ export async function middleware(request: NextRequest) {
  return NextResponse.next()
  }
 
- // Если уже на новом пути, пропускаем
+ // Редирект всех путей /manage/* на главную (платформа удалена)
  if (pathname.startsWith('/manage/')) {
- return NextResponse.next()
+ return NextResponse.redirect(new URL('/', request.url))
  }
 
  // Редиректы для публичных страниц (не требуют tenant-id)
@@ -30,13 +30,14 @@ export async function middleware(request: NextRequest) {
  return NextResponse.next()
  }
 
- // Редиректы старых путей на новые (без tenant-id, layout подставит)
+ // Редиректы старых путей на главную (платформа удалена)
  const redirects: Record<string, string> = {
- '/agents': '/manage/redirect/ai-agents',
- '/knowledge-base/articles': '/manage/redirect/knowledge-items',
- '/knowledge-base/categories': '/manage/redirect/knowledge-categories',
- '/account': '/manage/redirect/account-settings',
- '/chat': '/manage/redirect/test-chat',
+ '/agents': '/',
+ '/knowledge-base/articles': '/',
+ '/knowledge-base/categories': '/',
+ '/account': '/',
+ '/chat': '/',
+ '/manage': '/',
  }
 
  // Проверяем точное совпадение
