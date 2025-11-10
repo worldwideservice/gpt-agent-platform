@@ -95,8 +95,7 @@ export {
 } from './popover'
 
 // Layout компоненты
-export { Sidebar } from '../layout/Sidebar'
-export { Header } from '../layout/Header'
+// Старые компоненты удалены - используйте Shadcn Sidebar из './sidebar'
 
 // CRM компоненты
 export { CRMSync } from '../crm/CRMSync'

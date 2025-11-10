@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
-import { HeaderWithSidebar } from "@/components/layout/HeaderWithSidebar";
-import { SidebarProvider } from "@/components/layout/SidebarToggle";
+import { ManageLayout } from "@/components/layout/ManageLayout";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { RefineProvider } from "@/components/refine/providers";
 import { auth } from "@/auth";
 import { getOrganizationsForUser } from "@/lib/repositories/organizations";
@@ -449,14 +449,14 @@ const ManageLayout = async ({ children, params }: ManageLayoutProps) => {
  return (
    <RefineProvider>
      <SidebarProvider>
-       <HeaderWithSidebar
+       <ManageLayout
          session={session}
          organizations={organizations}
          activeOrganization={activeOrganization}
          tenantId={tenantId}
        >
          {children}
-       </HeaderWithSidebar>
+       </ManageLayout>
      </SidebarProvider>
    </RefineProvider>
  );
