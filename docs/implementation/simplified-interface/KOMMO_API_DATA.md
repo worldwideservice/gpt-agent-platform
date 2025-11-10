@@ -1,7 +1,8 @@
 # Полный список данных и методов Kommo CRM API
 
 **Дата обновления:** 2025-01-26  
-**Источник:** 
+**Источник:**
+
 - Официальная документация Kommo API: https://developers.kommo.com/docs/about-kommo-api
 - Анализ кода проекта
 - Реализованные методы в `lib/lib/crm/kommo.ts`
@@ -15,6 +16,7 @@
 **Endpoint:** `GET /api/v4/leads/pipelines`
 
 **Данные:**
+
 - `id` - ID воронки
 - `name` - Название воронки
 - `sort` - Порядок сортировки
@@ -33,6 +35,7 @@
 **Метод в коде:** `getPipelines()`
 
 **Использование:**
+
 - Выбор воронок для работы агента
 - Настройка этапов для триггеров
 - Фильтрация сделок по воронкам
@@ -44,6 +47,7 @@
 **Endpoint:** `GET /api/v4/leads/pipelines/{pipeline_id}`
 
 **Данные:**
+
 - `id` - ID этапа
 - `name` - Название этапа
 - `sort` - Порядок сортировки
@@ -59,6 +63,7 @@
 **Метод в коде:** `getPipelines()` (вложено в `_embedded.statuses`)
 
 **Использование:**
+
 - Настройка триггеров по этапам
 - Автоматическое перемещение сделок
 - Условия для цепочек
@@ -68,12 +73,14 @@
 ### 3. **Сделки (Leads)**
 
 **Endpoints:**
+
 - `GET /api/v4/leads` - Список сделок
 - `GET /api/v4/leads/{id}` - Конкретная сделка
 - `POST /api/v4/leads` - Создание сделки
 - `PATCH /api/v4/leads` - Обновление сделки
 
 **Данные:**
+
 - `id` - ID сделки
 - `name` - Название сделки
 - `price` - Сумма сделки
@@ -106,6 +113,7 @@
   - `name` - Название тега
 
 **Методы в коде:**
+
 - `getLead(leadId)` - Получить сделку
 - `getLeads()` - Список сделок
 - `createLead(lead)` - Создать сделку
@@ -113,6 +121,7 @@
 - `searchLeads(query)` - Поиск сделок
 
 **Использование:**
+
 - Получение данных сделки для агента
 - Обновление полей сделки
 - Перемещение по этапам
@@ -123,12 +132,14 @@
 ### 4. **Контакты (Contacts)**
 
 **Endpoints:**
+
 - `GET /api/v4/contacts` - Список контактов
 - `GET /api/v4/contacts/{id}` - Конкретный контакт
 - `POST /api/v4/contacts` - Создание контакта
 - `PATCH /api/v4/contacts` - Обновление контакта
 
 **Данные:**
+
 - `id` - ID контакта
 - `name` - Имя контакта
 - `first_name` - Имя
@@ -152,12 +163,14 @@
 - `_embedded.tags` - Теги
 
 **Методы в коде:**
+
 - `getContact(contactId)` - Получить контакт
 - `createContact(contact)` - Создать контакт
 - `updateContact(contactId, contact)` - Обновить контакт
 - `searchContacts(query)` - Поиск контактов
 
 **Использование:**
+
 - Получение данных контакта для агента
 - Обновление полей контакта
 - Создание новых контактов
@@ -169,6 +182,7 @@
 **Endpoint:** `GET /api/v4/custom_fields`
 
 **Данные:**
+
 - `id` - ID поля
 - `name` - Название поля
 - `type` - Тип поля:
@@ -206,10 +220,12 @@
   - `sort` - Порядок
 
 **Методы в коде:**
+
 - `getCustomFields()` - Получить все поля
 - `createCustomField(field)` - Создать поле
 
 **Использование:**
+
 - Выбор полей для доступа агента
 - Автоматическое обновление полей
 - Валидация данных
@@ -221,6 +237,7 @@
 **Endpoint:** `GET /api/v4/users`
 
 **Данные:**
+
 - `id` - ID пользователя
 - `name` - Имя пользователя
 - `email` - Email
@@ -233,9 +250,11 @@
 - `role_id` - ID роли
 
 **Методы в коде:**
+
 - `getUsers()` - Получить список пользователей
 
 **Использование:**
+
 - Назначение ответственных
 - Фильтрация по менеджерам
 - Аналитика по пользователям
@@ -245,11 +264,13 @@
 ### 7. **Задачи (Tasks)**
 
 **Endpoints:**
+
 - `GET /api/v4/tasks` - Список задач
 - `POST /api/v4/tasks` - Создание задачи
 - `PATCH /api/v4/tasks` - Обновление задачи
 
 **Данные:**
+
 - `id` - ID задачи
 - `text` - Текст задачи
 - `complete_till` - Срок выполнения (timestamp)
@@ -268,11 +289,13 @@
 - `result` - Результат выполнения
 
 **Методы в коде:**
+
 - `createTask(task)` - Создать задачу
 - `updateTask(taskId, task)` - Обновить задачу
 - `getTasksByEntity(entityId, entityType)` - Получить задачи по сущности
 
 **Использование:**
+
 - Создание задач для менеджеров
 - Автоматизация напоминаний
 - Отслеживание выполнения
@@ -282,6 +305,7 @@
 ### 8. **Примечания (Notes)** ⭐ КРИТИЧНО ДЛЯ РАБОТЫ С ПИСЬМАМИ
 
 **Endpoints:**
+
 - `GET /api/v4/{entity_type}/{entity_id}/notes` - Список примечаний по сущности
 - `GET /api/v4/{entity_type}/notes` - Список примечаний по типу сущности
 - `GET /api/v4/notes/{id}` - Получить конкретное примечание
@@ -290,6 +314,7 @@
 - `PATCH /api/v4/notes/{id}` - Обновление конкретного примечания
 
 **Данные:**
+
 - `id` - ID примечания
 - `entity_id` - ID сущности
 - `entity_type` - Тип сущности:
@@ -328,6 +353,7 @@
 - `updated_at` - Дата обновления (timestamp)
 
 **Методы в коде:**
+
 - `createNote(note)` - Создать примечание
 - `getNotesByEntity(entityId, entityType)` - Получить примечания по сущности
 - `sendEmailFromLead(leadId, emailData)` - **Отправить email через сделку**
@@ -337,43 +363,47 @@
 **📧 Работа с электронными письмами:**
 
 **Отправка письма:**
+
 ```typescript
 // Отправка письма клиенту через сделку
 await kommoApi.sendEmailFromLead(leadId, {
-  to: ['client@example.com'],
-  subject: 'Ответ на ваш вопрос',
-  html: '<p>Текст письма в HTML</p>',
-  text: 'Текст письма в plain text',
-  from: 'agent@company.com',
-  cc: ['manager@company.com'],
-  bcc: []
-})
+  to: ["client@example.com"],
+  subject: "Ответ на ваш вопрос",
+  html: "<p>Текст письма в HTML</p>",
+  text: "Текст письма в plain text",
+  from: "agent@company.com",
+  cc: ["manager@company.com"],
+  bcc: [],
+});
 ```
 
 **Чтение писем из сделки:**
+
 ```typescript
 // Получить все примечания (включая письма) по сделке
-const notes = await kommoApi.getNotesByEntity(leadId, 'leads')
+const notes = await kommoApi.getNotesByEntity(leadId, "leads");
 
 // Фильтровать только письма
-const emails = notes.filter(note => 
-  note.note_type === 'mail_message' || 
-  note.note_type === 'outgoing_email' || 
-  note.note_type === 'incoming_email'
-)
+const emails = notes.filter(
+  (note) =>
+    note.note_type === "mail_message" ||
+    note.note_type === "outgoing_email" ||
+    note.note_type === "incoming_email",
+);
 
 // Получить входящие письма
-const incomingEmails = emails.filter(email => 
-  email.params.from && !email.params.to?.includes(agentEmail)
-)
+const incomingEmails = emails.filter(
+  (email) => email.params.from && !email.params.to?.includes(agentEmail),
+);
 
 // Получить исходящие письма
-const outgoingEmails = emails.filter(email => 
-  email.params.to && email.params.status === 1
-)
+const outgoingEmails = emails.filter(
+  (email) => email.params.to && email.params.status === 1,
+);
 ```
 
 **Использование:**
+
 - ✅ **Отправка писем клиентам через AI-агента**
 - ✅ **Чтение входящих писем из сделки**
 - ✅ **История переписки в сделке**
@@ -385,12 +415,14 @@ const outgoingEmails = emails.filter(email =>
 ### 9. **Компании (Companies)**
 
 **Endpoints:**
+
 - `GET /api/v4/companies` - Список компаний
 - `GET /api/v4/companies/{id}` - Конкретная компания
 - `POST /api/v4/companies` - Создание компании
 - `PATCH /api/v4/companies` - Обновление компании
 
 **Данные:**
+
 - `id` - ID компании
 - `name` - Название компании
 - `responsible_user_id` - ID ответственного
@@ -401,9 +433,14 @@ const outgoingEmails = emails.filter(email =>
 - `_embedded.leads` - Связанные сделки
 - `_embedded.tags` - Теги
 
-**Методы в коде:** (не реализовано, но доступно через API)
+**Методы в коде:**
+- `getCompanies()` - Получить список компаний
+- `getCompany(companyId)` - Получить компанию по ID
+- `createCompany(company)` - Создать компанию
+- `updateCompany(companyId, company)` - Обновить компанию
 
 **Использование:**
+
 - Работа с компаниями
 - Связывание контактов и сделок
 
@@ -414,13 +451,19 @@ const outgoingEmails = emails.filter(email =>
 **Endpoint:** `GET /api/v4/tags`
 
 **Данные:**
+
 - `id` - ID тега
 - `name` - Название тега
 - `color` - Цвет тега
 
-**Методы в коде:** (не реализовано, но доступно через API)
+**Методы в коде:**
+- `getCompanies()` - Получить список компаний
+- `getCompany(companyId)` - Получить компанию по ID
+- `createCompany(company)` - Создать компанию
+- `updateCompany(companyId, company)` - Обновить компанию
 
 **Использование:**
+
 - Группировка сделок/контактов
 - Фильтрация
 
@@ -431,6 +474,7 @@ const outgoingEmails = emails.filter(email =>
 **Endpoint:** `GET /api/v4/account`
 
 **Данные:**
+
 - `id` - ID аккаунта
 - `name` - Название аккаунта
 - `subdomain` - Поддомен
@@ -439,9 +483,14 @@ const outgoingEmails = emails.filter(email =>
 - `timezone` - Часовой пояс
 - `timezone_offset` - Смещение часового пояса
 
-**Методы в коде:** (не реализовано, но доступно через API)
+**Методы в коде:**
+- `getCompanies()` - Получить список компаний
+- `getCompany(companyId)` - Получить компанию по ID
+- `createCompany(company)` - Создать компанию
+- `updateCompany(companyId, company)` - Обновить компанию
 
 **Использование:**
+
 - Проверка подключения
 - Получение настроек аккаунта
 
@@ -450,12 +499,14 @@ const outgoingEmails = emails.filter(email =>
 ### 12. **Статистика (Stats)**
 
 **Методы в коде:**
+
 - `getLeadsStats()` - Статистика по сделкам:
   - `total` - Всего сделок
   - `by_status` - По этапам (Record<status_id, count>)
   - `by_pipeline` - По воронкам (Record<pipeline_id, count>)
 
 **Использование:**
+
 - Аналитика
 - Отчеты
 - Dashboard
@@ -465,6 +516,7 @@ const outgoingEmails = emails.filter(email =>
 ### 13. **Входящие лиды (Incoming Leads)**
 
 **Endpoints:**
+
 - `GET /api/v4/incoming_leads` - Список входящих лидов
 - `GET /api/v4/incoming_leads/{uid}` - Получить входящий лид по UID
 - `POST /api/v4/incoming_leads` - Добавить входящий лид
@@ -475,6 +527,7 @@ const outgoingEmails = emails.filter(email =>
 - `POST /api/v4/incoming_leads/{uid}/link` - Привязать входящий лид к сделке/контакту
 
 **Данные:**
+
 - `uid` - Уникальный идентификатор входящего лида
 - `source_uid` - UID источника
 - `source_type` - Тип источника (form, sip, etc.)
@@ -483,9 +536,14 @@ const outgoingEmails = emails.filter(email =>
 - `created_at` - Дата создания
 - `metadata` - Метаданные лида
 
-**Методы в коде:** (не реализовано, но доступно через API)
+**Методы в коде:**
+- `getCompanies()` - Получить список компаний
+- `getCompany(companyId)` - Получить компанию по ID
+- `createCompany(company)` - Создать компанию
+- `updateCompany(companyId, company)` - Обновить компанию
 
 **Использование:**
+
 - Обработка входящих заявок
 - Автоматическое создание сделок
 - Интеграция с формами и звонками
@@ -495,6 +553,7 @@ const outgoingEmails = emails.filter(email =>
 ### 14. **Источники (Sources)**
 
 **Endpoints:**
+
 - `GET /api/v4/leads/sources` - Список источников
 - `GET /api/v4/leads/sources/{id}` - Получить источник по ID
 - `POST /api/v4/leads/sources` - Добавить источник
@@ -504,14 +563,20 @@ const outgoingEmails = emails.filter(email =>
 - `DELETE /api/v4/leads/sources/{id}` - Удалить источник
 
 **Данные:**
+
 - `id` - ID источника
 - `name` - Название источника
 - `type` - Тип источника
 - `external_id` - Внешний ID
 
-**Методы в коде:** (не реализовано, но доступно через API)
+**Методы в коде:**
+- `getCompanies()` - Получить список компаний
+- `getCompany(companyId)` - Получить компанию по ID
+- `createCompany(company)` - Создать компанию
+- `updateCompany(companyId, company)` - Обновить компанию
 
 **Использование:**
+
 - Отслеживание источников сделок
 - Аналитика по источникам
 - Настройка каналов
@@ -521,6 +586,7 @@ const outgoingEmails = emails.filter(email =>
 ### 15. **Шаблоны (Templates)**
 
 **Endpoints:**
+
 - `GET /api/v4/templates` - Список шаблонов
 - `GET /api/v4/templates/{id}` - Получить шаблон по ID
 - `POST /api/v4/templates` - Добавить шаблон
@@ -532,6 +598,7 @@ const outgoingEmails = emails.filter(email =>
 - `DELETE /api/v4/templates/{id}` - Удалить шаблон
 
 **Данные:**
+
 - `id` - ID шаблона
 - `name` - Название шаблона
 - `type` - Тип шаблона (email, sms, whatsapp)
@@ -541,9 +608,11 @@ const outgoingEmails = emails.filter(email =>
 - `status` - Статус (для WhatsApp)
 
 **Методы в коде:**
+
 - `getEmailTemplates()` - Получить шаблоны писем (заглушка, возвращает пустой массив)
 
 **Использование:**
+
 - Шаблоны писем для агента
 - Автоматические ответы
 - Персонализация сообщений
@@ -553,10 +622,12 @@ const outgoingEmails = emails.filter(email =>
 ### 16. **Разговоры (Conversations)**
 
 **Endpoints:**
+
 - `GET /api/v4/conversations/{id}` - Получить разговор по ID
 - `POST /api/v4/conversations/{id}/close` - Закрыть разговор
 
 **Данные:**
+
 - `id` - ID разговора
 - `entity_id` - ID сущности
 - `entity_type` - Тип сущности
@@ -564,9 +635,14 @@ const outgoingEmails = emails.filter(email =>
 - `status` - Статус разговора
 - `messages` - Сообщения в разговоре
 
-**Методы в коде:** (не реализовано, но доступно через API)
+**Методы в коде:**
+- `getCompanies()` - Получить список компаний
+- `getCompany(companyId)` - Получить компанию по ID
+- `createCompany(company)` - Создать компанию
+- `updateCompany(companyId, company)` - Обновить компанию
 
 **Использование:**
+
 - Управление разговорами
 - Закрытие завершенных разговоров
 - История коммуникаций
@@ -576,11 +652,13 @@ const outgoingEmails = emails.filter(email =>
 ### 17. **События (Events)**
 
 **Endpoints:**
+
 - `GET /api/v4/events` - Список событий
 - `GET /api/v4/events/{id}` - Получить событие по ID
 - `GET /api/v4/events/types` - Получить типы событий
 
 **Данные:**
+
 - `id` - ID события
 - `type` - Тип события
 - `entity_id` - ID сущности
@@ -588,9 +666,14 @@ const outgoingEmails = emails.filter(email =>
 - `created_at` - Дата создания
 - `user_id` - ID пользователя
 
-**Методы в коде:** (не реализовано, но доступно через API)
+**Методы в коде:**
+- `getCompanies()` - Получить список компаний
+- `getCompany(companyId)` - Получить компанию по ID
+- `createCompany(company)` - Создать компанию
+- `updateCompany(companyId, company)` - Обновить компанию
 
 **Использование:**
+
 - Отслеживание событий в CRM
 - Аналитика действий
 - Аудит системы
@@ -600,6 +683,7 @@ const outgoingEmails = emails.filter(email =>
 ### 18. **Списки (Lists)**
 
 **Endpoints:**
+
 - `GET /api/v4/lists` - Список списков
 - `GET /api/v4/lists/{id}` - Получить список
 - `POST /api/v4/lists` - Добавить список
@@ -612,14 +696,20 @@ const outgoingEmails = emails.filter(email =>
 - `PATCH /api/v4/lists/{id}/elements/{element_id}` - Обновить элемент
 
 **Данные:**
+
 - `id` - ID списка
 - `name` - Название списка
 - `type` - Тип списка
 - `elements` - Элементы списка
 
-**Методы в коде:** (не реализовано, но доступно через API)
+**Методы в коде:**
+- `getCompanies()` - Получить список компаний
+- `getCompany(companyId)` - Получить компанию по ID
+- `createCompany(company)` - Создать компанию
+- `updateCompany(companyId, company)` - Обновить компанию
 
 **Использование:**
+
 - Работа со списками контактов
 - Сегментация клиентов
 - Массовые операции
@@ -629,17 +719,24 @@ const outgoingEmails = emails.filter(email =>
 ### 19. **Связи между сущностями (Links)**
 
 **Endpoints:**
+
 - `GET /api/v4/{entity_type}/{entity_id}/links` - Список связей сущности
 - `POST /api/v4/{entity_type}/{entity_id}/links` - Создать связь
 - `DELETE /api/v4/{entity_type}/{entity_id}/links` - Удалить связь
 
 **Данные:**
+
 - `to_entity_id` - ID связанной сущности
 - `to_entity_type` - Тип связанной сущности
 
-**Методы в коде:** (не реализовано, но доступно через API)
+**Методы в коде:**
+- `getCompanies()` - Получить список компаний
+- `getCompany(companyId)` - Получить компанию по ID
+- `createCompany(company)` - Создать компанию
+- `updateCompany(companyId, company)` - Обновить компанию
 
 **Использование:**
+
 - Связывание сделок с контактами
 - Связывание компаний с контактами
 - Построение связей между сущностями
@@ -649,6 +746,7 @@ const outgoingEmails = emails.filter(email =>
 ### 20. **Роли пользователей (Roles)**
 
 **Endpoints:**
+
 - `GET /api/v4/users/roles` - Список ролей
 - `GET /api/v4/users/roles/{id}` - Получить роль по ID
 - `POST /api/v4/users/roles` - Добавить роль
@@ -656,13 +754,19 @@ const outgoingEmails = emails.filter(email =>
 - `DELETE /api/v4/users/roles/{id}` - Удалить роль
 
 **Данные:**
+
 - `id` - ID роли
 - `name` - Название роли
 - `rights` - Права доступа
 
-**Методы в коде:** (не реализовано, но доступно через API)
+**Методы в коде:**
+- `getCompanies()` - Получить список компаний
+- `getCompany(companyId)` - Получить компанию по ID
+- `createCompany(company)` - Создать компанию
+- `updateCompany(companyId, company)` - Обновить компанию
 
 **Использование:**
+
 - Управление правами доступа
 - Назначение ролей пользователям
 
@@ -671,20 +775,27 @@ const outgoingEmails = emails.filter(email =>
 ### 21. **Виджеты (Widgets)**
 
 **Endpoints:**
+
 - `GET /api/v4/widgets` - Список виджетов
 - `GET /api/v4/widgets/{code}` - Получить виджет по коду
 - `POST /api/v4/widgets/{code}/install` - Установить виджет в аккаунт
 - `POST /api/v4/widgets/{code}/uninstall` - Удалить виджет из аккаунта
 
 **Данные:**
+
 - `code` - Код виджета
 - `name` - Название виджета
 - `version` - Версия виджета
 - `settings` - Настройки виджета
 
-**Методы в коде:** (не реализовано, но доступно через API)
+**Методы в коде:**
+- `getCompanies()` - Получить список компаний
+- `getCompany(companyId)` - Получить компанию по ID
+- `createCompany(company)` - Создать компанию
+- `updateCompany(companyId, company)` - Обновить компанию
 
 **Использование:**
+
 - Интеграция виджетов
 - Кастомизация интерфейса
 
@@ -693,16 +804,23 @@ const outgoingEmails = emails.filter(email =>
 ### 22. **Salesbot**
 
 **Endpoints:**
+
 - `POST /api/v4/salesbot/launch` - Запустить Salesbot
 
 **Данные:**
+
 - `bot_id` - ID бота
 - `entity_id` - ID сущности
 - `entity_type` - Тип сущности
 
-**Методы в коде:** (не реализовано, но доступно через API)
+**Методы в коде:**
+- `getCompanies()` - Получить список компаний
+- `getCompany(companyId)` - Получить компанию по ID
+- `createCompany(company)` - Создать компанию
+- `updateCompany(companyId, company)` - Обновить компанию
 
 **Использование:**
+
 - Автоматизация продаж
 - Чат-боты
 
@@ -713,6 +831,7 @@ const outgoingEmails = emails.filter(email =>
 **Endpoint:** `POST /api/crm/webhook` (наш endpoint)
 
 **Типы событий:**
+
 - `leads` - Изменения в сделках
 - `contacts` - Изменения в контактах
 - `customers` - Изменения в клиентах
@@ -722,6 +841,7 @@ const outgoingEmails = emails.filter(email =>
 - `companies` - Изменения в компаниях
 
 **Формат:**
+
 ```json
 {
   "account": {
@@ -737,9 +857,11 @@ const outgoingEmails = emails.filter(email =>
 ```
 
 **Методы в коде:**
+
 - `KommoAPI.parseWebhook(payload)` - Парсинг webhook
 
 **Использование:**
+
 - Автоматическая обработка событий
 - Триггеры для агентов
 - Синхронизация данных
@@ -749,6 +871,7 @@ const outgoingEmails = emails.filter(email =>
 ## 📊 Каналы связи (Channels)
 
 **Примечание:** Каналы не имеют отдельного API endpoint, но определяются через:
+
 - Типы примечаний (`note_type`):
   - `mail_message` - Email
   - `sms_in` / `sms_out` - SMS
@@ -758,6 +881,7 @@ const outgoingEmails = emails.filter(email =>
 - Webhooks для сообщений
 
 **Использование:**
+
 - Настройка каналов для агента
 - Фильтрация по каналам
 - Статистика по каналам
@@ -792,6 +916,7 @@ const outgoingEmails = emails.filter(email =>
    - `createMeetingNote()` - Создать примечание о встрече
 
 **Использование:**
+
 - Настройка триггеров
 - Автоматизация действий
 - Цепочки действий
@@ -826,38 +951,38 @@ const outgoingEmails = emails.filter(email =>
 ```typescript
 interface KommoSyncCache {
   pipelines: Array<{
-    id: number
-    name: string
+    id: number;
+    name: string;
     stages: Array<{
-      id: number
-      name: string
-      sort: number
-      color: string
-      type: number
-    }>
-  }>
+      id: number;
+      name: string;
+      sort: number;
+      color: string;
+      type: number;
+    }>;
+  }>;
   dealFields: Array<{
-    id: number
-    name: string
-    type: string
-    enums?: Record<string, string>
-  }>
+    id: number;
+    name: string;
+    type: string;
+    enums?: Record<string, string>;
+  }>;
   contactFields: Array<{
-    id: number
-    name: string
-    type: string
-    enums?: Record<string, string>
-  }>
+    id: number;
+    name: string;
+    type: string;
+    enums?: Record<string, string>;
+  }>;
   users: Array<{
-    id: number
-    name: string
-    email: string
-  }>
+    id: number;
+    name: string;
+    email: string;
+  }>;
   channels: Array<{
-    id: string
-    name: string
-    type: string
-  }>
+    id: string;
+    name: string;
+    type: string;
+  }>;
 }
 ```
 
@@ -877,13 +1002,13 @@ GET  /api/kommo/channels                 # Получить каналы (из �
 ### 3. Действия для триггеров/цепочек
 
 ```typescript
-type KommoAction = 
-  | { type: 'create_task', task: KommoTask }
-  | { type: 'update_lead', leadId: number, data: Partial<KommoLead> }
-  | { type: 'update_contact', contactId: number, data: Partial<KommoContact> }
-  | { type: 'move_lead', leadId: number, statusId: number }
-  | { type: 'send_email', leadId: number, email: KommoEmailMessage }
-  | { type: 'create_note', note: KommoNote }
+type KommoAction =
+  | { type: "create_task"; task: KommoTask }
+  | { type: "update_lead"; leadId: number; data: Partial<KommoLead> }
+  | { type: "update_contact"; contactId: number; data: Partial<KommoContact> }
+  | { type: "move_lead"; leadId: number; statusId: number }
+  | { type: "send_email"; leadId: number; email: KommoEmailMessage }
+  | { type: "create_note"; note: KommoNote };
 ```
 
 ---
@@ -895,6 +1020,7 @@ type KommoAction =
 #### 1. **Работа с письмами (Email)**
 
 **Отправка писем:**
+
 - ✅ Отправка писем клиентам через AI-агента
 - ✅ Создание примечания типа `mail_message` или `outgoing_email`
 - ✅ Kommo реально отправляет письмо клиенту через свою email-интеграцию
@@ -902,29 +1028,32 @@ type KommoAction =
 - ✅ История сохраняется в сделке
 
 **Чтение писем:**
+
 - ✅ Получение всех примечаний по сделке (включая письма)
 - ✅ Фильтрация по типу `mail_message`, `outgoing_email`, `incoming_email`
 - ✅ Чтение входящих писем от клиентов
 - ✅ Просмотр истории переписки
 
 **Реализация:**
+
 ```typescript
 // Отправка письма
 await kommoApi.sendEmailFromLead(leadId, {
-  to: ['client@example.com'],
-  subject: 'Ответ на ваш вопрос',
-  html: '<p>Текст письма</p>',
-  text: 'Текст письма',
-  from: 'agent@company.com'
-})
+  to: ["client@example.com"],
+  subject: "Ответ на ваш вопрос",
+  html: "<p>Текст письма</p>",
+  text: "Текст письма",
+  from: "agent@company.com",
+});
 
 // Чтение писем
-const notes = await kommoApi.getNotesByEntity(leadId, 'leads')
-const emails = notes.filter(note => 
-  note.note_type === 'mail_message' || 
-  note.note_type === 'outgoing_email' || 
-  note.note_type === 'incoming_email'
-)
+const notes = await kommoApi.getNotesByEntity(leadId, "leads");
+const emails = notes.filter(
+  (note) =>
+    note.note_type === "mail_message" ||
+    note.note_type === "outgoing_email" ||
+    note.note_type === "incoming_email",
+);
 ```
 
 #### 2. **Работа со сделками**
@@ -983,55 +1112,68 @@ const emails = notes.filter(note =>
 ### ⚠️ Не реализовано, но доступно через API
 
 #### 1. **Компании (Companies)**
+
 - Получение списка компаний
 - Создание/обновление компаний
 - Связывание с контактами и сделками
 
 #### 2. **Теги (Tags)**
+
 - Получение тегов
 - Добавление/обновление тегов для сущностей
 
 #### 3. **Аккаунт (Account)**
+
 - Получение информации об аккаунте
 - Проверка подключения
 
 #### 4. **Входящие лиды (Incoming Leads)**
+
 - Обработка входящих заявок
 - Принятие/отклонение лидов
 - Привязка к сделкам
 
 #### 5. **Источники (Sources)**
+
 - Управление источниками сделок
 - Аналитика по источникам
 
 #### 6. **Шаблоны (Templates)**
+
 - Управление шаблонами писем
 - WhatsApp шаблоны
 
 #### 7. **Разговоры (Conversations)**
+
 - Управление разговорами
 - Закрытие разговоров
 
 #### 8. **События (Events)**
+
 - Отслеживание событий
 - Аналитика действий
 
 #### 9. **Списки (Lists)**
+
 - Работа со списками контактов
 - Сегментация
 
 #### 10. **Связи между сущностями (Links)**
+
 - Связывание сущностей
 - Построение связей
 
 #### 11. **Роли пользователей (Roles)**
+
 - Управление ролями
 - Права доступа
 
 #### 12. **Виджеты (Widgets)**
+
 - Установка/удаление виджетов
 
 #### 13. **Salesbot**
+
 - Запуск Salesbot
 
 ---
@@ -1041,6 +1183,7 @@ const emails = notes.filter(note =>
 ### Отправка письма через наш интерфейс
 
 **Через AI-агента:**
+
 1. Агент получает входящее письмо от клиента
 2. Агент анализирует письмо и генерирует ответ
 3. Агент отправляет ответ через `sendEmailFromLead()`
@@ -1048,6 +1191,7 @@ const emails = notes.filter(note =>
 5. Письмо сохраняется в истории сделки как примечание
 
 **Через триггеры/цепочки:**
+
 1. Сделка переходит на определенный этап
 2. Срабатывает триггер
 3. Выполняется действие "Отправить письмо"
@@ -1055,6 +1199,7 @@ const emails = notes.filter(note =>
 5. Письмо сохраняется в истории
 
 **Через наш API:**
+
 ```typescript
 POST /api/integrations/kommo/messages/send
 {
@@ -1074,6 +1219,7 @@ POST /api/integrations/kommo/messages/send
 ### Чтение писем через наш интерфейс
 
 **Получение всех писем по сделке:**
+
 ```typescript
 // Через наш API
 GET /api/crm/kommo?action=lead&id=123
@@ -1081,20 +1227,22 @@ GET /api/crm/kommo?action=lead&id=123
 
 // Затем получаем примечания
 const notes = await kommoApi.getNotesByEntity(leadId, 'leads')
-const emails = notes.filter(note => 
-  note.note_type === 'mail_message' || 
-  note.note_type === 'outgoing_email' || 
+const emails = notes.filter(note =>
+  note.note_type === 'mail_message' ||
+  note.note_type === 'outgoing_email' ||
   note.note_type === 'incoming_email'
 )
 ```
 
 **Через webhooks:**
+
 - Kommo отправляет webhook при получении нового письма
 - Наш сервис обрабатывает webhook
 - Письмо автоматически добавляется в историю сделки
 - Агент может автоматически ответить на письмо
 
 **Структура письма в примечании:**
+
 ```typescript
 {
   id: 12345,
@@ -1122,9 +1270,11 @@ const emails = notes.filter(note =>
 Согласно официальной документации Kommo API (https://developers.kommo.com/docs/about-kommo-api), доступны следующие методы:
 
 ### Account
+
 - ✅ Get the account information
 
 ### Leads
+
 - ✅ Get a leads list
 - ✅ Get a single lead
 - ✅ Add leads
@@ -1133,6 +1283,7 @@ const emails = notes.filter(note =>
 - ✅ Complex addition leads (with contacts and companies)
 
 ### Pipelines and Stages
+
 - ✅ Get a pipelines list
 - ✅ Get a single pipeline
 - ✅ Add pipelines
@@ -1146,6 +1297,7 @@ const emails = notes.filter(note =>
 - ✅ Stage colors codes
 
 ### Contacts
+
 - ✅ Get a contacts list
 - ✅ Get a contact
 - ✅ Add contacts
@@ -1153,6 +1305,7 @@ const emails = notes.filter(note =>
 - ✅ Update a bunch of contacts
 
 ### Users and roles
+
 - ✅ Get a users list
 - ✅ Get a user
 - ✅ Add users
@@ -1163,17 +1316,20 @@ const emails = notes.filter(note =>
 - ✅ Delete a role
 
 ### Tags
+
 - ⚠️ Get a list of entity tags
 - ⚠️ Add tags for a particular entity type
 - ⚠️ Update tags of a single entity
 - ⚠️ Update tags of multiple entities
 
 ### Custom fields
+
 - ✅ Get a custom fields list
 - ✅ Get an entity custom field by ID
 - ✅ Add custom fields
 
 ### Incoming leads
+
 - ⚠️ Incoming leads list
 - ⚠️ Getting an incoming lead by its UID
 - ⚠️ Adding incoming leads from the type sip (call)
@@ -1185,6 +1341,7 @@ const emails = notes.filter(note =>
 - ⚠️ Metadata objects description
 
 ### Tasks
+
 - ✅ Tasks List
 - ✅ Getting a task by its ID
 - ✅ Adding tasks
@@ -1192,6 +1349,7 @@ const emails = notes.filter(note =>
 - ✅ Editing a single task
 
 ### Sources
+
 - ⚠️ Get a list of sources
 - ⚠️ Get a source by its ID
 - ⚠️ Add sources
@@ -1206,9 +1364,11 @@ const emails = notes.filter(note =>
 - ⚠️ Update Website chat button
 
 ### Salesbot
+
 - ⚠️ Launch Salesbot
 
 ### Companies
+
 - ⚠️ Companies list
 - ⚠️ Getting a company by its ID
 - ⚠️ Add companies
@@ -1216,6 +1376,7 @@ const emails = notes.filter(note =>
 - ⚠️ Updating a company
 
 ### Templates
+
 - ⚠️ Get a list of templates
 - ⚠️ Get a template by ID
 - ⚠️ Add templates
@@ -1226,22 +1387,26 @@ const emails = notes.filter(note =>
 - ⚠️ Delete a template
 
 ### Webhooks
+
 - ✅ List of webhooks
 - ✅ Adding a webhook
 - ✅ Deleting a webhook
 - ✅ Webhook events
 
 ### Conversations
+
 - ⚠️ Get a conversation by ID
 - ⚠️ Close a conversation by ID
 
 ### Widgets
+
 - ⚠️ Widgets List
 - ⚠️ Getting the widget info by its code
 - ⚠️ Installing the widget into the account
 - ⚠️ Uninstalling widget
 
 ### Lists
+
 - ⚠️ Get a list of lists
 - ⚠️ Get a list
 - ⚠️ Adding lists
@@ -1254,12 +1419,14 @@ const emails = notes.filter(note =>
 - ⚠️ Editing a list element
 
 ### Events
+
 - ⚠️ Events list
 - ⚠️ Getting an event by its ID
 - ⚠️ Getting events types
 - ⚠️ Events types
 
 ### Notes ⭐ КРИТИЧНО
+
 - ✅ Getting a particular entity's notes list by the entity ID
 - ✅ Notes list by the entity type
 - ✅ Get a note by its ID
@@ -1269,17 +1436,21 @@ const emails = notes.filter(note =>
 - ✅ Notes types
 
 ### Calls
+
 - ✅ Add calls
 
 ### OAuth 2.0
+
 - ✅ Get/renew an access token
 
 ### Links between entities
+
 - ⚠️ Linked entities list
 - ⚠️ Linking entities
 - ⚠️ Unlinking entities
 
 **Легенда:**
+
 - ✅ Реализовано в проекте
 - ⚠️ Не реализовано, но доступно через API
 
@@ -1287,4 +1458,3 @@ const emails = notes.filter(note =>
 
 **Последнее обновление:** 2025-01-26  
 **Источник документации:** https://developers.kommo.com/docs/about-kommo-api
-
