@@ -1,19 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server'
-
 import { z } from 'zod'
 
 import { auth } from '@/auth'
-import { logger } from '@/lib/utils/logger'
 import {
-  getKnowledgeBaseCategoryById,
-  updateKnowledgeBaseCategory,
-  deleteKnowledgeBaseCategory,
+ getKnowledgeBaseCategoryById,
+ updateKnowledgeBaseCategory,
+ deleteKnowledgeBaseCategory,
 } from '@/lib/repositories/knowledge-base'
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
-
 
 export const GET = async (
  request: NextRequest,
@@ -37,12 +30,8 @@ export const GET = async (
  success: true,
  data: category,
  })
- } catch (error: unknown) {
- logger.error('Category API error', error, {
-   endpoint: '/api/knowledge-base/categories/[id]',
-   method: 'GET',
-   categoryId: id,
- })
+ } catch (error) {
+ console.error('Category API error', error)
 
  return NextResponse.json(
  {
@@ -93,12 +82,8 @@ export const PATCH = async (
  success: true,
  data: category,
  })
- } catch (error: unknown) {
- logger.error('Category update API error', error, {
-   endpoint: '/api/knowledge-base/categories/[id]',
-   method: 'PATCH',
-   categoryId: id,
- })
+ } catch (error) {
+ console.error('Category update API error', error)
 
  return NextResponse.json(
  {
@@ -127,12 +112,8 @@ export const DELETE = async (
  return NextResponse.json({
  success: true,
  })
- } catch (error: unknown) {
- logger.error('Category delete API error', error, {
-   endpoint: '/api/knowledge-base/categories/[id]',
-   method: 'DELETE',
-   categoryId: id,
- })
+ } catch (error) {
+ console.error('Category delete API error', error)
 
  return NextResponse.json(
  {
@@ -143,23 +124,6 @@ export const DELETE = async (
  )
  }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

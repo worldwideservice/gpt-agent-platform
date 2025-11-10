@@ -2,13 +2,9 @@ import { NextResponse } from 'next/server'
 
 import { auth } from '@/auth'
 import { backendFetch } from '@/lib/backend/client'
-import { logger } from '@/lib/utils/logger'
 
-
-
-// Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
+
 export async function GET() {
  try {
  const session = await auth()
@@ -37,10 +33,8 @@ export async function GET() {
  })
 
  return NextResponse.json(result)
- } catch (error: unknown) {
- logger.error('Kommo status error:', error, {
-   endpoint: '/api/integrations/kommo/status',
- })
+ } catch (error) {
+ console.error('Kommo status error:', error)
  return NextResponse.json(
  { success: false, error: 'Не удалось получить статус подключения Kommo' },
  { status: 500 },

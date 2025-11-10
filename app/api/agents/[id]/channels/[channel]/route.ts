@@ -1,15 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
-
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { deleteAgentChannel, upsertAgentChannel } from '@/lib/repositories/agent-sequences'
-import { logger } from '@/lib/utils/logger'
 
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 const updateSchema = z.object({
  isEnabled: z.boolean(),
  settings: z.record(z.string(), z.unknown()).optional(),
@@ -48,13 +42,8 @@ export const PATCH = async (
  })
 
  return NextResponse.json({ success: true, data: updated })
- } catch (error: unknown) {
- logger.error('Agent channel PATCH error', error, {
-   endpoint: '/api/agents/[id]/channels/[channel]',
-   method: 'PATCH',
-   agentId: id,
-   channel,
- })
+ } catch (error) {
+ console.error('Agent channel PATCH error', error)
 
  return NextResponse.json(
  {
@@ -81,13 +70,8 @@ export const DELETE = async (
  await deleteAgentChannel(session.user.orgId, id, channel)
 
  return NextResponse.json({ success: true })
- } catch (error: unknown) {
- logger.error('Agent channel DELETE error', error, {
-   endpoint: '/api/agents/[id]/channels/[channel]',
-   method: 'DELETE',
-   agentId: id,
-   channel,
- })
+ } catch (error) {
+ console.error('Agent channel DELETE error', error)
 
  return NextResponse.json(
  {

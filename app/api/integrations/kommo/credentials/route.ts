@@ -1,20 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { backendFetch } from '@/lib/backend/client'
-import { logger } from '@/lib/utils/logger'
 
-
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 const bodySchema = z.object({
-  clientId: z.string().min(1),
-  clientSecret: z.string().min(1),
-  redirectUri: z.string().url(),
+ clientId: z.string().min(1),
+ clientSecret: z.string().min(1),
+ redirectUri: z.string().url(),
 })
 
 export async function POST(request: NextRequest) {
@@ -38,10 +31,8 @@ export async function POST(request: NextRequest) {
  })
 
  return NextResponse.json({ success: true })
- } catch (error: unknown) {
- logger.error('Kommo credentials error:', error, {
-   endpoint: '/api/integrations/kommo/credentials',
- })
+ } catch (error) {
+ console.error('Kommo credentials error:', error)
  return NextResponse.json(
  {
  success: false,

@@ -1,17 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server'
-
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { createErrorResponse } from '@/lib/utils/error-handler'
-import { logger } from '@/lib/utils/logger'
 
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 const updateScriptSchema = z.object({
   title: z.string().min(1).optional(),
   scriptType: z.enum(['greeting', 'qualification', 'presentation', 'objection_handling', 'closing']).optional(),
@@ -79,12 +73,7 @@ export const PATCH = async (
       .single()
 
     if (error) {
-      logger.error('Failed to update script', error, {
-        endpoint: '/api/agents/[id]/scripts/[scriptId]',
-        method: 'PATCH',
-        agentId,
-        scriptId,
-      })
+      console.error('Failed to update script', error)
       const { response, status } = createErrorResponse(
         new Error('Не удалось обновить скрипт'),
         { code: 'SCRIPT_UPDATE_ERROR', logToSentry: true }
@@ -149,12 +138,7 @@ export const DELETE = async (
  const { error } = await supabase.from('sales_scripts').delete().eq('id', scriptId).eq('org_id', session.user.orgId)
 
  if (error) {
- logger.error('Failed to delete script', error, {
-   endpoint: '/api/agents/[id]/scripts/[scriptId]',
-   method: 'DELETE',
-   agentId,
-   scriptId,
- })
+ console.error('Failed to delete script', error)
  throw new Error('Не удалось удалить скрипт')
  }
 

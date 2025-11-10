@@ -1,22 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { logger } from '@/lib/utils/logger'
 
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 interface RouteParams {
  params: Promise<{ id: string }>
 }
 
 // GET - Получение списка интеграций агента
 export async function GET(request: NextRequest, { params }: RouteParams) {
+ try {
  const resolvedParams = await params
  const { id: agentId } = resolvedParams
- try {
 
  const session = await auth()
 
@@ -37,11 +31,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  .eq('org_id', session.user.orgId)
 
  if (error) {
- logger.error('Error fetching agent integrations:', error, {
-   endpoint: '/api/agents/[id]/integrations',
-   method: 'GET',
-   agentId,
- })
+ console.error('Error fetching agent integrations:', error)
  return NextResponse.json(
  { success: false, error: 'Не удалось получить список интеграций' },
  { status: 500 }
@@ -52,12 +42,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  success: true,
  integrations: integrations || [],
  })
- } catch (error: unknown) {
- logger.error('Agent integrations API error:', error, {
-   endpoint: '/api/agents/[id]/integrations',
-   method: 'GET',
-   agentId,
- })
+ } catch (error) {
+ console.error('Agent integrations API error:', error)
  return NextResponse.json(
  { success: false, error: 'Внутренняя ошибка сервера' },
  { status: 500 }

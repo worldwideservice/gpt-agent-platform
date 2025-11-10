@@ -531,11 +531,6 @@ export function LandingPageClient() {
                       Помощь
                     </Link>
                   </li>
-                  <li>
-                    <Link href="/docs" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#E63946] dark:hover:text-[#E63946] transition-colors">
-                      Документация
-                    </Link>
-                  </li>
                 </ul>
               </div>
             </div>

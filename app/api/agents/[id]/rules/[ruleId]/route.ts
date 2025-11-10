@@ -1,16 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server'
-
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { createErrorResponse } from '@/lib/utils/error-handler'
-import { logger } from '@/lib/utils/logger'
 
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 const updateRuleSchema = z.object({
   name: z.string().min(1).optional(),
   description: z.string().optional(),
@@ -28,9 +22,8 @@ const updateRuleSchema = z.object({
  */
 export const PATCH = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; ruleId: string }> },
+  { params }: { params: { id: string; ruleId: string } },
 ) => {
-  const { id, ruleId } = await params
   const session = await auth()
 
   if (!session?.user?.orgId) {
@@ -66,19 +59,14 @@ export const PATCH = async (
         ...parsed.data,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', ruleId)
+      .eq('id', params.ruleId)
       .eq('org_id', session.user.orgId)
-      .eq('agent_id', id)
+      .eq('agent_id', params.id)
       .select()
       .single()
 
     if (error) {
-      logger.error('Failed to update rule', error, {
-        endpoint: '/api/agents/[id]/rules/[ruleId]',
-        method: 'PATCH',
-        agentId: id,
-        ruleId,
-      })
+      console.error('Failed to update rule', error)
       const { response, status } = createErrorResponse(
         new Error('Не удалось обновить правило'),
         { code: 'RULE_UPDATE_ERROR', logToSentry: true }
@@ -105,9 +93,8 @@ export const PATCH = async (
  */
 export const DELETE = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; ruleId: string }> },
+  { params }: { params: { id: string; ruleId: string } },
 ) => {
-  const { id, ruleId } = await params
   const session = await auth()
 
   if (!session?.user?.orgId) {
@@ -124,17 +111,12 @@ export const DELETE = async (
     const { error } = await supabase
       .from('automation_rules')
       .delete()
-      .eq('id', ruleId)
+      .eq('id', params.ruleId)
       .eq('org_id', session.user.orgId)
-      .eq('agent_id', id)
+      .eq('agent_id', params.id)
 
     if (error) {
-      logger.error('Failed to delete rule', error, {
-        endpoint: '/api/agents/[id]/rules/[ruleId]',
-        method: 'DELETE',
-        agentId: id,
-        ruleId,
-      })
+      console.error('Failed to delete rule', error)
       const { response, status } = createErrorResponse(
         new Error('Не удалось удалить правило'),
         { code: 'RULE_DELETE_ERROR', logToSentry: true }

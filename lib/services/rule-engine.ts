@@ -45,15 +45,14 @@ export interface AutomationRule {
 }
 
 export interface RuleExecutionContext {
-  organizationId: string
-  agentId?: string | null
-  leadId?: string
-  contactId?: string
-  triggerType: string
-  triggerData: Record<string, any>
-  previousState?: Record<string, any>
-  currentState?: Record<string, any>
-  ruleName?: string // Добавлено для логирования
+ organizationId: string
+ agentId?: string | null
+ leadId?: string
+ contactId?: string
+ triggerType: string
+ triggerData: Record<string, any>
+ previousState?: Record<string, any>
+ currentState?: Record<string, any>
 }
 
 /**
@@ -155,24 +154,18 @@ export const executeRules = async (
  continue
  }
 
-      // Выполняем действия
-      const actionResults = await executeActions(rule.actions, context)
+ // Выполняем действия
+ const actionResults = await executeActions(rule.actions, context)
 
-      // Добавляем ruleName в контекст для логирования
-      const contextWithRuleName = {
-        ...context,
-        ruleName: rule.name,
-      }
+ // Логируем выполнение
+ await logRuleExecution(rule.id, context, actionResults)
 
-      // Логируем выполнение
-      await logRuleExecution(rule.id, contextWithRuleName, actionResults)
-
-      results.push({
-        ruleId: rule.id,
-        actions: rule.actions,
-        success: actionResults.every(r => r.success),
-        error: actionResults.find(r => !r.success)?.error,
-      })
+ results.push({
+ ruleId: rule.id,
+ actions: rule.actions,
+ success: actionResults.every(r => r.success),
+ error: actionResults.find(r => !r.success)?.error,
+ })
 
  } catch (error) {
  console.error(`Rule execution failed for rule ${rule.id}`, error)
@@ -478,39 +471,30 @@ const executeSendEmail = async (
 
     // Подготавливаем переменные для шаблона из контекста
     const variables: Record<string, string> = {
-      ...(context.currentState || {}),
-      ...(context.triggerData || {}),
-      recipient: action.recipient || '',
+      ...context.leadData,
+      ...context.contactData,
+      recipient: action.recipient,
     }
 
     // Отправляем email
-    // template может быть строкой или объектом
-    const templateStr = typeof action.template === 'string' 
-      ? action.template 
-      : (action.template as any)?.html || (action.template as any)?.body || ''
-    
-    const subject = typeof action.template === 'string'
-      ? 'Сообщение от World Wide Services'
-      : (action.template as any)?.subject || 'Сообщение от World Wide Services'
-
     const success = await sendTemplateEmail(
-      action.recipient || '',
-      subject,
-      templateStr,
+      action.recipient,
+      action.template.subject || 'Сообщение от World Wide Services',
+      action.template.html || action.template.body || '',
       variables,
     )
 
     if (!success) {
-    console.error('Failed to send email in rule action:', {
-      recipient: action.recipient,
-      actionType: action.type,
-    })
+      console.error('Failed to send email in rule action:', {
+        recipient: action.recipient,
+        actionId: action.id,
+      })
       return false
     }
 
     console.log('Rule: Email sent successfully', {
       recipient: action.recipient,
-      actionType: action.type,
+      actionId: action.id,
     })
 
     return true
@@ -571,48 +555,24 @@ const executeAiResponse = async (
  * Логирует выполнение правила
  */
 const logRuleExecution = async (
-  ruleId: string,
-  context: RuleExecutionContext,
-  actionResults: Array<{ action: RuleAction; success: boolean; error?: string }>,
+ ruleId: string,
+ context: RuleExecutionContext,
+ actionResults: Array<{ action: RuleAction; success: boolean; error?: string }>,
 ): Promise<void> => {
-  const supabase = getSupabaseServiceRoleClient()
+ const supabase = getSupabaseServiceRoleClient()
 
-  try {
-    // Логируем в rule_executions (для детального анализа)
-    await supabase.from('rule_executions').insert({
-      rule_id: ruleId,
-      org_id: context.organizationId,
-      lead_id: context.leadId,
-      execution_context: context,
-      action_results: actionResults,
-      executed_at: new Date().toISOString(),
-    })
-
-    // Логируем в activity_logs (для Dashboard Recent Updates)
-    const { logActivity } = await import('./activity-logger')
-    const ruleName = context.ruleName || `Правило #${ruleId}`
-    const successCount = actionResults.filter((r) => r.success).length
-    const totalCount = actionResults.length
-    
-    await logActivity({
-      orgId: context.organizationId,
-      agentId: context.agentId || undefined,
-      activityType: 'rule_executed',
-      title: `Правило выполнено: ${ruleName}`,
-      description: `Выполнено ${successCount} из ${totalCount} действий`,
-      metadata: {
-        rule_id: ruleId,
-        rule_name: ruleName,
-        success_count: successCount,
-        total_actions: totalCount,
-        lead_id: context.leadId,
-      },
-    }).catch((error) => {
-      console.error('Failed to log rule execution to activity_logs:', error)
-    })
-  } catch (error) {
-    console.error('Failed to log rule execution', error)
-  }
+ try {
+ await supabase.from('rule_executions').insert({
+ rule_id: ruleId,
+ org_id: context.organizationId,
+ lead_id: context.leadId,
+ execution_context: context,
+ action_results: actionResults,
+ executed_at: new Date().toISOString(),
+ })
+ } catch (error) {
+ console.error('Failed to log rule execution', error)
+ }
 }
 
 /**

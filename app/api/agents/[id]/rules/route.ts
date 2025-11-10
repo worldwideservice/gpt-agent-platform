@@ -1,16 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server'
-
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { createRule, getRules, executeRules } from '@/lib/services/rule-engine'
 import type { AutomationRule, RuleExecutionContext } from '@/lib/services/rule-engine'
-import { logger } from '@/lib/utils/logger'
 
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 const createRuleSchema = z.object({
  name: z.string().min(1, 'Название правила обязательно'),
  description: z.string().optional(),
@@ -53,9 +47,8 @@ const executeRulesSchema = z.object({
  */
 export const GET = async (
  request: NextRequest,
- { params }: { params: Promise<{ id: string }> },
+ { params }: { params: { id: string } },
 ) => {
- const { id } = await params
  const session = await auth()
 
  if (!session?.user?.orgId) {
@@ -66,18 +59,14 @@ export const GET = async (
  const { searchParams } = new URL(request.url)
  const activeOnly = searchParams.get('active_only') !== 'false'
 
- const rules = await getRules(session.user.orgId, id, activeOnly)
+ const rules = await getRules(session.user.orgId, params.id, activeOnly)
 
  return NextResponse.json({
  success: true,
  data: rules,
  })
- } catch (error: unknown) {
- logger.error('Get rules API error', error, {
-   endpoint: '/api/agents/[id]/rules',
-   method: 'GET',
-   agentId: id,
- })
+ } catch (error) {
+ console.error('Get rules API error', error)
 
  return NextResponse.json(
  {
@@ -94,9 +83,8 @@ export const GET = async (
  */
 export const POST = async (
  request: NextRequest,
- { params }: { params: Promise<{ id: string }> },
+ { params }: { params: { id: string } },
 ) => {
- const { id } = await params
  const session = await auth()
 
  if (!session?.user?.orgId) {
@@ -121,7 +109,7 @@ export const POST = async (
 
  const ruleData = {
  ...parsed.data,
- agent_id: id,
+ agent_id: params.id,
  metadata: {},
  }
 
@@ -134,34 +122,12 @@ export const POST = async (
  )
  }
 
- // Логируем создание правила
- const { logActivity } = await import('@/lib/services/activity-logger')
- await logActivity({
-   orgId: session.user.orgId,
-   userId: session.user.id,
-   agentId: id,
-   activityType: 'rule_created' as any,
-   title: `Создано правило: ${parsed.data.name}`,
-   description: `Пользователь создал новое правило автоматизации "${parsed.data.name}"`,
-   metadata: { rule_id: ruleId, rule_name: parsed.data.name },
- }).catch((error: unknown) => {
-   logger.error('Failed to log rule creation:', error, {
-     endpoint: '/api/agents/[id]/rules',
-     method: 'POST',
-     agentId: id,
-   })
- })
-
  return NextResponse.json({
  success: true,
  data: { id: ruleId },
  })
- } catch (error: unknown) {
- logger.error('Create rule API error', error, {
-   endpoint: '/api/agents/[id]/rules',
-   method: 'POST',
-   agentId: id,
- })
+ } catch (error) {
+ console.error('Create rule API error', error)
 
  return NextResponse.json(
  {
@@ -178,9 +144,8 @@ export const POST = async (
  */
 export const PUT = async (
  request: NextRequest,
- { params }: { params: Promise<{ id: string }> },
+ { params }: { params: { id: string } },
 ) => {
- const { id } = await params
  const session = await auth()
 
  if (!session?.user?.orgId) {
@@ -208,7 +173,7 @@ export const PUT = async (
 
  const context: RuleExecutionContext = {
  organizationId: session.user.orgId,
- agentId: id,
+ agentId: params.id,
  ...parsed.data,
  }
 
@@ -236,13 +201,8 @@ export const PUT = async (
  },
  })
  }
- } catch (error: unknown) {
- logger.error('Execute rules API error', error, {
-   endpoint: '/api/agents/[id]/rules',
-   method: 'POST',
-   action: 'execute',
-   agentId: id,
- })
+ } catch (error) {
+ console.error('Execute rules API error', error)
 
  return NextResponse.json(
  {

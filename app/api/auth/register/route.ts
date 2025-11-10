@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { UserRepository } from '@/lib/repositories/users'
-import { createNotification } from '@/lib/repositories/notifications'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { loadSupabaseServerEnv } from '@/lib/env/supabase'
 import { logger } from '@/lib/utils/logger'
@@ -163,31 +162,6 @@ export async function POST(request: NextRequest) {
  })
  }
 
- // Create welcome notification
- if (organizationId) {
- try {
- await createNotification(organizationId, {
- userId: user.id,
- type: 'success',
- title: 'Добро пожаловать! 🎉',
- message: `Ваш аккаунт успешно создан. Ваша организация "${organization.name}" готова к работе.`,
- linkUrl: '/agents',
- linkText: 'Создать первого агента',
- metadata: {
- event: 'user_registered',
- userId: user.id,
- organizationId: organization.id,
- },
- })
- } catch (notifError: unknown) {
- logger.error('Failed to create welcome notification:', notifError, {
-   endpoint: '/api/auth/register',
-   userId: user.id,
-   organizationId,
- })
- // Don't fail registration if notification fails
- }
- }
 
  logger.log('Registration: Organization created successfully:', organization.id)
  } else {

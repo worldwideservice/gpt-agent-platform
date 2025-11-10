@@ -1,19 +1,13 @@
 import { NextResponse, type NextRequest } from 'next/server'
-
 import { z } from 'zod'
 
 import { auth } from '@/auth'
-import { logger } from '@/lib/utils/logger'
 import { getAgentById } from '@/lib/repositories/agents'
 import {
-  getCompanyKnowledgeForContext,
-  createCompanyKnowledge,
-  type CompanyKnowledge,
+ getCompanyKnowledgeForContext,
+ createCompanyKnowledge,
+ type CompanyKnowledge,
 } from '@/lib/repositories/company-knowledge'
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 
 /**
  * GET /api/agents/[id]/knowledge - Получение знаний для агента
@@ -48,12 +42,8 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
  success: true,
  data: knowledge,
  })
- } catch (error: unknown) {
- logger.error('Knowledge API error', error, {
-   endpoint: '/api/agents/[id]/knowledge',
-   method: 'GET',
-   agentId,
- })
+ } catch (error) {
+ console.error('Knowledge API error', error)
 
  return NextResponse.json(
  {
@@ -116,12 +106,8 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
  success: true,
  data: knowledge,
  })
- } catch (error: unknown) {
- logger.error('Knowledge create API error', error, {
-   endpoint: '/api/agents/[id]/knowledge',
-   method: 'POST',
-   agentId,
- })
+ } catch (error) {
+ console.error('Knowledge create API error', error)
 
  return NextResponse.json(
  {

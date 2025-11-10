@@ -1,18 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server'
-
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { logger } from '@/lib/utils/logger'
 
 import type { SalesScript } from '@/lib/repositories/company-knowledge'
 
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 /**
  * GET /api/agents/[id]/scripts - Получение скриптов продаж для агента
  */
@@ -55,11 +49,7 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
  const { data, error } = await query
 
  if (error) {
- logger.error('Failed to fetch sales scripts', error, {
-   endpoint: '/api/agents/[id]/scripts',
-   method: 'GET',
-   agentId,
- })
+ console.error('Failed to fetch sales scripts', error)
  throw new Error('Не удалось загрузить скрипты')
  }
 
@@ -86,12 +76,8 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
  success: true,
  data: scripts,
  })
- } catch (error: unknown) {
- logger.error('Scripts API error', error, {
-   endpoint: '/api/agents/[id]/scripts',
-   method: 'GET',
-   agentId,
- })
+ } catch (error) {
+ console.error('Scripts API error', error)
 
  return NextResponse.json(
  {
@@ -161,11 +147,7 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
  .single()
 
  if (error || !script) {
- logger.error('Failed to create sales script', error, {
-   endpoint: '/api/agents/[id]/scripts',
-   method: 'POST',
-   agentId,
- })
+ console.error('Failed to create sales script', error)
  throw new Error('Не удалось создать скрипт')
  }
 
@@ -191,12 +173,8 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
  success: true,
  data: result,
  })
- } catch (error: unknown) {
- logger.error('Script create API error', error, {
-   endpoint: '/api/agents/[id]/scripts',
-   method: 'POST',
-   agentId,
- })
+ } catch (error) {
+ console.error('Script create API error', error)
 
  return NextResponse.json(
  {

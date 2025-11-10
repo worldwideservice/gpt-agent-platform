@@ -1,14 +1,8 @@
 import { NextResponse } from 'next/server'
-
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import { backendFetch } from '@/lib/backend/client'
-import { logger } from '@/lib/utils/logger'
 
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 /**
  * GET /api/agents/[id]/crm-connection - Получение подключения CRM для агента
  */
@@ -16,8 +10,8 @@ export async function GET(
  request: Request,
  { params }: { params: Promise<{ id: string }> },
 ) {
- const { id: agentId } = await params
  try {
+ const { id: agentId } = await params
  const session = await auth()
 
  if (!session?.user?.orgId) {
@@ -83,12 +77,8 @@ export async function GET(
  success: true,
  data: connection,
  })
- } catch (error: unknown) {
- logger.error('CRM connection API error', error, {
-   endpoint: '/api/agents/[id]/crm-connection',
-   method: 'GET',
-   agentId,
- })
+ } catch (error) {
+ console.error('CRM connection API error', error)
 
  return NextResponse.json(
  {
@@ -99,23 +89,6 @@ export async function GET(
  )
  }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

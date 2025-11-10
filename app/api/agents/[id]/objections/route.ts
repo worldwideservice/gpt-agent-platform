@@ -1,18 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server'
-
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { logger } from '@/lib/utils/logger'
 
 import type { ObjectionResponse } from '@/lib/repositories/company-knowledge'
 
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 /**
  * GET /api/agents/[id]/objections - Получение ответов на возражения
  */
@@ -46,11 +40,7 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
  const { data, error } = await query
 
  if (error) {
- logger.error('Failed to fetch objection responses', error, {
-   endpoint: '/api/agents/[id]/objections',
-   method: 'GET',
-   agentId,
- })
+ console.error('Failed to fetch objection responses', error)
  throw new Error('Не удалось загрузить ответы на возражения')
  }
 
@@ -74,12 +64,8 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
  success: true,
  data: objections,
  })
- } catch (error: unknown) {
- logger.error('Objections API error', error, {
-   endpoint: '/api/agents/[id]/objections',
-   method: 'GET',
-   agentId,
- })
+ } catch (error) {
+ console.error('Objections API error', error)
 
  return NextResponse.json(
  {
@@ -144,11 +130,7 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
  .single()
 
  if (error || !objection) {
- logger.error('Failed to create objection response', error, {
-   endpoint: '/api/agents/[id]/objections',
-   method: 'POST',
-   agentId,
- })
+ console.error('Failed to create objection response', error)
  throw new Error('Не удалось создать ответ на возражение')
  }
 
@@ -171,12 +153,8 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
  success: true,
  data: result,
  })
- } catch (error: unknown) {
- logger.error('Objection create API error', error, {
-   endpoint: '/api/agents/[id]/objections',
-   method: 'POST',
-   agentId,
- })
+ } catch (error) {
+ console.error('Objection create API error', error)
 
  return NextResponse.json(
  {

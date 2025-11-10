@@ -4,11 +4,6 @@ import { KommoAPI } from '@/lib/crm/kommo'
 import { saveWebhookEvent, processWebhookEvent } from '@/lib/services/webhook-processor'
 import { getCrmConnectionData } from '@/lib/repositories/crm-connection'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { logger } from '@/lib/utils/logger'
-
-// Force dynamic rendering (uses request.headers)
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 
 /**
  * Webhook endpoint для получения событий от Kommo CRM
@@ -33,18 +28,17 @@ export async function POST(request: NextRequest) {
  }
 
  // Парсинг события от Kommo
-const event = KommoAPI.parseWebhook(body)
+ const event = KommoAPI.parseWebhook(body)
 
-logger.log('Kommo Webhook Event:', event.type, event.data)
+ if (process.env.NODE_ENV === 'development') {
+ console.log('Kommo Webhook Event:', event.type, event.data)
+ }
 
  // Определяем orgId из webhook payload или headers
  const orgId = await determineOrgIdFromWebhook(body, request)
 
  if (!orgId) {
- logger.warn('Could not determine orgId from webhook, skipping processing', {
-   endpoint: '/api/crm/webhook',
-   eventType: event.type,
- })
+ console.warn('Could not determine orgId from webhook, skipping processing')
  return NextResponse.json({ success: true, message: 'Event received but orgId not found' })
  }
 
@@ -62,11 +56,8 @@ logger.log('Kommo Webhook Event:', event.type, event.data)
 
  // Обрабатываем событие асинхронно (не блокируем ответ)
  // Можно использовать очередь для гарантированной обработки
- processWebhookEvent(eventId).catch((error: unknown) => {
- logger.error(`Failed to process webhook event ${eventId}:`, error, {
-   eventId,
-   endpoint: '/api/crm/webhook',
- })
+ processWebhookEvent(eventId).catch(error => {
+ console.error(`Failed to process webhook event ${eventId}:`, error)
  })
 
  // Возвращаем успешный ответ сразу (webhook должен ответить быстро)
@@ -75,16 +66,14 @@ logger.log('Kommo Webhook Event:', event.type, event.data)
  eventId,
  message: 'Webhook received and queued for processing'
  })
- } catch (error: unknown) {
- logger.error('Webhook Error:', error, {
-   endpoint: '/api/crm/webhook',
- })
+ } catch (error) {
+ console.error('Webhook Error:', error)
  return NextResponse.json(
-   { 
-     success: false, 
-     error: error instanceof Error ? error.message : 'Unknown error' 
-   },
-   { status: 500 }
+ { 
+ success: false, 
+ error: error instanceof Error ? error.message : 'Unknown error' 
+ },
+ { status: 500 }
  )
  }
 }
@@ -128,11 +117,8 @@ async function determineOrgIdFromWebhook(
  }
 
  return null
- } catch (error: unknown) {
- logger.error('Error determining orgId from webhook:', error, {
-   endpoint: '/api/crm/webhook',
-   function: 'determineOrgIdFromWebhook',
- })
+ } catch (error) {
+ console.error('Error determining orgId from webhook:', error)
  return null
  }
 }
@@ -273,11 +259,8 @@ function extractEventMetadata(
  }
 
  return metadata
- } catch (error: unknown) {
- logger.error('Error extracting event metadata:', error, {
-   endpoint: '/api/crm/webhook',
-   function: 'extractEventMetadata',
- })
+ } catch (error) {
+ console.error('Error extracting event metadata:', error)
  return {}
  }
 }

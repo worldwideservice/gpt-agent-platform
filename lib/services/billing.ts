@@ -8,8 +8,7 @@ import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
 let stripe: Stripe | null = null
 
-// Экспортируем getStripe для возможности мокирования в тестах
-export const getStripe = (): Stripe => {
+const getStripe = (): Stripe => {
  if (!stripe) {
  const secretKey = process.env.STRIPE_SECRET_KEY
  if (!secretKey) {

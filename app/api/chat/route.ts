@@ -1,37 +1,23 @@
 import { NextResponse, type NextRequest } from 'next/server'
-
 import { z } from 'zod'
 
 import { auth } from '@/auth'
-import { logger } from '@/lib/utils/logger'
-
 import { createErrorResponse } from '@/lib/utils/error-handler'
 import {
-  createConversation,
-  getConversationById,
-  addMessageToConversation,
-  getConversationMessages,
+ createConversation,
+ getConversationById,
+ addMessageToConversation,
+ getConversationMessages,
 } from '@/lib/repositories/conversations'
 import { searchKnowledgeBase, formatKnowledgeContext } from '@/lib/repositories/knowledge-search'
-
 import { getAgentById } from '@/lib/repositories/agents'
-
 import { generateChatResponse } from '@/lib/services/llm'
-
 import { buildFullSystemPrompt, processConversationMemory } from '@/lib/services/agent-context-builder'
-
 import { AgentActionsService } from '@/lib/services/agent-actions'
-
 import { createKommoApiForOrg } from '@/lib/repositories/crm-connection'
-
 import { isAgentConfiguredForStage } from '@/lib/repositories/agent-pipeline-settings'
 
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 const sendMessageSchema = z.object({
-
  conversationId: z.string().uuid().optional(),
  agentId: z.string().uuid().optional(),
  message: z.string().min(1, 'Сообщение не может быть пустым'),
@@ -64,7 +50,9 @@ async function analyzeAndExecuteActions(context: {
  // Выполняем наиболее уверенное действие (если уверенность > 0.7)
  if (suggestions.length > 0 && suggestions[0].confidence > 0.7) {
  const action = suggestions[0]
- logger.log(`🤖 Агент автоматически выполняет действие: ${action.reason} (уверенность: ${action.confidence})`)
+ if (process.env.NODE_ENV === 'development') {
+ console.log(`🤖 Агент автоматически выполняет действие: ${action.reason} (уверенность: ${action.confidence})`)
+ }
 
  await actionsService.executeSuggestedAction(action, {
  organizationId: context.organizationId,
@@ -74,13 +62,14 @@ async function analyzeAndExecuteActions(context: {
  userMessage: context.userMessage,
  })
 
- logger.log(`✅ Действие выполнено: ${action.type}`)
+ if (process.env.NODE_ENV === 'development') {
+ console.log(`✅ Действие выполнено: ${action.type}`)
  }
- } catch (error: unknown) {
- logger.error('Failed to analyze and execute actions:', error, {
- organizationId: context.organizationId,
- agentId: context.agentId,
- })
+ }
+ } catch (error) {
+ if (process.env.NODE_ENV === 'development') {
+ console.error('Failed to analyze and execute actions:', error)
+ }
  }
 }
 
@@ -328,25 +317,18 @@ export const POST = async (request: NextRequest) => {
  
  if (!isConfigured) {
  canUseAgent = false
- logger.log(`Agent ${effectiveAgentId} not configured for pipeline ${pipelineId} stage ${pipelineStageId}`)
+ console.log(`Agent ${effectiveAgentId} not configured for pipeline ${pipelineId} stage ${pipelineStageId}`)
  }
  }
  }
- } catch (error: unknown) {
+ } catch (error) {
  // Если не удалось получить данные из CRM, продолжаем без проверки
- logger.error('Failed to fetch lead from CRM or check agent settings', error, {
- pipelineId,
- pipelineStageId,
- effectiveAgentId,
- })
+ console.error('Failed to fetch lead from CRM or check agent settings', error)
  }
  }
  }
- } catch (error: unknown) {
- logger.error('Failed to fetch agent', error, {
- organizationId,
- agentId: effectiveAgentId,
- })
+ } catch (error) {
+ console.error('Failed to fetch agent', error)
  }
  }
  }
@@ -376,24 +358,6 @@ export const POST = async (request: NextRequest) => {
 
  if (useKnowledgeBase) {
  try {
- // Собираем контекст для скриптов из conversation и lead данных
- const agentData = agentId || conversation.agentId
-   ? await getAgentById(agentId || conversation.agentId || '', organizationId).catch(() => null)
-   : null
-
- const scriptContext = {
-   leadId: conversation.leadId ? String(conversation.leadId) : undefined,
-   leadName: (conversation.metadata && typeof conversation.metadata === 'object' && 'leadName' in conversation.metadata)
-     ? String(conversation.metadata.leadName)
-     : undefined,
-   customerName: clientIdentifier || undefined,
-   agentName: (agentData && 'name' in agentData) ? agentData.name : 'Агент',
-   customVariables: {},
-   crmData: conversation.metadata && typeof conversation.metadata === 'object'
-     ? conversation.metadata as Record<string, unknown>
-     : {},
- }
-
  fullSystemPrompt = await buildFullSystemPrompt({
  organizationId,
  agentId: agentId || conversation.agentId || null,
@@ -402,13 +366,9 @@ export const POST = async (request: NextRequest) => {
  conversationHistory,
  clientIdentifier: clientIdentifier || undefined,
  agentInstructions,
- scriptContext,
  })
- } catch (error: unknown) {
- logger.error('Failed to build agent context', error, {
- organizationId,
- agentId: agentId || conversation.agentId,
- })
+ } catch (error) {
+ console.error('Failed to build agent context', error)
  // Fallback к старому методу
  try {
  const knowledgeChunks = await searchKnowledgeBase(
@@ -422,11 +382,8 @@ export const POST = async (request: NextRequest) => {
  } else {
  fullSystemPrompt = agentInstructions
  }
- } catch (fallbackError: unknown) {
- logger.error('Fallback knowledge search failed', fallbackError, {
- organizationId,
- agentId: agentId || conversation.agentId,
- })
+ } catch (fallbackError) {
+ console.error('Fallback knowledge search failed', fallbackError)
  fullSystemPrompt = agentInstructions
  }
  }
@@ -434,31 +391,11 @@ export const POST = async (request: NextRequest) => {
  fullSystemPrompt = agentInstructions
  }
 
- // Проверяем лимиты сообщений перед генерацией ответа
- const { checkUsageLimit: checkMessageLimit } = await import('@/lib/services/usage-tracker')
- const messageLimitCheck = await checkMessageLimit(organizationId, 'messages', 1)
-
- if (!messageLimitCheck.allowed && messageLimitCheck.limit !== -1) {
-   return NextResponse.json({
-     success: false,
-     error: `Лимит сообщений превышен. Использовано: ${messageLimitCheck.current}/${messageLimitCheck.limit}. Обновите план подписки.`,
-   }, { status: 403 })
- }
-
  // Генерируем ответ от LLM с полным контекстом
  const llmResponse = await generateChatResponse(organizationId, message, {
  model: agentModel,
  systemPrompt: fullSystemPrompt ?? undefined,
  conversationHistory,
- })
-
- // Отслеживаем использование сообщений (асинхронно)
- const { recordUsage } = await import('@/lib/services/usage-tracker')
- recordUsage(organizationId, 'messages', 1, 'Сообщение в чате').catch((error: unknown) => {
-   logger.error('Failed to track message usage', error, {
-     organizationId,
-     endpoint: '/api/chat',
-   })
  })
 
  // Вспомогательная функция для buildSystemPrompt (если не используется новый билдер)
@@ -493,12 +430,10 @@ export const POST = async (request: NextRequest) => {
      agentId || conversation.agentId || '',
      conversation.id,
      llmResponse.content.length,
-   ).catch((error: unknown) => {
-     logger.error('Failed to log agent response:', error, {
-       organizationId,
-       agentId: agentId || conversation.agentId || '',
-       conversationId: conversation.id,
-     })
+   ).catch((error) => {
+     if (process.env.NODE_ENV === 'development') {
+       console.error('Failed to log agent response:', error)
+     }
    })
  }
 
@@ -517,11 +452,9 @@ export const POST = async (request: NextRequest) => {
  clientIdentifier,
  conversationMessages,
  }).catch((error: unknown) => {
- logger.error('Memory processing failed', error, {
-   organizationId,
-   agentId: agentId || conversation.agentId,
-   clientIdentifier,
- })
+ if (process.env.NODE_ENV === 'development') {
+ console.error('Memory processing failed', error)
+ }
  })
  }
 
@@ -541,11 +474,9 @@ export const POST = async (request: NextRequest) => {
  conversationHistory,
  userMessage: message,
  }).catch((error: unknown) => {
- logger.error('Action analysis failed', error, {
-   organizationId,
-   agentId: agentId || conversation.agentId,
-   leadId: conversation.leadId,
- })
+ if (process.env.NODE_ENV === 'development') {
+ console.error('Action analysis failed', error)
+ }
  })
  }
 
@@ -569,11 +500,8 @@ export const POST = async (request: NextRequest) => {
      model: llmResponse.model,
    },
  })
- } catch (error: unknown) {
- logger.error('Chat API error', error, {
-   endpoint: '/api/chat',
-   method: 'POST',
- })
+ } catch (error) {
+ console.error('Chat API error', error)
 
  const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка'
 
@@ -632,11 +560,8 @@ export const GET = async (request: NextRequest) => {
  total,
  },
  })
- } catch (error: unknown) {
- logger.error('Chat GET API error', error, {
-   endpoint: '/api/chat',
-   method: 'GET',
- })
+ } catch (error) {
+ console.error('Chat GET API error', error)
 
  return NextResponse.json(
  {

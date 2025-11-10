@@ -3,12 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { logger } from '@/lib/utils/logger'
 
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 /**
  * DELETE /api/agents/[id]/objections/[objectionId] - Удаление ответа на возражение
  */
@@ -52,25 +47,15 @@ export const DELETE = async (
  .eq('org_id', session.user.orgId)
 
  if (error) {
- logger.error('Failed to delete objection response', error, {
-   endpoint: '/api/agents/[id]/objections/[objectionId]',
-   method: 'DELETE',
-   agentId,
-   objectionId,
- })
+ console.error('Failed to delete objection response', error)
  throw new Error('Не удалось удалить ответ на возражение')
  }
 
  return NextResponse.json({
  success: true,
  })
- } catch (error: unknown) {
- logger.error('Objection delete API error', error, {
-   endpoint: '/api/agents/[id]/objections/[objectionId]',
-   method: 'DELETE',
-   agentId,
-   objectionId,
- })
+ } catch (error) {
+ console.error('Objection delete API error', error)
 
  return NextResponse.json(
  {

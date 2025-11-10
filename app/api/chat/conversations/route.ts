@@ -1,14 +1,10 @@
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 import { auth } from '@/auth'
 import { getConversations } from '@/lib/repositories/conversations'
-import { logger } from '@/lib/utils/logger'
 
-
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 export const GET = async (request: Request) => {
   const session = await auth()
 
@@ -36,11 +32,8 @@ export const GET = async (request: Request) => {
         total: result.total,
       },
     })
-  } catch (error: unknown) {
-    logger.error('Failed to fetch conversations:', error, {
-      endpoint: '/api/chat/conversations',
-      method: 'GET',
-    })
+  } catch (error) {
+    console.error('Failed to fetch conversations:', error)
     return NextResponse.json(
       {
         success: false,

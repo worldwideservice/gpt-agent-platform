@@ -2,16 +2,9 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 import { auth } from '@/auth'
 import { backendFetch } from '@/lib/backend/client'
-import { logger } from '@/lib/utils/logger'
 
-
-
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 export const POST = async (request: NextRequest) => {
-  const session = await auth()
+ const session = await auth()
 
  if (!session?.user?.orgId) {
  return NextResponse.json({ success: false, error: 'Не авторизовано' }, { status: 401 })
@@ -31,20 +24,9 @@ export const POST = async (request: NextRequest) => {
  body: JSON.stringify(payload),
  })
 
- // Логируем синхронизацию интеграции
- const { ActivityLogger } = await import('@/lib/services/activity-logger')
- await ActivityLogger.integrationSynced(session.user.orgId, 'kommo', true).catch((error: unknown) => {
-   logger.error('Failed to log integration sync:', error, {
-     endpoint: '/api/integrations/kommo/sync/pipelines',
-     organizationId: session.user.orgId,
-   })
- })
-
  return NextResponse.json({ success: true })
- } catch (error: unknown) {
- logger.error('Kommo sync pipelines error', error, {
-   endpoint: '/api/integrations/kommo/sync/pipelines',
- })
+ } catch (error) {
+ console.error('Kommo sync pipelines error', error)
  return NextResponse.json({ success: false, error: 'Не удалось запустить синхронизацию Kommo' }, { status: 500 })
  }
 }

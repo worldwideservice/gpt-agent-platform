@@ -1,19 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { backendFetch } from '@/lib/backend/client'
-import { logger } from '@/lib/utils/logger'
 
-
-
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 const bodySchema = z.object({
-  baseDomain: z.string().min(1),
+ baseDomain: z.string().min(1),
 })
 
 export async function POST(request: NextRequest) {
@@ -34,10 +26,8 @@ export async function POST(request: NextRequest) {
  })
 
  return NextResponse.json(result)
- } catch (error: unknown) {
- logger.error('Kommo oauth start error:', error, {
-   endpoint: '/api/integrations/kommo/oauth/start',
- })
+ } catch (error) {
+ console.error('Kommo oauth start error:', error)
 
  return NextResponse.json(
  {

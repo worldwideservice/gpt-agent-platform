@@ -1,15 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
-
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { AgentActionsService } from '@/lib/services/agent-actions'
-import { logger } from '@/lib/utils/logger'
 
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 const analyzeActionsSchema = z.object({
  leadId: z.number().optional(),
  message: z.string().min(1, 'Сообщение обязательно'),
@@ -44,9 +38,8 @@ const executeActionSchema = z.object({
  */
 export const GET = async (
  request: NextRequest,
- { params }: { params: Promise<{ id: string }> },
+ { params }: { params: { id: string } },
 ) => {
- const { id } = await params
  const session = await auth()
 
  if (!session?.user?.orgId) {
@@ -61,12 +54,8 @@ export const GET = async (
  success: true,
  actions: availableActions,
  })
- } catch (error: unknown) {
- logger.error('Failed to get agent actions:', error, {
-   endpoint: '/api/agents/[id]/actions',
-   method: 'GET',
-   agentId: id,
- })
+ } catch (error) {
+ console.error('Failed to get agent actions:', error)
  return NextResponse.json(
  { success: false, error: 'Не удалось получить действия агента' },
  { status: 500 },
@@ -79,9 +68,8 @@ export const GET = async (
  */
 export const POST = async (
  request: NextRequest,
- { params }: { params: Promise<{ id: string }> },
+ { params }: { params: { id: string } },
 ) => {
- const { id } = await params
  const session = await auth()
 
  if (!session?.user?.orgId) {
@@ -110,7 +98,7 @@ export const POST = async (
  // Анализируем ситуацию
  const suggestions = await actionsService.analyzeAndSuggestActions({
  organizationId: session.user.orgId,
- agentId: id,
+ agentId: params.id,
  leadId: leadId || undefined,
  conversationHistory,
  userMessage: message,
@@ -120,13 +108,8 @@ export const POST = async (
  success: true,
  suggestions,
  })
- } catch (error: unknown) {
- logger.error('Failed to analyze actions:', error, {
-   endpoint: '/api/agents/[id]/actions',
-   method: 'POST',
-   action: 'analyze',
-   agentId: id,
- })
+ } catch (error) {
+ console.error('Failed to analyze actions:', error)
  return NextResponse.json(
  { success: false, error: 'Не удалось проанализировать действия' },
  { status: 500 },
@@ -139,9 +122,8 @@ export const POST = async (
  */
 export const PUT = async (
  request: NextRequest,
- { params }: { params: Promise<{ id: string }> },
+ { params }: { params: { id: string } },
 ) => {
- const { id } = await params
  const session = await auth()
 
  if (!session?.user?.orgId) {
@@ -170,25 +152,10 @@ export const PUT = async (
  // Выполняем действие
  const result = await actionsService.executeSuggestedAction(action, {
  organizationId: session.user.orgId,
- agentId: id,
+ agentId: params.id,
  leadId: leadId || 0,
  conversationHistory,
  userMessage: 'Выполнение действия через API',
- })
-
- // Логируем выполнение действия
- const { ActivityLogger } = await import('@/lib/services/activity-logger')
- await ActivityLogger.actionExecuted(
-   session.user.orgId,
-   id,
-   action.type,
-   { lead_id: leadId, ...action.data }
- ).catch((error: unknown) => {
-   logger.error('Failed to log action execution:', error, {
-     endpoint: '/api/agents/[id]/actions',
-     method: 'PUT',
-     agentId: id,
-   })
  })
 
  return NextResponse.json({
@@ -196,12 +163,8 @@ export const PUT = async (
  result,
  message: 'Действие выполнено успешно',
  })
- } catch (error: unknown) {
- logger.error('Failed to execute action:', error, {
-   endpoint: '/api/agents/[id]/actions',
-   method: 'PUT',
-   agentId: id,
- })
+ } catch (error) {
+ console.error('Failed to execute action:', error)
  return NextResponse.json(
  { success: false, error: 'Не удалось выполнить действие' },
  { status: 500 },

@@ -1,20 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server'
-
 import { z } from 'zod'
-
 
 import { auth } from '@/auth'
 import {
-  getKnowledgeBaseArticleById,
-  updateKnowledgeBaseArticle,
-  deleteKnowledgeBaseArticle,
+ getKnowledgeBaseArticleById,
+ updateKnowledgeBaseArticle,
+ deleteKnowledgeBaseArticle,
 } from '@/lib/repositories/knowledge-base'
-import { logger } from '@/lib/utils/logger'
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
-
 
 export const GET = async (
  request: NextRequest,
@@ -38,12 +30,8 @@ export const GET = async (
  success: true,
  data: article,
  })
- } catch (error: unknown) {
- logger.error('Article API error', error, {
-   endpoint: '/api/knowledge-base/articles/[id]',
-   method: 'GET',
-   articleId: id,
- })
+ } catch (error) {
+ console.error('Article API error', error)
 
  return NextResponse.json(
  {
@@ -96,12 +84,8 @@ export const PATCH = async (
  success: true,
  data: article,
  })
- } catch (error: unknown) {
- logger.error('Article update API error', error, {
-   endpoint: '/api/knowledge-base/articles/[id]',
-   method: 'PATCH',
-   articleId: id,
- })
+ } catch (error) {
+ console.error('Article update API error', error)
 
  return NextResponse.json(
  {
@@ -130,12 +114,8 @@ export const DELETE = async (
  return NextResponse.json({
  success: true,
  })
- } catch (error: unknown) {
- logger.error('Article delete API error', error, {
-   endpoint: '/api/knowledge-base/articles/[id]',
-   method: 'DELETE',
-   articleId: id,
- })
+ } catch (error) {
+ console.error('Article delete API error', error)
 
  return NextResponse.json(
  {
@@ -146,23 +126,6 @@ export const DELETE = async (
  )
  }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

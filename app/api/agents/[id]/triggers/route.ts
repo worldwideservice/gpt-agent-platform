@@ -1,16 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server'
-
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import { getTriggers, createTrigger } from '@/lib/repositories/triggers'
-import { logger } from '@/lib/utils/logger'
 
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 export const GET = async (
  request: NextRequest,
  { params }: { params: Promise<{ id: string }> },
@@ -35,12 +29,8 @@ export const GET = async (
  success: true,
  data: triggers,
  })
- } catch (error: unknown) {
- logger.error('Triggers API error', error, {
-   endpoint: '/api/agents/[id]/triggers',
-   method: 'GET',
-   agentId: id,
- })
+ } catch (error) {
+ console.error('Triggers API error', error)
 
  return NextResponse.json(
  {
@@ -111,12 +101,8 @@ export const POST = async (
  success: true,
  data: trigger,
  })
- } catch (error: unknown) {
- logger.error('Trigger create API error', error, {
-   endpoint: '/api/agents/[id]/triggers',
-   method: 'POST',
-   agentId: id,
- })
+ } catch (error) {
+ console.error('Trigger create API error', error)
 
  return NextResponse.json(
  {

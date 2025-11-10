@@ -2,14 +2,9 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { z } from 'zod'
 
 import { auth } from '@/auth'
-import { getAgents, createAgent } from '@/lib/repositories/agents'
+import { getAgents } from '@/lib/repositories/agents'
 import { createErrorResponse } from '@/lib/utils/error-handler'
 
-
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 const querySchema = z.object({
  search: z.string().optional(),
  status: z.enum(['active', 'inactive', 'draft']).optional(),
@@ -24,6 +19,8 @@ const querySchema = z.object({
  .transform((value) => Number.parseInt(value, 10))
  .optional(),
 })
+
+import { createAgent } from '@/lib/repositories/agents'
 
 /**
  * @swagger
@@ -305,17 +302,6 @@ export const POST = async (request: NextRequest) => {
  )
  }
 
- // Проверяем лимит агентов перед созданием
- const { checkUsageLimit } = await import('@/lib/services/usage-tracker')
- const agentLimitCheck = await checkUsageLimit(session.user.orgId, 'agents', 1)
-
- if (!agentLimitCheck.allowed && agentLimitCheck.limit !== -1) {
-   return NextResponse.json({
-     success: false,
-     error: `Лимит агентов превышен. Использовано: ${agentLimitCheck.current}/${agentLimitCheck.limit}. Обновите план подписки.`,
-   }, { status: 403 })
- }
-
  const agent = await createAgent(session.user.orgId, {
  name: parsed.data.name,
  status: parsed.data.status,
@@ -327,29 +313,11 @@ export const POST = async (request: NextRequest) => {
  settings: parsed.data.settings ?? {},
  })
 
- // Отслеживаем использование агентов
- // eslint-disable-next-line react-hooks/rules-of-hooks
- const { useResource } = await import('@/lib/services/usage-tracker')
- await useResource(session.user.orgId, 'agents', 1, `Создан агент: ${agent.name}`).catch((error: unknown) => {
-   const { logger } = require('@/lib/utils/logger')
-   logger.error('Failed to track agent usage', error, {
-     endpoint: '/api/agents',
-     method: 'POST',
-     organizationId: session.user.orgId,
-   })
- })
-
  // Логируем создание агента
  const { ActivityLogger } = await import('@/lib/services/activity-logger')
  await ActivityLogger.agentCreated(session.user.orgId, session.user.id, agent.id, agent.name).catch(
- (error: unknown) => {
-   const { logger } = require('@/lib/utils/logger')
-   logger.error('Failed to log agent creation:', error, {
-     endpoint: '/api/agents',
-     method: 'POST',
-     organizationId: session.user.orgId,
-     agentId: agent.id,
-   })
+ (error) => {
+ console.error('Failed to log agent creation:', error)
  },
  )
 

@@ -116,19 +116,6 @@ const buildSystemPrompt = (
 /**
  * Основная функция для генерации ответа от LLM
  */
-/**
- * Отслеживает использование токенов
- */
-const trackTokenUsage = async (orgId: string, tokens: number): Promise<void> => {
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { useResource } = await import('./usage-tracker')
-    await useResource(orgId, 'tokens', tokens, `Использовано ${tokens} токенов`)
-  } catch (error) {
-    console.error('Failed to track token usage', error)
-  }
-}
-
 export const generateChatResponse = async (
  organizationId: string,
  userMessage: string,
@@ -190,16 +177,6 @@ export const generateChatResponse = async (
  max_tokens: maxTokens,
  }
 
- // Проверяем лимиты перед генерацией
- const { checkUsageLimit } = await import('./usage-tracker')
- const limitCheck = await checkUsageLimit(organizationId, 'tokens', 1000) // Примерная оценка
-
- if (!limitCheck.allowed && limitCheck.limit !== -1) {
- throw new Error(
-   `Лимит токенов превышен. Использовано: ${limitCheck.current}/${limitCheck.limit}. Обновите план подписки.`
-   )
- }
-
  const response = await callOpenRouter(apiKey, request)
 
  if (!response.choices || response.choices.length === 0) {
@@ -212,11 +189,6 @@ export const generateChatResponse = async (
  if (!content) {
  throw new Error('Пустой контент в ответе от OpenRouter')
  }
-
- // Отслеживаем использование токенов (асинхронно, не блокируем ответ)
- trackTokenUsage(organizationId, response.usage.total_tokens).catch((error) => {
-   console.error('Failed to track token usage', error)
- })
 
  return {
  content,
@@ -303,18 +275,6 @@ export const getAvailableModels = async (organizationId: string): Promise<
 }
 
 export type { ChatOptions, OpenRouterMessage }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

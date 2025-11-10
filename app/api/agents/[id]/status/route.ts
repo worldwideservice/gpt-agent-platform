@@ -1,15 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
-
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { updateAgentStatus } from '@/lib/repositories/agents'
-import { logger } from '@/lib/utils/logger'
 
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 const statusSchema = z.object({
  status: z.enum(['active', 'inactive', 'draft']),
 })
@@ -47,12 +41,8 @@ export const PATCH = async (
  success: true,
  data: agent,
  })
- } catch (error: unknown) {
- logger.error('Agent status update API error', error, {
-   endpoint: '/api/agents/[id]/status',
-   method: 'PATCH',
-   agentId: id,
- })
+ } catch (error) {
+ console.error('Agent status update API error', error)
 
  return NextResponse.json(
  {
@@ -63,23 +53,6 @@ export const PATCH = async (
  )
  }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

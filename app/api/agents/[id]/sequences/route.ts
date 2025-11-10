@@ -1,15 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
-
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { createSequence, getSequences, startSequence, deleteSequence } from '@/lib/services/sequences'
-import { logger } from '@/lib/utils/logger'
 
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 const createSequenceSchema = z.object({
  name: z.string().min(1, 'Название последовательности обязательно'),
  description: z.string().optional(),
@@ -47,9 +41,8 @@ const startSequenceSchema = z.object({
  */
 export const GET = async (
  request: NextRequest,
- { params }: { params: Promise<{ id: string }> },
+ { params }: { params: { id: string } },
 ) => {
- const { id } = await params
  const session = await auth()
 
  if (!session?.user?.orgId) {
@@ -60,18 +53,14 @@ export const GET = async (
  const { searchParams } = new URL(request.url)
  const activeOnly = searchParams.get('active_only') === 'true'
 
- const sequences = await getSequences(session.user.orgId, id, activeOnly)
+ const sequences = await getSequences(session.user.orgId, params.id, activeOnly)
 
  return NextResponse.json({
  success: true,
  data: sequences,
  })
- } catch (error: unknown) {
- logger.error('Get sequences API error', error, {
-   endpoint: '/api/agents/[id]/sequences',
-   method: 'GET',
-   agentId: id,
- })
+ } catch (error) {
+ console.error('Get sequences API error', error)
 
  return NextResponse.json(
  {
@@ -88,9 +77,8 @@ export const GET = async (
  */
 export const POST = async (
  request: NextRequest,
- { params }: { params: Promise<{ id: string }> },
+ { params }: { params: { id: string } },
 ) => {
- const { id } = await params
  const session = await auth()
 
  if (!session?.user?.orgId) {
@@ -115,7 +103,7 @@ export const POST = async (
 
  const sequenceData = {
  ...parsed.data,
- agent_id: id,
+ agent_id: params.id,
  metadata: {},
  }
 
@@ -128,34 +116,12 @@ export const POST = async (
  )
  }
 
- // Логируем создание последовательности
- const { logActivity } = await import('@/lib/services/activity-logger')
- await logActivity({
-   orgId: session.user.orgId,
-   userId: session.user.id,
-   agentId: id,
-   activityType: 'sequence_created' as any,
-   title: `Создана последовательность: ${parsed.data.name}`,
-   description: `Пользователь создал новую последовательность действий "${parsed.data.name}"`,
-   metadata: { sequence_id: sequenceId, sequence_name: parsed.data.name },
- }).catch((error: unknown) => {
-   logger.error('Failed to log sequence creation:', error, {
-     endpoint: '/api/agents/[id]/sequences',
-     method: 'POST',
-     agentId: id,
-   })
- })
-
  return NextResponse.json({
  success: true,
  data: { id: sequenceId },
  })
- } catch (error: unknown) {
- logger.error('Create sequence API error', error, {
-   endpoint: '/api/agents/[id]/sequences',
-   method: 'POST',
-   agentId: id,
- })
+ } catch (error) {
+ console.error('Create sequence API error', error)
 
  return NextResponse.json(
  {
@@ -172,9 +138,8 @@ export const POST = async (
  */
 export const PUT = async (
  request: NextRequest,
- { params }: { params: Promise<{ id: string }> },
+ { params }: { params: { id: string } },
 ) => {
- const { id } = await params
  const session = await auth()
 
  if (!session?.user?.orgId) {
@@ -226,13 +191,8 @@ export const PUT = async (
  success: true,
  data: { execution_id: executionId },
  })
- } catch (error: unknown) {
- logger.error('Start sequence API error', error, {
-   endpoint: '/api/agents/[id]/sequences',
-   method: 'POST',
-   action: 'start',
-   agentId: id,
- })
+ } catch (error) {
+ console.error('Start sequence API error', error)
 
  return NextResponse.json(
  {

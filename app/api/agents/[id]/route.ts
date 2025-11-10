@@ -1,14 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
-
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { getAgentById, updateAgent, deleteAgent } from '@/lib/repositories/agents'
 
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 const settingsSchema = z
  .object({
  language: z.string().optional(),
@@ -104,22 +99,6 @@ export const PATCH = async (
  maxTokens: parsed.data.maxTokens,
  responseDelaySeconds: parsed.data.responseDelaySeconds,
  settings: parsed.data.settings ?? {},
- })
-
- // Логируем обновление агента
- const { ActivityLogger } = await import('@/lib/services/activity-logger')
- await ActivityLogger.agentUpdated(
-   session.user.orgId,
-   session.user.id,
-   agent.id,
-   agent.name
- ).catch((error: unknown) => {
-   const { logger } = require('@/lib/utils/logger')
-   logger.error('Failed to log agent update:', error, {
-     endpoint: '/api/agents/[id]',
-     method: 'PATCH',
-     agentId: id,
-   })
  })
 
  return NextResponse.json({

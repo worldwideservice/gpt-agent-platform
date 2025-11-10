@@ -1,22 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { logger } from '@/lib/utils/logger'
 
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 interface RouteParams {
  params: Promise<{ id: string; integrationId: string }>
 }
 
 // PATCH - Обновление настроек интеграции
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
+ try {
  const resolvedParams = await params
  const { id: agentId, integrationId } = resolvedParams
- try {
 
  const session = await auth()
 
@@ -64,12 +58,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
  .single()
 
  if (updateError) {
- logger.error('Error updating agent integration:', updateError, {
-   endpoint: '/api/agents/[id]/integrations/[integrationId]',
-   method: 'PATCH',
-   agentId,
-   integrationId,
- })
+ console.error('Error updating agent integration:', updateError)
  return NextResponse.json(
  { success: false, error: 'Не удалось обновить настройки интеграции' },
  { status: 500 }
@@ -80,13 +69,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
  success: true,
  integration: updated,
  })
- } catch (error: unknown) {
- logger.error('Agent integration update API error:', error, {
-   endpoint: '/api/agents/[id]/integrations/[integrationId]',
-   method: 'PATCH',
-   agentId,
-   integrationId,
- })
+ } catch (error) {
+ console.error('Agent integration update API error:', error)
  return NextResponse.json(
  { success: false, error: 'Внутренняя ошибка сервера' },
  { status: 500 }
@@ -96,9 +80,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
 // GET - Получение настроек интеграции
 export async function GET(request: NextRequest, { params }: RouteParams) {
+ try {
  const resolvedParams = await params
  const { id: agentId, integrationId } = resolvedParams
- try {
 
  const session = await auth()
 
@@ -130,13 +114,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  success: true,
  integration,
  })
- } catch (error: unknown) {
- logger.error('Agent integration get API error:', error, {
-   endpoint: '/api/agents/[id]/integrations/[integrationId]',
-   method: 'GET',
-   agentId,
-   integrationId,
- })
+ } catch (error) {
+ console.error('Agent integration get API error:', error)
  return NextResponse.json(
  { success: false, error: 'Внутренняя ошибка сервера' },
  { status: 500 }

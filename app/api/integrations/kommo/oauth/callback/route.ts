@@ -1,18 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-
 import { z } from 'zod'
-import { logger } from '@/lib/utils/logger'
 
-
-
-// Force dynamic rendering (uses headers from auth())
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
+
 const querySchema = z.object({
  code: z.string().min(1),
  state: z.string().min(1),
- error: z.string().nullable().optional(),
- error_description: z.string().nullable().optional(),
+ error: z.string().optional(),
+ error_description: z.string().optional(),
 })
 
 export async function GET(request: NextRequest) {
@@ -27,11 +23,7 @@ export async function GET(request: NextRequest) {
 
  // Если есть ошибка от Kommo
  if (query.error) {
- logger.error('Kommo OAuth error:', undefined, {
-   endpoint: '/api/integrations/kommo/oauth/callback',
-   error: query.error,
-   errorDescription: query.error_description,
- })
+ console.error('Kommo OAuth error:', query.error, query.error_description)
  return NextResponse.json({
  success: false,
  error: query.error,
@@ -47,41 +39,30 @@ export async function GET(request: NextRequest) {
  }, { status: 400 })
  }
 
- logger.log('Processing Kommo OAuth callback:', {
+ console.log('Processing Kommo OAuth callback:', {
  code: query.code.substring(0, 10) + '...',
  state: query.state,
  })
 
  // Обмениваем authorization code на токены напрямую через Kommo API
- const clientId = process.env.KOMMO_CLIENT_ID
- const clientSecret = process.env.KOMMO_CLIENT_SECRET
- const redirectUri = process.env.KOMMO_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/integrations/kommo/oauth/callback`
-
- if (!clientId || !clientSecret) {
- return NextResponse.json({
- success: false,
- error: 'Kommo OAuth credentials not configured',
- }, { status: 500 })
- }
-
  const tokenResponse = await fetch('https://kommo.com/oauth2/access_token', {
  method: 'POST',
  headers: {
  'Content-Type': 'application/x-www-form-urlencoded',
  },
  body: new URLSearchParams({
- client_id: clientId,
- client_secret: clientSecret,
+ client_id: '2a5c1463-43dd-4ccc-abd0-79516f785e57',
+ client_secret: '6FhlKjCZehELKIShuUQcPHdrF9uUHKLQosf0tDsSvdTuUoahVz3EO44xzVinlbh7',
  grant_type: 'authorization_code',
  code: query.code,
- redirect_uri: redirectUri,
+ redirect_uri: 'https://gpt-agent-kwid-43ii46hai-world-wide-services-62780b79.vercel.app/integrations/kommo/oauth/callback',
  }),
  })
 
  const tokens = await tokenResponse.json()
 
  if (tokenResponse.ok && tokens.access_token) {
- logger.log('Tokens received successfully')
+ console.log('Tokens received successfully')
 
  // Возвращаем токены в JSON формате для обработки на frontend
  return NextResponse.json({
@@ -94,20 +75,15 @@ export async function GET(request: NextRequest) {
  account_id: tokens.account_id,
  })
  } else {
- logger.error('Token exchange failed:', undefined, {
-   endpoint: '/api/integrations/kommo/oauth/callback',
-   tokens,
- })
+ console.error('Token exchange failed:', tokens)
  return NextResponse.json({
  success: false,
  error: tokens.error_description || tokens.error || 'Token exchange failed',
  }, { status: 400 })
  }
 
- } catch (error: unknown) {
- logger.error('Kommo OAuth callback processing error:', error, {
-   endpoint: '/api/integrations/kommo/oauth/callback',
- })
+ } catch (error) {
+ console.error('Kommo OAuth callback processing error:', error)
 
  return NextResponse.json({
  success: false,

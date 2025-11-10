@@ -1,18 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-
 import { z } from 'zod'
 
 import { auth } from '@/auth'
 import { backendFetch } from '@/lib/backend/client'
-import { logger } from '@/lib/utils/logger'
 
-
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 const bodySchema = z.object({
-  dealId: z.string().min(1),
+ dealId: z.string().min(1),
  channel: z.enum(['email', 'chat']),
  message: z.object({
  subject: z.string().min(1).optional(),
@@ -50,7 +43,7 @@ export const POST = async (request: NextRequest) => {
  })
 
  return NextResponse.json(response)
- } catch (error: unknown) {
+ } catch (error) {
  if (error instanceof z.ZodError) {
  return NextResponse.json(
  {
@@ -62,9 +55,7 @@ export const POST = async (request: NextRequest) => {
  )
  }
 
- logger.error('Kommo send message error', error, {
-   endpoint: '/api/integrations/kommo/messages/send',
- })
+ console.error('Kommo send message error', error)
  return NextResponse.json({ success: false, error: 'Не удалось отправить сообщение через Kommo' }, { status: 500 })
  }
 }

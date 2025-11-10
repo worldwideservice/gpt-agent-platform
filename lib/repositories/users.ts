@@ -3,8 +3,7 @@ import { hash } from 'bcryptjs'
 // import { UserTier } from '@/lib/rate-limit' // Removed to avoid circular dependency
 
 // Helper function to get Supabase client
-// Экспортируем для возможности мокирования в тестах
-export async function getSupabaseClient() {
+async function getSupabaseClient() {
  try {
  // Use validated Supabase client with proper env loading
  const { getSupabaseServiceRoleClient } = await import('@/lib/supabase/admin')
@@ -27,7 +26,7 @@ export class UserRepository {
  static async getUserById(id: string): Promise<User | null> {
  try {
  const supabase = await getSupabaseClient()
- const { data, error } = await supabase
+ const { data, error } = await getSupabaseClient()
  .from('users')
  .select(`
  *,
@@ -99,8 +98,7 @@ export class UserRepository {
  }
 
  // First check if user has an active subscription
- const client = await getSupabaseClient()
- const { data: subscription, error: subError } = await client
+ const { data: subscription, error: subError } = await getSupabaseClient()
  .from('subscriptions')
  .select('plan_id, status')
  .eq('user_id', userId)
@@ -114,8 +112,7 @@ export class UserRepository {
 
  // If no active subscription, check organization tier
  if (orgId) {
- const orgClient = await getSupabaseClient()
- const { data: org, error: orgError } = await orgClient
+ const { data: org, error: orgError } = await getSupabaseClient()
  .from('organizations')
  .select('tier')
  .eq('id', orgId)
@@ -138,8 +135,7 @@ export class UserRepository {
  static async getTierByPlanId(planId: string): Promise<import('@/lib/rate-limit').UserTier | null> {
  const { UserTier } = await import('@/lib/rate-limit')
  try {
- const client = await getSupabaseClient()
- const { data, error } = await client
+ const { data, error } = await getSupabaseClient()
  .from('plans')
  .select('tier')
  .eq('id', planId)
@@ -179,8 +175,7 @@ export class UserRepository {
  // Update user tier (admin function)
  static async updateUserTier(userId: string, tier: import('@/lib/rate-limit').UserTier): Promise<boolean> {
  try {
- const client = await getSupabaseClient()
- const { error } = await client
+ const { error } = await getSupabaseClient()
  .from('users')
  .update({ tier, updated_at: new Date().toISOString() } as any)
  .eq('id', userId)
@@ -195,8 +190,7 @@ export class UserRepository {
  // Get all users with pagination (admin function)
  static async getUsers(limit = 50, offset = 0): Promise<User[]> {
  try {
- const client = await getSupabaseClient()
- const { data, error } = await client
+ const { data, error } = await getSupabaseClient()
  .from('users')
  .select(`
  *,
@@ -249,8 +243,7 @@ export class UserRepository {
  // Search users (admin function)
  static async searchUsers(query: string, limit = 20): Promise<User[]> {
  try {
- const client = await getSupabaseClient()
- const { data, error } = await client
+ const { data, error } = await getSupabaseClient()
  .from('users')
  .select(`
  *,
@@ -350,8 +343,7 @@ export class UserRepository {
  // Get user by email (with subscription info)
  static async getUserByEmail(email: string): Promise<User | null> {
  try {
- const client = await getSupabaseClient()
- const { data, error } = await client
+ const { data, error } = await getSupabaseClient()
  .from('users')
  .select(`
  *,
@@ -422,8 +414,7 @@ export class UserRepository {
  updateData.email = updates.email
  }
 
- const client = await getSupabaseClient()
- const { error } = await client
+ const { error } = await getSupabaseClient()
  .from('users')
  .update(updateData)
  .eq('id', id)
@@ -435,11 +426,10 @@ export class UserRepository {
  }
  }
 
-// Update user password hash
-static async updateUserPasswordHash(id: string, passwordHash: string): Promise<boolean> {
+ // Update user password hash
+ static async updateUserPasswordHash(id: string, passwordHash: string): Promise<boolean> {
  try {
- const client = await getSupabaseClient()
- const { error } = await client
+ const { error } = await getSupabaseClient()
  .from('users')
  .update({
  password_hash: passwordHash,
@@ -457,8 +447,7 @@ static async updateUserPasswordHash(id: string, passwordHash: string): Promise<b
  // Update user last sign in
  static async updateUserLastSignIn(id: string): Promise<boolean> {
  try {
- const client = await getSupabaseClient()
- const { error } = await client
+ const { error } = await getSupabaseClient()
  .from('users')
  .update({
  last_sign_in_at: new Date().toISOString(),
@@ -473,11 +462,10 @@ static async updateUserPasswordHash(id: string, passwordHash: string): Promise<b
  }
  }
 
-// Update user password hash
-static async updateUserPasswordHash(id: string, passwordHash: string): Promise<boolean> {
+ // Update user password hash
+ static async updateUserPasswordHash(id: string, passwordHash: string): Promise<boolean> {
  try {
- const client = await getSupabaseClient()
- const { error } = await client
+ const { error } = await getSupabaseClient()
  .from('users')
  .update({
  password_hash: passwordHash,

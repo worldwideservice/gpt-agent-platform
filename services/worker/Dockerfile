@@ -1,6 +1,5 @@
 # Multi-stage build для Worker сервиса
 # Этот Dockerfile запускается из корня проекта (Root Directory = /)
-# Railway копирует весь проект в /app
 FROM node:20-alpine AS base
 
 # Устанавливаем рабочую директорию в корень проекта
@@ -9,7 +8,7 @@ WORKDIR /app
 # Копируем package.json Worker для установки зависимостей
 COPY services/worker/package.json services/worker/package-lock.json ./services/worker/
 
-# Копируем весь проект (включая lib/ и types/)
+# Копируем весь проект (включая lib/)
 COPY . .
 
 # Переходим в директорию Worker и собираем
@@ -35,9 +34,10 @@ COPY services/worker/package.json services/worker/package-lock.json ./services/w
 COPY --from=base /app/services/worker/dist ./services/worker/dist
 
 # Копируем локальный lib из services/worker/src/lib для резолва импортов ../lib/* из dist/index.js
+# Импорт ../lib/env.ts из dist/index.js резолвится как services/worker/lib/env.ts
 COPY --from=base /app/services/worker/src/lib ./services/worker/lib
 
-# Копируем lib и types директории из корня (нужны для динамических импортов)
+# Копируем lib и types директории из корня (могут быть нужны для динамических импортов)
 COPY --from=base /app/lib ./lib
 COPY --from=base /app/types ./types
 # Копируем tsconfig.json для правильного резолва path aliases

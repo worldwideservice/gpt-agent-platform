@@ -1,16 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
-
 import { z } from 'zod'
-
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { logger } from '@/lib/utils/logger'
 
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 const fieldsSchema = z.object({
  dealFields: z.array(z.string()),
  contactFields: z.array(z.string()),
@@ -44,12 +37,8 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
  contactFields,
  },
  })
- } catch (error: unknown) {
- logger.error('Fields API error', error, {
-   endpoint: '/api/agents/[id]/fields',
-   method: 'GET',
-   agentId,
- })
+ } catch (error) {
+ console.error('Fields API error', error)
 
  return NextResponse.json(
  {
@@ -109,23 +98,15 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
  .eq('org_id', session.user.orgId)
 
  if (error) {
- logger.error('Failed to save fields', error, {
-   endpoint: '/api/agents/[id]/fields',
-   method: 'POST',
-   agentId,
- })
+ console.error('Failed to save fields', error)
  throw new Error('Не удалось сохранить поля')
  }
 
  return NextResponse.json({
  success: true,
  })
- } catch (error: unknown) {
- logger.error('Fields save API error', error, {
-   endpoint: '/api/agents/[id]/fields',
-   method: 'POST',
-   agentId,
- })
+ } catch (error) {
+ console.error('Fields save API error', error)
 
  return NextResponse.json(
  {

@@ -1,15 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { logger } from '@/lib/utils/logger'
 
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 /**
  * DELETE /api/agents/[id]/knowledge/[knowledgeId] - Удаление знания для агента
  */
@@ -49,25 +43,15 @@ export const DELETE = async (
  const { error } = await supabase.from('company_knowledge').delete().eq('id', knowledgeId).eq('org_id', session.user.orgId)
 
  if (error) {
- logger.error('Failed to delete knowledge', error, {
-   endpoint: '/api/agents/[id]/knowledge/[knowledgeId]',
-   method: 'DELETE',
-   agentId,
-   knowledgeId,
- })
+ console.error('Failed to delete knowledge', error)
  throw new Error('Не удалось удалить знание')
  }
 
  return NextResponse.json({
  success: true,
  })
- } catch (error: unknown) {
- logger.error('Knowledge delete API error', error, {
-   endpoint: '/api/agents/[id]/knowledge/[knowledgeId]',
-   method: 'DELETE',
-   agentId,
-   knowledgeId,
- })
+ } catch (error) {
+ console.error('Knowledge delete API error', error)
 
  return NextResponse.json(
  {
@@ -78,23 +62,6 @@ export const DELETE = async (
  )
  }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

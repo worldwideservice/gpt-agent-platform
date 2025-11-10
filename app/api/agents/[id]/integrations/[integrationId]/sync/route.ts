@@ -1,22 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { logger } from '@/lib/utils/logger'
 
-
-// Force dynamic rendering (uses headers from auth())
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 interface RouteParams {
  params: Promise<{ id: string; integrationId: string }>
 }
 
 // POST - Синхронизация настроек CRM
 export async function POST(request: NextRequest, { params }: RouteParams) {
+ try {
  const resolvedParams = await params
  const { id: agentId, integrationId } = resolvedParams
- try {
 
  const session = await auth()
 
@@ -71,16 +65,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
  )
  }
 
- // Запускаем синхронизацию через Job Queue (Worker обрабатывает job 'crm:sync-pipelines')
+ // Вызываем реальную синхронизацию через Worker API
  try {
- const { addJobToQueue } = await import('@/lib/queue')
+ const { backendFetch } = await import('@/lib/backend/client')
  
- // Добавляем job в очередь для обработки Worker
- const job = await addJobToQueue('crm:sync-pipelines', {
- provider: 'kommo',
+ await backendFetch('/crm/sync', {
+ method: 'POST',
+ body: JSON.stringify({
  orgId: session.user.orgId,
+ provider: 'kommo',
  connectionId: crmConnection.id,
  baseDomain: crmConnection.base_domain,
+ }),
  })
 
  // Обновляем timestamp синхронизации в интеграции
@@ -91,18 +87,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
  ...((integration.settings as Record<string, unknown>) || {}),
  last_synced_at: new Date().toISOString(),
  sync_status: 'queued',
- sync_job_id: job.id, // Сохраняем ID job для отслеживания
  },
  })
  .eq('id', integrationId)
 
  if (updateError) {
- logger.error('Error updating sync timestamp:', updateError, {
-   endpoint: '/api/agents/[id]/integrations/[integrationId]/sync',
-   method: 'POST',
-   agentId,
-   integrationId,
- })
+ console.error('Error updating sync timestamp:', updateError)
  // Не прерываем выполнение, т.к. синхронизация уже запущена
  }
 
@@ -110,19 +100,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
  success: true,
  message: 'Синхронизация запущена',
  details: {
- jobId: job.id,
  pipelines: 'Синхронизация воронок поставлена в очередь',
  fields: 'Синхронизация полей будет выполнена автоматически',
  channels: 'Синхронизация каналов будет выполнена автоматически',
  },
  })
- } catch (syncError: unknown) {
- logger.error('Failed to trigger CRM sync:', syncError, {
-   endpoint: '/api/agents/[id]/integrations/[integrationId]/sync',
-   method: 'POST',
-   agentId,
-   integrationId,
- })
+ } catch (syncError) {
+ console.error('Failed to trigger CRM sync:', syncError)
  
  // Обновляем статус ошибки
  await supabase
@@ -145,13 +129,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
  { status: 500 }
  )
  }
- } catch (error: unknown) {
- logger.error('Agent integration sync API error:', error, {
-   endpoint: '/api/agents/[id]/integrations/[integrationId]/sync',
-   method: 'POST',
-   agentId,
-   integrationId,
- })
+ } catch (error) {
+ console.error('Agent integration sync API error:', error)
  return NextResponse.json(
  { success: false, error: 'Внутренняя ошибка сервера' },
  { status: 500 }
