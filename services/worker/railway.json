@@ -3,7 +3,7 @@
   "build": {
     "builder": "DOCKERFILE",
     "dockerfilePath": "services/worker/Dockerfile",
-    "watchPatterns": ["services/worker/**"]
+    "watchPatterns": ["services/worker/**", "lib/**", "types/**"]
   },
   "deploy": {
     "numReplicas": 2,
