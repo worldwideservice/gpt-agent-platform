@@ -471,30 +471,38 @@ const executeSendEmail = async (
 
     // Подготавливаем переменные для шаблона из контекста
     const variables: Record<string, string> = {
-      ...context.leadData,
-      ...context.contactData,
-      recipient: action.recipient,
+      ...(context.currentState || {}),
+      ...(context.triggerData || {}),
+      recipient: action.recipient || '',
     }
 
     // Отправляем email
+    // template может быть строкой или объектом
+    const templateSubject = typeof action.template === 'string' 
+      ? 'Сообщение от World Wide Services'
+      : (action.template as any)?.subject || 'Сообщение от World Wide Services'
+    const templateBody = typeof action.template === 'string'
+      ? action.template
+      : (action.template as any)?.html || (action.template as any)?.body || ''
+    
     const success = await sendTemplateEmail(
       action.recipient,
-      action.template.subject || 'Сообщение от World Wide Services',
-      action.template.html || action.template.body || '',
+      templateSubject,
+      templateBody,
       variables,
     )
 
     if (!success) {
       console.error('Failed to send email in rule action:', {
         recipient: action.recipient,
-        actionId: action.id,
+        actionType: action.type,
       })
       return false
     }
 
     console.log('Rule: Email sent successfully', {
       recipient: action.recipient,
-      actionId: action.id,
+      actionType: action.type,
     })
 
     return true

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { auth } from '@/auth'
-import { getCRMConnectionByOrg, createKommoApiForOrg } from '@/lib/repositories/crm-connection'
+import { getCrmConnectionData, createKommoApiForOrg } from '@/lib/repositories/crm-connection'
 import { logger } from '@/lib/utils/logger'
 
 export const dynamic = 'force-dynamic'
@@ -15,8 +15,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Не авторизовано' }, { status: 401 })
     }
 
-    const connection = await getCRMConnectionByOrg(session.user.orgId)
-    if (!connection || !connection.is_connected) {
+    const crmData = await getCrmConnectionData(session.user.orgId)
+    if (!crmData.connection || !crmData.connection.access_token) {
       return NextResponse.json(
         { success: false, error: 'CRM не подключен' },
         { status: 400 }
@@ -24,18 +24,21 @@ export async function GET(request: NextRequest) {
     }
 
     const kommoApi = await createKommoApiForOrg(session.user.orgId)
+    if (!kommoApi) {
+      return NextResponse.json(
+        { success: false, error: 'Не удалось создать API клиент' },
+        { status: 500 }
+      )
+    }
+
     const pipelines = await kommoApi.getPipelines()
 
-    // Get stages for each pipeline
-    const pipelinesWithStages = await Promise.all(
-      pipelines.map(async (pipeline) => {
-        const stages = await kommoApi.getPipelineStatuses(pipeline.id)
-        return {
-          ...pipeline,
-          stages,
-        }
-      })
-    )
+    // Pipelines already include stages in _embedded.statuses
+    const pipelinesWithStages = pipelines.map((pipeline) => ({
+      id: pipeline.id,
+      name: pipeline.name,
+      stages: pipeline._embedded?.statuses || [],
+    }))
 
     return NextResponse.json({
       success: true,
