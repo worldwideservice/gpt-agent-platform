@@ -64,4 +64,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 
 # Запускаем worker напрямую через tsx из node_modules для поддержки TypeScript импортов из lib/
 WORKDIR /app/services/worker
-CMD ["node", "node_modules/.bin/tsx", "--tsconfig", "/app/tsconfig.json", "dist/index.js"]
+CMD ["node", "node_modules/.bin/tsx", "--tsconfig", "/app/tsconfig.json", "./dist/index.js"]
