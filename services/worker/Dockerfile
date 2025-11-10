@@ -1,18 +1,17 @@
 # Multi-stage build для Worker сервиса
-# Railway может запускать сборку из разных директорий
+# Railway должен запускать сборку из корня проекта (Root Directory = /)
 FROM node:20-alpine AS base
 
-# Устанавливаем рабочую директорию
+# Устанавливаем рабочую директорию в корень проекта
 WORKDIR /app
 
-# Копируем package.json и package-lock.json (если есть)
-COPY package.json package-lock.json* ./
+# Копируем package.json Worker для установки зависимостей
+COPY services/worker/package.json services/worker/package-lock.json* ./services/worker/
 
-# Копируем весь проект
+# Копируем весь проект (включая lib/)
 COPY . .
 
-# Переходим в директорию Worker (если запускаем из корня)
-# Или остаемся здесь (если запускаем из services/worker)
+# Переходим в директорию Worker и собираем
 WORKDIR /app/services/worker
 
 # Устанавливаем зависимости и собираем
