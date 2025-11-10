@@ -1,12 +1,13 @@
 # Multi-stage build для Worker сервиса
-# Этот Dockerfile запускается из корня проекта (Root Directory = /)
+# Railway запускает сборку из корня проекта
 FROM node:20-alpine AS base
 
 # Устанавливаем рабочую директорию в корень проекта
 WORKDIR /app
 
 # Копируем package.json Worker для установки зависимостей
-COPY services/worker/package.json ./services/worker/
+# Railway использует root directory = /, поэтому путь должен быть относительно корня
+COPY services/worker/package.json services/worker/package-lock.json* ./services/worker/
 
 # Копируем весь проект (включая lib/)
 COPY . .
@@ -28,7 +29,7 @@ RUN apk add --no-cache wget
 WORKDIR /app
 
 # Копируем package.json Worker для production зависимостей
-COPY services/worker/package.json ./services/worker/
+COPY services/worker/package.json services/worker/package-lock.json* ./services/worker/
 
 # Копируем собранное приложение Worker
 COPY --from=base /app/services/worker/dist ./services/worker/dist
