@@ -52,8 +52,20 @@ export function DashboardClient() {
     <div className="space-y-8 p-6">
       {stats && <SimpleDashboardStats stats={stats} />}
       <div className="grid gap-6 md:grid-cols-2">
-        {charts?.lineChart && <LineChartCard data={charts.lineChart} />}
-        {charts?.barChart && <BarChartCard data={charts.barChart} />}
+        {charts?.lineChart && (
+          <LineChartCard
+            title="Активность за период"
+            subtitle="Ответы ИИ по дням"
+            data={charts.lineChart}
+          />
+        )}
+        {charts?.barChart && (
+          <BarChartCard
+            title="Распределение по каналам"
+            subtitle="Ответы по каналам связи"
+            data={charts.barChart}
+          />
+        )}
       </div>
       {updates && <RecentUpdates updates={updates} />}
     </div>
