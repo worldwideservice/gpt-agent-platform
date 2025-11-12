@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Zap, PlayCircle, CreditCard } from 'lucide-react'
+import { Zap, PlayCircle, CreditCard, HelpCircle } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import { Button } from '@/components/ui'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
@@ -56,8 +56,8 @@ export function PublicHeader({ showNav = true, alwaysShowAuthButtons = false }: 
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#E63946] to-[#FF6B6B] group-hover:w-full transition-all duration-300"></span>
               </span>
             </Link>
-            <Link 
-              href="/pricing" 
+            <Link
+              href="/pricing"
               className={`group relative flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:ring-offset-2 ${
                 pathname === '/pricing'
                   ? 'text-[#E63946] dark:text-[#E63946] bg-gray-100 dark:bg-gray-800'
@@ -70,6 +70,23 @@ export function PublicHeader({ showNav = true, alwaysShowAuthButtons = false }: 
                 Тарифы
                 <span className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-[#E63946] to-[#FF6B6B] transition-all duration-300 ${
                   pathname === '/pricing' ? 'w-full' : 'w-0 group-hover:w-full'
+                }`}></span>
+              </span>
+            </Link>
+            <Link
+              href="/faq"
+              className={`group relative flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:ring-offset-2 ${
+                pathname === '/faq'
+                  ? 'text-[#E63946] dark:text-[#E63946] bg-gray-100 dark:bg-gray-800'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#E63946] dark:hover:text-[#E63946]'
+              }`}
+              aria-label="Перейти к разделу Частые вопросы"
+            >
+              <HelpCircle className="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
+              <span className="relative">
+                FAQ
+                <span className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-[#E63946] to-[#FF6B6B] transition-all duration-300 ${
+                  pathname === '/faq' ? 'w-full' : 'w-0 group-hover:w-full'
                 }`}></span>
               </span>
             </Link>
