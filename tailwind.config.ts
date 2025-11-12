@@ -6,6 +6,7 @@ import {
   chartColorTokens,
   radiusTokens,
   fontTokens,
+  brandTokens,
 } from './design-tokens'
 
 const config: Config = {
@@ -22,6 +23,7 @@ const config: Config = {
         ...basePalette,
         ...semanticColorTokens,
         chart: chartColorTokens,
+        brand: brandTokens,
       },
       borderRadius: radiusTokens,
       fontFamily: fontTokens,

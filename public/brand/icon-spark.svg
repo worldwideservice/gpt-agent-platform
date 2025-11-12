@@ -1,0 +1,12 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Иконка искры TON 18</title>
+  <desc id="desc">Минималистичная иконка искры с градиентным заливом</desc>
+  <defs>
+    <linearGradient id="spark" x1="8" y1="6" x2="40" y2="42" gradientUnits="userSpaceOnUse">
+      <stop stop-color="hsl(355, 78%, 56%)" />
+      <stop offset="1" stop-color="hsl(16, 100%, 60%)" />
+    </linearGradient>
+  </defs>
+  <path d="M24 4L28.9443 16.0557L41 21L28.9443 25.9443L24 38L19.0557 25.9443L7 21L19.0557 16.0557L24 4Z" fill="url(#spark)" />
+  <path d="M24 10L26.8887 17.1113L34 20L26.8887 22.8887L24 30L21.1113 22.8887L14 20L21.1113 17.1113L24 10Z" fill="white" fill-opacity="0.82" />
+</svg>

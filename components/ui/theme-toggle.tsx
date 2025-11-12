@@ -17,7 +17,7 @@ export function ThemeToggle() {
     // Check for saved theme preference or default to light
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    
+
     if (savedTheme) {
       setTheme(savedTheme)
       applyTheme(savedTheme)
@@ -43,10 +43,13 @@ export function ThemeToggle() {
     applyTheme(newTheme)
   }
 
+  const accessibleLabel =
+    theme === 'dark' ? 'Переключить на светлую тему' : 'Переключить на тёмную тему'
+
   if (!mounted) {
     return (
-      <Button variant="ghost" size="icon" className="h-9 w-9">
-        <Sun className="h-4 w-4" />
+      <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Переключить тему" aria-pressed={false}>
+        <Sun className="h-4 w-4" aria-hidden="true" />
       </Button>
     )
   }
@@ -56,13 +59,14 @@ export function ThemeToggle() {
       variant="ghost"
       size="icon"
       onClick={toggleTheme}
-      className="h-9 w-9 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-      aria-label="Toggle theme"
+      className="h-9 w-9 transition-colors hover:bg-brand-accent/10"
+      aria-label={accessibleLabel}
+      aria-pressed={theme === 'dark'}
     >
       {theme === 'light' ? (
-        <Moon className="h-4 w-4" />
+        <Moon className="h-4 w-4" aria-hidden="true" />
       ) : (
-        <Sun className="h-4 w-4" />
+        <Sun className="h-4 w-4" aria-hidden="true" />
       )}
     </Button>
   )

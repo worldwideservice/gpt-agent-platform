@@ -1,0 +1,39 @@
+<svg width="640" height="480" viewBox="0 0 640 480" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Иллюстрация главного экрана TON 18</title>
+  <desc id="desc">Абстрактная сцена с панелями интерфейса, графиками и линиями связи</desc>
+  <defs>
+    <linearGradient id="bg" x1="80" y1="40" x2="560" y2="440" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="rgba(230,57,70,0.12)" />
+      <stop offset="1" stop-color="rgba(255,107,53,0.08)" />
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="320" y2="240" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity="0.92" />
+      <stop offset="1" stop-color="#F8FAFC" stop-opacity="0.6" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="160" y2="160" gradientUnits="userSpaceOnUse">
+      <stop stop-color="hsl(355, 78%, 56%)" />
+      <stop offset="1" stop-color="hsl(16, 100%, 60%)" />
+    </linearGradient>
+    <filter id="shadow" x="-50" y="-50" width="740" height="580" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="24" stdDeviation="48" flood-opacity="0.1" />
+    </filter>
+  </defs>
+  <rect width="640" height="480" rx="40" fill="url(#bg)" />
+  <g filter="url(#shadow)">
+    <rect x="96" y="96" width="448" height="288" rx="32" fill="url(#panel)" />
+    <rect x="128" y="128" width="192" height="48" rx="16" fill="#EEF2FF" />
+    <rect x="128" y="192" width="160" height="20" rx="10" fill="#E2E8F0" />
+    <rect x="128" y="222" width="128" height="20" rx="10" fill="#E2E8F0" />
+    <rect x="128" y="252" width="96" height="20" rx="10" fill="#E2E8F0" />
+    <rect x="352" y="128" width="128" height="160" rx="24" fill="#FFFFFF" />
+    <path d="M368 160C368 151.163 375.163 144 384 144H448C456.837 144 464 151.163 464 160V208C464 216.837 456.837 224 448 224H384C375.163 224 368 216.837 368 208V160Z" fill="url(#accent)" opacity="0.85" />
+    <path d="M384 236C383.204 236 382.441 236.316 381.878 236.878C381.316 237.441 381 238.204 381 239C381 244.523 385.477 249 391 249H441C446.523 249 451 244.523 451 239C451 238.204 450.684 237.441 450.122 236.878C449.559 236.316 448.796 236 448 236H384Z" fill="#E2E8F0" />
+    <rect x="368" y="256" width="96" height="8" rx="4" fill="#CBD5F5" />
+  </g>
+  <circle cx="160" cy="344" r="20" fill="url(#accent)" opacity="0.6" />
+  <circle cx="480" cy="108" r="14" fill="url(#accent)" opacity="0.8" />
+  <path d="M160 344C160 344 248 268 320 288C392 308 480 216 480 108" stroke="url(#accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="24 18" opacity="0.7" />
+  <path d="M144 160H192M176 176H240M208 208H272" stroke="#CBD5F5" stroke-width="6" stroke-linecap="round" opacity="0.6" />
+  <path d="M192 320C192 306.745 202.745 296 216 296H280C293.255 296 304 306.745 304 320C304 333.255 293.255 344 280 344H216C202.745 344 192 333.255 192 320Z" fill="#FFFFFF" opacity="0.8" />
+  <path d="M224 320C224 317.791 225.791 316 228 316H268C270.209 316 272 317.791 272 320C272 322.209 270.209 324 268 324H228C225.791 324 224 322.209 224 320Z" fill="#CBD5F5" />
+</svg>
