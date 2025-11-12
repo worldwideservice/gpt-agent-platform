@@ -1,5 +1,8 @@
+'use client'
+
 import type { ComponentType } from 'react'
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
+import { useFormatter, useTranslations } from 'next-intl'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
 import type { AgentAsset } from '@/lib/repositories/agent-assets'
@@ -8,11 +11,11 @@ interface KnowledgeProcessingHistoryProps {
   items: AgentAsset[]
 }
 
-const STATUS_BADGES: Record<AgentAsset['status'], string> = {
-  pending: 'В очереди',
-  processing: 'Обработка',
-  completed: 'Готово',
-  failed: 'Ошибка',
+const STATUS_LABEL_KEYS: Record<AgentAsset['status'], string> = {
+  pending: 'statuses.pending',
+  processing: 'statuses.processing',
+  completed: 'statuses.completed',
+  failed: 'statuses.failed',
 }
 
 const STATUS_ICON: Record<AgentAsset['status'], ComponentType<{ className?: string }>> = {
@@ -23,15 +26,17 @@ const STATUS_ICON: Record<AgentAsset['status'], ComponentType<{ className?: stri
 }
 
 export function KnowledgeProcessingHistory({ items }: KnowledgeProcessingHistoryProps) {
+  const t = useTranslations('manage.knowledge.history')
+  const format = useFormatter()
   return (
     <Card>
       <CardHeader>
-        <CardTitle>История обработок</CardTitle>
-        <CardDescription>Последние загруженные документы и их статусы</CardDescription>
+        <CardTitle>{t('title')}</CardTitle>
+        <CardDescription>{t('description')}</CardDescription>
       </CardHeader>
       <CardContent>
         {items.length === 0 ? (
-          <p className="text-sm text-gray-500">История пока пуста. Загрузите документы, чтобы запустить обработку.</p>
+          <p className="text-sm text-gray-500">{t('empty')}</p>
         ) : (
           <ul className="space-y-3 text-sm">
             {items.map((asset) => {
@@ -41,8 +46,20 @@ export function KnowledgeProcessingHistory({ items }: KnowledgeProcessingHistory
                   <div>
                     <p className="font-medium text-gray-900 dark:text-gray-50">{asset.sourceName || asset.type}</p>
                     <p className="text-xs text-gray-500">
-                      Загружено {new Date(asset.createdAt).toLocaleString('ru-RU')}
-                      {asset.processedAt ? ` · Завершено ${new Date(asset.processedAt).toLocaleString('ru-RU')}` : ''}
+                      {t('uploadedAt', {
+                        created: format.dateTime(new Date(asset.createdAt), {
+                          dateStyle: 'short',
+                          timeStyle: 'short',
+                        }),
+                      })}
+                      {asset.processedAt
+                        ? ` · ${t('completedAt', {
+                            completed: format.dateTime(new Date(asset.processedAt), {
+                              dateStyle: 'short',
+                              timeStyle: 'short',
+                            }),
+                          })}`
+                        : ''}
                     </p>
                     {asset.processingError && asset.status === 'failed' && (
                       <p className="mt-1 text-xs text-rose-500">{asset.processingError}</p>
@@ -51,10 +68,10 @@ export function KnowledgeProcessingHistory({ items }: KnowledgeProcessingHistory
                   <div className="text-right">
                     <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
                       <Icon className="h-3 w-3" />
-                      {STATUS_BADGES[asset.status]}
+                      {t(STATUS_LABEL_KEYS[asset.status])}
                     </span>
                     {asset.chunksCount ? (
-                      <p className="text-xs text-gray-400">Чанков: {asset.chunksCount}</p>
+                      <p className="text-xs text-gray-400">{t('chunks', { count: asset.chunksCount })}</p>
                     ) : null}
                   </div>
                 </li>

@@ -1,18 +1,25 @@
 import { Suspense } from 'react'
+import { getTranslations } from 'next-intl/server'
 
 import { auth } from '@/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
-import { getDashboardStats } from '@/lib/repositories/agents'
-import { getWorkspaceSummary } from '@/lib/repositories/manage-summary'
 import { WorkspaceSummaryIntegrationInsights } from '@/components/features/manage/WorkspaceSummaryIntegrationInsights'
 import { WorkspaceSummaryKnowledgeInsights } from '@/components/features/manage/WorkspaceSummaryKnowledgeInsights'
 import { WebhookActivityCard } from '@/components/features/manage/WebhookActivityCard'
-import type { DashboardStats } from '@/types'
+import { loadManageDashboardData } from '@/lib/repositories/manage-data'
 
 interface DashboardPageProps {
   params: {
     tenantId: string
   }
+}
+
+type MetricConfig = {
+  key: string
+  label: string
+  helper?: string
+  value: number | null | undefined
+  change?: number | null
 }
 
 const MetricsSkeleton = () => {
@@ -29,46 +36,53 @@ const MetricsSkeleton = () => {
   )
 }
 
-export default function DashboardPage({ params }: DashboardPageProps) {
+export default async function DashboardPage({ params }: DashboardPageProps) {
+  const t = await getTranslations('manage.dashboard')
+  const session = await auth()
+  const organizationId = session?.user?.orgId ?? null
+
   return (
     <div className="space-y-8">
       <header className="flex flex-col gap-2">
-        <p className="text-sm uppercase text-primary">Обзор</p>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Рабочее пространство</h1>
+        <p className="text-sm uppercase text-primary">{t('header.eyebrow')}</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">{t('header.title')}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Tenant: <span className="font-mono text-xs">{params.tenantId}</span>
+          {t.rich('header.tenant', {
+            tenant: (chunk) => <span className="font-mono text-xs">{chunk}</span>,
+            id: params.tenantId,
+          })}
         </p>
       </header>
 
       <Suspense fallback={<MetricsSkeleton />}>
-        <DashboardMetrics />
+        <DashboardMetrics organizationId={organizationId} />
       </Suspense>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Недавние активности</CardTitle>
-            <CardDescription>Полная история появится после интеграции с Supabase.</CardDescription>
+            <CardTitle>{t('recentActivity.title')}</CardTitle>
+            <CardDescription>{t('recentActivity.description')}</CardDescription>
           </CardHeader>
-          <CardContent className="text-sm text-gray-500">
-            Нет данных. Подключите Kommo и начните общение с клиентами.
+          <CardContent className="text-sm text-gray-500 dark:text-gray-400">
+            {t('recentActivity.placeholder')}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Быстрые действия</CardTitle>
-            <CardDescription>Запустите ключевые сценарии платформы.</CardDescription>
+            <CardTitle>{t('quickActions.title')}</CardTitle>
+            <CardDescription>{t('quickActions.description')}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <button className="rounded-lg border border-dashed border-primary/40 px-4 py-2 text-left text-sm font-medium text-primary hover:bg-primary/5">
-              Создать агента
+              {t('quickActions.actions.createAgent')}
             </button>
             <button className="rounded-lg border border-dashed border-primary/40 px-4 py-2 text-left text-sm font-medium text-primary hover:bg-primary/5">
-              Загрузить знания
+              {t('quickActions.actions.uploadKnowledge')}
             </button>
             <button className="rounded-lg border border-dashed border-primary/40 px-4 py-2 text-left text-sm font-medium text-primary hover:bg-primary/5">
-              Подключить Kommo
+              {t('quickActions.actions.connectKommo')}
             </button>
           </CardContent>
         </Card>
@@ -77,41 +91,61 @@ export default function DashboardPage({ params }: DashboardPageProps) {
   )
 }
 
-const ZERO_STATS: DashboardStats = {
-  monthlyResponses: 0,
-  monthlyChange: 0,
-  weeklyResponses: 0,
-  todayResponses: 0,
-  totalAgents: 0,
+interface DashboardMetricsProps {
+  organizationId: string | null
 }
 
-async function DashboardMetrics() {
-  const session = await auth()
-  const organizationId = session?.user?.orgId
+async function DashboardMetrics({ organizationId }: DashboardMetricsProps) {
+  const t = await getTranslations('manage.dashboard')
+
   if (!organizationId) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Недостаточно данных</CardTitle>
-          <CardDescription>Авторизуйтесь, чтобы получить доступ к статистике workspace.</CardDescription>
+          <CardTitle>{t('states.unauthorized.title')}</CardTitle>
+          <CardDescription>{t('states.unauthorized.description')}</CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-gray-600 dark:text-gray-300">
-          Данные по workspace во главе с Supabase пока отсутствуют.
+          {t('states.unauthorized.helper')}
         </CardContent>
       </Card>
     )
   }
 
-  const [stats, summary] = await Promise.all([
-    getDashboardStats(organizationId).catch(() => null),
-    getWorkspaceSummary(organizationId).catch(() => null),
-  ])
+  const { stats, summary, error } = await loadManageDashboardData(organizationId)
 
-  const statsToDisplay = stats ?? ZERO_STATS
+  const metrics: MetricConfig[] = [
+    {
+      key: 'monthlyResponses',
+      label: t('metrics.monthlyResponses.label'),
+      helper: t('metrics.monthlyResponses.helper'),
+      value: stats.monthlyResponses,
+      change: stats.monthlyChange,
+    },
+    {
+      key: 'weeklyResponses',
+      label: t('metrics.weeklyResponses.label'),
+      helper: t('metrics.weeklyResponses.helper'),
+      value: stats.weeklyResponses,
+    },
+    {
+      key: 'todayResponses',
+      label: t('metrics.todayResponses.label'),
+      helper: t('metrics.todayResponses.helper'),
+      value: stats.todayResponses,
+      change: stats.todayChange,
+    },
+    {
+      key: 'activeAgents',
+      label: t('metrics.activeAgents.label'),
+      helper: t('metrics.activeAgents.helper'),
+      value: stats.totalAgents,
+    },
+  ]
 
   return (
     <>
-      <StatsGrid stats={statsToDisplay} />
+      <StatsGrid metrics={metrics} />
       {summary ? (
         <>
           <WorkspaceSummaryKnowledgeInsights summary={summary} />
@@ -123,32 +157,30 @@ async function DashboardMetrics() {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>Статистика недоступна</CardTitle>
-            <CardDescription>Проверьте соединение с Supabase и интеграции Kommo.</CardDescription>
+            <CardTitle>{t('states.summaryUnavailable.title')}</CardTitle>
+            <CardDescription>{t('states.summaryUnavailable.description')}</CardDescription>
           </CardHeader>
+          <CardContent className="text-sm text-gray-600 dark:text-gray-300">
+            {error ? t('states.summaryUnavailable.helper') : t('states.summaryUnavailable.empty')}
+          </CardContent>
         </Card>
       )}
     </>
   )
 }
 
-function StatsGrid({ stats }: { stats: DashboardStats }) {
+function StatsGrid({ metrics }: { metrics: MetricConfig[] }) {
   return (
     <div className="grid gap-4 lg:grid-cols-4">
-      <StatCard
-        label="Ответов за месяц"
-        value={stats.monthlyResponses}
-        change={stats.monthlyChange}
-        helper="к прошлому месяцу"
-      />
-      <StatCard label="Ответов за неделю" value={stats.weeklyResponses} helper="Последние 7 дней" />
-      <StatCard
-        label="Ответов сегодня"
-        value={stats.todayResponses}
-        change={stats.todayChange}
-        helper="к вчерашнему дню"
-      />
-      <StatCard label="Активные агенты" value={stats.totalAgents} helper="Включены и доступны" />
+      {metrics.map((metric) => (
+        <StatCard
+          key={metric.key}
+          label={metric.label}
+          value={metric.value}
+          change={metric.change}
+          helper={metric.helper}
+        />
+      ))}
     </div>
   )
 }

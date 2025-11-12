@@ -1,9 +1,37 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 
-import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Input, Label, Textarea } from '@/components/ui'
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Textarea,
+} from '@/components/ui'
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 import type { Agent } from '@/types'
 
 interface AgentFormProps {
@@ -11,33 +39,61 @@ interface AgentFormProps {
   agent?: Agent
 }
 
-export function AgentForm({ tenantId: _tenantId, agent }: AgentFormProps) {
+const STATUS_OPTIONS = ['draft', 'active', 'inactive'] as const
+
+type AgentFormValues = {
+  name: string
+  status: (typeof STATUS_OPTIONS)[number]
+  model: string
+  instructions?: string | null
+  temperature: number
+  maxTokens: number
+}
+
+export function AgentForm({ agent }: AgentFormProps) {
   const router = useRouter()
-  const [formState, setFormState] = useState({
-    name: agent?.name ?? '',
-    status: agent?.status ?? 'draft',
-    model: agent?.model ?? '',
-    instructions: agent?.instructions ?? '',
-    temperature: agent?.temperature ?? 0.7,
-    maxTokens: agent?.maxTokens ?? 2048,
+  const t = useTranslations('manage.agents.form')
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  const schema = useMemo(
+    () =>
+      z.object({
+        name: z.string().min(2, { message: t('validation.name') }),
+        status: z.enum(STATUS_OPTIONS, { invalid_type_error: t('validation.status') }),
+        model: z.string().min(3, { message: t('validation.model') }),
+        instructions: z
+          .string()
+          .max(2000, { message: t('validation.instructions') })
+          .optional()
+          .or(z.literal('')),
+        temperature: z
+          .coerce
+          .number({ invalid_type_error: t('validation.temperatureRange') })
+          .min(0, { message: t('validation.temperatureRange') })
+          .max(2, { message: t('validation.temperatureRange') }),
+        maxTokens: z
+          .coerce
+          .number({ invalid_type_error: t('validation.maxTokens') })
+          .min(128, { message: t('validation.maxTokens') })
+          .max(8000, { message: t('validation.maxTokens') }),
+      }),
+    [t],
+  )
+
+  const form = useForm<AgentFormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      name: agent?.name ?? '',
+      status: agent?.status ?? 'draft',
+      model: agent?.model ?? '',
+      instructions: agent?.instructions ?? '',
+      temperature: agent?.temperature ?? 0.7,
+      maxTokens: agent?.maxTokens ?? 2048,
+    },
   })
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
 
-  const handleChange = (key: keyof typeof formState) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormState((prev) => ({ ...prev, [key]: event.target.value }))
-  }
-
-  const handleSelect = (key: keyof typeof formState) => (value: string) => {
-    setFormState((prev) => ({ ...prev, [key]: value }))
-  }
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setSaving(true)
-    setError(null)
-    setSuccess(null)
+  const onSubmit = async (values: AgentFormValues) => {
+    setStatusMessage(null)
 
     try {
       const endpoint = agent ? `/api/agents/${agent.id}` : '/api/agents'
@@ -46,131 +102,187 @@ export function AgentForm({ tenantId: _tenantId, agent }: AgentFormProps) {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: formState.name,
-          status: formState.status,
-          model: formState.model,
-          instructions: formState.instructions,
-          temperature: Number(formState.temperature),
-          maxTokens: Number(formState.maxTokens),
+          name: values.name,
+          status: values.status,
+          model: values.model,
+          instructions: values.instructions ?? '',
+          temperature: values.temperature,
+          maxTokens: values.maxTokens,
         }),
       })
 
       if (!response.ok) {
         const payload = await response.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(payload.error || 'Не удалось сохранить агента')
+        throw new Error(payload.error || t('messages.error'))
       }
 
       router.refresh()
-      setSuccess(agent ? 'Изменения сохранены' : 'Агент создан')
-      if (!agent) {
-        setFormState({
-          name: '',
-          status: 'draft',
-          model: '',
-          instructions: '',
-          temperature: 0.7,
-          maxTokens: 2048,
-        })
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка сохранения агента')
-    } finally {
-      setSaving(false)
+      form.reset({
+        name: agent ? values.name : '',
+        status: values.status,
+        model: agent ? values.model : '',
+        instructions: agent ? values.instructions ?? '' : '',
+        temperature: values.temperature,
+        maxTokens: values.maxTokens,
+      })
+      setStatusMessage({ type: 'success', text: agent ? t('messages.updated') : t('messages.created') })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t('messages.error')
+      setStatusMessage({ type: 'error', text: message })
     }
   }
 
+  const isSubmitting = form.formState.isSubmitting
+
   return (
     <Card>
-      <form onSubmit={handleSubmit}>
-        <CardHeader>
-          <CardTitle>{agent ? 'Редактирование агента' : 'Новый агент'}</CardTitle>
-          <CardDescription>Укажите базовые параметры и инструкции для агента.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="agent-name">Название</Label>
-            <Input
-              id="agent-name"
-              value={formState.name}
-              onChange={handleChange('name')}
-              placeholder="AI Sales Assistant"
-              required
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <CardHeader>
+            <CardTitle>{agent ? t('title.edit') : t('title.create')}</CardTitle>
+            <CardDescription>{t('subtitle')}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('fields.name.label')}</FormLabel>
+                  <FormControl>
+                    <Input placeholder={t('fields.name.placeholder')} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label>Статус</Label>
-              <select
-                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
-                value={formState.status}
-                onChange={(event) => handleSelect('status')(event.target.value)}
+            <div className="grid gap-4 md:grid-cols-3">
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('fields.status.label')}</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('fields.status.placeholder')} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {STATUS_OPTIONS.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {t(`fields.status.options.${option}`)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="model"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('fields.model.label')}</FormLabel>
+                    <FormControl>
+                      <Input placeholder={t('fields.model.placeholder')} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="temperature"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('fields.temperature.label')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={2}
+                        step="0.1"
+                        value={Number.isFinite(field.value) ? field.value : 0}
+                        onChange={(event) => field.onChange(event.target.value)}
+                      />
+                    </FormControl>
+                    <FormDescription>{t('fields.temperature.description')}</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="maxTokens"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('fields.maxTokens.label')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={128}
+                        max={8000}
+                        value={Number.isFinite(field.value) ? field.value : 0}
+                        onChange={(event) => field.onChange(event.target.value)}
+                      />
+                    </FormControl>
+                    <FormDescription>{t('fields.maxTokens.description')}</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="instructions"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('fields.instructions.label')}</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      rows={6}
+                      placeholder={t('fields.instructions.placeholder')}
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormDescription>{t('fields.instructions.description')}</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {statusMessage && (
+              <p
+                className={`text-sm ${
+                  statusMessage.type === 'success' ? 'text-emerald-600' : 'text-rose-500'
+                }`}
               >
-                <option value="draft">Черновик</option>
-                <option value="active">Активен</option>
-                <option value="inactive">Выключен</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="agent-model">Модель</Label>
-              <Input
-                id="agent-model"
-                value={formState.model}
-                onChange={handleChange('model')}
-                placeholder="openrouter/gpt-4.1-mini"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="agent-temp">Temperature</Label>
-              <Input
-                id="agent-temp"
-                type="number"
-                step="0.1"
-                min="0"
-                max="2"
-                value={formState.temperature}
-                onChange={handleChange('temperature')}
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="agent-tokens">Max tokens</Label>
-              <Input
-                id="agent-tokens"
-                type="number"
-                min="128"
-                max="8000"
-                value={formState.maxTokens}
-                onChange={handleChange('maxTokens')}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="agent-instructions">Инструкции</Label>
-            <Textarea
-              id="agent-instructions"
-              rows={6}
-              value={formState.instructions}
-              onChange={handleChange('instructions')}
-              placeholder="Опишите роль и тональность агента"
-            />
-          </div>
-
-          {error && <p className="text-sm text-rose-500">{error}</p>}
-          {success && <p className="text-sm text-emerald-600">{success}</p>}
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button type="button" variant="outline" onClick={() => router.back()}>
-            Отмена
-          </Button>
-          <Button type="submit" disabled={saving}>
-            {saving ? 'Сохраняем…' : agent ? 'Сохранить' : 'Создать агента'}
-          </Button>
-        </CardFooter>
-      </form>
+                {statusMessage.text}
+              </p>
+            )}
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button type="button" variant="outline" onClick={() => router.back()}>
+              {t('actions.cancel')}
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? t('actions.saving') : agent ? t('actions.update') : t('actions.create')}
+            </Button>
+          </CardFooter>
+        </form>
+      </Form>
     </Card>
   )
 }

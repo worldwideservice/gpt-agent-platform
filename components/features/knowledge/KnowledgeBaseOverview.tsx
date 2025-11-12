@@ -1,6 +1,7 @@
 'use client'
 
 import { BookOpenCheck, UploadCloud } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
 import type { KnowledgeBaseStatsSummary } from '@/types'
@@ -11,10 +12,11 @@ interface KnowledgeBaseOverviewProps {
 }
 
 export function KnowledgeBaseOverview({ tenantId, stats }: KnowledgeBaseOverviewProps) {
+  const t = useTranslations('manage.knowledge.overview')
   const cards = [
-    { label: 'Статей', value: stats?.publishedArticlesCount ?? 0 },
-    { label: 'Категорий', value: stats?.categoriesCount ?? 0 },
-    { label: 'Знаний в очереди', value: stats?.pendingAssetsCount ?? 0 },
+    { label: t('stats.articles'), value: stats?.publishedArticlesCount ?? 0 },
+    { label: t('stats.categories'), value: stats?.categoriesCount ?? 0 },
+    { label: t('stats.pending'), value: stats?.pendingAssetsCount ?? 0 },
   ]
 
   return (
@@ -34,38 +36,37 @@ export function KnowledgeBaseOverview({ tenantId, stats }: KnowledgeBaseOverview
         <CardHeader>
           <div className="flex items-center gap-2 text-primary">
             <UploadCloud className="h-5 w-5" />
-            <CardTitle>Загрузите знания, чтобы начать</CardTitle>
+            <CardTitle>{t('upload.title')}</CardTitle>
           </div>
-          <CardDescription>
-            Документы, статьи и FAQ будут автоматически разбиты на чанки, проиндексированы и связаны с агентами.
-          </CardDescription>
+          <CardDescription>{t('upload.description')}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Поддерживаются PDF, DOCX, Markdown и HTML. Каждый файл обрабатывается воркером и попадает в Supabase.
-          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-300">{t('upload.helper')}</p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm">
               <BookOpenCheck className="mr-2 h-4 w-4" />
-              Открыть статьи
+              {t('upload.actions.openArticles')}
             </Button>
-            <Button size="sm">Загрузить файл</Button>
+            <Button size="sm">{t('upload.actions.upload')}</Button>
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>История обработок</CardTitle>
+          <CardTitle>{t('history.title')}</CardTitle>
           <CardDescription>
             {stats
-              ? `В очереди обработки: ${stats.pendingAssetsCount}`
-              : 'Отображение реальных данных появляется после интеграции с Supabase.'}
+              ? t('history.queue', { count: stats.pendingAssetsCount })
+              : t('history.placeholder')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-500">
-            Пока история пустая. Добавьте документы для workspace <span className="font-mono">{tenantId}</span>, чтобы увидеть прогресс.
+            {t.rich('history.empty', {
+              tenant: (chunks) => <span className="font-mono">{chunks}</span>,
+              id: tenantId,
+            })}
           </p>
         </CardContent>
       </Card>

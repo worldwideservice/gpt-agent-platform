@@ -57,5 +57,390 @@
     "minLength": "Минимум {min} символов",
     "maxLength": "Максимум {max} символов",
     "pattern": "Неверный формат"
+  },
+  "manage": {
+    "layout": {
+      "searchPlaceholder": "Поиск по агентам, сделкам, статьям",
+      "workspaceLabel": "Workspace",
+      "organizationFallback": "Организация"
+    },
+    "navigation": {
+      "main": {
+        "title": "Главное",
+        "dashboard": { "label": "Дашборд" },
+        "agents": { "label": "Агенты ИИ" }
+      },
+      "knowledge": {
+        "title": "Знания и сценарии",
+        "base": { "label": "База знаний" },
+        "testChat": { "label": "Чат и тестирование" }
+      },
+      "integrations": {
+        "title": "Интеграции и настройки",
+        "items": {
+          "integrations": { "label": "Интеграции" },
+          "settings": { "label": "Настройки" }
+        }
+      }
+    },
+    "agents": {
+      "form": {
+        "title": {
+          "create": "Новый агент",
+          "edit": "Редактирование агента"
+        },
+        "subtitle": "Укажите базовые параметры и инструкции для агента.",
+        "validation": {
+          "name": "Введите название агента",
+          "status": "Выберите статус",
+          "model": "Укажите модель",
+          "instructions": "Максимум 2000 символов",
+          "temperatureRange": "Допустимый диапазон от 0 до 2",
+          "maxTokens": "Укажите значение от 128 до 8000"
+        },
+        "messages": {
+          "created": "Агент создан",
+          "updated": "Изменения сохранены",
+          "error": "Не удалось сохранить агента"
+        },
+        "fields": {
+          "name": {
+            "label": "Название",
+            "placeholder": "AI Sales Assistant"
+          },
+          "status": {
+            "label": "Статус",
+            "placeholder": "Выберите статус",
+            "options": {
+              "draft": "Черновик",
+              "active": "Активен",
+              "inactive": "Выключен"
+            }
+          },
+          "model": {
+            "label": "Модель",
+            "placeholder": "openrouter/gpt-4.1-mini"
+          },
+          "temperature": {
+            "label": "Temperature",
+            "description": "Контролируйте креативность ответа"
+          },
+          "maxTokens": {
+            "label": "Max tokens",
+            "description": "Диапазон от 128 до 8000"
+          },
+          "instructions": {
+            "label": "Инструкции",
+            "placeholder": "Опишите роль и тональность агента",
+            "description": "Используется в качестве системного промпта"
+          }
+        },
+        "actions": {
+          "cancel": "Отмена",
+          "saving": "Сохраняем…",
+          "update": "Сохранить",
+          "create": "Создать агента"
+        }
+      },
+      "page": {
+        "header": {
+          "eyebrow": "Агенты",
+          "title": "Агенты ИИ",
+          "subtitle": "Управляйте агентами для workspace <tenant>{id}</tenant>"
+        },
+        "errors": {
+          "noOrganization": "Нет доступа к организации. Авторизуйтесь, чтобы увидеть список агентов.",
+          "fetchFailed": "Не удалось загрузить агентов из Supabase."
+        },
+        "summary": {
+          "title": "Обзор агентов",
+          "description": "Сводка по workspace из Supabase.",
+          "total": "Всего агентов",
+          "active": "Активные",
+          "inactive": "Неактивные"
+        }
+      }
+    },
+    "dashboard": {
+      "header": {
+        "eyebrow": "Обзор",
+        "title": "Рабочее пространство",
+        "tenant": "Tenant: <tenant>{id}</tenant>"
+      },
+      "recentActivity": {
+        "title": "Недавние активности",
+        "description": "Полная история появится после интеграции с Supabase.",
+        "placeholder": "Нет данных. Подключите Kommo и начните общение с клиентами."
+      },
+      "quickActions": {
+        "title": "Быстрые действия",
+        "description": "Запустите ключевые сценарии платформы.",
+        "actions": {
+          "createAgent": "Создать агента",
+          "uploadKnowledge": "Загрузить знания",
+          "connectKommo": "Подключить Kommo"
+        }
+      },
+      "metrics": {
+        "monthlyResponses": {
+          "label": "Ответов за месяц",
+          "helper": "к прошлому месяцу"
+        },
+        "weeklyResponses": {
+          "label": "Ответов за неделю",
+          "helper": "Последние 7 дней"
+        },
+        "todayResponses": {
+          "label": "Ответов сегодня",
+          "helper": "к вчерашнему дню"
+        },
+        "activeAgents": {
+          "label": "Активные агенты",
+          "helper": "Включены и доступны"
+        }
+      },
+      "states": {
+        "unauthorized": {
+          "title": "Недостаточно данных",
+          "description": "Авторизуйтесь, чтобы получить доступ к статистике workspace.",
+          "helper": "Данные доступны только после авторизации."
+        },
+        "summaryUnavailable": {
+          "title": "Статистика недоступна",
+          "description": "Проверьте соединение с Supabase и интеграции Kommo.",
+          "helper": "Попробуйте перезагрузить страницу или обновить интеграции.",
+          "empty": "Данные пока не собраны"
+        }
+      }
+    },
+    "components": {
+      "integrationSummary": {
+        "title": "Интеграции и вебхуки",
+        "description": "Сводка по Kommo и webhook событиям.",
+        "events": "Последние события: {count}",
+        "successRate": "Success rate: {rate}%"
+      },
+      "knowledgeSummary": {
+        "title": "Использование базы знаний",
+        "description": "Аналитика загрузок за последние 7 дней.",
+        "totals": {
+          "uploads": "{count} загрузок",
+          "pending": "{count} ожидают"
+        }
+      },
+      "knowledgeHeatmap": {
+        "title": "Heatmap загрузок знаний",
+        "description": "Интенсивность отражает число загрузок за день."
+      },
+      "knowledgeTimeline": {
+        "title": "Загрузка знаний (7 дней)",
+        "metrics": "{count} загрузок · {pending} в очереди"
+      },
+      "integrationAlert": {
+        "title": {
+          "connected": "Kommo подключён",
+          "disconnected": "Kommo не подключён"
+        },
+        "domain": "Домен:",
+        "lastEvent": "Последний webhook: {event}",
+        "status": "Статус: {status}",
+        "error": "Ошибка: {message}",
+        "noEvents": "Последние webhook события отсутствуют."
+      },
+      "webhookSuccess": {
+        "title": "Успешность webhook Kommo",
+        "eventsWindow": "{count} событий за последние {days}"
+      },
+      "webhookActivity": {
+        "title": "История webhook Kommo",
+        "emptyTimestamp": "—"
+      },
+      "agentsFilters": {
+        "title": "Состояние агентов",
+        "description": "Фильтры по состоянию на основе базы Supabase.",
+        "filters": {
+          "all": "Все",
+          "active": "Активные",
+          "inactive": "Неактивные"
+        }
+      }
+    },
+    "knowledge": {
+      "page": {
+        "header": {
+          "eyebrow": "База знаний",
+          "title": "Знания компании",
+          "subtitle": "Управляйте статьями и файлами, которые используют агенты внутри workspace <tenant>{id}</tenant>"
+        },
+        "notice": {
+          "noOrganization": "Нет доступа к данным организации. Перезайдите в аккаунт, чтобы увидеть статистику базы знаний.",
+          "fetchFailed": "Не удалось загрузить данные базы знаний."
+        },
+        "summary": {
+          "title": "Сводка по workspace",
+          "description": "Быстрая статистика по знаниям и интеграциям.",
+          "categories": "Категорий",
+          "published": "Публикаций",
+          "pending": "Ожидают обработки"
+        },
+        "webhook": {
+          "title": "Последнее webhook событие Kommo",
+          "description": "Поступившие события показывают, что происходит в CRM.",
+          "eventType": "Тип события: {event}",
+          "status": "Статус: {status}",
+          "error": "Ошибка: {message}",
+          "timestamp": "Время: {timestamp}",
+          "empty": "—"
+        }
+      },
+      "overview": {
+        "stats": {
+          "articles": "Статей",
+          "categories": "Категорий",
+          "pending": "Знаний в очереди"
+        },
+        "upload": {
+          "title": "Загрузите знания, чтобы начать",
+          "description": "Документы, статьи и FAQ будут автоматически разбиты на чанки, проиндексированы и связаны с агентами.",
+          "helper": "Поддерживаются PDF, DOCX, Markdown и HTML. Каждый файл обрабатывается воркером и попадает в Supabase.",
+          "actions": {
+            "openArticles": "Открыть статьи",
+            "upload": "Загрузить файл"
+          }
+        },
+        "history": {
+          "title": "История обработок",
+          "queue": "В очереди обработки: {count}",
+          "placeholder": "Отображение реальных данных появляется после интеграции с Supabase.",
+          "empty": "Пока история пустая. Добавьте документы для workspace <tenant>{id}</tenant>, чтобы увидеть прогресс."
+        }
+      },
+      "collections": {
+        "categories": {
+          "title": "Категории",
+          "description": "Все разделы, доступные агентам",
+          "empty": "Категории ещё не созданы.",
+          "count": "{count} шт."
+        },
+        "articles": {
+          "title": "Статьи",
+          "description": "Последние материалы в базе знаний",
+          "empty": "Статьи ещё не добавлены. Загрузите файлы или создайте статью.",
+          "updated": "Обновлено {date} · {status}",
+          "status": {
+            "published": "Опубликовано",
+            "draft": "Черновик"
+          }
+        }
+      },
+      "history": {
+        "title": "История обработок",
+        "description": "Последние загруженные документы и их статусы",
+        "empty": "История пока пуста. Загрузите документы, чтобы запустить обработку.",
+        "uploadedAt": "Загружено {created}",
+        "completedAt": "Завершено {completed}",
+        "chunks": "Чанков: {count}",
+        "statuses": {
+          "pending": "В очереди",
+          "processing": "Обработка",
+          "completed": "Готово",
+          "failed": "Ошибка"
+        }
+      },
+      "upload": {
+        "title": "Загрузка знаний",
+        "description": "Прикрепите документ, чтобы обогатить базу знаний агента.",
+        "validation": {
+          "agent": "Выберите агента",
+          "file": "Выберите файл для загрузки"
+        },
+        "messages": {
+          "success": "Файл загружен и отправлен на обработку",
+          "error": "Ошибка загрузки файла"
+        },
+        "fields": {
+          "agent": {
+            "label": "Агент"
+          },
+          "file": {
+            "label": "Файл",
+            "helper": "Поддерживаются PDF, DOCX, TXT, Markdown и HTML до 50 МБ"
+          }
+        },
+        "actions": {
+          "uploading": "Загрузка…",
+          "submit": "Загрузить"
+        }
+      }
+    },
+    "integrations": {
+      "list": {
+        "empty": "Интеграции пока не доступны.",
+        "workspaceLabel": "Workspace: <tenant>{id}</tenant>",
+        "comingSoon": "Интеграция будет доступна в следующих релизах.",
+        "connected": {
+          "description": "Интеграция активна и готова к использованию.",
+          "domain": "Домен:",
+          "expires": "Токен истекает {date}"
+        },
+        "disconnected": {
+          "description": "Подключите интеграцию.",
+          "actions": {
+            "docs": "Инструкции",
+            "connect": "Подключить"
+          }
+        }
+      },
+      "status": {
+        "connected": "Подключено",
+        "comingSoon": "Скоро",
+        "disconnected": "Не подключено"
+      },
+      "kommo": {
+        "description": "Впишите домен вашего Kommo аккаунта и следуйте шагам OAuth авторизации.",
+        "validation": {
+          "domain": "Укажите корректный домен"
+        },
+        "messages": {
+          "error": "Не удалось начать авторизацию Kommo",
+          "redirect": "Переходим к авторизации…"
+        },
+        "fields": {
+          "domain": {
+            "label": "Домен Kommo",
+            "placeholder": "example.kommo.com"
+          }
+        },
+        "actions": {
+          "docs": "Инструкции",
+          "pending": "Переходим…",
+          "connect": "Подключить"
+        }
+      },
+      "page": {
+        "header": {
+          "eyebrow": "Интеграции",
+          "title": "Подключения и вебхуки",
+          "subtitle": "Управляйте OAuth, webhook и API ключами для workspace <tenant>{id}</tenant>"
+        },
+        "notices": {
+          "noOrganization": "Нет доступа к организации. Авторизуйтесь, чтобы настраивать интеграции.",
+          "fetchFailed": "Не удалось загрузить данные интеграций.",
+          "kommoSuccess": "Kommo успешно подключена. Данные будут синхронизированы автоматически.",
+          "kommoError": "Не удалось подключить Kommo: {message}"
+        },
+        "items": {
+          "kommo": {
+            "description": "OAuth + Webhooks, синхронизация сделок и каналов",
+            "failure": "Последний webhook: {event} ({error})",
+            "genericError": "ошибка",
+            "placeholder": "Подключите Kommo, чтобы активировать правила, sequences и webhooks."
+          },
+          "slack": {
+            "description": "Уведомления о событиях агентов в каналах Slack"
+          }
+        }
+      }
+    }
   }
 }

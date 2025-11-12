@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import type { WorkspaceSummary } from '@/lib/repositories/manage-summary'
 
 interface KnowledgeHeatmapCardProps {
@@ -7,11 +9,15 @@ interface KnowledgeHeatmapCardProps {
 }
 
 export function KnowledgeHeatmapCard({ data }: KnowledgeHeatmapCardProps) {
-  if (!data.length) return null
+  const t = useTranslations('manage.components.knowledgeHeatmap')
+
+  if (!data?.length) {
+    return null
+  }
 
   return (
     <div className="rounded-lg border p-4">
-      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Heatmap загрузок знаний</p>
+      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('title')}</p>
       <div className="mt-3 grid grid-cols-7 gap-1 text-[10px] text-gray-500">
         {data.map((entry) => (
           <div
@@ -26,7 +32,7 @@ export function KnowledgeHeatmapCard({ data }: KnowledgeHeatmapCardProps) {
           </div>
         ))}
       </div>
-      <div className="mt-2 text-xs text-gray-500">Интенсивность отражает число загрузок за день.</div>
+      <div className="mt-2 text-xs text-gray-500">{t('description')}</div>
     </div>
   )
 }

@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+
+import { brandTokens } from '@/design-tokens'
 import { cn } from '@/lib/utils'
 
 interface ProgressRingProps {
@@ -22,7 +24,7 @@ export function ProgressRing({
   strokeWidth = 8,
   className,
   showLabel = true,
-  color = '#E63946',
+  color = brandTokens.accent,
 }: ProgressRingProps) {
   const circleRef = useRef<SVGCircleElement>(null)
   const radius = (size - strokeWidth) / 2

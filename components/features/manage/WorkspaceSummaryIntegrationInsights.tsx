@@ -1,3 +1,5 @@
+import { getTranslations } from 'next-intl/server'
+
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui'
 import { IntegrationAlertCard } from '@/components/features/manage/IntegrationAlertCard'
 import { WebhookSuccessRateCard } from '@/components/features/manage/WebhookSuccessRateCard'
@@ -7,7 +9,7 @@ interface WorkspaceSummaryIntegrationInsightsProps {
   summary: WorkspaceSummary
 }
 
-export function WorkspaceSummaryIntegrationInsights({ summary }: WorkspaceSummaryIntegrationInsightsProps) {
+export async function WorkspaceSummaryIntegrationInsights({ summary }: WorkspaceSummaryIntegrationInsightsProps) {
   const { webhookHistory } = summary.integrations
   const hasIntegrationsData = summary.integrations.kommoConnected || (summary.integrations.webhookHistory?.length ?? 0) > 0
 
@@ -15,17 +17,20 @@ export function WorkspaceSummaryIntegrationInsights({ summary }: WorkspaceSummar
     return null
   }
 
+  const t = await getTranslations('manage.components.integrationSummary')
+  const eventsCount = webhookHistory?.length ?? 0
+
   return (
     <section className="space-y-4">
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>Интеграции и вебхуки</CardTitle>
-            <CardDescription>Сводка по Kommo и webhook событиям.</CardDescription>
+            <CardTitle>{t('title')}</CardTitle>
+            <CardDescription>{t('description')}</CardDescription>
           </div>
           <div className="text-right text-xs text-gray-500 dark:text-gray-400">
-            <p>Последние события: {webhookHistory?.length ?? 0}</p>
-            <p>Success rate: {summary.integrations.webhookSuccessRate}%</p>
+            <p>{t('events', { count: eventsCount })}</p>
+            <p>{t('successRate', { rate: summary.integrations.webhookSuccessRate })}</p>
           </div>
         </CardHeader>
       </Card>
