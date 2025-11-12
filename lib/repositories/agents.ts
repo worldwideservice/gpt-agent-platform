@@ -9,27 +9,34 @@ import type {
  DashboardStatsViewRow,
 } from '@/types/supabase'
 
+const DEMO_FLAG_VALUES = new Set(['1', 'true'])
+const matchesDemoFlag = (value?: string) => (value ? DEMO_FLAG_VALUES.has(value.toLowerCase()) : false)
+const isDemoEnvironment = () =>
+  matchesDemoFlag(process.env.DEMO_MODE) ||
+  matchesDemoFlag(process.env.E2E_ONBOARDING_FAKE) ||
+  matchesDemoFlag(process.env.PLAYWRIGHT_DEMO_MODE)
+
 interface AgentListParams {
- organizationId: string
- search?: string
- status?: Agent['status']
- page?: number
- limit?: number
+  organizationId: string
+  search?: string
+  status?: Agent['status']
+  page?: number
+  limit?: number
 }
 
 interface AgentListResult {
- agents: Agent[]
- total: number
+  agents: Agent[]
+  total: number
 }
 
 interface ActivitySummaryItem {
- date: string
- messagesCount: number
+  date: string
+  messagesCount: number
 }
 
 interface ActivitySeriesPoint {
- label: string
- value: number
+  label: string
+  value: number
 }
 
 const AGENT_SELECT_FIELDS = `
@@ -173,13 +180,24 @@ export const getAgents = async (params: AgentListParams): Promise<AgentListResul
 }
 
 export const getDashboardStats = async (
- organizationId: string,
+  organizationId: string,
 ): Promise<import('@/types').DashboardStats> => {
- const supabase = getSupabaseServiceRoleClient()
+  if (isDemoEnvironment()) {
+    return {
+      monthlyResponses: 420,
+      monthlyChange: 12,
+      weeklyResponses: 108,
+      todayResponses: 16,
+      todayChange: 4,
+      totalAgents: 3,
+    }
+  }
 
- const stats = await loadDashboardStatsFromView(supabase, organizationId)
+  const supabase = getSupabaseServiceRoleClient()
 
- if (stats) {
+  const stats = await loadDashboardStatsFromView(supabase, organizationId)
+
+  if (stats) {
  return stats
  }
 

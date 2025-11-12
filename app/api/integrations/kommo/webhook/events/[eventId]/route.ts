@@ -2,6 +2,14 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { requeueDemoWebhookEvent } from '@/lib/demo/webhook-events'
+
+const DEMO_FLAG_VALUES = new Set(['1', 'true'])
+const matchesDemoFlag = (value?: string) => (value ? DEMO_FLAG_VALUES.has(value.toLowerCase()) : false)
+const isDemoEnvironment = () =>
+  matchesDemoFlag(process.env.DEMO_MODE) ||
+  matchesDemoFlag(process.env.E2E_ONBOARDING_FAKE) ||
+  matchesDemoFlag(process.env.PLAYWRIGHT_DEMO_MODE)
 
 export const POST = async (
   request: NextRequest,
@@ -14,6 +22,14 @@ export const POST = async (
   }
 
   try {
+    if (isDemoEnvironment()) {
+      const updated = requeueDemoWebhookEvent(params.eventId)
+      if (!updated) {
+        return NextResponse.json({ success: false, error: 'Событие не найдено' }, { status: 404 })
+      }
+      return NextResponse.json({ success: true })
+    }
+
     const supabase = getSupabaseServiceRoleClient()
     const { data: event, error } = await supabase
       .from('webhook_events')
