@@ -192,6 +192,7 @@ export type Database = {
  openrouter_embedding_model: string | null
  openai_api_key: string | null
  openai_model: string | null
+ provider_configs: Json | null
  metadata: Json | null
  created_at: string
  updated_at: string
@@ -204,6 +205,7 @@ export type Database = {
  openrouter_embedding_model?: string | null
  openai_api_key?: string | null
  openai_model?: string | null
+ provider_configs?: Json | null
  metadata?: Json | null
  created_at?: string
  updated_at?: string
@@ -216,6 +218,7 @@ export type Database = {
  openrouter_embedding_model?: string | null
  openai_api_key?: string | null
  openai_model?: string | null
+ provider_configs?: Json | null
  metadata?: Json | null
  created_at?: string
  updated_at?: string

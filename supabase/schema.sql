@@ -119,6 +119,7 @@ create table if not exists organization_settings (
   openrouter_embedding_model text,
   openai_api_key text,
   openai_model text,
+  provider_configs jsonb default '{}'::jsonb,
   metadata jsonb default '{}'::jsonb,
   created_at timestamptz default now(),
   updated_at timestamptz default now()

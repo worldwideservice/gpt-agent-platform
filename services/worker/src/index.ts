@@ -7,6 +7,7 @@ import { startHealthServer, setRedisConnection } from './health'
 import { metrics } from './metrics'
 import { initSentry, trackJob } from './lib/sentry'
 import { logger } from './lib/logger'
+import { setRedisClient as setSharedRedisClient } from '@/lib/cache'
 
 logger.info('Starting Worker service', {
   nodeVersion: process.version,
@@ -28,7 +29,7 @@ metrics.init(env.JOB_QUEUE_NAME, env.JOB_CONCURRENCY)
 
 // Для прямого подключения к Upstash Redis через ioredis используем формат:
 // rediss://default:TOKEN@ENDPOINT:6379
-// 
+//
 // Данные получены из Upstash Console:
 // - Endpoint: тот же хост, что и REST URL (composed-primate-14678.upstash.io)
 // - Port: 6379 (для TLS подключения)
@@ -68,7 +69,10 @@ const connection = new Redis(redisUrl, {
   },
   reconnectOnError: (err) => {
     // Если DNS ошибка, не переподключаемся автоматически
-    if (err.message.includes('ENOTFOUND') || err.message.includes('getaddrinfo')) {
+    if (
+      err.message.includes('ENOTFOUND') ||
+      err.message.includes('getaddrinfo')
+    ) {
       logger.error('DNS resolution failed', err, {
         event: 'redis.dns.failed',
       })
@@ -136,15 +140,10 @@ const worker = new Worker(
 
     // Обертываем выполнение job в Sentry tracking для автоматического отслеживания ошибок
     try {
-      await trackJob(
-        jobName,
-        jobId,
-        job.data,
-        async () => {
-          await handler(job.data)
-        },
-      )
-      
+      await trackJob(jobName, jobId, job.data, async () => {
+        await handler(job.data)
+      })
+
       const duration = Date.now() - startTime
       logger.jobComplete(jobId, jobName, duration)
     } catch (error) {
@@ -202,9 +201,12 @@ worker.on('error', (error) => {
   })
 })
 
+// Делимся подключением с web-приложением для единого кэша
+setSharedRedisClient(connection as unknown as import('ioredis').Redis)
+
 // Запускаем health check сервер после создания подключения к Redis
-startHealthServer()
 setRedisConnection(connection)
+startHealthServer()
 
 logger.info('Worker started successfully', {
   queueName: env.JOB_QUEUE_NAME,

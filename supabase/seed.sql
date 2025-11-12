@@ -35,13 +35,21 @@ values (
 )
 on conflict (org_id) do nothing;
 
-insert into organization_settings (org_id, ai_provider, openrouter_api_key, openrouter_default_model, openrouter_embedding_model, metadata)
+insert into organization_settings (org_id, ai_provider, openrouter_api_key, openrouter_default_model, openrouter_embedding_model, provider_configs, metadata)
 values (
   '00000000-0000-4000-8000-000000000001',
   'openrouter',
   'sk-or-demo-key',
   'openrouter/gpt-4.1-mini',
   'openai/text-embedding-3-large',
+  jsonb_build_object(
+    'openrouter',
+    jsonb_build_object(
+      'apiKey', 'sk-or-demo-key',
+      'defaultModel', 'openrouter/gpt-4.1-mini',
+      'embeddingModel', 'openai/text-embedding-3-large'
+    )
+  ),
   jsonb_build_object('source', 'seed')
 )
 on conflict (org_id) do nothing;
