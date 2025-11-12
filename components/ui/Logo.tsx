@@ -33,7 +33,7 @@ export const Logo = ({ className, showTagline = false, href }: LogoProps) => {
     return () => observer.disconnect()
   }, [])
 
-  const logoSrc = isDark ? '/logo_transparent white.png' : '/logo_transparent.png'
+  const logoSrc = isDark ? '/brand/logo-wordmark-dark.svg' : '/brand/logo-wordmark-light.svg'
 
   const content = (
     <div className={cn('flex flex-col items-center', className)}>
@@ -43,20 +43,20 @@ export const Logo = ({ className, showTagline = false, href }: LogoProps) => {
           <Image
             src={logoSrc}
             alt="TON 18 Logo"
-            width={120}
-            height={60}
+            width={160}
+            height={64}
             className="drop-shadow-sm object-contain"
             priority
           />
         ) : (
-          <div className="w-[120px] h-[60px] bg-transparent" />
+          <div className="w-[160px] h-[64px] bg-transparent" />
         )}
       </div>
       
       {/* Tagline только если нужно */}
       {showTagline && (
         <div className="flex flex-col items-center mt-2">
-          <span className="text-[10px] font-normal tracking-wider text-black dark:text-white">
+          <span className="text-[10px] font-normal tracking-wider text-brand-accent">
             create infinity
           </span>
         </div>
@@ -98,23 +98,16 @@ export const LogoCompact = ({ className, href }: { className?: string; href?: st
     return () => observer.disconnect()
   }, [])
 
-  const logoSrc = isDark ? '/logo_transparent white.png' : '/logo_transparent.png'
+  const logoSrc = isDark ? '/brand/logo-mark.svg' : '/brand/logo-mark.svg'
 
   const content = (
     <div className={cn('flex items-center gap-2', className)}>
       {/* Компактный логотип */}
       <div className="relative">
         {mounted ? (
-          <Image
-            src={logoSrc}
-            alt="TON 18 Logo"
-            width={64}
-            height={32}
-            className="object-contain"
-            priority
-          />
+          <Image src={logoSrc} alt="TON 18 логотип" width={48} height={48} className="object-contain" priority />
         ) : (
-          <div className="w-16 h-8 bg-transparent" />
+          <div className="w-12 h-12 bg-transparent" />
         )}
       </div>
     </div>

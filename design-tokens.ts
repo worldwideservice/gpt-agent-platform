@@ -90,10 +90,10 @@ export const fontTokens = {
 } as const
 
 export const brandTokens = {
-  accent: '#E63946',
-  accentStrong: '#FF6B35',
-  accentForeground: '#FFFFFF',
-  focusRing: '#E63946',
+  accent: 'hsl(var(--brand-accent))',
+  accentStrong: 'hsl(var(--brand-accent-strong))',
+  accentForeground: 'hsl(var(--brand-accent-foreground))',
+  focus: 'hsl(var(--focus-ring))',
 } as const
 
 export const designTokens = {
