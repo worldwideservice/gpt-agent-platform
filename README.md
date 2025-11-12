@@ -26,11 +26,14 @@ npm install
 cp env.example .env.local
 # Отредактировать .env.local с вашими настройками
 
-# Запустить Redis (через Docker)
-docker-compose up -d redis
+# Проверить заполнение шаблонов
+npm run verify:env
 
-# Запустить приложение
-npm run dev
+# Запустить все сервисы (Next.js, Fastify, Worker, Redis, Supabase)
+make dev
+
+# Остановить dev-окружение
+make dev-down
 ```
 
 Приложение будет доступно на `http://localhost:3000`
@@ -144,7 +147,17 @@ npm run vercel:deploy
 ### Docker
 
 ```bash
-docker-compose up -d
+# Локальное окружение разработки
+docker compose -f docker-compose.dev.yml up --build
+
+# Staging песочница
+docker compose -f docker-compose.staging.yml up --build
+```
+
+### Мониторинг
+
+```bash
+docker compose -f monitoring/docker-compose.yml up -d
 ```
 
 ## 🤝 Вклад

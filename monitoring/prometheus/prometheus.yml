@@ -26,26 +26,50 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
-  # Мониторинг Worker сервиса
+  # Мониторинг Worker сервиса (локальный порт 3001)
   - job_name: 'worker'
     scrape_interval: 15s
     scrape_timeout: 10s
     metrics_path: '/metrics/prometheus'
-    scheme: 'https'
     static_configs:
       - targets:
-          - 'gpt-agent-platform-production.up.railway.app'
+          - 'host.docker.internal:3001'
         labels:
-          instance: 'worker-service'
           service: 'worker'
-          environment: 'production'
-    # Настройки для TLS
-    tls_config:
-      insecure_skip_verify: true
+          environment: 'staging'
 
-  # Мониторинг Node.js метрик (если доступны)
+  # Мониторинг Next.js приложения
+  - job_name: 'next-app'
+    scrape_interval: 15s
+    metrics_path: '/api/metrics'
+    static_configs:
+      - targets:
+          - 'host.docker.internal:3000'
+        labels:
+          service: 'next-app'
+
+  # Мониторинг Fastify API
+  - job_name: 'fastify-api'
+    scrape_interval: 15s
+    metrics_path: '/metrics'
+    static_configs:
+      - targets:
+          - 'host.docker.internal:4000'
+        labels:
+          service: 'fastify-api'
+
+  # Экспортер Redis
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  # Node Exporter
   - job_name: 'node-exporter'
     static_configs:
       - targets: ['node-exporter:9100']
-    scrape_interval: 30s
+
+  # cAdvisor
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
 

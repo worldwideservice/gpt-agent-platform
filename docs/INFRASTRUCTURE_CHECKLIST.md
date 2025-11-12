@@ -3,25 +3,23 @@
 Документ собирает инфраструктурные шаги, которые уже реализованы в репозитории, и обозначает следующий объём работы (Docker, env, мониторинг, деплой).
 
 ## 1. Docker и локальная среда
-- `docker-compose.yml` и `Dockerfile` описывают Next.js приложение и Redis.  
-- Запуск: `docker-compose up -d redis` для разработки + `npm run dev` в контейнере.  
-- Следующее: добавить `docker-compose.dev.yml`, объединяющий Next.js, Fastify/worker сервиса, Supabase CLI и Redis (пока только два сервиса).
-- В документации (см. `docs/DOCKER_SETUP.md`) прописать окружение и команды `npm run docker:redis`, `npm run docker:down`.
+- `docker-compose.dev.yml` и `docker-compose.staging.yml` собирают Next.js, Fastify API, worker, Redis и Supabase.
+- Makefile упрощает команды (`make dev`, `make staging`, `make monitoring`).
+- Документация обновлена (`docs/DOCKER_SETUP.md`) с инструкциями для разработки и staging.
 
 ## 2. Переменные окружения
-- Список обязательных переменных описан в `docs/ENVIRONMENT_VARIABLES.md`.  
-- Скрипты `scripts/check-env.js` и `scripts/verify-env.js` используются для валидации перед запуском/деплоем (`npm run check:env`, `npm run verify:env`).  
-- Следующая итерация: централизовать шаблоны env (убрать дубли `.env.production 2.example`, `env.production`) и добавить команду `npm run setup:env`, которая вызывает `scripts/auto-setup-env.sh`.
+- Шаблоны `env.example`, `env.staging.example`, `env.production.example` консолидированы и документированы.
+- Новый скрипт `scripts/verify-env.ts` (команда `npm run verify:env`, `make verify-env`) проверяет наличие значений и предупреждает о заглушках.
+- `docs/ENVIRONMENT_VARIABLES.md` дополнен описанием стадий и чек-листом.
 
 ## 3. Мониторинг и наблюдаемость
-- `monitoring/` содержит шаблоны для Sentry/Prometheus (файлы описаны, но требуют подключения).  
-- Скрипты `scripts/check-redis.js`, `scripts/check-worker.js`, `scripts/check-all-errors.sh` позволяют запускать базовые health-checked (в git-логе).  
-- Необходимо: добавить `/api/health` endpoints (Next + Fastify), интегрировать alerting (Sentry DSN, Prometheus push), и описать настройки в README.
+- Fastify API и worker отдают Prometheus-метрики; Next.js предоставляет `/api/metrics`.
+- `monitoring/docker-compose.yml` разворачивает Prometheus, Grafana, Alertmanager, node-exporter, cAdvisor и redis-exporter.
+- Добавлены alert-правила для Next, Fastify и worker. Логирование переведено на Pino + интеграцию с Sentry/OTel.
 
 ## 4. Тесты и CI
-- `npm run lint`, `npm run test:unit`, `npm run test:e2e`, `npm run test:components` уже описаны (см. `package.json`).  
-- `playwright` настроен для e2e/UI (см. `playwright.config.ts`).  
-- Добавить GitHub workflow, который вызывает `npm run lint` и `npm run test`, а также публикует Playwright отчёт.
+- Основной workflow (`main.yml`) теперь запускает `npm run verify:env`, type-check, lint, тесты, сборку и деплой.
+- Дополнительные workflow обновлены для использования секрета окружения без бэкапных значений.
 
 ## 5. Документация и дальнейшие шаги
 - README ссылается на `PROJECT_STRUCTURE.md` и детали API/AI/Kommo (см. ссылки в README).  
