@@ -1,12 +1,14 @@
-import { type AgentListItem } from '@/components/features/agents/AgentsTable'
+import { getTranslations } from 'next-intl/server'
+
+import { auth } from '@/auth'
 import { AgentForm } from '@/components/features/agents/AgentForm'
 import { AgentsDashboardSection } from '@/components/features/manage/AgentsDashboardSection'
 import { WorkspaceSummaryIntegrationInsights } from '@/components/features/manage/WorkspaceSummaryIntegrationInsights'
 import { WorkspaceSummaryKnowledgeInsights } from '@/components/features/manage/WorkspaceSummaryKnowledgeInsights'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
-import { auth } from '@/auth'
-import { getAgents } from '@/lib/repositories/agents'
-import { getWorkspaceSummary, type WorkspaceSummary } from '@/lib/repositories/manage-summary'
+import { loadManageAgentsData } from '@/lib/repositories/manage-data'
+import type { AgentListItem } from '@/components/features/agents/AgentsTable'
+import type { WorkspaceSummary } from '@/lib/repositories/manage-summary'
 import type { Agent } from '@/types'
 
 interface AiAgentsPageProps {
@@ -15,91 +17,93 @@ interface AiAgentsPageProps {
   }
 }
 
+const EMPTY_SUMMARY: WorkspaceSummary = {
+  agents: {
+    total: 0,
+    active: 0,
+    inactive: 0,
+  },
+  knowledge: {
+    categories: 0,
+    publishedArticles: 0,
+    pendingAssets: 0,
+  },
+  integrations: {
+    kommoConnected: false,
+    kommoDomain: null,
+    webhookHistory: [],
+    webhookSuccessRate: 0,
+  },
+  knowledgeTimeline: [],
+  knowledgeHeatmap: [],
+}
+
 export default async function AiAgentsPage({ params }: AiAgentsPageProps) {
+  const t = await getTranslations('manage.agents.page')
   const session = await auth()
+  const organizationId = session?.user?.orgId ?? null
+
   let initialAgents: AgentListItem[] = []
+  let summary: WorkspaceSummary = EMPTY_SUMMARY
   let initialError: string | null = null
 
-  const summaryPromise = session?.user?.orgId ? getWorkspaceSummary(session.user.orgId) : Promise.resolve(null)
-
-  if (!session?.user?.orgId) {
-    initialError = 'Нет доступа к организации. Авторизуйтесь, чтобы увидеть список агентов.'
+  if (!organizationId) {
+    initialError = t('errors.noOrganization')
   } else {
-    try {
-      const { agents } = await getAgents({ organizationId: session.user.orgId, limit: 50 })
-      initialAgents = mapAgentsToListItems(agents)
-    } catch (error) {
-      console.error('Failed to load agents for manage UI', error)
-      initialError = 'Не удалось загрузить агентов из Supabase.'
+    const data = await loadManageAgentsData(organizationId)
+    initialAgents = mapAgentsToListItems(data.agents)
+    summary = data.summary ?? EMPTY_SUMMARY
+    if (data.error) {
+      initialError = t('errors.fetchFailed')
     }
   }
-
-  const summary = await summaryPromise
-  const fallbackSummary: WorkspaceSummary = {
-    agents: {
-      total: 0,
-      active: 0,
-      inactive: 0,
-    },
-    knowledge: {
-      categories: 0,
-      publishedArticles: 0,
-      pendingAssets: 0,
-    },
-    integrations: {
-      kommoConnected: false,
-      kommoDomain: null,
-      webhookHistory: [],
-      webhookSuccessRate: 100,
-    },
-    knowledgeTimeline: [],
-    knowledgeHeatmap: [],
-  }
-  const summaryData = summary ?? fallbackSummary
 
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm uppercase text-primary">Агенты</p>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Агенты ИИ</h1>
+        <p className="text-sm uppercase text-primary">{t('header.eyebrow')}</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">{t('header.title')}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Управляйте агентами для workspace&nbsp;
-          <span className="font-mono">{params.tenantId}</span>
+          {t.rich('header.subtitle', {
+            tenant: (chunk) => <span className="font-mono">{chunk}</span>,
+            id: params.tenantId,
+          })}
         </p>
       </div>
-      {summaryData && (
-        <div className="space-y-6">
-          <WorkspaceSummaryIntegrationInsights summary={summaryData} />
-          <WorkspaceSummaryKnowledgeInsights summary={summaryData} />
-        </div>
-      )}
-      {summaryData.agents.total > 0 && (
+
+      <div className="space-y-6">
+        <WorkspaceSummaryIntegrationInsights summary={summary} />
+        <WorkspaceSummaryKnowledgeInsights summary={summary} />
+      </div>
+
+      {summary.agents.total > 0 && (
         <Card className="grid gap-3 md:grid-cols-3">
           <CardHeader className="col-span-3">
-            <CardTitle className="text-lg">Обзор агентов</CardTitle>
-            <CardDescription>Сводка по workspace из Supabase.</CardDescription>
+            <CardTitle className="text-lg">{t('summary.title')}</CardTitle>
+            <CardDescription>{t('summary.description')}</CardDescription>
           </CardHeader>
           <CardContent className="border-r border-dashed border-border p-4 text-sm text-gray-600 dark:text-gray-400">
-            <p className="text-xs uppercase">Всего агентов</p>
-            <p className="text-2xl font-semibold">{summaryData.agents.total}</p>
+            <p className="text-xs uppercase">{t('summary.total')}</p>
+            <p className="text-2xl font-semibold">{summary.agents.total}</p>
           </CardContent>
           <CardContent className="border-r border-dashed border-border p-4 text-sm text-gray-600 dark:text-gray-400">
-            <p className="text-xs uppercase">Активные</p>
-            <p className="text-2xl font-semibold">{summaryData.agents.active}</p>
+            <p className="text-xs uppercase">{t('summary.active')}</p>
+            <p className="text-2xl font-semibold">{summary.agents.active}</p>
           </CardContent>
           <CardContent className="p-4 text-sm text-gray-600 dark:text-gray-400">
-            <p className="text-xs uppercase">Неактивные</p>
-            <p className="text-2xl font-semibold">{summaryData.agents.inactive}</p>
+            <p className="text-xs uppercase">{t('summary.inactive')}</p>
+            <p className="text-2xl font-semibold">{summary.agents.inactive}</p>
           </CardContent>
         </Card>
       )}
+
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <AgentsDashboardSection
             tenantId={params.tenantId}
             initialAgents={initialAgents}
             initialError={initialError}
-            summary={summaryData}
+            summary={summary}
           />
         </div>
         <AgentForm tenantId={params.tenantId} />
@@ -108,8 +112,8 @@ export default async function AiAgentsPage({ params }: AiAgentsPageProps) {
   )
 }
 
-const mapAgentsToListItems = (agents: Agent[]): AgentListItem[] =>
-  agents.map((agent) => ({
+function mapAgentsToListItems(agents: Agent[]): AgentListItem[] {
+  return agents.map((agent) => ({
     id: agent.id,
     name: agent.name,
     status: agent.status,
@@ -117,3 +121,4 @@ const mapAgentsToListItems = (agents: Agent[]): AgentListItem[] =>
     ownerName: agent.ownerName,
     updatedAt: agent.updatedAt,
   }))
+}

@@ -1,3 +1,7 @@
+'use client'
+
+import { useFormatter, useTranslations } from 'next-intl'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
 import type { KnowledgeBaseArticle, KnowledgeBaseCategory } from '@/types'
 
@@ -7,16 +11,18 @@ interface KnowledgeBaseCollectionsProps {
 }
 
 export function KnowledgeBaseCollections({ categories, articles }: KnowledgeBaseCollectionsProps) {
+  const t = useTranslations('manage.knowledge.collections')
+  const format = useFormatter()
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle>Категории</CardTitle>
-          <CardDescription>Все разделы, доступные агентам</CardDescription>
+          <CardTitle>{t('categories.title')}</CardTitle>
+          <CardDescription>{t('categories.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           {categories.length === 0 ? (
-            <p className="text-sm text-gray-500">Категории ещё не созданы.</p>
+            <p className="text-sm text-gray-500">{t('categories.empty')}</p>
           ) : (
             <ul className="space-y-3">
               {categories.map((category) => (
@@ -28,7 +34,7 @@ export function KnowledgeBaseCollections({ categories, articles }: KnowledgeBase
                     )}
                   </div>
                   <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
-                    {category.articlesCount} шт.
+                    {t('categories.count', { count: category.articlesCount })}
                   </span>
                 </li>
               ))}
@@ -39,12 +45,12 @@ export function KnowledgeBaseCollections({ categories, articles }: KnowledgeBase
 
       <Card>
         <CardHeader>
-          <CardTitle>Статьи</CardTitle>
-          <CardDescription>Последние материалы в базе знаний</CardDescription>
+          <CardTitle>{t('articles.title')}</CardTitle>
+          <CardDescription>{t('articles.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           {articles.length === 0 ? (
-            <p className="text-sm text-gray-500">Статьи ещё не добавлены. Загрузите файлы или создайте статью.</p>
+            <p className="text-sm text-gray-500">{t('articles.empty')}</p>
           ) : (
             <div className="space-y-4">
               {articles.map((article) => (
@@ -54,8 +60,12 @@ export function KnowledgeBaseCollections({ categories, articles }: KnowledgeBase
                     <p className="text-xs text-gray-500">/{article.slug}</p>
                   )}
                   <p className="text-xs text-gray-500">
-                    Обновлено {article.updatedAt.toLocaleDateString('ru-RU')} ·{' '}
-                    {article.isPublished ? 'Опубликовано' : 'Черновик'}
+                    {t('articles.updated', {
+                      date: format.dateTime(new Date(article.updatedAt), { dateStyle: 'medium' }),
+                      status: article.isPublished
+                        ? t('articles.status.published')
+                        : t('articles.status.draft'),
+                    })}
                   </p>
                 </div>
               ))}

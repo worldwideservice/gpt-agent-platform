@@ -57,5 +57,390 @@
     "minLength": "Minimum {min} characters",
     "maxLength": "Maximum {max} characters",
     "pattern": "Invalid format"
+  },
+  "manage": {
+    "layout": {
+      "searchPlaceholder": "Search agents, deals, articles",
+      "workspaceLabel": "Workspace",
+      "organizationFallback": "Organization"
+    },
+    "navigation": {
+      "main": {
+        "title": "Main",
+        "dashboard": { "label": "Dashboard" },
+        "agents": { "label": "AI Agents" }
+      },
+      "knowledge": {
+        "title": "Knowledge & Flows",
+        "base": { "label": "Knowledge Base" },
+        "testChat": { "label": "Chat & Testing" }
+      },
+      "integrations": {
+        "title": "Integrations & Settings",
+        "items": {
+          "integrations": { "label": "Integrations" },
+          "settings": { "label": "Settings" }
+        }
+      }
+    },
+    "agents": {
+      "form": {
+        "title": {
+          "create": "New agent",
+          "edit": "Edit agent"
+        },
+        "subtitle": "Provide the core configuration and instructions for the agent.",
+        "validation": {
+          "name": "Enter the agent name",
+          "status": "Select a status",
+          "model": "Specify a model",
+          "instructions": "Maximum 2000 characters",
+          "temperatureRange": "Allowed range is 0 to 2",
+          "maxTokens": "Enter a value between 128 and 8000"
+        },
+        "messages": {
+          "created": "Agent created",
+          "updated": "Changes saved",
+          "error": "Failed to save agent"
+        },
+        "fields": {
+          "name": {
+            "label": "Name",
+            "placeholder": "AI Sales Assistant"
+          },
+          "status": {
+            "label": "Status",
+            "placeholder": "Select status",
+            "options": {
+              "draft": "Draft",
+              "active": "Active",
+              "inactive": "Disabled"
+            }
+          },
+          "model": {
+            "label": "Model",
+            "placeholder": "openrouter/gpt-4.1-mini"
+          },
+          "temperature": {
+            "label": "Temperature",
+            "description": "Control the creativity of responses"
+          },
+          "maxTokens": {
+            "label": "Max tokens",
+            "description": "Range from 128 to 8000"
+          },
+          "instructions": {
+            "label": "Instructions",
+            "placeholder": "Describe the agent's role and tone",
+            "description": "Used as the system prompt"
+          }
+        },
+        "actions": {
+          "cancel": "Cancel",
+          "saving": "Saving…",
+          "update": "Save",
+          "create": "Create agent"
+        }
+      },
+      "page": {
+        "header": {
+          "eyebrow": "Agents",
+          "title": "AI Agents",
+          "subtitle": "Manage agents for workspace <tenant>{id}</tenant>"
+        },
+        "errors": {
+          "noOrganization": "No organization access. Sign in to see the agent list.",
+          "fetchFailed": "Failed to load agents from Supabase."
+        },
+        "summary": {
+          "title": "Agent overview",
+          "description": "Workspace summary pulled from Supabase.",
+          "total": "Total agents",
+          "active": "Active",
+          "inactive": "Inactive"
+        }
+      }
+    },
+    "dashboard": {
+      "header": {
+        "eyebrow": "Overview",
+        "title": "Workspace",
+        "tenant": "Tenant: <tenant>{id}</tenant>"
+      },
+      "recentActivity": {
+        "title": "Recent activity",
+        "description": "Full history appears after Supabase integration is enabled.",
+        "placeholder": "No data yet. Connect Kommo and start talking to customers."
+      },
+      "quickActions": {
+        "title": "Quick actions",
+        "description": "Launch the core platform flows.",
+        "actions": {
+          "createAgent": "Create agent",
+          "uploadKnowledge": "Upload knowledge",
+          "connectKommo": "Connect Kommo"
+        }
+      },
+      "metrics": {
+        "monthlyResponses": {
+          "label": "Responses this month",
+          "helper": "vs last month"
+        },
+        "weeklyResponses": {
+          "label": "Responses this week",
+          "helper": "Last 7 days"
+        },
+        "todayResponses": {
+          "label": "Responses today",
+          "helper": "vs yesterday"
+        },
+        "activeAgents": {
+          "label": "Active agents",
+          "helper": "Enabled and available"
+        }
+      },
+      "states": {
+        "unauthorized": {
+          "title": "Not enough data",
+          "description": "Sign in to access workspace stats.",
+          "helper": "Data is available after authentication."
+        },
+        "summaryUnavailable": {
+          "title": "Summary unavailable",
+          "description": "Check your Supabase connection and Kommo integration.",
+          "helper": "Reload the page or refresh integrations.",
+          "empty": "Data not collected yet"
+        }
+      }
+    },
+    "components": {
+      "integrationSummary": {
+        "title": "Integrations & webhooks",
+        "description": "Summary for Kommo and webhook events.",
+        "events": "Latest events: {count}",
+        "successRate": "Success rate: {rate}%"
+      },
+      "knowledgeSummary": {
+        "title": "Knowledge base usage",
+        "description": "Upload analytics for the last 7 days.",
+        "totals": {
+          "uploads": "{count} uploads",
+          "pending": "{count} pending"
+        }
+      },
+      "knowledgeHeatmap": {
+        "title": "Knowledge upload heatmap",
+        "description": "Intensity represents the number of uploads per day."
+      },
+      "knowledgeTimeline": {
+        "title": "Knowledge uploads (7 days)",
+        "metrics": "{count} uploads · {pending} in queue"
+      },
+      "integrationAlert": {
+        "title": {
+          "connected": "Kommo connected",
+          "disconnected": "Kommo not connected"
+        },
+        "domain": "Domain:",
+        "lastEvent": "Last webhook: {event}",
+        "status": "Status: {status}",
+        "error": "Error: {message}",
+        "noEvents": "No recent webhook events."
+      },
+      "webhookSuccess": {
+        "title": "Kommo webhook success",
+        "eventsWindow": "{count} events in the last {days}"
+      },
+      "webhookActivity": {
+        "title": "Kommo webhook history",
+        "emptyTimestamp": "—"
+      },
+      "agentsFilters": {
+        "title": "Agent status",
+        "description": "Filters based on Supabase agent states.",
+        "filters": {
+          "all": "All",
+          "active": "Active",
+          "inactive": "Inactive"
+        }
+      }
+    },
+    "knowledge": {
+      "page": {
+        "header": {
+          "eyebrow": "Knowledge base",
+          "title": "Company knowledge",
+          "subtitle": "Manage the articles and files agents use in workspace <tenant>{id}</tenant>"
+        },
+        "notice": {
+          "noOrganization": "No organization access. Sign in again to view knowledge stats.",
+          "fetchFailed": "Failed to load knowledge base data."
+        },
+        "summary": {
+          "title": "Workspace summary",
+          "description": "Quick stats for knowledge and integrations.",
+          "categories": "Categories",
+          "published": "Published",
+          "pending": "Pending"
+        },
+        "webhook": {
+          "title": "Latest Kommo webhook",
+          "description": "Incoming events show what happens in your CRM.",
+          "eventType": "Event type: {event}",
+          "status": "Status: {status}",
+          "error": "Error: {message}",
+          "timestamp": "Time: {timestamp}",
+          "empty": "—"
+        }
+      },
+      "overview": {
+        "stats": {
+          "articles": "Articles",
+          "categories": "Categories",
+          "pending": "Knowledge in queue"
+        },
+        "upload": {
+          "title": "Upload knowledge to get started",
+          "description": "Documents, articles, and FAQs are chunked, indexed, and linked to agents.",
+          "helper": "Supports PDF, DOCX, Markdown, and HTML. Each file is processed and stored in Supabase.",
+          "actions": {
+            "openArticles": "Open articles",
+            "upload": "Upload file"
+          }
+        },
+        "history": {
+          "title": "Processing history",
+          "queue": "In processing queue: {count}",
+          "placeholder": "Real data appears after Supabase integration is live.",
+          "empty": "History is empty. Add documents for workspace <tenant>{id}</tenant> to track progress."
+        }
+      },
+      "collections": {
+        "categories": {
+          "title": "Categories",
+          "description": "All sections available to agents",
+          "empty": "No categories yet.",
+          "count": "{count} items"
+        },
+        "articles": {
+          "title": "Articles",
+          "description": "Latest materials in the knowledge base",
+          "empty": "No articles yet. Upload files or create an article.",
+          "updated": "Updated {date} · {status}",
+          "status": {
+            "published": "Published",
+            "draft": "Draft"
+          }
+        }
+      },
+      "history": {
+        "title": "Processing history",
+        "description": "Recently uploaded documents and their statuses",
+        "empty": "History is empty. Upload documents to start processing.",
+        "uploadedAt": "Uploaded {created}",
+        "completedAt": "Completed {completed}",
+        "chunks": "Chunks: {count}",
+        "statuses": {
+          "pending": "Queued",
+          "processing": "Processing",
+          "completed": "Completed",
+          "failed": "Failed"
+        }
+      },
+      "upload": {
+        "title": "Knowledge upload",
+        "description": "Attach a document to enrich the agent knowledge base.",
+        "validation": {
+          "agent": "Select an agent",
+          "file": "Choose a file to upload"
+        },
+        "messages": {
+          "success": "File uploaded and sent for processing",
+          "error": "File upload failed"
+        },
+        "fields": {
+          "agent": {
+            "label": "Agent"
+          },
+          "file": {
+            "label": "File",
+            "helper": "Supports PDF, DOCX, TXT, Markdown, and HTML up to 50 MB"
+          }
+        },
+        "actions": {
+          "uploading": "Uploading…",
+          "submit": "Upload"
+        }
+      }
+    },
+    "integrations": {
+      "list": {
+        "empty": "No integrations available yet.",
+        "workspaceLabel": "Workspace: <tenant>{id}</tenant>",
+        "comingSoon": "Integration will be available in future releases.",
+        "connected": {
+          "description": "Integration is active and ready to use.",
+          "domain": "Domain:",
+          "expires": "Token expires {date}"
+        },
+        "disconnected": {
+          "description": "Connect the integration.",
+          "actions": {
+            "docs": "Docs",
+            "connect": "Connect"
+          }
+        }
+      },
+      "status": {
+        "connected": "Connected",
+        "comingSoon": "Coming soon",
+        "disconnected": "Not connected"
+      },
+      "kommo": {
+        "description": "Enter your Kommo account domain and follow the OAuth authorization steps.",
+        "validation": {
+          "domain": "Enter a valid domain"
+        },
+        "messages": {
+          "error": "Failed to start Kommo authorization",
+          "redirect": "Redirecting to authorization…"
+        },
+        "fields": {
+          "domain": {
+            "label": "Kommo domain",
+            "placeholder": "example.kommo.com"
+          }
+        },
+        "actions": {
+          "docs": "Docs",
+          "pending": "Redirecting…",
+          "connect": "Connect"
+        }
+      },
+      "page": {
+        "header": {
+          "eyebrow": "Integrations",
+          "title": "Connections & webhooks",
+          "subtitle": "Manage OAuth, webhooks, and API keys for workspace <tenant>{id}</tenant>"
+        },
+        "notices": {
+          "noOrganization": "No organization access. Sign in to manage integrations.",
+          "fetchFailed": "Failed to load integration data.",
+          "kommoSuccess": "Kommo connected successfully. Data will sync automatically.",
+          "kommoError": "Could not connect Kommo: {message}"
+        },
+        "items": {
+          "kommo": {
+            "description": "OAuth + Webhooks, deal and channel sync",
+            "failure": "Last webhook: {event} ({error})",
+            "genericError": "error",
+            "placeholder": "Connect Kommo to enable rules, sequences, and webhooks."
+          },
+          "slack": {
+            "description": "Notify channels about agent events in Slack"
+          }
+        }
+      }
+    }
   }
 }
