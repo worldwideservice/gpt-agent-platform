@@ -11,6 +11,13 @@ export type CrmSyncPipelinesJob = {
  baseDomain?: string
 }
 
+export type CrmSyncContactsJob = {
+ provider: 'kommo' | 'hubspot' | 'bitrix24' | 'salesforce'
+ orgId: string
+ connectionId: string
+ baseDomain?: string
+}
+
 export type LegacyKommoSyncPipelinesJob = {
  provider: 'kommo'
  orgId: string
@@ -46,6 +53,7 @@ export type ExtractKnowledgeGraphJob = {
 export type JobPayload =
  | ({ type: 'kommo:webhook' } & KommoWebhookJob)
  | ({ type: 'crm:sync-pipelines' } & CrmSyncPipelinesJob)
+ | ({ type: 'crm:sync-contacts' } & CrmSyncContactsJob)
  | ({ type: 'kommo:sync-pipelines' } & LegacyKommoSyncPipelinesJob)
  | ({ type: 'kommo:send-message' } & KommoSendMessageJob)
  | ({ type: 'process-asset' } & ProcessAssetJob)

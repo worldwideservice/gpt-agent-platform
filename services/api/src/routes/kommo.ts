@@ -384,9 +384,9 @@ export const registerKommoRoutes = async (fastify: FastifyInstance) => {
  fastify.post('/webhook', async (request, reply) => {
  const signatureHeader = request.headers['x-signature']
  const secret = fastify.config.KOMMO_WEBHOOK_SECRET
+ const bodyString = JSON.stringify(request.body ?? {})
 
  if (secret) {
- const bodyString = JSON.stringify(request.body ?? {})
  const expected = crypto.createHmac('sha256', secret).update(bodyString).digest('hex')
 
  if (typeof signatureHeader !== 'string' || signatureHeader !== expected) {
