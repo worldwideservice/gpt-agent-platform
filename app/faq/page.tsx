@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { PublicHeader } from '@/components/layout/PublicHeader'
 import { Button } from '@/components/ui'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
 import { MessageCircleQuestion, LifeBuoy, Compass } from 'lucide-react'
 
 export const metadata: Metadata = {

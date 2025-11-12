@@ -1,10 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { PublicHeader } from '@/components/layout/PublicHeader'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table'
-import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/button'
 
 export const metadata: Metadata = {
   title: 'GTM Playbook — TON 18',
