@@ -1,3 +1,5 @@
+import { createHmac } from 'node:crypto'
+
 import { env } from '../lib/env.ts'
 import { decryptSecret } from '../lib/crypto.ts'
 import { getSupabaseClient } from '../lib/supabase.ts'
@@ -6,6 +8,8 @@ import type { Database, Json } from '../lib/types.ts'
 import { processAsset } from './process-asset'
 import { extractKnowledgeGraph } from './extract-knowledge-graph'
 import { processLargeFile, generateReport, processBulkData, fineTuneModel } from './heavy-processing'
+import { KommoAPI } from '@/lib/crm/kommo'
+import { extractWebhookMetadata, processWebhookEvent, saveWebhookEvent } from '@/lib/services/webhook-processor'
 
 const supabase = getSupabaseClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY)
 
@@ -20,6 +24,13 @@ type CrmPipelineInsert = Database['public']['Tables']['crm_pipelines']['Insert']
 type CrmPipelineStageInsert = Database['public']['Tables']['crm_pipeline_stages']['Insert']
 
 type CrmSyncPipelinesJob = {
+ provider: SupportedCrmProvider
+ orgId: string
+ connectionId?: string
+ baseDomain?: string
+}
+
+type CrmSyncContactsJob = {
  provider: SupportedCrmProvider
  orgId: string
  connectionId?: string
@@ -58,6 +69,16 @@ type StageInput = {
  name: string
  sortOrder: number
  metadata: Json
+}
+
+type KommoContact = {
+ id: number | string
+ name?: string
+ first_name?: string
+ last_name?: string
+ created_at?: number
+ updated_at?: number
+ [key: string]: unknown
 }
 
 type CrmCredentials = Pick<CrmCredentialsRow, 'client_id' | 'redirect_uri'> & { client_secret: string }
@@ -328,21 +349,29 @@ const syncKommoPipelines = async (
  }
 }
 
-const recordWebhookEvent = async (orgId: string, payload: unknown) => {
- const eventType =
- typeof payload === 'object' && payload && 'event' in (payload as Record<string, unknown>)
- ? String((payload as Record<string, unknown>).event)
- : 'unknown'
+const syncKommoContacts = async (
+ connection: CrmConnectionRow,
+ credentials: CrmCredentials,
+) => {
+ const ensuredConnection = await ensureAccessToken(connection, credentials)
 
- const { error } = await supabase.from('webhook_events').insert({
- org_id: orgId,
- provider: 'kommo',
- event_type: eventType,
- payload,
+ const contactsResponse = await kommoApiRequest<{ _embedded?: { contacts?: KommoContact[] } }>({
+ baseDomain: ensuredConnection.base_domain,
+ accessToken: ensuredConnection.access_token,
+ path: '/contacts?limit=50',
  })
 
- if (error) {
- throw error
+ const contacts = contactsResponse?._embedded?.contacts ?? []
+
+ const newestContact = contacts
+ .slice()
+ .sort((a, b) => (Number(b.updated_at ?? b.created_at ?? 0) - Number(a.updated_at ?? a.created_at ?? 0)))[0]
+
+ return {
+ connection: ensuredConnection,
+ contactsCount: contacts.length,
+ latestContactAt: newestContact?.updated_at || newestContact?.created_at || null,
+ sampleContact: newestContact ?? null,
  }
 }
 
@@ -438,6 +467,11 @@ const handleCrmSyncPipelines = async (payload: CrmSyncPipelinesJob) => {
  status: 'running',
  startedAt,
  error: null,
+ pipelines: {
+ status: 'running',
+ startedAt,
+ error: null,
+ },
  })
 
  try {
@@ -452,6 +486,14 @@ const handleCrmSyncPipelines = async (payload: CrmSyncPipelinesJob) => {
  error: null,
  provider,
  baseDomain: syncResult.connection.base_domain,
+ pipelines: {
+ status: 'completed',
+ completedAt,
+ error: null,
+ pipelinesCount: syncResult.pipelinesCount,
+ stagesCount: syncResult.stagesCount,
+ preview: syncResult.pipelinePreview,
+ },
  pipelinesCount: syncResult.pipelinesCount,
  stagesCount: syncResult.stagesCount,
  pipelinesPreview: syncResult.pipelinePreview,
@@ -463,6 +505,11 @@ const handleCrmSyncPipelines = async (payload: CrmSyncPipelinesJob) => {
  status: 'failed',
  failedAt: new Date().toISOString(),
  error: error instanceof Error ? error.message : 'Unknown error',
+ pipelines: {
+ status: 'failed',
+ failedAt: new Date().toISOString(),
+ error: error instanceof Error ? error.message : 'Unknown error',
+ },
  })
 
  throw error
@@ -527,68 +574,120 @@ const sendKommoMessage = async (payload: {
 
 export const getTaskHandlers = () => {
  return {
- 'crm:sync-pipelines': async (payload: CrmSyncPipelinesJob) => {
- await handleCrmSyncPipelines(payload)
- },
- 'kommo:sync-pipelines': async (payload: { orgId: string; baseDomain: string }) => {
- await handleCrmSyncPipelines({
- provider: 'kommo',
- orgId: payload.orgId,
- baseDomain: payload.baseDomain,
- })
- },
- 'kommo:webhook': async (payload: { orgId: string; provider: 'kommo'; payload: unknown }) => {
- await recordWebhookEvent(payload.orgId, payload.payload)
- },
- 'webhook:retry': async (payload: { eventId: string; retryCount: number }) => {
- // Импортируем процессор webhook динамически через tsx для поддержки path aliases
- // Используем tsImport для правильного резолва @/ импортов внутри файла
- const { tsImport } = await import('tsx/esm/api')
- const { fileURLToPath } = await import('url')
- const { dirname, resolve } = await import('path')
- 
- // Определяем путь к текущему файлу и корню проекта
- const currentFile = fileURLToPath(import.meta.url)
- const currentDir = dirname(currentFile)
- const projectRoot = resolve(process.cwd())
- const tsconfigPath = resolve(projectRoot, 'tsconfig.json')
- 
- // Пробуем разные пути к webhook-processor
- const paths = [
-   resolve(currentDir, '../../lib/services/webhook-processor.ts'),
-   resolve(projectRoot, 'lib/services/webhook-processor.ts'),
- ]
- 
- let processWebhookEvent
- let lastError: Error | null = null
- 
- for (const libPath of paths) {
-   try {
-     // Используем tsImport с указанием tsconfig для резолва path aliases
-     const module = await tsImport(libPath, {
-       parentURL: import.meta.url,
-       tsconfig: tsconfigPath,
-     })
-     if (module && module.processWebhookEvent) {
-       processWebhookEvent = module.processWebhookEvent
-       console.log(`✅ Successfully imported webhook-processor from: ${libPath}`)
-       break
-     }
-   } catch (error) {
-     lastError = error as Error
-     console.error(`⚠️ Failed to import from ${libPath}:`, error)
-     continue
+  'crm:sync-pipelines': async (payload: CrmSyncPipelinesJob) => {
+   await handleCrmSyncPipelines(payload)
+  },
+  'crm:sync-contacts': async (payload: CrmSyncContactsJob) => {
+   const provider = normalizeProvider(payload.provider)
+
+   if (provider !== 'kommo') {
+    throw new Error(`CRM provider ${provider} is not yet supported`)
    }
- }
- 
- if (!processWebhookEvent) {
-   console.error('❌ Failed to import webhook-processor from all paths:', paths)
-   console.error('Last error:', lastError)
-   throw new Error(`Failed to import webhook-processor: ${lastError?.message || 'Unknown error'}`)
- }
- 
- await processWebhookEvent(payload.eventId)
- },
+
+   const connection = await fetchCrmConnection({
+    orgId: payload.orgId,
+    provider,
+    connectionId: payload.connectionId,
+    baseDomain: payload.baseDomain,
+   })
+
+   if (!connection) {
+    throw new Error('CRM connection not found')
+   }
+
+   const startedAt = new Date().toISOString()
+   let metadata = await updateSyncMetadata(connection.id, connection.metadata, {
+    status: 'running',
+    startedAt,
+    error: null,
+    contacts: {
+     status: 'running',
+     startedAt,
+     error: null,
+    },
+   })
+
+   try {
+    const credentials = await fetchCrmCredentials(payload.orgId, provider)
+    const syncResult = await syncKommoContacts(connection, credentials)
+
+    const completedAt = new Date().toISOString()
+
+    metadata = await updateSyncMetadata(syncResult.connection.id, metadata, {
+     status: 'completed',
+     completedAt,
+     error: null,
+     contacts: {
+      status: 'completed',
+      completedAt,
+      error: null,
+      contactsCount: syncResult.contactsCount,
+      latestContactAt: syncResult.latestContactAt,
+      sampleContact: syncResult.sampleContact,
+     },
+     contactsCount: syncResult.contactsCount,
+    })
+
+    return metadata
+   } catch (error) {
+    await updateSyncMetadata(connection.id, metadata, {
+     status: 'failed',
+     failedAt: new Date().toISOString(),
+     error: error instanceof Error ? error.message : 'Unknown error',
+     contacts: {
+      status: 'failed',
+      failedAt: new Date().toISOString(),
+      error: error instanceof Error ? error.message : 'Unknown error',
+     },
+    })
+
+    throw error
+   }
+  },
+  'kommo:sync-pipelines': async (payload: { orgId: string; baseDomain: string }) => {
+   await handleCrmSyncPipelines({
+    provider: 'kommo',
+    orgId: payload.orgId,
+    baseDomain: payload.baseDomain,
+   })
+  },
+  'kommo:webhook': async (payload: {
+   orgId: string
+   provider: 'kommo'
+   payload: unknown
+   signature?: string | null
+   rawBody?: string
+  }) => {
+   if (env.KOMMO_WEBHOOK_SECRET) {
+    const bodyString = payload.rawBody ?? JSON.stringify(payload.payload ?? {})
+    const expected = createHmac('sha256', env.KOMMO_WEBHOOK_SECRET).update(bodyString).digest('hex')
+
+    if (!payload.signature || payload.signature !== expected) {
+     throw new Error('Invalid webhook signature')
+    }
+   }
+
+   if (typeof payload.payload !== 'object' || payload.payload === null) {
+    throw new Error('Invalid webhook payload format')
+   }
+
+   const record = payload.payload as Record<string, unknown>
+   const event = KommoAPI.parseWebhook(record)
+   const metadata = extractWebhookMetadata(event.type, event.data)
+   const eventId = await saveWebhookEvent(payload.orgId, payload.provider, event.type, record, metadata)
+   const success = await processWebhookEvent(eventId)
+
+   if (!success) {
+    throw new Error(`Processing failed for webhook event ${eventId}`)
+   }
+  },
+  'webhook:retry': async (payload: { eventId: string; retryCount: number }) => {
+   const success = await processWebhookEvent(payload.eventId)
+
+   if (!success) {
+    throw new Error(`Retry processing failed for webhook event ${payload.eventId}`)
+   }
+  },
  'kommo:send-message': async (payload: {
  orgId: string
  dealId: string
