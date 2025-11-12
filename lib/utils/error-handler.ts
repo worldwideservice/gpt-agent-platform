@@ -5,6 +5,8 @@
 
 import * as Sentry from '@sentry/nextjs'
 
+import { recordApiError } from '@/lib/monitoring/metrics'
+
 export interface ApiError {
   success: false
   error: string
@@ -106,6 +108,8 @@ export function createErrorResponse(
     code?: string
     details?: unknown
     logToSentry?: boolean
+    route?: string
+    method?: string
   }
 ): { response: ApiError; status: number } {
   let errorType = classifyError(error)
@@ -142,6 +146,14 @@ export function createErrorResponse(
   // Логируем в консоль для разработки
   if (process.env.NODE_ENV === 'development') {
     console.error(`[error-handler] ${errorType}:`, error)
+  }
+
+  if (context?.route && context?.method && status >= 500) {
+    recordApiError({
+      route: context.route,
+      method: context.method,
+      statusCode: status,
+    })
   }
 
   return { response: errorResponse, status }

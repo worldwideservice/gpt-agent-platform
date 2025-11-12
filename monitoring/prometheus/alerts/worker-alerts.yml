@@ -31,7 +31,7 @@ groups:
 
       # Алерт: Redis отключен
       - alert: RedisDisconnected
-        expr: worker_redis_connection_status == 0
+        expr: worker_redis_connected == 0
         for: 1m
         labels:
           severity: critical
@@ -56,7 +56,7 @@ groups:
 
       # Алерт: Много jobs в обработке
       - alert: HighJobProcessingQueue
-        expr: worker_jobs_processing > 50
+        expr: worker_jobs_in_flight > 50
         for: 5m
         labels:
           severity: warning
@@ -68,7 +68,7 @@ groups:
       # Алерт: Много попыток переподключения Redis
       - alert: HighRedisReconnectAttempts
         expr: |
-          rate(worker_redis_reconnect_attempts_total[5m]) > 5
+          rate(worker_redis_reconnect_total[5m]) > 5
         for: 5m
         labels:
           severity: warning
@@ -88,4 +88,38 @@ groups:
         annotations:
           summary: "Низкая производительность Worker"
           description: "Worker обрабатывает менее 0.5 jobs в секунду за последние 10 минут"
+
+  - name: app_alerts
+    interval: 30s
+    rules:
+      - alert: NextApiHighLatency
+        expr: |
+          histogram_quantile(0.95, rate(next_api_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: next-app
+        annotations:
+          summary: "Высокая латентность Next.js API"
+          description: "95-й перцентиль времени ответа Next.js API превышает 1 секунду"
+
+      - alert: NextApiErrors
+        expr: increase(next_api_request_errors_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: critical
+          component: next-app
+        annotations:
+          summary: "Рост ошибок Next.js API"
+          description: "За последние 5 минут зафиксировано более 10 ошибок Next.js API"
+
+      - alert: FastifyHighErrorRate
+        expr: increase(api_http_errors_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: critical
+          component: fastify-api
+        annotations:
+          summary: "Рост ошибок Fastify API"
+          description: "Количество ошибок Fastify API превышает 5 за 5 минут"
 
