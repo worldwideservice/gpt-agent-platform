@@ -2,75 +2,93 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { z } from 'zod'
 
 import { auth } from '@/auth'
+import { cache, cacheConfig, cacheKeys } from '@/lib/cache'
 import { createErrorResponse } from '@/lib/utils/error-handler'
 import {
- createConversation,
- getConversationById,
- addMessageToConversation,
- getConversationMessages,
+  createConversation,
+  getConversationById,
+  addMessageToConversation,
+  getConversationMessages,
 } from '@/lib/repositories/conversations'
-import { searchKnowledgeBase, formatKnowledgeContext } from '@/lib/repositories/knowledge-search'
+import {
+  searchKnowledgeBase,
+  formatKnowledgeContext,
+} from '@/lib/repositories/knowledge-search'
 import { getAgentById } from '@/lib/repositories/agents'
 import { generateChatResponse } from '@/lib/services/llm'
-import { buildFullSystemPrompt, processConversationMemory } from '@/lib/services/agent-context-builder'
+import {
+  buildAgentContext,
+  composeSystemPrompt,
+  processConversationMemory,
+} from '@/lib/services/agent-context-builder'
+import type { AgentContext } from '@/lib/services/agent-context-builder'
+import { resolveOrganizationAiConfiguration } from '@/lib/services/ai/configuration-resolver'
 import { AgentActionsService } from '@/lib/services/agent-actions'
 import { createKommoApiForOrg } from '@/lib/repositories/crm-connection'
 import { isAgentConfiguredForStage } from '@/lib/repositories/agent-pipeline-settings'
 
 const sendMessageSchema = z.object({
- conversationId: z.string().uuid().optional(),
- agentId: z.string().uuid().optional(),
- message: z.string().min(1, 'Сообщение не может быть пустым'),
- useKnowledgeBase: z.boolean().optional().default(true),
- clientIdentifier: z.string().optional(), // email, phone или другой идентификатор клиента
+  conversationId: z.string().uuid().optional(),
+  agentId: z.string().uuid().optional(),
+  message: z.string().min(1, 'Сообщение не может быть пустым'),
+  useKnowledgeBase: z.boolean().optional().default(true),
+  clientIdentifier: z.string().optional(), // email, phone или другой идентификатор клиента
 })
+
+type CachedAgentInstructionPayload = {
+  instructions: string | null
+  model?: string
+  updatedAt?: string | null
+}
 
 /**
  * Анализирует разговор и автоматически выполняет действия агента
  */
 async function analyzeAndExecuteActions(context: {
- organizationId: string
- agentId: string | null
- leadId: number
- conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }>
- userMessage: string
+  organizationId: string
+  agentId: string | null
+  leadId: number
+  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }>
+  userMessage: string
 }): Promise<void> {
- try {
- const actionsService = new AgentActionsService(context.organizationId)
+  try {
+    const actionsService = new AgentActionsService(context.organizationId)
 
- // Анализируем ситуацию и получаем предложения действий
- const suggestions = await actionsService.analyzeAndSuggestActions({
- organizationId: context.organizationId,
- agentId: context.agentId || '',
- leadId: context.leadId,
- conversationHistory: context.conversationHistory,
- userMessage: context.userMessage,
- })
+    // Анализируем ситуацию и получаем предложения действий
+    const suggestions = await actionsService.analyzeAndSuggestActions({
+      organizationId: context.organizationId,
+      agentId: context.agentId || '',
+      leadId: context.leadId,
+      conversationHistory: context.conversationHistory,
+      userMessage: context.userMessage,
+    })
 
- // Выполняем наиболее уверенное действие (если уверенность > 0.7)
- if (suggestions.length > 0 && suggestions[0].confidence > 0.7) {
- const action = suggestions[0]
- if (process.env.NODE_ENV === 'development') {
- console.log(`🤖 Агент автоматически выполняет действие: ${action.reason} (уверенность: ${action.confidence})`)
- }
+    // Выполняем наиболее уверенное действие (если уверенность > 0.7)
+    if (suggestions.length > 0 && suggestions[0].confidence > 0.7) {
+      const action = suggestions[0]
+      if (process.env.NODE_ENV === 'development') {
+        console.log(
+          `🤖 Агент автоматически выполняет действие: ${action.reason} (уверенность: ${action.confidence})`,
+        )
+      }
 
- await actionsService.executeSuggestedAction(action, {
- organizationId: context.organizationId,
- agentId: context.agentId || '',
- leadId: context.leadId,
- conversationHistory: context.conversationHistory,
- userMessage: context.userMessage,
- })
+      await actionsService.executeSuggestedAction(action, {
+        organizationId: context.organizationId,
+        agentId: context.agentId || '',
+        leadId: context.leadId,
+        conversationHistory: context.conversationHistory,
+        userMessage: context.userMessage,
+      })
 
- if (process.env.NODE_ENV === 'development') {
- console.log(`✅ Действие выполнено: ${action.type}`)
- }
- }
- } catch (error) {
- if (process.env.NODE_ENV === 'development') {
- console.error('Failed to analyze and execute actions:', error)
- }
- }
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`✅ Действие выполнено: ${action.type}`)
+      }
+    }
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Failed to analyze and execute actions:', error)
+    }
+  }
 }
 
 /**
@@ -208,332 +226,428 @@ async function analyzeAndExecuteActions(context: {
  * example: "Внутренняя ошибка сервера"
  */
 export const POST = async (request: NextRequest) => {
- const session = await auth()
+  const session = await auth()
 
- if (!session?.user?.orgId) {
- return NextResponse.json({ success: false, error: 'Не авторизовано' }, { status: 401 })
- }
+  if (!session?.user?.orgId) {
+    return NextResponse.json(
+      { success: false, error: 'Не авторизовано' },
+      { status: 401 },
+    )
+  }
 
- try {
- const body = await request.json()
- const parsed = sendMessageSchema.safeParse(body)
+  try {
+    const body = await request.json()
+    const parsed = sendMessageSchema.safeParse(body)
 
- if (!parsed.success) {
- const issues = parsed.error.issues.map((issue) => issue.message)
- const { response, status } = createErrorResponse(
-   new Error('Некорректные данные'),
-   {
-     code: 'VALIDATION_ERROR',
-     details: issues,
-     logToSentry: false,
-   }
- )
- return NextResponse.json(response, { status })
- }
+    if (!parsed.success) {
+      const issues = parsed.error.issues.map((issue) => issue.message)
+      const { response, status } = createErrorResponse(
+        new Error('Некорректные данные'),
+        {
+          code: 'VALIDATION_ERROR',
+          details: issues,
+          logToSentry: false,
+        },
+      )
+      return NextResponse.json(response, { status })
+    }
 
- const { conversationId, agentId, message, useKnowledgeBase, clientIdentifier } = parsed.data
- const organizationId = session.user.orgId
- const userId = session.user.id
+    const {
+      conversationId,
+      agentId,
+      message,
+      useKnowledgeBase,
+      clientIdentifier,
+    } = parsed.data
+    const organizationId = session.user.orgId
+    const userId = session.user.id
 
- // Определяем или создаем диалог
- let conversation
+    // Определяем или создаем диалог
+    let conversation
 
- if (conversationId) {
- conversation = await getConversationById(conversationId, organizationId)
- if (!conversation) {
- return NextResponse.json({ success: false, error: 'Диалог не найден' }, { status: 404 })
- }
- } else {
- // Создаем новый диалог
- conversation = await createConversation(organizationId, {
- agentId: agentId ?? null,
- userId,
- title: message.slice(0, 50), // Первые 50 символов как заголовок
- })
- }
+    if (conversationId) {
+      conversation = await getConversationById(conversationId, organizationId)
+      if (!conversation) {
+        return NextResponse.json(
+          { success: false, error: 'Диалог не найден' },
+          { status: 404 },
+        )
+      }
+    } else {
+      // Создаем новый диалог
+      conversation = await createConversation(organizationId, {
+        agentId: agentId ?? null,
+        userId,
+        title: message.slice(0, 50), // Первые 50 символов как заголовок
+      })
+    }
 
- // Сохраняем сообщение пользователя
- await addMessageToConversation(conversation.id, {
- role: 'user',
- content: message,
- })
+    // Сохраняем сообщение пользователя
+    await addMessageToConversation(conversation.id, {
+      role: 'user',
+      content: message,
+    })
 
- // Получаем инструкции агента и определяем этап воронки (если есть)
- let agentInstructions: string | null = null
- let agentModel: string | undefined
- let pipelineStageId: string | null = null
- let canUseAgent = true // По умолчанию разрешаем использовать агента
+    // Получаем инструкции агента и определяем этап воронки (если есть)
+    let agentInstructions: string | null = null
+    let agentModel: string | undefined
+    let pipelineStageId: string | null = null
+    let canUseAgent = true // По умолчанию разрешаем использовать агента
+    let agentResolved = false
 
- if (agentId || conversation.agentId) {
- const effectiveAgentId = agentId || conversation.agentId
- if (effectiveAgentId) {
- try {
- const agent = await getAgentById(effectiveAgentId, organizationId)
- if (agent) {
- agentInstructions = 'instructions' in agent ? agent.instructions ?? null : null
- agentModel = agent.model ?? undefined
- 
- // Определяем pipeline_id и stage_id из CRM если есть активная сделка
- let pipelineId: string | null = null
- 
- // Получаем leadId из conversation.metadata или ищем по clientIdentifier
- let leadId: number | null = null
- 
- if (conversation.metadata && typeof conversation.metadata === 'object') {
- // Проверяем metadata на наличие leadId
- if ('leadId' in conversation.metadata && typeof conversation.metadata.leadId === 'number') {
- leadId = conversation.metadata.leadId
- } else if ('lead_id' in conversation.metadata && typeof conversation.metadata.lead_id === 'number') {
- leadId = conversation.metadata.lead_id
- }
- }
- 
- // Если нет leadId в metadata, можно поискать по clientIdentifier через API
- // Пока что используем только из metadata
- 
- // Если есть leadId, получаем информацию о сделке из Kommo
- if (leadId) {
- try {
- const kommoApi = await createKommoApiForOrg(organizationId)
- if (kommoApi) {
- const lead = await kommoApi.getLead(leadId)
- 
- if (lead.pipeline_id) {
- pipelineId = lead.pipeline_id.toString()
- }
- 
- if (lead.status_id) {
- pipelineStageId = lead.status_id.toString()
- }
- 
- // Проверяем настройки агента для этого этапа
- if (pipelineId && pipelineStageId) {
- const isConfigured = await isAgentConfiguredForStage(
- effectiveAgentId,
- organizationId,
- pipelineId,
- pipelineStageId,
- )
- 
- if (!isConfigured) {
- canUseAgent = false
- console.log(`Agent ${effectiveAgentId} not configured for pipeline ${pipelineId} stage ${pipelineStageId}`)
- }
- }
- }
- } catch (error) {
- // Если не удалось получить данные из CRM, продолжаем без проверки
- console.error('Failed to fetch lead from CRM or check agent settings', error)
- }
- }
- }
- } catch (error) {
- console.error('Failed to fetch agent', error)
- }
- }
- }
+    if (agentId || conversation.agentId) {
+      const effectiveAgentId = agentId || conversation.agentId
+      if (effectiveAgentId) {
+        try {
+          const cacheKey = cacheKeys.agentInstructions(
+            organizationId,
+            effectiveAgentId,
+          )
+          const cachedPayload =
+            await cache.get<CachedAgentInstructionPayload>(cacheKey)
 
- // Получаем историю диалога
- const historyMessages = await getConversationMessages(conversation.id, { limit: 10 })
+          if (cachedPayload) {
+            agentInstructions = cachedPayload.instructions
+            agentModel = cachedPayload.model ?? undefined
+            agentResolved = true
+          } else {
+            const agent = await getAgentById(effectiveAgentId, organizationId)
+            if (agent) {
+              agentInstructions = agent.instructions ?? null
+              agentModel = agent.model ?? undefined
+              agentResolved = true
 
- // Формируем историю для LLM (только user и assistant сообщения)
- const conversationHistory = historyMessages
- .filter((msg) => msg.role !== 'system')
- .map((msg) => ({
- role: msg.role as 'user' | 'assistant',
- content: msg.content,
- }))
+              await cache
+                .set(
+                  cacheKey,
+                  {
+                    instructions: agentInstructions,
+                    model: agentModel,
+                    updatedAt: agent.updatedAt ?? null,
+                  },
+                  cacheConfig.agentInstructions,
+                )
+                .catch(() => {})
+            }
+          }
 
- // Если агент не настроен для этого этапа - не используем его
- if (!canUseAgent) {
- return NextResponse.json({
- success: false,
- error: 'Агент не настроен для использования на данном этапе воронки. Настройте агента в разделе "Воронки"',
- }, { status: 403 })
- }
+          if (agentResolved) {
+            // Определяем pipeline_id и stage_id из CRM если есть активная сделка
+            let pipelineId: string | null = null
 
- // Строим полный контекст агента (КАГ - Knowledge Augmented Generation)
- // Включает: знания компании, скрипты продаж, ответы на возражения, векторный поиск, Knowledge Graph
- let fullSystemPrompt: string | null = null
+            // Получаем leadId из conversation.metadata или ищем по clientIdentifier
+            let leadId: number | null = null
 
- if (useKnowledgeBase) {
- try {
- fullSystemPrompt = await buildFullSystemPrompt({
- organizationId,
- agentId: agentId || conversation.agentId || null,
- pipelineStageId,
- userMessage: message,
- conversationHistory,
- clientIdentifier: clientIdentifier || undefined,
- agentInstructions,
- })
- } catch (error) {
- console.error('Failed to build agent context', error)
- // Fallback к старому методу
- try {
- const knowledgeChunks = await searchKnowledgeBase(
- organizationId,
- message,
- agentId || conversation.agentId || null,
- 5,
- )
- if (knowledgeChunks.length > 0) {
- fullSystemPrompt = buildSystemPrompt(agentInstructions, formatKnowledgeContext(knowledgeChunks))
- } else {
- fullSystemPrompt = agentInstructions
- }
- } catch (fallbackError) {
- console.error('Fallback knowledge search failed', fallbackError)
- fullSystemPrompt = agentInstructions
- }
- }
- } else {
- fullSystemPrompt = agentInstructions
- }
+            if (
+              conversation.metadata &&
+              typeof conversation.metadata === 'object'
+            ) {
+              // Проверяем metadata на наличие leadId
+              if (
+                'leadId' in conversation.metadata &&
+                typeof conversation.metadata.leadId === 'number'
+              ) {
+                leadId = conversation.metadata.leadId
+              } else if (
+                'lead_id' in conversation.metadata &&
+                typeof conversation.metadata.lead_id === 'number'
+              ) {
+                leadId = conversation.metadata.lead_id
+              }
+            }
 
- // Генерируем ответ от LLM с полным контекстом
- const llmResponse = await generateChatResponse(organizationId, message, {
- model: agentModel,
- systemPrompt: fullSystemPrompt ?? undefined,
- conversationHistory,
- })
+            // Если есть leadId, получаем информацию о сделке из Kommo
+            if (leadId) {
+              try {
+                const kommoApi = await createKommoApiForOrg(organizationId)
+                if (kommoApi) {
+                  const lead = await kommoApi.getLead(leadId)
 
- // Вспомогательная функция для buildSystemPrompt (если не используется новый билдер)
- function buildSystemPrompt(instructions: string | null, context?: string): string | null {
- if (!instructions && !context) return null
- 
- const parts: string[] = []
- if (instructions) parts.push(instructions)
- if (context) {
- parts.push('\n\n## Контекст из базы знаний:\n')
- parts.push(context)
- }
- return parts.join('\n')
- }
+                  if (lead.pipeline_id) {
+                    pipelineId = lead.pipeline_id.toString()
+                  }
 
- // Сохраняем ответ агента
- const assistantMessage = await addMessageToConversation(conversation.id, {
-   role: 'assistant',
-   content: llmResponse.content,
-   metadata: {
-     model: llmResponse.model,
-     usage: llmResponse.usage,
-     usedKnowledgeBase: useKnowledgeBase && (fullSystemPrompt?.includes('Контекст из базы знаний') ?? false),
-   },
- })
+                  if (lead.status_id) {
+                    pipelineStageId = lead.status_id.toString()
+                  }
 
- // Логируем ответ агента (асинхронно, не блокируем ответ)
- if (agentId || conversation.agentId) {
-   const { ActivityLogger } = await import('@/lib/services/activity-logger')
-   ActivityLogger.agentResponse(
-     organizationId,
-     agentId || conversation.agentId || '',
-     conversation.id,
-     llmResponse.content.length,
-   ).catch((error) => {
-     if (process.env.NODE_ENV === 'development') {
-       console.error('Failed to log agent response:', error)
-     }
-   })
- }
+                  // Проверяем настройки агента для этого этапа
+                  if (pipelineId && pipelineStageId) {
+                    const isConfigured = await isAgentConfiguredForStage(
+                      effectiveAgentId,
+                      organizationId,
+                      pipelineId,
+                      pipelineStageId,
+                    )
 
- // Обрабатываем память агента из разговора (асинхронно, не блокируем ответ)
- if (clientIdentifier) {
- const allMessages = await getConversationMessages(conversation.id)
- const conversationMessages = allMessages.map(msg => ({
- role: msg.role as 'user' | 'assistant',
- content: msg.content,
- }))
+                    if (!isConfigured) {
+                      canUseAgent = false
+                      console.log(
+                        `Agent ${effectiveAgentId} not configured for pipeline ${pipelineId} stage ${pipelineStageId}`,
+                      )
+                    }
+                  }
+                }
+              } catch (error) {
+                // Если не удалось получить данные из CRM, продолжаем без проверки
+                console.error(
+                  'Failed to fetch lead from CRM or check agent settings',
+                  error,
+                )
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch agent', error)
+        }
+      }
+    }
 
- // Запускаем обработку памяти в фоне
- processConversationMemory({
- organizationId,
- agentId: agentId || conversation.agentId || null,
- clientIdentifier,
- conversationMessages,
- }).catch((error: unknown) => {
- if (process.env.NODE_ENV === 'development') {
- console.error('Memory processing failed', error)
- }
- })
- }
+    // Получаем историю диалога
+    const historyMessages = await getConversationMessages(conversation.id, {
+      limit: 10,
+    })
 
- // Анализируем и предлагаем действия агента (асинхронно, не блокируем ответ)
- if (conversation.leadId && typeof conversation.leadId === 'number') {
- const allMessages = await getConversationMessages(conversation.id)
- const conversationHistory = allMessages.map(msg => ({
- role: msg.role as 'user' | 'assistant',
- content: msg.content,
- }))
+    // Формируем историю для LLM (только user и assistant сообщения)
+    const conversationHistory = historyMessages
+      .filter((msg) => msg.role !== 'system')
+      .map((msg) => ({
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content,
+      }))
 
- // Запускаем анализ действий в фоне
- analyzeAndExecuteActions({
- organizationId,
- agentId: agentId || conversation.agentId || null,
- leadId: conversation.leadId!,
- conversationHistory,
- userMessage: message,
- }).catch((error: unknown) => {
- if (process.env.NODE_ENV === 'development') {
- console.error('Action analysis failed', error)
- }
- })
- }
+    // Если агент не настроен для этого этапа - не используем его
+    if (!canUseAgent) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            'Агент не настроен для использования на данном этапе воронки. Настройте агента в разделе "Воронки"',
+        },
+        { status: 403 },
+      )
+    }
 
- // Обновляем заголовок диалога на основе первого сообщения, если еще не установлен
- if (!conversation.title && message.length > 0) {
- // Это уже сделано при создании диалога выше
- }
+    const aiConfigurationPromise =
+      resolveOrganizationAiConfiguration(organizationId)
 
- return NextResponse.json({
-   success: true,
-   data: {
-     conversationId: conversation.id,
-     message: {
-       id: assistantMessage.id,
-       role: assistantMessage.role,
-       content: assistantMessage.content,
-       createdAt: assistantMessage.createdAt,
-       metadata: assistantMessage.metadata,
-     },
-     usage: llmResponse.usage,
-     model: llmResponse.model,
-   },
- })
- } catch (error) {
- console.error('Chat API error', error)
+    // Строим полный контекст агента (КАГ - Knowledge Augmented Generation)
+    // Включает: знания компании, скрипты продаж, ответы на возражения, векторный поиск, Knowledge Graph
+    let fullSystemPrompt: string | null = null
+    let agentContext: AgentContext | null = null
 
- const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка'
+    const createEmptyContext = (
+      instructionsValue: string | null,
+    ): AgentContext => ({
+      companyKnowledge: '',
+      salesScripts: '',
+      objectionResponses: '',
+      knowledgeGraph: '',
+      vectorSearch: '',
+      agentMemory: '',
+      clientMemory: '',
+      instructions: instructionsValue ?? '',
+    })
 
- return NextResponse.json(
- {
- success: false,
- error: 'Не удалось обработать сообщение',
- details: errorMessage,
- },
- { status: 500 },
- )
- }
+    if (useKnowledgeBase) {
+      try {
+        agentContext = await buildAgentContext({
+          organizationId,
+          agentId: agentId || conversation.agentId || null,
+          pipelineStageId,
+          userMessage: message,
+          conversationHistory,
+          clientIdentifier: clientIdentifier || undefined,
+          agentInstructions,
+        })
+        fullSystemPrompt = composeSystemPrompt(agentContext, agentInstructions)
+      } catch (error) {
+        console.error('Failed to build agent context', error)
+        agentContext = agentContext ?? createEmptyContext(agentInstructions)
+
+        try {
+          const knowledgeChunks = await searchKnowledgeBase(
+            organizationId,
+            message,
+            agentId || conversation.agentId || null,
+            5,
+          )
+          if (knowledgeChunks.length > 0) {
+            const knowledgeText = formatKnowledgeContext(knowledgeChunks)
+            agentContext = {
+              ...agentContext,
+              vectorSearch: knowledgeText,
+            }
+            fullSystemPrompt = composeSystemPrompt(
+              agentContext,
+              agentInstructions,
+            )
+          } else {
+            fullSystemPrompt = agentInstructions
+          }
+        } catch (fallbackError) {
+          console.error('Fallback knowledge search failed', fallbackError)
+          fullSystemPrompt = agentInstructions
+        }
+      }
+    } else {
+      fullSystemPrompt = agentInstructions
+    }
+
+    // Генерируем ответ от LLM с полным контекстом
+    const llmResponse = await generateChatResponse(organizationId, message, {
+      model: agentModel,
+      systemPrompt: fullSystemPrompt ?? undefined,
+      conversationHistory,
+    })
+
+    const usedKnowledgeBase =
+      useKnowledgeBase &&
+      !!agentContext &&
+      Boolean(
+        agentContext.companyKnowledge ||
+          agentContext.salesScripts ||
+          agentContext.objectionResponses ||
+          agentContext.vectorSearch ||
+          agentContext.knowledgeGraph ||
+          agentContext.agentMemory ||
+          agentContext.clientMemory,
+      )
+
+    // Сохраняем ответ агента
+    const assistantMessage = await addMessageToConversation(conversation.id, {
+      role: 'assistant',
+      content: llmResponse.content,
+      metadata: {
+        model: llmResponse.model,
+        usage: llmResponse.usage,
+        usedKnowledgeBase,
+      },
+    })
+
+    // Логируем ответ агента (асинхронно, не блокируем ответ)
+    if (agentId || conversation.agentId) {
+      const { ActivityLogger } = await import('@/lib/services/activity-logger')
+      ActivityLogger.agentResponse(
+        organizationId,
+        agentId || conversation.agentId || '',
+        conversation.id,
+        llmResponse.content.length,
+      ).catch((error) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to log agent response:', error)
+        }
+      })
+    }
+
+    // Обрабатываем память агента из разговора (асинхронно, не блокируем ответ)
+    if (clientIdentifier) {
+      const allMessages = await getConversationMessages(conversation.id)
+      const conversationMessages = allMessages.map((msg) => ({
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content,
+      }))
+
+      // Запускаем обработку памяти в фоне
+      processConversationMemory({
+        organizationId,
+        agentId: agentId || conversation.agentId || null,
+        clientIdentifier,
+        conversationMessages,
+      }).catch((error: unknown) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Memory processing failed', error)
+        }
+      })
+    }
+
+    // Анализируем и предлагаем действия агента (асинхронно, не блокируем ответ)
+    if (conversation.leadId && typeof conversation.leadId === 'number') {
+      const allMessages = await getConversationMessages(conversation.id)
+      const conversationHistory = allMessages.map((msg) => ({
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content,
+      }))
+
+      // Запускаем анализ действий в фоне
+      analyzeAndExecuteActions({
+        organizationId,
+        agentId: agentId || conversation.agentId || null,
+        leadId: conversation.leadId!,
+        conversationHistory,
+        userMessage: message,
+      }).catch((error: unknown) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Action analysis failed', error)
+        }
+      })
+    }
+
+    // Обновляем заголовок диалога на основе первого сообщения, если еще не установлен
+    if (!conversation.title && message.length > 0) {
+      // Это уже сделано при создании диалога выше
+    }
+
+    const aiConfiguration = await aiConfigurationPromise
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        conversationId: conversation.id,
+        message: {
+          id: assistantMessage.id,
+          role: assistantMessage.role,
+          content: assistantMessage.content,
+          createdAt: assistantMessage.createdAt,
+          metadata: assistantMessage.metadata,
+        },
+        usage: llmResponse.usage,
+        model: llmResponse.model,
+        context: agentContext,
+        systemPrompt: fullSystemPrompt,
+        configuration: aiConfiguration,
+      },
+    })
+  } catch (error) {
+    console.error('Chat API error', error)
+
+    const errorMessage =
+      error instanceof Error ? error.message : 'Неизвестная ошибка'
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Не удалось обработать сообщение',
+        details: errorMessage,
+      },
+      { status: 500 },
+    )
+  }
 }
 
 /**
  * GET /api/chat - Получение диалогов или сообщений
  */
 export const GET = async (request: NextRequest) => {
- const session = await auth()
+  const session = await auth()
 
- if (!session?.user?.orgId) {
- return NextResponse.json({ success: false, error: 'Не авторизовано' }, { status: 401 })
- }
+  if (!session?.user?.orgId) {
+    return NextResponse.json(
+      { success: false, error: 'Не авторизовано' },
+      { status: 401 },
+    )
+  }
 
- const { searchParams } = new URL(request.url)
- const conversationId = searchParams.get('conversationId')
- const agentId = searchParams.get('agentId')
+  const { searchParams } = new URL(request.url)
+  const conversationId = searchParams.get('conversationId')
+  const agentId = searchParams.get('agentId')
 
- try {
- if (conversationId) {
+  try {
+    if (conversationId) {
       // Получаем сообщения конкретного диалога
-      const { getConversationMessages: getMessages } = await import('@/lib/repositories/conversations')
+      const { getConversationMessages: getMessages } = await import(
+        '@/lib/repositories/conversations'
+      )
       const messages = await getMessages(conversationId)
 
       return NextResponse.json({
@@ -543,34 +657,37 @@ export const GET = async (request: NextRequest) => {
           conversationId,
         },
       })
- }
+    }
 
- // Получаем список диалогов
- const { getConversations } = await import('@/lib/repositories/conversations')
- const { conversations, total } = await getConversations(session.user.orgId, {
- agentId: agentId ?? null,
- userId: session.user.id,
- limit: 50,
- })
+    // Получаем список диалогов
+    const { getConversations } = await import(
+      '@/lib/repositories/conversations'
+    )
+    const { conversations, total } = await getConversations(
+      session.user.orgId,
+      {
+        agentId: agentId ?? null,
+        userId: session.user.id,
+        limit: 50,
+      },
+    )
 
- return NextResponse.json({
- success: true,
- data: conversations,
- pagination: {
- total,
- },
- })
- } catch (error) {
- console.error('Chat GET API error', error)
+    return NextResponse.json({
+      success: true,
+      data: conversations,
+      pagination: {
+        total,
+      },
+    })
+  } catch (error) {
+    console.error('Chat GET API error', error)
 
- return NextResponse.json(
- {
- success: false,
- error: 'Не удалось загрузить данные',
- },
- { status: 500 },
- )
- }
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Не удалось загрузить данные',
+      },
+      { status: 500 },
+    )
+  }
 }
-
-

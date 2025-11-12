@@ -1,5 +1,6 @@
 import { type OpenRouterMessage } from '@/lib/services/ai/openrouter.client'
 import { resolveOpenRouterClient } from '@/lib/services/ai/openrouter-resolver'
+import { resolveOrganizationAiConfiguration } from '@/lib/services/ai/configuration-resolver'
 
 /**
  * Сервис для работы с LLM через OpenRouter
@@ -14,7 +15,10 @@ interface ChatOptions {
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>
 }
 
-const buildSystemPrompt = (agentInstructions?: string | null, knowledgeContext?: string): string => {
+const buildSystemPrompt = (
+  agentInstructions?: string | null,
+  knowledgeContext?: string,
+): string => {
   const parts: string[] = []
 
   if (agentInstructions) {
@@ -51,11 +55,13 @@ export const generateChatResponse = async (
   }
   model: string
 }> => {
-  // В дальнейшем можно получать разные ключи/конфигурации по organizationId.
-  const client = await resolveOpenRouterClient(organizationId)
+  const [configuration, client] = await Promise.all([
+    resolveOrganizationAiConfiguration(organizationId),
+    resolveOpenRouterClient(organizationId),
+  ])
 
   const {
-    model = client.defaultModel,
+    model = configuration.defaultModel ?? client.defaultModel,
     temperature = 0.7,
     maxTokens = 1000,
     systemPrompt,
@@ -129,7 +135,10 @@ export const getAvailableModels = async (): Promise<
       description: model.description,
     }))
   } catch (error) {
-    console.warn('Failed to fetch models from OpenRouter, returning default list', error)
+    console.warn(
+      'Failed to fetch models from OpenRouter, returning default list',
+      error,
+    )
     return defaultModels
   }
 }

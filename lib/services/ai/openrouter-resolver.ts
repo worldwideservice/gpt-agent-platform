@@ -1,8 +1,15 @@
-import { getOrganizationAiSettings } from '@/lib/repositories/organization-settings'
-import { createOpenRouterClient, getOpenRouterClient, OpenRouterClient } from '@/lib/services/ai/openrouter.client'
+import {
+  createOpenRouterClient,
+  getOpenRouterClient,
+  OpenRouterClient,
+} from '@/lib/services/ai/openrouter.client'
+import { resolveOrganizationAiConfiguration } from '@/lib/services/ai/configuration-resolver'
 
 const OPENROUTER_CACHE_TTL = 1000 * 60 * 5 // 5 минут
-const openRouterClientCache = new Map<string, { client: OpenRouterClient; expiresAt: number }>()
+const openRouterClientCache = new Map<
+  string,
+  { client: OpenRouterClient; expiresAt: number }
+>()
 
 const getCachedClient = (orgId: string): OpenRouterClient | null => {
   const cached = openRouterClientCache.get(orgId)
@@ -25,7 +32,9 @@ const setCachedClient = (orgId: string, client: OpenRouterClient) => {
   })
 }
 
-export const resolveOpenRouterClient = async (organizationId?: string | null): Promise<OpenRouterClient> => {
+export const resolveOpenRouterClient = async (
+  organizationId?: string | null,
+): Promise<OpenRouterClient> => {
   if (!organizationId) {
     return getOpenRouterClient()
   }
@@ -35,15 +44,17 @@ export const resolveOpenRouterClient = async (organizationId?: string | null): P
     return cached
   }
 
-  const settings = await getOrganizationAiSettings(organizationId)
-  if (!settings || settings.aiProvider !== 'openrouter' || !settings.openrouterApiKey) {
+  const configuration = await resolveOrganizationAiConfiguration(organizationId)
+
+  if (configuration.provider !== 'openrouter' || !configuration.apiKey) {
     return getOpenRouterClient()
   }
 
   const client = createOpenRouterClient({
-    apiKey: settings.openrouterApiKey,
-    defaultModel: settings.openrouterDefaultModel ?? undefined,
-    embeddingModel: settings.openrouterEmbeddingModel ?? undefined,
+    apiKey: configuration.apiKey,
+    defaultModel: configuration.defaultModel ?? undefined,
+    embeddingModel: configuration.embeddingModel ?? undefined,
+    baseUrl: configuration.baseUrl ?? undefined,
   })
 
   setCachedClient(organizationId, client)
