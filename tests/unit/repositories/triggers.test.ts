@@ -8,6 +8,8 @@ import {
   updateTriggerStatus,
 } from '@/lib/repositories/triggers'
 
+const ORGANIZATION_ID = 'org-123'
+
 // Мокаем Supabase
 const createMockQuery = () => {
   const query: any = {
@@ -40,6 +42,7 @@ describe('Triggers Repository', () => {
       const mockTriggers = [
         {
           id: 'trigger-1',
+          org_id: ORGANIZATION_ID,
           agent_id: 'agent-123',
           name: 'Test Trigger',
           description: 'Test description',
@@ -76,7 +79,7 @@ describe('Triggers Repository', () => {
         .mockReturnValueOnce(conditionsQuery) // для conditions
         .mockReturnValueOnce(actionsQuery) // для actions
 
-      const result = await getTriggers('agent-123')
+      const result = await getTriggers(ORGANIZATION_ID, 'agent-123')
 
       expect(result).toHaveLength(1)
       expect(result[0].id).toBe('trigger-1')
@@ -87,6 +90,7 @@ describe('Triggers Repository', () => {
       const mockTriggers = [
         {
           id: 'trigger-1',
+          org_id: ORGANIZATION_ID,
           agent_id: 'agent-123',
           name: 'Test Trigger',
           description: null,
@@ -130,7 +134,7 @@ describe('Triggers Repository', () => {
         .mockReturnValueOnce(conditionsQuery)
         .mockReturnValueOnce(actionsQuery)
 
-      const result = await getTriggers('agent-123')
+      const result = await getTriggers(ORGANIZATION_ID, 'agent-123')
 
       expect(result[0].conditions).toHaveLength(1)
       expect(result[0].conditions[0].conditionType).toBe('message_contains')
@@ -144,14 +148,14 @@ describe('Triggers Repository', () => {
 
       mockSupabaseClient.from.mockReturnValue(queryChain)
 
-      await expect(getTriggers('agent-123')).rejects.toThrow('Не удалось загрузить триггеры')
+      await expect(getTriggers(ORGANIZATION_ID, 'agent-123')).rejects.toThrow('Не удалось загрузить триггеры')
     })
   })
 
   describe('getTriggerById', () => {
     it('should return trigger by id', async () => {
-      const mockTrigger = {
-        id: 'trigger-1',
+              org_id: ORGANIZATION_ID,
+        org_id: ORGANIZATION_ID,
         agent_id: 'agent-123',
         name: 'Test Trigger',
         description: 'Test description',
@@ -186,7 +190,7 @@ describe('Triggers Repository', () => {
         .mockReturnValueOnce(conditionsQuery)
         .mockReturnValueOnce(actionsQuery)
 
-      const result = await getTriggerById('trigger-1', 'agent-123')
+      const result = await getTriggerById(ORGANIZATION_ID, 'trigger-1', 'agent-123')
 
       expect(result).toBeDefined()
       expect(result?.id).toBe('trigger-1')
@@ -199,7 +203,7 @@ describe('Triggers Repository', () => {
 
       mockSupabaseClient.from.mockReturnValue(queryChain)
 
-      const result = await getTriggerById('trigger-1', 'agent-123')
+      const result = await getTriggerById(ORGANIZATION_ID, 'trigger-1', 'agent-123')
 
       expect(result).toBeNull()
     })
@@ -210,14 +214,15 @@ describe('Triggers Repository', () => {
 
       mockSupabaseClient.from.mockReturnValue(queryChain)
 
-      await expect(getTriggerById('trigger-1', 'agent-123')).rejects.toThrow('Не удалось загрузить триггер')
+      await expect(
+        getTriggerById(ORGANIZATION_ID, 'trigger-1', 'agent-123'),
+      ).rejects.toThrow('Не удалось загрузить триггер')
     })
   })
 
   describe('createTrigger', () => {
     it('should create trigger with conditions and actions', async () => {
-      const mockTrigger = {
-        id: 'trigger-1',
+              org_id: ORGANIZATION_ID,
         agent_id: 'agent-123',
         name: 'New Trigger',
         description: 'New description',
@@ -262,7 +267,7 @@ describe('Triggers Repository', () => {
         .mockReturnValueOnce(conditionsQuery) // для conditions select
         .mockReturnValueOnce(actionsQuery) // для actions select
 
-      const result = await createTrigger('agent-123', {
+      const result = await createTrigger(ORGANIZATION_ID, 'agent-123', {
         name: 'New Trigger',
         description: 'New description',
         isActive: true,
@@ -287,8 +292,7 @@ describe('Triggers Repository', () => {
     })
 
     it('should create trigger without conditions and actions', async () => {
-      const mockTrigger = {
-        id: 'trigger-1',
+              org_id: ORGANIZATION_ID,
         agent_id: 'agent-123',
         name: 'New Trigger',
         description: null,
@@ -325,7 +329,7 @@ describe('Triggers Repository', () => {
         .mockReturnValueOnce(conditionsQuery)
         .mockReturnValueOnce(actionsQuery)
 
-      const result = await createTrigger('agent-123', {
+      const result = await createTrigger(ORGANIZATION_ID, 'agent-123', {
         name: 'New Trigger',
         conditions: [],
         actions: [],
@@ -344,7 +348,7 @@ describe('Triggers Repository', () => {
       mockSupabaseClient.from.mockReturnValue(insertQuery)
 
       await expect(
-        createTrigger('agent-123', {
+        createTrigger(ORGANIZATION_ID, 'agent-123', {
           name: 'New Trigger',
           conditions: [],
           actions: [],
@@ -353,8 +357,7 @@ describe('Triggers Repository', () => {
     })
 
     it('should throw error if conditions creation fails', async () => {
-      const mockTrigger = {
-        id: 'trigger-1',
+              org_id: ORGANIZATION_ID,
         agent_id: 'agent-123',
         name: 'New Trigger',
         description: null,
@@ -376,7 +379,7 @@ describe('Triggers Repository', () => {
         .mockReturnValueOnce(conditionsInsertQuery)
 
       await expect(
-        createTrigger('agent-123', {
+        createTrigger(ORGANIZATION_ID, 'agent-123', {
           name: 'New Trigger',
           conditions: [
             {
@@ -391,8 +394,7 @@ describe('Triggers Repository', () => {
     })
 
     it('should throw error if actions creation fails', async () => {
-      const mockTrigger = {
-        id: 'trigger-1',
+              org_id: ORGANIZATION_ID,
         agent_id: 'agent-123',
         name: 'New Trigger',
         description: null,
@@ -435,7 +437,7 @@ describe('Triggers Repository', () => {
         .mockReturnValueOnce(actionsQuery) // для actions select (mapTriggerRowToDomain)
 
       await expect(
-        createTrigger('agent-123', {
+        createTrigger(ORGANIZATION_ID, 'agent-123', {
           name: 'New Trigger',
           conditions: [],
           actions: [
@@ -455,8 +457,7 @@ describe('Triggers Repository', () => {
       // Очищаем mockSupabaseClient.from перед тестом (mockReset очищает mockReturnValueOnce)
       mockSupabaseClient.from.mockReset()
       
-      const mockTrigger = {
-        id: 'trigger-1',
+              org_id: ORGANIZATION_ID,
         agent_id: 'agent-123',
         name: 'Updated Trigger',
         description: 'Updated description',
@@ -468,8 +469,9 @@ describe('Triggers Repository', () => {
       const updateQuery = createMockQuery()
       updateQuery.update.mockReturnValue(updateQuery)
       updateQuery.eq
-        .mockReturnValueOnce(updateQuery) // первый eq (id)
-        .mockReturnValueOnce(updateQuery) // второй eq (agent_id)
+        .mockReturnValueOnce(updateQuery) // eq('id')
+        .mockReturnValueOnce(updateQuery) // eq('org_id')
+        .mockReturnValueOnce(updateQuery) // eq('agent_id')
       // select() возвращает объект с single(), который возвращает промис
       // Используем функцию, которая создает новый объект каждый раз при вызове
       const selectQuery: any = {
@@ -513,7 +515,7 @@ describe('Triggers Repository', () => {
         .mockReturnValueOnce(conditionsQuery)
         .mockReturnValueOnce(actionsQuery)
 
-      const result = await updateTrigger('trigger-1', 'agent-123', {
+      const result = await updateTrigger('trigger-1', ORGANIZATION_ID, 'agent-123', {
         name: 'Updated Trigger',
         description: 'Updated description',
         isActive: false,
@@ -528,8 +530,7 @@ describe('Triggers Repository', () => {
       // Очищаем mockSupabaseClient.from перед тестом (mockReset очищает mockReturnValueOnce)
       mockSupabaseClient.from.mockReset()
       
-      const mockTrigger = {
-        id: 'trigger-1',
+              org_id: ORGANIZATION_ID,
         agent_id: 'agent-123',
         name: 'Trigger',
         description: null,
@@ -595,7 +596,7 @@ describe('Triggers Repository', () => {
         .mockReturnValueOnce(conditionsQuery)
         .mockReturnValueOnce(actionsQuery)
 
-      const result = await updateTrigger('trigger-1', 'agent-123', {
+      const result = await updateTrigger('trigger-1', ORGANIZATION_ID, 'agent-123', {
         conditions: [
           {
             conditionType: 'message_contains',
@@ -624,7 +625,7 @@ describe('Triggers Repository', () => {
 
       mockSupabaseClient.from.mockReturnValue(updateQuery)
 
-      await expect(updateTrigger('trigger-1', 'agent-123', { name: 'Updated' })).rejects.toThrow('Не удалось обновить триггер')
+      await expect(updateTrigger('trigger-1', ORGANIZATION_ID, 'agent-123', { name: 'Updated' })).rejects.toThrow('Не удалось обновить триггер')
     })
 
     it('should throw error if trigger not found', async () => {
@@ -643,7 +644,7 @@ describe('Triggers Repository', () => {
 
       mockSupabaseClient.from.mockReturnValue(updateQuery)
 
-      await expect(updateTrigger('trigger-1', 'agent-123', { name: 'Updated' })).rejects.toThrow('Триггер не найден')
+      await expect(updateTrigger('trigger-1', ORGANIZATION_ID, 'agent-123', { name: 'Updated' })).rejects.toThrow('Триггер не найден')
     })
   })
 
@@ -659,15 +660,17 @@ describe('Triggers Repository', () => {
       
       // Первый eq возвращает query, второй eq возвращает Promise
       deleteQuery.eq
-        .mockReturnValueOnce(deleteQuery) // первый eq возвращает query
-        .mockResolvedValueOnce({ error: null }) // второй eq возвращает Promise с результатом
+        .mockReturnValueOnce(deleteQuery) // eq('id')
+        .mockReturnValueOnce(deleteQuery) // eq('org_id')
+        .mockResolvedValueOnce({ error: null }) // eq('agent_id') возвращает Promise
 
       mockSupabaseClient.from.mockReturnValue(deleteQuery)
 
-      await deleteTrigger('trigger-1', 'agent-123')
+      await deleteTrigger(ORGANIZATION_ID, 'trigger-1', 'agent-123')
 
       expect(deleteQuery.delete).toHaveBeenCalled()
       expect(deleteQuery.eq).toHaveBeenCalledWith('id', 'trigger-1')
+      expect(deleteQuery.eq).toHaveBeenCalledWith('org_id', ORGANIZATION_ID)
       expect(deleteQuery.eq).toHaveBeenCalledWith('agent_id', 'agent-123')
     })
 
@@ -678,12 +681,13 @@ describe('Triggers Repository', () => {
       const deleteQuery = createMockQuery()
       deleteQuery.delete.mockReturnValue(deleteQuery)
       deleteQuery.eq
-        .mockReturnValueOnce(deleteQuery) // первый eq возвращает query
-        .mockResolvedValueOnce({ error: { message: 'Database error' } }) // второй eq возвращает Promise с ошибкой
+        .mockReturnValueOnce(deleteQuery)
+        .mockReturnValueOnce(deleteQuery)
+        .mockResolvedValueOnce({ error: { message: 'Database error' } })
 
       mockSupabaseClient.from.mockReturnValue(deleteQuery)
 
-      await expect(deleteTrigger('trigger-1', 'agent-123')).rejects.toThrow('Не удалось удалить триггер')
+      await expect(deleteTrigger(ORGANIZATION_ID, 'trigger-1', 'agent-123')).rejects.toThrow('Не удалось удалить триггер')
     })
   })
 
@@ -692,8 +696,7 @@ describe('Triggers Repository', () => {
       // Очищаем только mockSupabaseClient.from, чтобы избежать влияния других тестов
       mockSupabaseClient.from.mockClear()
       
-      const mockTrigger = {
-        id: 'trigger-1',
+              org_id: ORGANIZATION_ID,
         agent_id: 'agent-123',
         name: 'Trigger',
         description: null,
@@ -754,7 +757,7 @@ describe('Triggers Repository', () => {
         .mockReturnValueOnce(conditionsQuery)
         .mockReturnValueOnce(actionsQuery)
 
-      const result = await updateTriggerStatus('trigger-1', 'agent-123', true)
+      const result = await updateTriggerStatus(ORGANIZATION_ID, 'trigger-1', 'agent-123', true)
 
       expect(result.isActive).toBe(true)
       expect(updateQuery.update).toHaveBeenCalledWith({ is_active: true })
@@ -764,8 +767,7 @@ describe('Triggers Repository', () => {
       // Очищаем только mockSupabaseClient.from, чтобы избежать влияния других тестов
       mockSupabaseClient.from.mockClear()
       
-      const mockTrigger = {
-        id: 'trigger-1',
+              org_id: ORGANIZATION_ID,
         agent_id: 'agent-123',
         name: 'Trigger',
         description: null,
@@ -827,7 +829,7 @@ describe('Triggers Repository', () => {
         .mockReturnValueOnce(conditionsQuery)
         .mockReturnValueOnce(actionsQuery)
 
-      const result = await updateTriggerStatus('trigger-1', 'agent-123', false)
+      const result = await updateTriggerStatus(ORGANIZATION_ID, 'trigger-1', 'agent-123', false)
 
       expect(result.isActive).toBe(false)
       expect(updateQuery.update).toHaveBeenCalledWith({ is_active: false })

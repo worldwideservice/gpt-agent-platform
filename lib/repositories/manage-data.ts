@@ -1,15 +1,10 @@
 import { cache } from 'react'
 
-import { getAgents } from '@/lib/repositories/agents'
-import { getAgentAssetsForOrganization } from '@/lib/repositories/agent-assets'
-import { getKnowledgeBaseArticles, getKnowledgeBaseCategories, getKnowledgeBaseStats } from '@/lib/repositories/knowledge-base'
+import { listAgents } from '@/lib/services/agents'
+import { getKnowledgeOverview } from '@/lib/services/knowledge'
 import { getWorkspaceSummary, type WorkspaceSummary } from '@/lib/repositories/manage-summary'
-import type {
-  KnowledgeBaseArticle,
-  KnowledgeBaseCategory,
-  KnowledgeBaseStatsSummary,
-} from '@/types'
-import type { AgentAsset } from '@/lib/repositories/agent-assets'
+import { getIntegrationOverview } from '@/lib/services/integrations'
+import type { KnowledgeOverview } from '@/lib/services/knowledge'
 import type { Agent } from '@/types'
 import type { DashboardStats } from '@/types'
 import { getDashboardStats } from '@/lib/repositories/agents'
@@ -38,18 +33,14 @@ export interface ManageAgentsData {
   error?: ManageDataError
 }
 
-export interface ManageKnowledgeData {
-  stats: KnowledgeBaseStatsSummary | null
-  categories: KnowledgeBaseCategory[]
-  articles: KnowledgeBaseArticle[]
-  history: AgentAsset[]
-  agentOptions: Array<{ id: string; name: string }>
+export interface ManageKnowledgeData extends KnowledgeOverview {
   summary: WorkspaceSummary | null
   error?: ManageDataError
 }
 
 export interface ManageIntegrationsData {
   summary: WorkspaceSummary | null
+  integrations: Array<Awaited<ReturnType<typeof getIntegrationOverview>>>
   error?: ManageDataError
 }
 
@@ -73,7 +64,7 @@ export const loadManageDashboardData = cache(async (organizationId: string): Pro
 
 export const loadManageAgentsData = cache(async (organizationId: string): Promise<ManageAgentsData> => {
   const [agentsResult, summaryResult] = await Promise.allSettled([
-    getAgents({ organizationId, limit: 50 }),
+    listAgents(organizationId, { limit: 50 }),
     getWorkspaceSummary(organizationId),
   ])
 
@@ -91,34 +82,31 @@ export const loadManageAgentsData = cache(async (organizationId: string): Promis
 
 export const loadManageKnowledgeData = cache(async (organizationId: string): Promise<ManageKnowledgeData> => {
   const results = await Promise.allSettled([
-    getKnowledgeBaseStats(organizationId),
-    getKnowledgeBaseCategories(organizationId),
-    getKnowledgeBaseArticles(organizationId),
-    getAgentAssetsForOrganization(organizationId, 10),
-    getAgents({ organizationId, limit: 50 }),
+    getKnowledgeOverview(organizationId, { articlesLimit: 5, historyLimit: 10 }),
+    listAgents(organizationId, { limit: 50 }),
     getWorkspaceSummary(organizationId),
   ])
 
-  const [statsResult, categoriesResult, articlesResult, historyResult, agentsResult, summaryResult] = results
+  const [overviewResult, agentsResult, summaryResult] = results
 
-  const stats = statsResult.status === 'fulfilled' ? statsResult.value : null
-  const categories = categoriesResult.status === 'fulfilled' ? categoriesResult.value : []
-  const articles =
-    articlesResult.status === 'fulfilled' ? articlesResult.value.slice(0, 5) : ([] as KnowledgeBaseArticle[])
-  const history = historyResult.status === 'fulfilled' ? historyResult.value : ([] as AgentAsset[])
+  const overview = overviewResult.status === 'fulfilled'
+    ? overviewResult.value
+    : ({ stats: null, categories: [], articles: [], history: [], agentOptions: [] } satisfies KnowledgeOverview)
+
   const agentOptions =
     agentsResult.status === 'fulfilled'
       ? agentsResult.value.agents.map((agent) => ({ id: agent.id, name: agent.name }))
-      : []
+      : overview.agentOptions
+
   const summary = summaryResult.status === 'fulfilled' ? summaryResult.value : null
 
   const error = results.some((result) => result.status === 'rejected') ? ('fetchFailed' as ManageDataError) : undefined
 
   return {
-    stats,
-    categories,
-    articles,
-    history,
+    stats: overview.stats,
+    categories: overview.categories,
+    articles: overview.articles,
+    history: overview.history,
     agentOptions,
     summary,
     error,
@@ -126,13 +114,18 @@ export const loadManageKnowledgeData = cache(async (organizationId: string): Pro
 })
 
 export const loadManageIntegrationsData = cache(async (organizationId: string): Promise<ManageIntegrationsData> => {
-  const summaryResult = await Promise.allSettled([getWorkspaceSummary(organizationId)])
-  const [result] = summaryResult
-  const summary = result.status === 'fulfilled' ? result.value : null
-  const error = result.status === 'rejected' ? ('fetchFailed' as ManageDataError) : undefined
+  const results = await Promise.allSettled([
+    getWorkspaceSummary(organizationId),
+    getIntegrationOverview(organizationId),
+  ])
+
+  const summary = results[0].status === 'fulfilled' ? results[0].value : null
+  const overview = results[1].status === 'fulfilled' ? [results[1].value] : ([] as ManageIntegrationsData['integrations'])
+  const error = results.some((result) => result.status === 'rejected') ? ('fetchFailed' as ManageDataError) : undefined
 
   return {
     summary,
+    integrations: overview,
     error,
   }
 })
