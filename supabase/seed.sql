@@ -35,6 +35,17 @@ values (
 )
 on conflict (org_id) do nothing;
 
+insert into organization_settings (org_id, ai_provider, openrouter_api_key, openrouter_default_model, openrouter_embedding_model, metadata)
+values (
+  '00000000-0000-4000-8000-000000000001',
+  'openrouter',
+  'sk-or-demo-key',
+  'openrouter/gpt-4.1-mini',
+  'openai/text-embedding-3-large',
+  jsonb_build_object('source', 'seed')
+)
+on conflict (org_id) do nothing;
+
 insert into crm_credentials (id, org_id, provider, client_id, client_secret, redirect_uri)
 values (
   '00000000-0000-4000-8000-000000000050',
@@ -146,6 +157,58 @@ values
   ('31000000-0000-4000-8000-000000000331', '31000000-0000-4000-8000-000000000330', 1, interval '0 minutes', 'email', 'Thanks for contacting us! Here is your consultation link.'),
   ('31000000-0000-4000-8000-000000000332', '31000000-0000-4000-8000-000000000330', 2, interval '1 day', 'email', 'Just checking in if you had a chance to review our offer.'),
   ('31000000-0000-4000-8000-000000000333', '31000000-0000-4000-8000-000000000330', 3, interval '3 days', 'whatsapp', 'Happy to answer any question over chat — when is a good time to talk?')
+on conflict (id) do nothing;
+
+insert into sequence_executions (id, org_id, sequence_id, agent_id, lead_id, status, current_step, execution_context)
+values (
+  '33000000-0000-4000-8000-000000000350',
+  '00000000-0000-4000-8000-000000000001',
+  '31000000-0000-4000-8000-000000000330',
+  '10000000-0000-4000-8000-000000000100',
+  'demo-lead-001',
+  'running',
+  1,
+  jsonb_build_object('initiator', 'seed')
+)
+on conflict (id) do nothing;
+
+insert into automation_rules (
+  id,
+  org_id,
+  agent_id,
+  name,
+  description,
+  trigger_type,
+  conditions,
+  actions,
+  is_active,
+  priority,
+  metadata
+)
+values (
+  '32000000-0000-4000-8000-000000000340',
+  '00000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000100',
+  'Ответить новым лидам',
+  'Автоматически отправлять приветственное сообщение новым лидам',
+  'lead_created',
+  jsonb_build_array(
+    jsonb_build_object(
+      'type', 'field_value',
+      'field', 'source',
+      'operator', 'not_empty'
+    )
+  ),
+  jsonb_build_array(
+    jsonb_build_object(
+      'type', 'send_message',
+      'template', 'Спасибо за обращение! Мы свяжемся с вами в ближайшее время.'
+    )
+  ),
+  true,
+  5,
+  jsonb_build_object('created_by', 'seed')
+)
 on conflict (id) do nothing;
 
 insert into agent_activity_metrics (id, agent_id, org_id, activity_date, messages_count)

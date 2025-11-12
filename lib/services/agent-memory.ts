@@ -4,8 +4,6 @@
  */
 
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { generateChatResponse } from './llm'
-import { searchKnowledgeBase } from '@/lib/repositories/knowledge-search'
 
 export interface MemoryItem {
  id: string
@@ -158,35 +156,27 @@ export const getRelevantMemory = async (
  * Вычисляет семантическую схожесть между двумя текстами
  */
 const calculateSemanticSimilarity = async (text1: string, text2: string): Promise<number> => {
- try {
- // Используем OpenRouter для вычисления схожести
- const systemPrompt = `Ты эксперт по анализу текста. Оцени схожесть между двумя текстами по шкале от 0 до 1.
-Верни только число от 0 до 1, где:
-- 1.0 = тексты идентичны или почти идентичны
-- 0.5 = тексты связаны по теме, но разные
-- 0.0 = тексты совершенно не связаны
+ const tokensA = tokenize(text1)
+ const tokensB = tokenize(text2)
 
-Текст 1: "${text1}"
-Текст 2: "${text2}"
-
-Верни только число:`
-
- const response = await generateChatResponse('dummy-org', `Текст 1: "${text1}"\nТекст 2: "${text2}"`, {
- systemPrompt,
- model: 'openai/gpt-4o-mini',
- })
-
- const similarity = parseFloat(response.content.trim())
- return isNaN(similarity) ? 0 : Math.max(0, Math.min(1, similarity))
- } catch (error) {
- console.error('Error calculating semantic similarity', error)
- // Fallback: простое сравнение по словам
- const words1 = new Set(text1.toLowerCase().split(/\s+/))
- const words2 = new Set(text2.toLowerCase().split(/\s+/))
- const intersection = new Set([...words1].filter(x => words2.has(x)))
- const union = new Set([...words1, ...words2])
- return intersection.size / union.size
+ if (tokensA.length === 0 || tokensB.length === 0) {
+ return 0
  }
+
+ const setA = new Set(tokensA)
+ const setB = new Set(tokensB)
+ const intersection = [...setA].filter((token) => setB.has(token))
+ const union = new Set([...setA, ...setB])
+
+ return intersection.length / union.size
+}
+
+const tokenize = (text: string): string[] => {
+ return text
+ .toLowerCase()
+ .split(/[^a-zа-я0-9@.]+/i)
+ .map((token) => token.trim())
+ .filter(Boolean)
 }
 
 /**
@@ -246,7 +236,7 @@ export const extractAndSaveMemoryFromConversation = async (
 
  try {
  // Извлекаем важную информацию из последнего сообщения
- const extractedInfo = await extractImportantInfoFromMessage(lastUserMessage)
+ const extractedInfo = extractImportantInfoFromMessage(lastUserMessage)
 
  for (const info of extractedInfo) {
  await saveMemoryItem(
@@ -269,51 +259,72 @@ export const extractAndSaveMemoryFromConversation = async (
 /**
  * Извлекает важную информацию из сообщения пользователя
  */
-const extractImportantInfoFromMessage = async (message: string): Promise<Array<{
+const extractImportantInfoFromMessage = (
+ message: string,
+): Array<{
  type: MemoryItem['memory_type']
  content: string
  importance: number
  confidence: number
-}>> => {
- try {
- const systemPrompt = `Ты эксперт по анализу разговоров. Извлеки важную информацию из сообщения пользователя, которая может быть полезна для будущего общения.
+}> => {
+ const findings: Array<{
+ type: MemoryItem['memory_type']
+ content: string
+ importance: number
+ confidence: number
+}> = []
 
-Категории информации:
-1. FACTS - объективные факты о клиенте (имя, компания, должность, контактные данные)
-2. PREFERENCES - предпочтения и интересы ("любит чай", "предпочитает email", "работает по утрам")
-3. CONTEXT - текущий контекст разговора или ситуации
-
-Формат ответа JSON:
-{
- "information": [
- {
- "type": "fact|preference|context",
- "content": "краткое описание факта/предпочтения/контекста",
- "importance": 1-10,
- "confidence": 0.0-1.0
- }
- ]
-}
-
-Если нет важной информации - верни пустой массив.
-
-Сообщение пользователя: "${message}"`
-
- const response = await generateChatResponse('dummy-org', message, {
- systemPrompt,
- model: 'openai/gpt-4o-mini',
+ const nameMatch = message.match(/меня зовут\s+([а-яa-zё\s]+)/i)
+ if (nameMatch) {
+ findings.push({
+ type: 'fact',
+ content: `Имя клиента: ${nameMatch[1].trim()}`,
+ importance: 7,
+ confidence: 0.8,
  })
-
- const jsonMatch = response.content.match(/\{[\s\S]*\}/)
- if (!jsonMatch) return []
-
- const parsed = JSON.parse(jsonMatch[0])
- return parsed.information ?? []
- } catch (error) {
- console.error('Error extracting important info', error)
- return []
  }
+
+ const emailMatch = message.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)
+ if (emailMatch) {
+ findings.push({
+ type: 'fact',
+ content: `Email клиента: ${emailMatch[0]}`,
+ importance: 8,
+ confidence: 0.9,
+ })
+ }
+
+ const phoneMatch = message.match(/(?:\+?\d[\d -]{6,}\d)/)
+ if (phoneMatch) {
+ findings.push({
+ type: 'fact',
+ content: `Телефон клиента: ${phoneMatch[0]}`,
+ importance: 7,
+ confidence: 0.8,
+ })
+ }
+
+ if (/предпочит(аю|ает)|любл(ю|ит)|нравит/i.test(message)) {
+ findings.push({
+ type: 'preference',
+ content: `Предпочтение: ${message}`,
+ importance: 6,
+ confidence: 0.6,
+ })
+ }
+
+ if (/сейчас|сегодня|в данный момент/i.test(message)) {
+ findings.push({
+ type: 'context',
+ content: `Контекст разговора: ${message}`,
+ importance: 5,
+ confidence: 0.6,
+ })
+ }
+
+ return findings
 }
+
 
 /**
  * Обновляет важность памяти на основе обратной связи
@@ -382,5 +393,4 @@ export const formatMemoryContext = (memoryContext: MemoryContext): string => {
 
  return parts.join('\n')
 }
-
 

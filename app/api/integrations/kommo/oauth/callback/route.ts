@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { backendFetch } from '@/lib/backend/client'
+import { getOrganizationById } from '@/lib/repositories/organizations'
+
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
@@ -11,8 +14,18 @@ const querySchema = z.object({
  error_description: z.string().optional(),
 })
 
+type BackendOAuthResponse = {
+ success: boolean
+ connection?: {
+ org_id: string
+ base_domain: string
+ status?: string
+ }
+ error?: string
+ description?: string
+}
+
 export async function GET(request: NextRequest) {
- try {
  const { searchParams } = new URL(request.url)
  const query = querySchema.parse({
  code: searchParams.get('code'),
@@ -21,73 +34,48 @@ export async function GET(request: NextRequest) {
  error_description: searchParams.get('error_description'),
  })
 
- // Если есть ошибка от Kommo
  if (query.error) {
  console.error('Kommo OAuth error:', query.error, query.error_description)
- return NextResponse.json({
+ return NextResponse.json(
+ {
  success: false,
  error: query.error,
  description: query.error_description,
- }, { status: 400 })
- }
-
- // Если нет кода - ошибка
- if (!query.code) {
- return NextResponse.json({
- success: false,
- error: 'Authorization code not provided',
- }, { status: 400 })
- }
-
- console.log('Processing Kommo OAuth callback:', {
- code: query.code.substring(0, 10) + '...',
- state: query.state,
- })
-
- // Обмениваем authorization code на токены напрямую через Kommo API
- const tokenResponse = await fetch('https://kommo.com/oauth2/access_token', {
- method: 'POST',
- headers: {
- 'Content-Type': 'application/x-www-form-urlencoded',
  },
- body: new URLSearchParams({
- client_id: '2a5c1463-43dd-4ccc-abd0-79516f785e57',
- client_secret: '6FhlKjCZehELKIShuUQcPHdrF9uUHKLQosf0tDsSvdTuUoahVz3EO44xzVinlbh7',
- grant_type: 'authorization_code',
+ { status: 400 },
+ )
+ }
+
+ try {
+ const backendResult = await backendFetch<BackendOAuthResponse>('/kommo/oauth/callback', {
+ method: 'POST',
+ body: JSON.stringify({
  code: query.code,
- redirect_uri: 'https://gpt-agent-kwid-43ii46hai-world-wide-services-62780b79.vercel.app/integrations/kommo/oauth/callback',
+ state: query.state,
+ provider: 'kommo',
  }),
  })
 
- const tokens = await tokenResponse.json()
-
- if (tokenResponse.ok && tokens.access_token) {
- console.log('Tokens received successfully')
-
- // Возвращаем токены в JSON формате для обработки на frontend
- return NextResponse.json({
- success: true,
- access_token: tokens.access_token,
- refresh_token: tokens.refresh_token,
- expires_in: tokens.expires_in,
- token_type: tokens.token_type,
- base_domain: tokens.base_domain,
- account_id: tokens.account_id,
- })
- } else {
- console.error('Token exchange failed:', tokens)
- return NextResponse.json({
- success: false,
- error: tokens.error_description || tokens.error || 'Token exchange failed',
- }, { status: 400 })
+ if (backendResult.success && backendResult.connection?.org_id) {
+ const organization = await getOrganizationById(backendResult.connection.org_id)
+ if (organization?.slug) {
+ const origin = new URL(request.url).origin
+ const redirectUrl = new URL(`/manage/${organization.slug}/integrations`, origin)
+ redirectUrl.searchParams.set('provider', 'kommo')
+ redirectUrl.searchParams.set('status', 'success')
+ return NextResponse.redirect(redirectUrl)
+ }
  }
 
+ return NextResponse.json(backendResult)
  } catch (error) {
  console.error('Kommo OAuth callback processing error:', error)
-
- return NextResponse.json({
+ return NextResponse.json(
+ {
  success: false,
- error: error instanceof z.ZodError ? 'Invalid request parameters' : 'Internal server error',
- }, { status: error instanceof z.ZodError ? 400 : 500 })
+ error: error instanceof Error ? error.message : 'Internal server error',
+ },
+ { status: 500 },
+ )
  }
 }

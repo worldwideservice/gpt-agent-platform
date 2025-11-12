@@ -1,7 +1,11 @@
-export default function AppPage() {
-  return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
-      {/* Пустая страница приложения */}
-    </div>
-  )
+import { redirect } from 'next/navigation'
+
+interface ManageTenantPageProps {
+  params: {
+    tenantId: string
+  }
+}
+
+export default function ManageTenantPage({ params }: ManageTenantPageProps) {
+  redirect(`/manage/${params.tenantId}/dashboard`)
 }

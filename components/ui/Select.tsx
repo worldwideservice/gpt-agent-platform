@@ -3,6 +3,12 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
+type SelectChildProps = {
+  currentValue?: string
+  onValueChange?: (value: string) => void
+  disabled?: boolean
+}
+
 function Select({
   children,
   defaultValue,
@@ -21,13 +27,14 @@ function Select({
     <div data-select-root>
       {React.Children.map(children, (child) => {
         if (React.isValidElement(child)) {
-          return React.cloneElement(child as any, {
+          const element = child as React.ReactElement<SelectChildProps>
+          return React.cloneElement(element, {
             currentValue,
             onValueChange: (val: string) => {
               setInternalValue(val)
               onValueChange?.(val)
             },
-            disabled: (child.props as any).disabled,
+            disabled: element.props.disabled,
           })
         }
         return child

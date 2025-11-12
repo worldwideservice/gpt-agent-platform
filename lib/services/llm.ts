@@ -1,297 +1,143 @@
+import { type OpenRouterMessage } from '@/lib/services/ai/openrouter.client'
+import { resolveOpenRouterClient } from '@/lib/services/ai/openrouter-resolver'
+
 /**
  * Сервис для работы с LLM через OpenRouter
  */
 
-interface OpenRouterMessage {
- role: 'system' | 'user' | 'assistant'
- content: string
-}
-
-interface OpenRouterRequest {
- model: string
- messages: OpenRouterMessage[]
- temperature?: number
- max_tokens?: number
- top_p?: number
- frequency_penalty?: number
- presence_penalty?: number
-}
-
-interface OpenRouterResponse {
- id: string
- choices: Array<{
- message: {
- role: string
- content: string
- }
- finish_reason: string | null
- }>
- usage: {
- prompt_tokens: number
- completion_tokens: number
- total_tokens: number
- }
-}
-
 interface ChatOptions {
- model?: string
- temperature?: number
- maxTokens?: number
- systemPrompt?: string
- knowledgeContext?: string
- conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>
+  model?: string
+  temperature?: number
+  maxTokens?: number
+  systemPrompt?: string
+  knowledgeContext?: string
+  conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>
 }
 
-/**
- * Получает API ключ OpenRouter из настроек организации
- */
-const getOpenRouterApiKey = async (organizationId: string): Promise<string | null> => {
- // TODO: Получать из настроек организации или из env для демо
- const apiKey = process.env.OPENROUTER_API_KEY
+const buildSystemPrompt = (agentInstructions?: string | null, knowledgeContext?: string): string => {
+  const parts: string[] = []
 
- if (!apiKey) {
- console.warn('OPENROUTER_API_KEY not found in environment')
- return null
- }
+  if (agentInstructions) {
+    parts.push('## Инструкции агента')
+    parts.push(agentInstructions.trim())
+    parts.push('')
+  }
 
- return apiKey
+  if (knowledgeContext) {
+    parts.push('## Контекст из базы знаний')
+    parts.push(knowledgeContext.trim())
+    parts.push('')
+  }
+
+  parts.push('## Важные правила')
+  parts.push('- Отвечай дружелюбно и профессионально')
+  parts.push('- Используй информацию из базы знаний, если она релевантна')
+  parts.push('- Если не знаешь ответа, честно признайся')
+  parts.push('- Форматируй ответы для лучшей читаемости')
+
+  return parts.join('\n')
 }
 
-/**
- * Отправляет запрос к OpenRouter API
- */
-const callOpenRouter = async (
- apiKey: string,
- request: OpenRouterRequest,
-): Promise<OpenRouterResponse> => {
- const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
- method: 'POST',
- headers: {
- 'Content-Type': 'application/json',
- Authorization: `Bearer ${apiKey}`,
- 'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
- 'X-Title': 'GPT Agent Platform',
- },
- body: JSON.stringify(request),
- })
-
- if (!response.ok) {
- const errorText = await response.text()
- throw new Error(`OpenRouter API error: ${response.status} ${response.statusText} - ${errorText}`)
- }
-
- return (await response.json()) as OpenRouterResponse
-}
-
-/**
- * Формирует системный промпт с инструкциями агента и контекстом из базы знаний
- */
-const buildSystemPrompt = (
- agentInstructions?: string | null,
- knowledgeContext?: string,
-): string => {
- const parts: string[] = []
-
- if (agentInstructions) {
- parts.push('## Инструкции агента\n')
- parts.push(agentInstructions.trim())
- parts.push('\n')
- }
-
- if (knowledgeContext) {
- parts.push('## Контекст из базы знаний\n')
- parts.push(knowledgeContext.trim())
- parts.push('\n')
- }
-
- parts.push('\n## Важные правила:\n')
- parts.push('- Отвечай дружелюбно и профессионально\n')
- parts.push('- Используй информацию из базы знаний, если она релевантна\n')
- parts.push('- Если не знаешь ответа, честно признайся\n')
- parts.push('- Форматируй ответы для лучшей читаемости\n')
-
- return parts.join('')
-}
-
-/**
- * Основная функция для генерации ответа от LLM
- */
 export const generateChatResponse = async (
- organizationId: string,
- userMessage: string,
- options: ChatOptions = {},
+  organizationId: string,
+  userMessage: string,
+  options: ChatOptions = {},
 ): Promise<{
- content: string
- usage: {
- promptTokens: number
- completionTokens: number
- totalTokens: number
- }
- model: string
+  content: string
+  usage: {
+    promptTokens: number
+    completionTokens: number
+    totalTokens: number
+  }
+  model: string
 }> => {
- const apiKey = await getOpenRouterApiKey(organizationId)
+  // В дальнейшем можно получать разные ключи/конфигурации по organizationId.
+  const client = await resolveOpenRouterClient(organizationId)
 
- if (!apiKey) {
- throw new Error('OpenRouter API ключ не настроен. Пожалуйста, настройте интеграцию.')
- }
+  const {
+    model = client.defaultModel,
+    temperature = 0.7,
+    maxTokens = 1000,
+    systemPrompt,
+    knowledgeContext,
+    conversationHistory = [],
+  } = options
 
- const {
- model = 'openai/gpt-4o-mini',
- temperature = 0.7,
- maxTokens = 1000,
- systemPrompt,
- knowledgeContext,
- conversationHistory = [],
- } = options
+  const messages: OpenRouterMessage[] = []
 
- const messages: OpenRouterMessage[] = []
+  const fullSystemPrompt = buildSystemPrompt(systemPrompt, knowledgeContext)
+  if (fullSystemPrompt) {
+    messages.push({ role: 'system', content: fullSystemPrompt })
+  }
 
- // Добавляем системный промпт с инструкциями и контекстом
- const fullSystemPrompt = buildSystemPrompt(systemPrompt, knowledgeContext)
- if (fullSystemPrompt) {
- messages.push({
- role: 'system',
- content: fullSystemPrompt,
- })
- }
+  const recentHistory = conversationHistory.slice(-10)
+  for (const historyMessage of recentHistory) {
+    messages.push({
+      role: historyMessage.role,
+      content: historyMessage.content,
+    })
+  }
 
- // Добавляем историю диалога (последние 10 сообщений)
- const recentHistory = conversationHistory.slice(-10)
- for (const msg of recentHistory) {
- messages.push({
- role: msg.role === 'user' ? 'user' : 'assistant',
- content: msg.content,
- })
- }
+  messages.push({ role: 'user', content: userMessage })
 
- // Добавляем текущее сообщение пользователя
- messages.push({
- role: 'user',
- content: userMessage,
- })
+  const response = await client.chat(messages, {
+    model,
+    temperature,
+    maxTokens,
+  })
 
- const request: OpenRouterRequest = {
- model,
- messages,
- temperature,
- max_tokens: maxTokens,
- }
+  const choice = response.choices[0]
+  if (!choice?.message?.content) {
+    throw new Error('LLM вернул пустой ответ')
+  }
 
- const response = await callOpenRouter(apiKey, request)
-
- if (!response.choices || response.choices.length === 0) {
- throw new Error('OpenRouter вернул пустой ответ')
- }
-
- const choice = response.choices[0]
- const content = choice.message.content
-
- if (!content) {
- throw new Error('Пустой контент в ответе от OpenRouter')
- }
-
- return {
- content,
- usage: {
- promptTokens: response.usage.prompt_tokens,
- completionTokens: response.usage.completion_tokens,
- totalTokens: response.usage.total_tokens,
- },
- model,
- }
+  return {
+    content: choice.message.content,
+    usage: {
+      promptTokens: response.usage?.prompt_tokens ?? 0,
+      completionTokens: response.usage?.completion_tokens ?? 0,
+      totalTokens: response.usage?.total_tokens ?? 0,
+    },
+    model: response.model ?? model,
+  }
 }
 
-/**
- * Получает список доступных моделей из OpenRouter
- */
-export const getAvailableModels = async (organizationId: string): Promise<
- Array<{
- id: string
- name: string
- description?: string
- pricing?: {
- prompt: string
- completion: string
- }
- }>
+export const getAvailableModels = async (): Promise<
+  Array<{
+    id: string
+    name: string
+    description?: string
+  }>
 > => {
- const apiKey = await getOpenRouterApiKey(organizationId)
+  try {
+    const response = await fetch('https://openrouter.ai/api/v1/models')
+    if (!response.ok) {
+      throw new Error('Request failed')
+    }
 
- if (!apiKey) {
- return [
- { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini' },
- { id: 'openai/gpt-4', name: 'GPT-4' },
- { id: 'openai/gpt-3.5-turbo', name: 'GPT-3.5 Turbo' },
- { id: 'anthropic/claude-3-haiku', name: 'Claude 3 Haiku' },
- { id: 'anthropic/claude-3-sonnet', name: 'Claude 3 Sonnet' },
- ]
- }
+    const payload = (await response.json()) as {
+      data: Array<{ id: string; name?: string; description?: string }>
+    }
 
- try {
- const response = await fetch('https://openrouter.ai/api/v1/models', {
- headers: {
- Authorization: `Bearer ${apiKey}`,
- },
- })
+    if (!payload?.data) {
+      return defaultModels
+    }
 
- if (!response.ok) {
- console.warn('Failed to fetch models from OpenRouter, using default list')
- return [
- { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini' },
- { id: 'openai/gpt-4', name: 'GPT-4' },
- { id: 'openai/gpt-3.5-turbo', name: 'GPT-3.5 Turbo' },
- ]
- }
-
- const data = (await response.json()) as {
- data: Array<{
- id: string
- name?: string
- description?: string
- pricing?: {
- prompt: string
- completion: string
- }
- }>
- }
-
- return data.data
- .filter((model) => model.id.includes('gpt') || model.id.includes('claude'))
- .slice(0, 10)
- .map((model) => ({
- id: model.id,
- name: model.name || model.id.split('/')[1] || model.id,
- description: model.description,
- pricing: model.pricing,
- }))
- } catch (error) {
- console.error('Error fetching models from OpenRouter', error)
- return [
- { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini' },
- { id: 'openai/gpt-4', name: 'GPT-4' },
- { id: 'openai/gpt-3.5-turbo', name: 'GPT-3.5 Turbo' },
- ]
- }
+    return payload.data.map((model) => ({
+      id: model.id,
+      name: model.name ?? model.id,
+      description: model.description,
+    }))
+  } catch (error) {
+    console.warn('Failed to fetch models from OpenRouter, returning default list', error)
+    return defaultModels
+  }
 }
 
-export type { ChatOptions, OpenRouterMessage }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+const defaultModels = [
+  { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini' },
+  { id: 'openai/gpt-4o', name: 'GPT-4o' },
+  { id: 'openai/gpt-3.5-turbo', name: 'GPT-3.5 Turbo' },
+  { id: 'anthropic/claude-3-haiku', name: 'Claude 3 Haiku' },
+  { id: 'anthropic/claude-3-sonnet', name: 'Claude 3 Sonnet' },
+]

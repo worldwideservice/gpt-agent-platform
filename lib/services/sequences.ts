@@ -56,7 +56,7 @@ export interface SequenceExecution {
  started_at: string
  completed_at?: string
  next_execution_at?: string
- execution_data: Record<string, any>
+ execution_context: Record<string, any>
  error_message?: string
 }
 
@@ -192,11 +192,12 @@ export const startSequence = async (
       .insert({
         sequence_id: sequenceId,
         org_id: orgId,
+        agent_id: sequence.agent_id,
         lead_id: leadId,
         contact_id: contactId,
         current_step: 0,
         status: 'running',
-        execution_data: initialData,
+        execution_context: initialData,
       })
       .select('id')
       .single()
@@ -448,7 +449,7 @@ const executeSendMessageStep = async (
  console.log('Sequence: Sending message', {
  leadId: execution.lead_id,
  template: step.template,
- executionData: execution.execution_data,
+ executionData: execution.execution_context,
  })
 
  return true
@@ -487,7 +488,7 @@ const executeSendEmailStep = async (
 
     // Подготавливаем переменные для шаблона
     const variables: Record<string, string> = {
-      ...execution.execution_data,
+      ...execution.execution_context,
       recipient: step.recipient,
     }
 

@@ -3,6 +3,13 @@
  * Документация: https://www.amocrm.ru/developers/content/crm_platform/platform-abilities
  */
 
+const DEMO_FLAG_VALUES = new Set(['1', 'true'])
+const matchesDemoFlag = (value?: string) => (value ? DEMO_FLAG_VALUES.has(value.toLowerCase()) : false)
+const isDemoEnvironment = () =>
+  matchesDemoFlag(process.env.DEMO_MODE) ||
+  matchesDemoFlag(process.env.E2E_ONBOARDING_FAKE) ||
+  matchesDemoFlag(process.env.PLAYWRIGHT_DEMO_MODE)
+
 export interface KommoConfig {
  domain: string
  clientId: string
@@ -120,14 +127,13 @@ export interface KommoCustomField {
 }
 
 export class KommoAPI {
- private config: KommoConfig
- private baseUrl: string
- private isDemoMode: boolean
+  private config: KommoConfig
+  private baseUrl: string
+  private isDemoMode: boolean
 
- constructor(config: KommoConfig) {
- this.config = config
- // Отключаем демо-режим для использования реальных токенов
- this.isDemoMode = false
+  constructor(config: KommoConfig) {
+    this.config = config
+    this.isDemoMode = isDemoEnvironment()
  // Используем правильный формат: subdomain.kommo.com для API вызовов
  // Если domain уже содержит полный URL, используем его, иначе формируем из subdomain
  let apiDomain: string
@@ -149,12 +155,16 @@ export class KommoAPI {
  return this.baseUrl
  }
 
- /**
- * Получить конфигурацию API (копия для безопасности)
- */
- public getConfig(): KommoConfig {
- return { ...this.config }
- }
+  /**
+   * Получить конфигурацию API (копия для безопасности)
+   */
+  public getConfig(): KommoConfig {
+    return { ...this.config }
+  }
+
+  private demoTimestamp(): number {
+    return Date.now()
+  }
 
  /**
  * Получение access token через OAuth
@@ -252,26 +262,40 @@ export class KommoAPI {
  /**
  * Создание сделки
  */
- async createLead(lead: KommoLead): Promise<KommoLead> {
- const response = await this.request<{ _embedded: { leads: KommoLead[] } }>('/leads', {
- method: 'POST',
- body: JSON.stringify([lead]),
- })
+  async createLead(lead: KommoLead): Promise<KommoLead> {
+    if (this.isDemoMode) {
+      return {
+        id: Number(this.demoTimestamp()),
+        ...lead,
+      }
+    }
 
- return response._embedded.leads[0]
- }
+    const response = await this.request<{ _embedded: { leads: KommoLead[] } }>('/leads', {
+      method: 'POST',
+      body: JSON.stringify([lead]),
+    })
+
+    return response._embedded.leads[0]
+  }
 
  /**
  * Обновление сделки
  */
- async updateLead(leadId: number, lead: Partial<KommoLead>): Promise<KommoLead> {
- const response = await this.request<{ _embedded: { leads: KommoLead[] } }>('/leads', {
- method: 'PATCH',
- body: JSON.stringify([{ id: leadId, ...lead }]),
- })
+  async updateLead(leadId: number, lead: Partial<KommoLead>): Promise<KommoLead> {
+    if (this.isDemoMode) {
+      return {
+        id: leadId,
+        ...lead,
+      }
+    }
 
- return response._embedded.leads[0]
- }
+    const response = await this.request<{ _embedded: { leads: KommoLead[] } }>('/leads', {
+      method: 'PATCH',
+      body: JSON.stringify([{ id: leadId, ...lead }]),
+    })
+
+    return response._embedded.leads[0]
+  }
 
  /**
  * Поиск сделок
@@ -329,14 +353,24 @@ export class KommoAPI {
  /**
  * Добавление примечания к сделке
  */
- async addNoteToLead(
- leadId: number,
- note: { note_type: string; params: { text: string } }
- ): Promise<unknown> {
- return this.request(`/leads/${leadId}/notes`, {
- method: 'POST',
- body: JSON.stringify([{
- entity_id: leadId,
+  async addNoteToLead(
+    leadId: number,
+    note: { note_type: string; params: { text: string } }
+  ): Promise<unknown> {
+    if (this.isDemoMode) {
+      return Promise.resolve({
+        id: Number(this.demoTimestamp()),
+        entity_id: leadId,
+        entity_type: 'leads',
+        note_type: note.note_type,
+        params: note.params,
+      } as KommoNote)
+    }
+
+    return this.request(`/leads/${leadId}/notes`, {
+      method: 'POST',
+      body: JSON.stringify([{
+        entity_id: leadId,
  ...note,
  }]),
  })
@@ -507,29 +541,43 @@ export class KommoAPI {
  return response._embedded.users
  }
 
- /**
- * Создание задачи
- */
- async createTask(task: Omit<KommoTask, 'id' | 'created_at' | 'updated_at'>): Promise<KommoTask> {
- const response = await this.request<{ _embedded: { tasks: KommoTask[] } }>('/tasks', {
- method: 'POST',
- body: JSON.stringify([task]),
- })
+  /**
+   * Создание задачи
+   */
+  async createTask(task: Omit<KommoTask, 'id' | 'created_at' | 'updated_at'>): Promise<KommoTask> {
+    if (this.isDemoMode) {
+      return {
+        ...task,
+        id: Number(this.demoTimestamp()),
+      }
+    }
 
- return response._embedded.tasks[0]
- }
+    const response = await this.request<{ _embedded: { tasks: KommoTask[] } }>('/tasks', {
+      method: 'POST',
+      body: JSON.stringify([task]),
+    })
+
+    return response._embedded.tasks[0]
+  }
 
  /**
  * Обновление задачи
  */
- async updateTask(taskId: number, task: Partial<KommoTask>): Promise<KommoTask> {
- const response = await this.request<{ _embedded: { tasks: KommoTask[] } }>('/tasks', {
- method: 'PATCH',
- body: JSON.stringify([{ id: taskId, ...task }]),
- })
+  async updateTask(taskId: number, task: Partial<KommoTask>): Promise<KommoTask> {
+    if (this.isDemoMode) {
+      return {
+        id: taskId,
+        ...task,
+      }
+    }
 
- return response._embedded.tasks[0]
- }
+    const response = await this.request<{ _embedded: { tasks: KommoTask[] } }>('/tasks', {
+      method: 'PATCH',
+      body: JSON.stringify([{ id: taskId, ...task }]),
+    })
+
+    return response._embedded.tasks[0]
+  }
 
  /**
  * Получение задач по сущности
@@ -818,4 +866,3 @@ export const createContactFromChat = (
  ],
  }
 }
-

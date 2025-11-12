@@ -62,6 +62,12 @@ export interface KnowledgeBaseArticle {
  updatedAt: Date
 }
 
+export interface KnowledgeBaseStatsSummary {
+ categoriesCount: number
+ publishedArticlesCount: number
+ pendingAssetsCount: number
+}
+
 export interface Integration {
  id: string
  name: string

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { SessionProviderWrapper } from '@/components/providers/SessionProviderWrapper'
+import { ToastProvider } from '@/components/ui/toast-context'
 
 import './globals.css'
 
@@ -106,21 +107,18 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
  softwareVersion: '1.0.5',
  }
 
- return (
- <html lang={locale} className="light" suppressHydrationWarning>
- <head>
- <script
- type="application/ld+json"
- dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
- />
- </head>
- <body className={inter.className}>
- <SessionProviderWrapper>
- {children}
- </SessionProviderWrapper>
- <Analytics />
- </body>
- </html>
- )
+  return (
+    <html lang={locale} className="light" suppressHydrationWarning>
+      <head>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+      </head>
+      <body className={inter.className}>
+        <SessionProviderWrapper>
+          <ToastProvider>{children}</ToastProvider>
+        </SessionProviderWrapper>
+        <Analytics />
+      </body>
+    </html>
+  )
 }
 export default RootLayout

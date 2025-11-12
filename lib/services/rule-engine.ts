@@ -5,6 +5,7 @@
 
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { generateChatResponse } from './llm'
+import { createKommoApiForOrg } from '@/lib/repositories/crm-connection'
 
 export interface RuleCondition {
  type: 'field_value' | 'stage_changed' | 'time_elapsed' | 'event_triggered' | 'custom_condition'
@@ -287,20 +288,20 @@ const checkExecutionLimits = async (
  const supabase = getSupabaseServiceRoleClient()
 
  // Проверяем cooldown
- if (rule.cooldown_minutes) {
- const cooldownStart = new Date(Date.now() - rule.cooldown_minutes * 60 * 1000)
+ if (rule.cooldown_minutes && context.leadId) {
+  const cooldownStart = new Date(Date.now() - rule.cooldown_minutes * 60 * 1000)
 
- const { data: recentExecutions } = await supabase
- .from('rule_executions')
- .select('id')
- .eq('rule_id', rule.id)
+  const { data: recentExecutions } = await supabase
+  .from('rule_executions')
+  .select('id')
+  .eq('rule_id', rule.id)
  .eq('lead_id', context.leadId)
  .gte('executed_at', cooldownStart.toISOString())
- .limit(1)
+  .limit(1)
 
- if (recentExecutions && recentExecutions.length > 0) {
- return false // Cooldown активен
- }
+  if (recentExecutions && recentExecutions.length > 0) {
+  return false // Cooldown активен
+  }
  }
 
  // Проверяем дневной лимит
@@ -385,76 +386,138 @@ const executeAction = async (
 /**
  * Выполняет отправку сообщения
  */
-const executeSendMessage = async (
- action: RuleAction,
- context: RuleExecutionContext,
-): Promise<boolean> => {
- if (!action.template) return false
+const executeSendMessage = async (action: RuleAction, context: RuleExecutionContext): Promise<boolean> => {
+  if (!action.template || !context.leadId) {
+    return false
+  }
 
- // Здесь должна быть интеграция с Kommo API для отправки сообщения
- // Пока просто логируем
- console.log('Sending message:', {
- template: action.template,
- leadId: context.leadId,
- context,
- })
+  const kommoApi = await createKommoApiForOrg(context.organizationId)
+  if (!kommoApi) {
+    console.warn('Kommo API not configured for organization', context.organizationId)
+    return false
+  }
 
- return true
+  try {
+    const leadId = Number(context.leadId)
+    if (!Number.isFinite(leadId)) {
+      return false
+    }
+
+    await kommoApi.createNote({
+      entity_id: leadId,
+      entity_type: 'leads',
+      note_type: 'common',
+      params: {
+        text: action.template,
+        source: 'rule_engine',
+      },
+    })
+
+    return true
+  } catch (error) {
+    console.error('Failed to send message through Kommo', error)
+    return false
+  }
 }
 
 /**
  * Выполняет изменение этапа воронки
  */
-const executeChangeStage = async (
- action: RuleAction,
- context: RuleExecutionContext,
-): Promise<boolean> => {
- if (!action.newValue || !context.leadId) return false
+const executeChangeStage = async (action: RuleAction, context: RuleExecutionContext): Promise<boolean> => {
+  if (!action.newValue || !context.leadId) {
+    return false
+  }
 
- // Здесь должна быть интеграция с Kommo API для изменения этапа
- console.log('Changing stage:', {
- leadId: context.leadId,
- newStage: action.newValue,
- })
+  const kommoApi = await createKommoApiForOrg(context.organizationId)
+  if (!kommoApi) {
+    console.warn('Kommo API not available for stage change')
+    return false
+  }
 
- return true
+  const leadId = Number(context.leadId)
+  const newStageId = Number(action.newValue)
+
+  if (!Number.isFinite(leadId) || !Number.isFinite(newStageId)) {
+    return false
+  }
+
+  try {
+    await kommoApi.updateLead(leadId, { status_id: newStageId })
+    return true
+  } catch (error) {
+    console.error('Failed to change stage in Kommo', error)
+    return false
+  }
 }
 
 /**
  * Создает задачу
  */
-const executeCreateTask = async (
- action: RuleAction,
- context: RuleExecutionContext,
-): Promise<boolean> => {
- if (!action.template || !context.leadId) return false
+const executeCreateTask = async (action: RuleAction, context: RuleExecutionContext): Promise<boolean> => {
+  if (!action.template || !context.leadId) {
+    return false
+  }
 
- // Здесь должна быть интеграция с Kommo API для создания задачи
- console.log('Creating task:', {
- leadId: context.leadId,
- template: action.template,
- })
+  const kommoApi = await createKommoApiForOrg(context.organizationId)
+  if (!kommoApi) {
+    console.warn('Kommo API unavailable for creating task')
+    return false
+  }
 
- return true
+  const leadId = Number(context.leadId)
+  if (!Number.isFinite(leadId)) {
+    return false
+  }
+
+  try {
+    const defaultResponsibleId = Number(process.env.KOMMO_DEFAULT_USER_ID ?? 1)
+    const candidateResponsibleId = Number(context.triggerData?.responsible_user_id)
+    const responsibleId =
+      Number.isFinite(candidateResponsibleId) && candidateResponsibleId > 0 ? candidateResponsibleId : defaultResponsibleId
+
+    await kommoApi.createTask({
+      text: action.template,
+      complete_till: Math.floor(Date.now() / 1000 + 60 * 60),
+      task_type_id: 1,
+      responsible_user_id: responsibleId,
+      entity_id: leadId,
+      entity_type: 'leads',
+    })
+    return true
+  } catch (error) {
+    console.error('Failed to create Kommo task', error)
+    return false
+  }
 }
 
 /**
  * Обновляет поле в CRM
  */
-const executeUpdateField = async (
- action: RuleAction,
- context: RuleExecutionContext,
-): Promise<boolean> => {
- if (!action.targetField || !context.leadId) return false
+const executeUpdateField = async (action: RuleAction, context: RuleExecutionContext): Promise<boolean> => {
+  if (!action.targetField || !context.leadId) {
+    return false
+  }
 
- // Здесь должна быть интеграция с Kommo API для обновления поля
- console.log('Updating field:', {
- leadId: context.leadId,
- field: action.targetField,
- value: action.newValue,
- })
+  const kommoApi = await createKommoApiForOrg(context.organizationId)
+  if (!kommoApi) {
+    console.warn('Kommo API unavailable for update field')
+    return false
+  }
 
- return true
+  const leadId = Number(context.leadId)
+  if (!Number.isFinite(leadId)) {
+    return false
+  }
+
+  try {
+    await kommoApi.updateLead(leadId, {
+      [action.targetField]: action.newValue,
+    })
+    return true
+  } catch (error) {
+    console.error('Failed to update field in Kommo', error)
+    return false
+  }
 }
 
 /**
@@ -568,14 +631,20 @@ const logRuleExecution = async (
  actionResults: Array<{ action: RuleAction; success: boolean; error?: string }>,
 ): Promise<void> => {
  const supabase = getSupabaseServiceRoleClient()
+ const success = actionResults.every((result) => result.success)
+ const error = actionResults.find((result) => !result.success)?.error ?? null
 
  try {
  await supabase.from('rule_executions').insert({
  rule_id: ruleId,
  org_id: context.organizationId,
- lead_id: context.leadId,
+ agent_id: context.agentId ?? null,
+ lead_id: context.leadId ?? null,
+ trigger_type: context.triggerType,
  execution_context: context,
  action_results: actionResults,
+ success,
+ error,
  executed_at: new Date().toISOString(),
  })
  } catch (error) {
@@ -587,7 +656,7 @@ const logRuleExecution = async (
  * Предварительный просмотр того, какие правила сработают для данного контекста
  */
 export const previewRules = async (
- context: RuleExecutionContext,
+  context: RuleExecutionContext,
 ): Promise<Array<{ rule: AutomationRule; willExecute: boolean; reason?: string }>> => {
  const { organizationId } = context
 
@@ -622,7 +691,12 @@ export const previewRules = async (
  })
  }
 
- return results
+  return results
 }
 
-
+export const __testable = {
+  executeSendMessage,
+  executeChangeStage,
+  executeCreateTask,
+  executeUpdateField,
+}

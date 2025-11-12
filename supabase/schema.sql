@@ -110,6 +110,24 @@ create table if not exists usage_daily (
   primary key (org_id, usage_date)
 );
 
+-- Organization AI Settings -------------------------------------------------
+create table if not exists organization_settings (
+  org_id uuid primary key references organizations(id) on delete cascade,
+  ai_provider text not null default 'openrouter',
+  openrouter_api_key text,
+  openrouter_default_model text,
+  openrouter_embedding_model text,
+  openai_api_key text,
+  openai_model text,
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create trigger organization_settings_updated_at
+before update on organization_settings
+for each row execute procedure trigger_set_timestamp();
+
 -- CRM Connections ----------------------------------------------------------
 create table if not exists crm_connections (
   id uuid primary key default gen_random_uuid(),
@@ -505,8 +523,79 @@ create table if not exists agent_sequence_steps (
   wait_interval interval not null default interval '0 minutes',
   channel text not null,
   template text not null,
-  metadata jsonb default '{}'::jsonb
+ metadata jsonb default '{}'::jsonb
 );
+
+-- Automation Rules --------------------------------------------------------
+create table if not exists automation_rules (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references organizations(id) on delete cascade,
+  agent_id uuid references agents(id) on delete set null,
+  name text not null,
+  description text,
+  trigger_type text not null,
+  conditions jsonb not null default '[]'::jsonb,
+  actions jsonb not null default '[]'::jsonb,
+  is_active boolean default true,
+  priority integer default 10,
+  cooldown_minutes integer,
+  max_executions_per_day integer,
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create trigger automation_rules_updated_at
+before update on automation_rules
+for each row execute procedure trigger_set_timestamp();
+
+create index if not exists idx_automation_rules_org on automation_rules(org_id);
+create index if not exists idx_automation_rules_agent on automation_rules(agent_id);
+create index if not exists idx_automation_rules_trigger on automation_rules(trigger_type);
+
+create table if not exists rule_executions (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references organizations(id) on delete cascade,
+  rule_id uuid not null references automation_rules(id) on delete cascade,
+  agent_id uuid references agents(id) on delete set null,
+  lead_id text,
+  trigger_type text,
+  execution_context jsonb not null,
+  action_results jsonb not null,
+  success boolean default true,
+  error text,
+  executed_at timestamptz default now()
+);
+
+create index if not exists idx_rule_executions_rule on rule_executions(rule_id);
+create index if not exists idx_rule_executions_org on rule_executions(org_id);
+create index if not exists idx_rule_executions_agent on rule_executions(agent_id);
+create index if not exists idx_rule_executions_lead on rule_executions(lead_id);
+create index if not exists idx_rule_executions_executed_at on rule_executions(executed_at desc);
+
+create table if not exists sequence_executions (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references organizations(id) on delete cascade,
+  sequence_id uuid not null references agent_sequences(id) on delete cascade,
+  agent_id uuid references agents(id) on delete set null,
+  lead_id text,
+  contact_id text,
+  status text not null default 'running',
+  current_step integer default 0,
+  execution_context jsonb not null default '{}'::jsonb,
+  error text,
+  started_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create trigger sequence_executions_updated_at
+before update on sequence_executions
+for each row execute procedure trigger_set_timestamp();
+
+create index if not exists idx_sequence_executions_org on sequence_executions(org_id);
+create index if not exists idx_sequence_executions_sequence on sequence_executions(sequence_id);
+create index if not exists idx_sequence_executions_agent on sequence_executions(agent_id);
+create index if not exists idx_sequence_executions_lead on sequence_executions(lead_id);
 
 -- Conversations / messages -------------------------------------------------
 create table if not exists agent_conversations (

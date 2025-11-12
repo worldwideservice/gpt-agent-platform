@@ -1,9 +1,13 @@
-import { Queue } from 'bullmq'
+import { Queue, type Job, type JobsOptions } from 'bullmq'
 import Redis from 'ioredis'
 
 // Lazy initialization for Redis connection (to avoid connection during build)
 let connection: Redis | null = null
-let jobQueue: Queue | null = null
+
+export type JobPayload = Record<string, unknown>
+export type QueuedJob = Job<JobPayload, unknown, string>
+
+let jobQueue: Queue<JobPayload, unknown, string> | null = null
 
 function getRedisConnection(): Redis {
   if (!connection) {
@@ -20,7 +24,7 @@ function getRedisConnection(): Redis {
   return connection
 }
 
-function getJobQueue(): Queue {
+function getJobQueue(): Queue<JobPayload, unknown, string> {
   if (!jobQueue) {
     try {
       const conn = getRedisConnection()
@@ -39,35 +43,23 @@ function getJobQueue(): Queue {
   return jobQueue
 }
 
-export interface JobPayload {
-  [key: string]: any
-}
-
-export interface QueuedJob {
-  id: string
-  name: string
-  data: JobPayload
-  opts: any
-  progress: number
-  attemptsMade: number
-  finishedOn?: number
-  processedOn?: number
-  failedReason?: string
-  returnvalue?: any
-}
+export type JobPayload = Record<string, unknown>
+export type QueuedJob = Job<JobPayload, unknown, string>
 
 // Add job to queue
+const defaultJobOptions: JobsOptions = {
+  priority: 4,
+  delay: 0,
+  attempts: 3,
+  backoff: {
+    type: 'exponential',
+    delay: 2000,
+  },
+}
+
 export async function addJobToQueue(jobName: string, payload: JobPayload) {
   const queue = getJobQueue()
-  const job = await queue.add(jobName, payload, {
-    priority: 4, // Default priority
-    delay: 0,
-    attempts: 3,
-    backoff: {
-      type: 'exponential',
-      delay: 2000,
-    },
-  })
+  const job = await queue.add(jobName, payload, defaultJobOptions)
 
   return {
     id: job.id,
@@ -77,14 +69,17 @@ export async function addJobToQueue(jobName: string, payload: JobPayload) {
 }
 
 // Get job by ID
-export async function getJobById(jobId: string) {
+export async function getJobById(jobId: string): Promise<Job<JobPayload, unknown, string> | null> {
   const queue = getJobQueue()
   const job = await queue.getJob(jobId)
   return job
 }
 
 // Get jobs by status
-export async function getJobsByStatus(status: 'active' | 'waiting' | 'completed' | 'failed', limit = 10) {
+export async function getJobsByStatus(
+  status: 'active' | 'waiting' | 'completed' | 'failed',
+  limit = 10,
+): Promise<Job<JobPayload, unknown, string>[]> {
   const queue = getJobQueue()
   const jobs = await queue.getJobs([status], 0, limit - 1)
   return jobs

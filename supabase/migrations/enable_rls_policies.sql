@@ -11,6 +11,7 @@
 ALTER TABLE IF EXISTS public.crm_connections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.crm_pipelines ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.crm_pipeline_stages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.organization_settings ENABLE ROW LEVEL SECURITY;
 
 -- Агенты
 ALTER TABLE IF EXISTS public.agents ENABLE ROW LEVEL SECURITY;
@@ -18,6 +19,9 @@ ALTER TABLE IF EXISTS public.agent_assets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.agent_pipeline_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.agent_conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.agent_memory ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.automation_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.rule_executions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sequence_executions ENABLE ROW LEVEL SECURITY;
 
 -- База знаний
 ALTER TABLE IF EXISTS public.knowledge_base_articles ENABLE ROW LEVEL SECURITY;
@@ -254,6 +258,66 @@ USING (
 );
 
 -- ============================================
+-- RLS ПОЛИТИКИ: Organization Settings
+-- ============================================
+
+DROP POLICY IF EXISTS "Users can manage organization settings in their org" ON public.organization_settings;
+CREATE POLICY "Users can manage organization settings in their org"
+ON public.organization_settings FOR ALL
+TO authenticated
+USING (
+  org_id IN (
+    SELECT org_id FROM public.organization_members 
+    WHERE user_id = auth.uid()
+  )
+);
+
+-- ============================================
+-- RLS ПОЛИТИКИ: Automation Rules
+-- ============================================
+
+DROP POLICY IF EXISTS "Users can manage automation rules in their org" ON public.automation_rules;
+CREATE POLICY "Users can manage automation rules in their org"
+ON public.automation_rules FOR ALL
+TO authenticated
+USING (
+  org_id IN (
+    SELECT org_id FROM public.organization_members 
+    WHERE user_id = auth.uid()
+  )
+);
+
+-- ============================================
+-- RLS ПОЛИТИКИ: Rule Executions
+-- ============================================
+
+DROP POLICY IF EXISTS "Users can view rule executions in their org" ON public.rule_executions;
+CREATE POLICY "Users can view rule executions in their org"
+ON public.rule_executions FOR SELECT
+TO authenticated
+USING (
+  org_id IN (
+    SELECT org_id FROM public.organization_members 
+    WHERE user_id = auth.uid()
+  )
+);
+
+-- ============================================
+-- RLS ПОЛИТИКИ: Sequence Executions
+-- ============================================
+
+DROP POLICY IF EXISTS "Users can view sequence executions in their org" ON public.sequence_executions;
+CREATE POLICY "Users can view sequence executions in their org"
+ON public.sequence_executions FOR SELECT
+TO authenticated
+USING (
+  org_id IN (
+    SELECT org_id FROM public.organization_members 
+    WHERE user_id = auth.uid()
+  )
+);
+
+-- ============================================
 -- RLS ПОЛИТИКИ: CRM Pipelines
 -- ============================================
 
@@ -347,4 +411,3 @@ AND tablename IN (
   'objection_responses'
 )
 ORDER BY tablename;
-

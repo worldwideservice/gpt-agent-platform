@@ -59,27 +59,27 @@ export const cacheKeys = {
 
 // Cache operations
 export class Cache {
- private client: Redis | null
+  private client: Redis | null
 
- constructor() {
- this.client = getRedisClient()
- }
+  constructor() {
+    this.client = getRedisClient()
+  }
 
- async get<T = any>(key: string): Promise<T | null> {
- if (!this.client) return null
+  async get<T>(key: string): Promise<T | null> {
+    if (!this.client) return null
 
- try {
- const data = await this.client.get(key)
- if (!data) return null
+    try {
+      const data = await this.client.get(key)
+      if (!data) return null
 
- return JSON.parse(data)
+      return JSON.parse(data)
  } catch (error) {
  console.error('Cache get error:', error)
  return null
  }
  }
 
- async set(key: string, value: any, ttl: number = cacheConfig.default): Promise<boolean> {
+  async set<T>(key: string, value: T, ttl: number = cacheConfig.default): Promise<boolean> {
  if (!this.client) return false
 
  try {

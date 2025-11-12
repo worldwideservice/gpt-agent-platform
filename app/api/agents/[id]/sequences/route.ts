@@ -2,204 +2,98 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { z } from 'zod'
 
 import { auth } from '@/auth'
-import { createSequence, getSequences, startSequence, deleteSequence } from '@/lib/services/sequences'
+import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
-const createSequenceSchema = z.object({
- name: z.string().min(1, 'Название последовательности обязательно'),
- description: z.string().optional(),
- trigger_type: z.enum(['manual', 'lead_created', 'stage_changed', 'subscription', 'event']),
- trigger_conditions: z.record(z.string(), z.any()).optional(),
- is_active: z.boolean().optional().default(true),
- steps: z.array(z.object({
- step_order: z.number().min(1),
- delay_minutes: z.number().min(0).default(0),
- action_type: z.enum(['send_message', 'create_task', 'send_email', 'webhook', 'ai_response', 'wait', 'kommo_action']),
- template: z.string().optional(),
- recipient: z.string().optional(),
- webhook_url: z.string().optional(),
- ai_prompt: z.string().optional(),
- task_title: z.string().optional(),
- task_description: z.string().optional(),
- kommo_action: z.object({
- type: z.enum(['create_lead', 'update_lead', 'create_contact', 'update_contact', 'create_task', 'send_email', 'create_call_note', 'create_meeting_note', 'add_note']),
- data: z.record(z.string(), z.any()),
- entity_id: z.number().optional(),
- entity_type: z.enum(['leads', 'contacts', 'companies']).optional(),
- }).optional(),
- metadata: z.record(z.string(), z.any()).optional().default({}),
- })).min(1, 'Последовательность должна содержать хотя бы один шаг'),
+export const stepSchema = z.object({
+  channel: z.string().min(1),
+  wait_interval: z.string().min(1),
+  template: z.string().min(1),
 })
 
-const startSequenceSchema = z.object({
- lead_id: z.string().min(1, 'ID лида обязателен'),
- contact_id: z.string().optional(),
- initial_data: z.record(z.string(), z.any()).optional().default({}),
+export const createSequenceSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().optional(),
+  steps: z.array(stepSchema).min(1),
 })
 
-/**
- * GET /api/agents/[id]/sequences - Получение последовательностей агента
- */
 export const GET = async (
- request: NextRequest,
- { params }: { params: { id: string } },
+  request: NextRequest,
+  { params }: { params: { id: string } },
 ) => {
- const session = await auth()
+  const session = await auth()
 
- if (!session?.user?.orgId) {
- return NextResponse.json({ success: false, error: 'Не авторизовано' }, { status: 401 })
- }
+  if (!session?.user?.orgId) {
+    return NextResponse.json({ success: false, error: 'Не авторизовано' }, { status: 401 })
+  }
 
- try {
- const { searchParams } = new URL(request.url)
- const activeOnly = searchParams.get('active_only') === 'true'
+  try {
+    const supabase = getSupabaseServiceRoleClient()
 
- const sequences = await getSequences(session.user.orgId, params.id, activeOnly)
+    const { data, error } = await supabase
+      .from('agent_sequences')
+      .select('id, name, description, is_active, steps:agent_sequence_steps(id, step_index, wait_interval, channel, template)')
+      .eq('agent_id', params.id)
+      .order('created_at', { ascending: false })
 
- return NextResponse.json({
- success: true,
- data: sequences,
- })
- } catch (error) {
- console.error('Get sequences API error', error)
+    if (error) {
+      throw error
+    }
 
- return NextResponse.json(
- {
- success: false,
- error: 'Не удалось загрузить последовательности',
- },
- { status: 500 },
- )
- }
+    return NextResponse.json({ success: true, data: data ?? [] })
+  } catch (error) {
+    console.error('Failed to load sequences', error)
+    return NextResponse.json({ success: false, error: 'Не удалось загрузить последовательности' }, { status: 500 })
+  }
 }
 
-/**
- * POST /api/agents/[id]/sequences - Создание новой последовательности
- */
 export const POST = async (
- request: NextRequest,
- { params }: { params: { id: string } },
+  request: NextRequest,
+  { params }: { params: { id: string } },
 ) => {
- const session = await auth()
+  const session = await auth()
 
- if (!session?.user?.orgId) {
- return NextResponse.json({ success: false, error: 'Не авторизовано' }, { status: 401 })
- }
+  if (!session?.user?.orgId) {
+    return NextResponse.json({ success: false, error: 'Не авторизовано' }, { status: 401 })
+  }
 
- try {
- const body = await request.json()
- const parsed = createSequenceSchema.safeParse(body)
+  try {
+    const body = await request.json()
+    const payload = createSequenceSchema.parse(body)
 
- if (!parsed.success) {
- const issues = parsed.error.issues.map((issue) => issue.message)
- return NextResponse.json(
- {
- success: false,
- error: 'Некорректные данные',
- details: issues,
- },
- { status: 400 },
- )
- }
+    const supabase = getSupabaseServiceRoleClient()
 
- const sequenceData = {
- ...parsed.data,
- agent_id: params.id,
- metadata: {},
- }
+    const { data: sequence, error } = await supabase
+      .from('agent_sequences')
+      .insert({
+        agent_id: params.id,
+        name: payload.name,
+        description: payload.description,
+      })
+      .select('id')
+      .single()
 
- const sequenceId = await createSequence(session.user.orgId, sequenceData)
+    if (error || !sequence) {
+      throw error ?? new Error('Sequence insert failed')
+    }
 
- if (!sequenceId) {
- return NextResponse.json(
- { success: false, error: 'Не удалось создать последовательность' },
- { status: 500 },
- )
- }
+    const steps = payload.steps.map((step, index) => ({
+      sequence_id: sequence.id,
+      step_index: index + 1,
+      wait_interval: step.wait_interval,
+      channel: step.channel,
+      template: step.template,
+    }))
 
- return NextResponse.json({
- success: true,
- data: { id: sequenceId },
- })
- } catch (error) {
- console.error('Create sequence API error', error)
+    const { error: stepsError } = await supabase.from('agent_sequence_steps').insert(steps)
 
- return NextResponse.json(
- {
- success: false,
- error: 'Не удалось создать последовательность',
- },
- { status: 500 },
- )
- }
-}
+    if (stepsError) {
+      throw stepsError
+    }
 
-/**
- * PUT /api/agents/[id]/sequences/[sequenceId]/start - Запуск последовательности
- */
-export const PUT = async (
- request: NextRequest,
- { params }: { params: { id: string } },
-) => {
- const session = await auth()
-
- if (!session?.user?.orgId) {
- return NextResponse.json({ success: false, error: 'Не авторизовано' }, { status: 401 })
- }
-
- try {
- const { searchParams } = new URL(request.url)
- const sequenceId = searchParams.get('sequenceId')
-
- if (!sequenceId) {
- return NextResponse.json(
- { success: false, error: 'ID последовательности обязателен' },
- { status: 400 },
- )
- }
-
- const body = await request.json()
- const parsed = startSequenceSchema.safeParse(body)
-
- if (!parsed.success) {
- const issues = parsed.error.issues.map((issue) => issue.message)
- return NextResponse.json(
- {
- success: false,
- error: 'Некорректные данные',
- details: issues,
- },
- { status: 400 },
- )
- }
-
- const executionId = await startSequence(
- sequenceId,
- session.user.orgId,
- parsed.data.lead_id,
- parsed.data.contact_id,
- parsed.data.initial_data,
- )
-
- if (!executionId) {
- return NextResponse.json(
- { success: false, error: 'Не удалось запустить последовательность' },
- { status: 500 },
- )
- }
-
- return NextResponse.json({
- success: true,
- data: { execution_id: executionId },
- })
- } catch (error) {
- console.error('Start sequence API error', error)
-
- return NextResponse.json(
- {
- success: false,
- error: 'Не удалось запустить последовательность',
- },
- { status: 500 },
- )
- }
+    return NextResponse.json({ success: true, data: { id: sequence.id } })
+  } catch (error) {
+    console.error('Failed to create sequence', error)
+    const message = error instanceof z.ZodError ? 'Некорректные данные' : 'Не удалось создать последовательность'
+    return NextResponse.json({ success: false, error: message }, { status: error instanceof z.ZodError ? 400 : 500 })
+  }
 }

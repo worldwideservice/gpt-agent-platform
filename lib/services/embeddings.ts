@@ -1,29 +1,5 @@
-interface EmbeddingResponse {
- data: Array<{
- embedding: number[]
- index: number
- }>
- model: string
- usage?: {
- prompt_tokens: number
- total_tokens: number
- }
-}
-
-const DEFAULT_EMBEDDING_MODEL = 'openai/text-embedding-3-large'
-
-const getOpenRouterApiKey = async (organizationId: string): Promise<string | null> => {
- // TODO: получить ключ из настроек организации, пока используем глобальный env
- if (process.env.OPENROUTER_API_KEY) {
- return process.env.OPENROUTER_API_KEY
- }
-
- console.warn('OPENROUTER_API_KEY is not configured. Embeddings generation is not available.', {
- organizationId,
- })
-
- return null
-}
+import { type OpenRouterEmbeddingResponse } from '@/lib/services/ai/openrouter.client'
+import { resolveOpenRouterClient } from '@/lib/services/ai/openrouter-resolver'
 
 const chunkByTokenEstimate = (text: string, chunkSize = 600, overlap = 120): string[] => {
  const words = text.split(/\s+/)
@@ -53,37 +29,10 @@ export const generateEmbeddings = async (
  organizationId: string,
  input: string | string[],
  options?: { model?: string },
-): Promise<EmbeddingResponse> => {
- const apiKey = await getOpenRouterApiKey(organizationId)
-
- if (!apiKey) {
- throw new Error('OpenRouter API key is not configured')
- }
-
+): Promise<OpenRouterEmbeddingResponse> => {
+ const client = await resolveOpenRouterClient(organizationId)
  const normalizedInput = Array.isArray(input) ? input : [input]
- const model = options?.model ?? process.env.OPENROUTER_EMBEDDING_MODEL ?? DEFAULT_EMBEDDING_MODEL
-
- const response = await fetch('https://openrouter.ai/api/v1/embeddings', {
- method: 'POST',
- headers: {
- 'Content-Type': 'application/json',
- Authorization: `Bearer ${apiKey}`,
- 'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
- 'X-Title': 'GPT Agent Platform',
- },
- body: JSON.stringify({
- model,
- input: normalizedInput,
- }),
- })
-
- if (!response.ok) {
- const errorText = await response.text()
- throw new Error(`OpenRouter embeddings error: ${response.status} ${response.statusText} - ${errorText}`)
- }
-
- const payload = (await response.json()) as EmbeddingResponse
- return payload
+ return await client.embeddings(normalizedInput, { model: options?.model })
 }
 
 export const generateEmbeddingsForDocument = async (
@@ -106,11 +55,6 @@ export const generateEmbeddingsForDocument = async (
 }
 
 export { chunkByTokenEstimate }
-
-
-
-
-
 
 
 

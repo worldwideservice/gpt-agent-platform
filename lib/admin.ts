@@ -147,17 +147,24 @@ export async function getAdminStats() {
 }
 
 // Admin actions
-export async function performAdminAction(action: string, payload: any) {
- try {
- switch (action) {
- case 'update_user_tier':
- return await updateUserTier(payload.userId, payload.tier)
- case 'delete_user':
- return await deleteUser(payload.userId)
- case 'update_feature_flag':
- return await updateFeatureFlag(payload.flagKey, payload.updates)
- case 'clear_cache':
- return await clearCache()
+function asString(value: unknown): string {
+  if (typeof value === 'string') {
+    return value
+  }
+  return ''
+}
+
+export async function performAdminAction(action: string, payload: Record<string, unknown>) {
+  try {
+    switch (action) {
+    case 'update_user_tier':
+        return await updateUserTier(asString(payload.userId), asString(payload.tier))
+      case 'delete_user':
+        return await deleteUser(asString(payload.userId))
+      case 'update_feature_flag':
+        return await updateFeatureFlag(asString(payload.flagKey), payload.updates ?? {})
+      case 'clear_cache':
+        return await clearCache()
  case 'restart_worker':
  return await restartWorker()
  default:
@@ -196,7 +203,7 @@ async function deleteUser(userId: string) {
  return { success: true }
 }
 
-async function updateFeatureFlag(flagKey: string, updates: any) {
+async function updateFeatureFlag(flagKey: string, updates: Record<string, unknown>) {
  // This would update feature flags in database/cache
  // For now, just log the action
  console.log('Updating feature flag:', flagKey, updates)

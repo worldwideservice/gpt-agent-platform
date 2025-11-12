@@ -5,33 +5,36 @@ import { auth } from '@/auth'
 import { createRule, getRules, executeRules } from '@/lib/services/rule-engine'
 import type { AutomationRule, RuleExecutionContext } from '@/lib/services/rule-engine'
 
-const createRuleSchema = z.object({
- name: z.string().min(1, 'Название правила обязательно'),
- description: z.string().optional(),
- trigger_type: z.enum(['lead_created', 'lead_updated', 'message_received', 'stage_changed', 'time_based', 'manual']),
- conditions: z.array(z.object({
- type: z.enum(['field_value', 'stage_changed', 'time_elapsed', 'event_triggered', 'custom_condition']),
- field: z.string().optional(),
- operator: z.enum(['equals', 'contains', 'greater_than', 'less_than', 'changed_to', 'not_empty']).optional(),
- value: z.any().optional(),
- timeUnit: z.enum(['minutes', 'hours', 'days', 'weeks']).optional(),
- timeValue: z.number().optional(),
- customLogic: z.string().optional(),
- })),
- actions: z.array(z.object({
- type: z.enum(['send_message', 'change_stage', 'create_task', 'update_field', 'send_email', 'webhook', 'ai_response']),
- template: z.string().optional(),
- targetField: z.string().optional(),
- newValue: z.any().optional(),
- recipient: z.string().optional(),
- webhookUrl: z.string().optional(),
- aiPrompt: z.string().optional(),
- })),
- is_active: z.boolean().optional().default(true),
- priority: z.number().min(1).max(100).optional().default(10),
- cooldown_minutes: z.number().min(0).optional(),
- max_executions_per_day: z.number().min(1).optional(),
+const conditionSchema = z.object({
+  type: z.enum(['field_value', 'stage_changed', 'time_elapsed', 'event_triggered', 'custom_condition']).default('field_value'),
+  field: z.string().min(1).optional(),
+  operator: z.enum(['equals', 'contains', 'greater_than', 'less_than', 'changed_to', 'not_empty']).optional(),
+  value: z.string().optional(),
 })
+
+const actionSchema = z.object({
+  type: z.enum(['send_message', 'change_stage', 'create_task', 'update_field', 'send_email', 'webhook', 'ai_response']),
+  template: z.string().optional(),
+  targetField: z.string().optional(),
+  newValue: z.string().optional(),
+  recipient: z.string().optional(),
+  webhookUrl: z.string().optional(),
+  aiPrompt: z.string().optional(),
+})
+
+export const createRuleSchema = z.object({
+  name: z.string().min(1, 'Название правила обязательно'),
+  description: z.string().optional(),
+  trigger_type: z.enum(['lead_created', 'lead_updated', 'message_received', 'stage_changed', 'time_based', 'manual']),
+  conditions: z.array(conditionSchema).min(1, 'Добавьте хотя бы одно условие'),
+  actions: z.array(actionSchema).min(1, 'Добавьте действие'),
+  is_active: z.boolean().optional().default(true),
+  priority: z.number().min(1).max(100).optional().default(10),
+  cooldown_minutes: z.number().min(0).optional(),
+  max_executions_per_day: z.number().min(1).optional(),
+})
+
+export const updateRuleSchema = createRuleSchema.partial()
 
 const executeRulesSchema = z.object({
  triggerType: z.string(),
@@ -108,9 +111,13 @@ export const POST = async (
  }
 
  const ruleData = {
- ...parsed.data,
- agent_id: params.id,
- metadata: {},
+  ...parsed.data,
+  agent_id: params.id,
+  metadata: {},
+  conditions: parsed.data.conditions.map((cond) => ({
+    ...cond,
+    type: cond.type || 'field_value',
+  })),
  }
 
  const ruleId = await createRule(session.user.orgId, ruleData)
@@ -213,5 +220,3 @@ export const PUT = async (
  )
  }
 }
-
-

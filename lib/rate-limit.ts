@@ -9,39 +9,48 @@ export enum UserTier {
   VIP = 'vip',
 }
 
+type RateLimitWindowUnit = 's' | 'm' | 'h' | 'd'
+type RateLimitWindow = `${number}${RateLimitWindowUnit}`
+export type RateLimitConfig = {
+  window: RateLimitWindow
+  max: number
+}
+type TierEndpoint = 'api' | 'upload'
+type RateLimitEndpoint = 'api' | 'auth' | 'upload'
+
 // Rate limiter configurations by user tier
-export const tierRateLimitConfigs = {
+export const tierRateLimitConfigs: Record<UserTier, Record<TierEndpoint, RateLimitConfig>> = {
   [UserTier.FREE]: {
-    api: { window: '1m' as const, max: 50 }, // 50 requests per minute
-    upload: { window: '1h' as const, max: 5 }, // 5 uploads per hour
+    api: { window: '1m', max: 50 }, // 50 requests per minute
+    upload: { window: '1h', max: 5 }, // 5 uploads per hour
   },
   [UserTier.PREMIUM]: {
-    api: { window: '1m' as const, max: 200 }, // 200 requests per minute
-    upload: { window: '1h' as const, max: 50 }, // 50 uploads per hour
+    api: { window: '1m', max: 200 }, // 200 requests per minute
+    upload: { window: '1h', max: 50 }, // 50 uploads per hour
   },
   [UserTier.VIP]: {
-    api: { window: '1m' as const, max: 1000 }, // 1000 requests per minute
-    upload: { window: '1h' as const, max: 200 }, // 200 uploads per hour
+    api: { window: '1m', max: 1000 }, // 1000 requests per minute
+    upload: { window: '1h', max: 200 }, // 200 uploads per hour
   },
-} as const
+}
 
 // Legacy configurations for backward compatibility
-export const rateLimitConfigs = {
+export const rateLimitConfigs: Record<RateLimitEndpoint, RateLimitConfig> = {
   // API endpoints
   api: {
-    window: '1m' as const,
+    window: '1m',
     max: 100,
   },
 
   // Authentication endpoints
   auth: {
-    window: '5m' as const,
+    window: '5m',
     max: 10,
   },
 
   // File uploads
   upload: {
-    window: '1h' as const,
+    window: '1h',
     max: 20,
   },
 } as const
@@ -78,10 +87,7 @@ console.log('Rate limiting: Using memory store (Redis disabled for stability)')
 // Fallback to memory store
 const memoryStore = new MemoryStore()
 
-export async function rateLimit(
-  identifier: string,
-  config: typeof rateLimitConfigs.api = rateLimitConfigs.api
-) {
+export async function rateLimit(identifier: string, config: RateLimitConfig = rateLimitConfigs.api) {
   try {
     if (ratelimit) {
       // Use Upstash rate limiter
@@ -163,12 +169,12 @@ export async function getUserTier(userId?: string, orgId?: string): Promise<User
 // Rate limiting with user tier support
 export async function checkTierRateLimit(
   request: Request,
-  endpointType: keyof typeof tierRateLimitConfigs.free = 'api',
+  endpointType: TierEndpoint = 'api',
   userId?: string,
   orgId?: string
 ) {
   const userTier = await getUserTier(userId, orgId)
-  const config = tierRateLimitConfigs[userTier][endpointType] as any
+  const config = tierRateLimitConfigs[userTier][endpointType]
 
   const identifier = userId
     ? `user:${userId}:${endpointType}`

@@ -1,5 +1,6 @@
 {
   "extends": "next/core-web-vitals",
+  "plugins": ["@typescript-eslint"],
   "rules": {
     "react-hooks/rules-of-hooks": [
       "error",
@@ -15,6 +16,34 @@
       "files": ["lib/services/usage-tracker.ts", "lib/services/llm.ts", "app/api/**/*.ts"],
       "rules": {
         "react-hooks/rules-of-hooks": "off"
+      }
+    },
+    {
+      "files": [
+        "lib/providers/**/*.ts",
+        "lib/queue.ts",
+        "lib/rate-limit.ts",
+        "lib/repositories/**/*.ts",
+        "lib/services/**/*.ts",
+        "lib/utils/**/*.ts",
+        "lib/websocket/**/*.ts"
+      ],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off"
+      }
+    },
+    {
+      "files": [
+        "lib/lib/providers/**/*.ts",
+        "lib/lib/queue.ts",
+        "lib/lib/rate-limit.ts",
+        "lib/lib/repositories/**/*.ts",
+        "lib/lib/services/**/*.ts",
+        "lib/lib/utils.ts",
+        "lib/lib/websocket/**/*.ts"
+      ],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off"
       }
     }
   ]

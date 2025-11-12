@@ -183,6 +183,52 @@ export type Database = {
  },
  ]
  }
+ organization_settings: {
+ Row: {
+ org_id: string
+ ai_provider: string
+ openrouter_api_key: string | null
+ openrouter_default_model: string | null
+ openrouter_embedding_model: string | null
+ openai_api_key: string | null
+ openai_model: string | null
+ metadata: Json | null
+ created_at: string
+ updated_at: string
+ }
+ Insert: {
+ org_id: string
+ ai_provider?: string
+ openrouter_api_key?: string | null
+ openrouter_default_model?: string | null
+ openrouter_embedding_model?: string | null
+ openai_api_key?: string | null
+ openai_model?: string | null
+ metadata?: Json | null
+ created_at?: string
+ updated_at?: string
+ }
+ Update: {
+ org_id?: string
+ ai_provider?: string
+ openrouter_api_key?: string | null
+ openrouter_default_model?: string | null
+ openrouter_embedding_model?: string | null
+ openai_api_key?: string | null
+ openai_model?: string | null
+ metadata?: Json | null
+ created_at?: string
+ updated_at?: string
+ }
+ Relationships: [
+ {
+ foreignKeyName: 'organization_settings_org_id_fkey'
+ columns: ['org_id']
+ referencedRelation: 'organizations'
+ referencedColumns: ['id']
+ },
+ ]
+ }
  password_resets: {
  Row: {
  id: string
@@ -1043,6 +1089,9 @@ export type Database = {
 export type AgentRow = Database['public']['Tables']['agents']['Row']
 export type AgentStatus = AgentRow['status']
 export type OrganizationRow = Database['public']['Tables']['organizations']['Row']
+export type OrganizationSettingsRow = Database['public']['Tables']['organization_settings']['Row']
+export type AutomationRuleRow = Database['public']['Tables']['automation_rules']['Row']
+export type RuleExecutionRow = Database['public']['Tables']['rule_executions']['Row']
 export type UserRow = Database['public']['Tables']['users']['Row']
 export type OrganizationMemberRow = Database['public']['Tables']['organization_members']['Row']
 export type CrmConnectionRow = Database['public']['Tables']['crm_connections']['Row']
@@ -1086,3 +1135,5 @@ export type SubscriptionRow = Database['public']['Tables']['subscriptions']['Row
 export type DashboardStatsViewRow = Database['public']['Views']['dashboard_kpis']['Row']
 
 export type DashboardStatsFunctionResult = Database['public']['Functions']['calculate_dashboard_stats']['Returns']
+
+export type SequenceExecutionRow = Database['public']['Tables']['sequence_executions']['Row']
