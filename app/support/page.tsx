@@ -4,7 +4,7 @@ import { PublicHeader } from '@/components/layout/PublicHeader'
 import { Logo } from '@/components/ui/Logo'
 import { Button } from '@/components/ui'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
-import { HelpCircle, Mail, MessageSquare, BookOpen, FileText, Search } from 'lucide-react'
+import { HelpCircle, Mail, MessageSquare, BookOpen, FileText, Search, LifeBuoy } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Помощь и поддержка — TON 18',
@@ -205,14 +205,50 @@ export default function SupportPage() {
                   Написать в поддержку
                 </Button>
               </Link>
-              <Link href="/docs">
+              <Link href="/docs/support">
                 <Button variant="outline" size="lg" className="w-full sm:w-auto">
                   <BookOpen className="mr-2 h-4 w-4" />
-                  Открыть документацию
+                  Руководство поддержки
                 </Button>
               </Link>
             </div>
           </div>
+        </section>
+        <section className="mt-12 grid gap-6 md:grid-cols-2">
+          <Card className="h-full">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <FileText className="h-6 w-6 text-primary" />
+                <CardTitle className="text-lg font-semibold">Процессы релиз-нотов</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm text-gray-600 dark:text-gray-400">
+              <p>
+                Каждую неделю публикуем релиз-ноты с ключевыми изменениями. Регламент из GTM playbook включает шаблоны рассылок,
+                требования к скриншотам и чек-лист публикации.
+              </p>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/docs/gtm-playbook">Читать GTM playbook</Link>
+              </Button>
+            </CardContent>
+          </Card>
+          <Card className="h-full">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <LifeBuoy className="h-6 w-6 text-primary" />
+                <CardTitle className="text-lg font-semibold">SLA и эскалации</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm text-gray-600 dark:text-gray-400">
+              <p>
+                SLA по уровням P0–P3 и тайминги первой реакции зафиксированы в руководстве поддержки. Ознакомьтесь с матрицей
+                каналов и процессом пост-мортема перед запуском пилота.
+              </p>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/docs/support">Открыть регламент</Link>
+              </Button>
+            </CardContent>
+          </Card>
         </section>
       </main>
 

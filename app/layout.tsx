@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { SessionProviderWrapper } from '@/components/providers/SessionProviderWrapper'
+import { ProductAnalyticsProvider } from '@/components/providers/ProductAnalyticsProvider'
 import { ToastProvider } from '@/components/ui/toast-context'
 
 import './globals.css'
@@ -114,7 +115,9 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
       </head>
       <body className={inter.className}>
         <SessionProviderWrapper>
-          <ToastProvider>{children}</ToastProvider>
+          <ProductAnalyticsProvider context="public">
+            <ToastProvider>{children}</ToastProvider>
+          </ProductAnalyticsProvider>
         </SessionProviderWrapper>
         <Analytics />
       </body>

@@ -3,7 +3,7 @@
 > Полный список всех переменных окружения для GPT Agent AI Platform
 > 
 > **Версия:** 1.1
-> **Дата обновления:** 2025-02-15
+> **Дата обновления:** 2025-02-18
 
 > **Шаблоны:**
 > - `env.example` — development
@@ -23,7 +23,8 @@
 7. [Мониторинг](#мониторинг)
 8. [Email](#email)
 9. [Безопасность](#безопасность)
-10. [Feature Flags](#feature-flags)
+10. [Product Analytics](#product-analytics)
+11. [Feature Flags](#feature-flags)
 
 ---
 
@@ -295,6 +296,21 @@ DATADOG_SERVICE_NAME=gpt-agent-ai
 ```bash
 # Vercel Analytics (автоматически включен на Vercel)
 # Для локальной разработки не требуется
+```
+
+---
+
+## Product Analytics
+
+```bash
+# Segment analytics (публичный ключ)
+NEXT_PUBLIC_SEGMENT_WRITE_KEY=segment-write-key
+
+# PostHog analytics
+NEXT_PUBLIC_POSTHOG_KEY=phc_your_posthog_key
+
+# Кастомный домен PostHog (по умолчанию https://app.posthog.com)
+NEXT_PUBLIC_POSTHOG_HOST=https://app.posthog.com
 ```
 
 ---
