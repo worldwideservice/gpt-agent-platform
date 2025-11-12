@@ -68,6 +68,11 @@ const syncPipelinesSchema = z.object({
  provider: z.string().optional(),
 })
 
+const syncContactsSchema = z.object({
+ orgId: z.string().uuid(),
+ provider: z.string().optional(),
+})
+
 const sendMessageSchema = z.object({
  orgId: z.string().uuid(),
  provider: z.string().optional(),
@@ -197,11 +202,22 @@ export const registerKommoRoutes = async (fastify: FastifyInstance) => {
  metadata: { token_type: token.token_type },
  })
 
+ const queuedAt = new Date().toISOString()
  const metadata = mergeSyncMetadata(connection.metadata, {
  status: 'queued',
- requestedAt: new Date().toISOString(),
+ requestedAt: queuedAt,
  error: null,
  provider: connection.provider,
+ pipelines: {
+ status: 'queued',
+ requestedAt: queuedAt,
+ error: null,
+ },
+ contacts: {
+ status: 'queued',
+ requestedAt: queuedAt,
+ error: null,
+ },
  })
 
  const { data: updatedConnection, error: updateError } = await supabase
@@ -222,6 +238,18 @@ export const registerKommoRoutes = async (fastify: FastifyInstance) => {
  connectionId: updatedConnection.id,
  baseDomain: updatedConnection.base_domain,
  })
+
+ await enqueueJob(
+ queue,
+ {
+ type: 'crm:sync-contacts',
+ provider: 'kommo',
+ orgId: updatedConnection.org_id,
+ connectionId: updatedConnection.id,
+ baseDomain: updatedConnection.base_domain,
+ },
+ { jobId: `crm-sync-contacts-${updatedConnection.id}` },
+ )
 
  reply.send({ success: true, connection: updatedConnection })
  })
@@ -248,11 +276,17 @@ export const registerKommoRoutes = async (fastify: FastifyInstance) => {
  return
  }
 
+ const queuedAt = new Date().toISOString()
  const metadata = mergeSyncMetadata(connection.metadata, {
  status: 'queued',
- requestedAt: new Date().toISOString(),
+ requestedAt: queuedAt,
  error: null,
  provider: connection.provider,
+ pipelines: {
+ status: 'queued',
+ requestedAt: queuedAt,
+ error: null,
+ },
  })
 
  const { error: updateError } = await supabase
@@ -265,15 +299,61 @@ export const registerKommoRoutes = async (fastify: FastifyInstance) => {
  }
 
  await enqueueJob(
+  queue,
+  {
+  type: 'crm:sync-pipelines',
+  provider: 'kommo',
+  orgId: payload.orgId,
+  connectionId: connection.id,
+  baseDomain: connection.base_domain,
+  },
+  { jobId: `crm-sync-${connection.id}` },
+ )
+
+ reply.send({ success: true })
+})
+
+ fastify.post('/sync/contacts', async (request, reply) => {
+ const payload = syncContactsSchema.parse(request.body)
+
+ const connection = await getKommoConnection(supabase, payload.orgId, payload.provider ?? 'kommo')
+
+ if (!connection) {
+ reply.status(404).send({ success: false, error: 'Kommo connection not found' })
+ return
+ }
+
+ const queuedAt = new Date().toISOString()
+
+ const { error: updateError } = await supabase
+ .from('crm_connections')
+ .update({
+ metadata: mergeSyncMetadata(connection.metadata, {
+ status: 'queued',
+ provider: connection.provider,
+ contacts: {
+ status: 'queued',
+ requestedAt: queuedAt,
+ error: null,
+ },
+ }),
+ })
+ .eq('id', connection.id)
+
+ if (updateError) {
+ throw updateError
+ }
+
+ await enqueueJob(
  queue,
  {
- type: 'crm:sync-pipelines',
+ type: 'crm:sync-contacts',
  provider: 'kommo',
  orgId: payload.orgId,
  connectionId: connection.id,
  baseDomain: connection.base_domain,
  },
- { jobId: `crm-sync-${connection.id}` },
+ { jobId: `crm-sync-contacts-${connection.id}` },
  )
 
  reply.send({ success: true })
@@ -343,6 +423,8 @@ export const registerKommoRoutes = async (fastify: FastifyInstance) => {
  provider: 'kommo',
  orgId: connection.org_id,
  payload,
+ signature: typeof signatureHeader === 'string' ? signatureHeader : null,
+ rawBody: bodyString,
  })
 
  reply.send({ success: true })
