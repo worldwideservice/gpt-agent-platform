@@ -97,66 +97,193 @@ values (
 )
 on conflict (id) do nothing;
 
-insert into agent_pipelines (id, agent_id, pipeline_external_id, name)
+insert into agent_pipelines (id, org_id, agent_id, pipeline_external_id, name)
 values (
   '20000000-0000-4000-8000-000000000200',
+  '00000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000100',
   'lead_generation',
   'Generation Lead'
 )
 on conflict (id) do nothing;
 
-insert into agent_pipeline_stages (id, pipeline_id, stage_external_id, name, order_index)
+insert into agent_pipeline_stages (id, pipeline_id, org_id, stage_external_id, name, order_index)
 values
-  ('20000000-0000-4000-8000-000000000210', '20000000-0000-4000-8000-000000000200', 'new', 'Новый лид', 1),
-  ('20000000-0000-4000-8000-000000000211', '20000000-0000-4000-8000-000000000200', 'qualification', 'Квалификация', 2),
-  ('20000000-0000-4000-8000-000000000212', '20000000-0000-4000-8000-000000000200', 'proposal', 'Предложение', 3)
+  ('20000000-0000-4000-8000-000000000210', '20000000-0000-4000-8000-000000000200', '00000000-0000-4000-8000-000000000001', 'new', 'Новый лид', 1),
+  ('20000000-0000-4000-8000-000000000211', '20000000-0000-4000-8000-000000000200', '00000000-0000-4000-8000-000000000001', 'qualification', 'Квалификация', 2),
+  ('20000000-0000-4000-8000-000000000212', '20000000-0000-4000-8000-000000000200', '00000000-0000-4000-8000-000000000001', 'proposal', 'Предложение', 3)
 on conflict (id) do nothing;
 
-insert into agent_stage_policies (id, agent_id, stage_id, instructions, auto_advance, followup_delay, followup_template)
+insert into agent_stage_policies (id, org_id, agent_id, stage_id, instructions, auto_advance, followup_delay, followup_template)
 values
-  ('20000000-0000-4000-8000-000000000220', '10000000-0000-4000-8000-000000000100', '20000000-0000-4000-8000-000000000210', 'Приветствуй клиента, собирай email и тип услуги. Уточни, что ответишь на английском.', true, interval '0 minutes', 'Hi {{contact_name}}, thanks for reaching out! I''ll collect a few details to get you to the right specialist.'),
-  ('20000000-0000-4000-8000-000000000221', '10000000-0000-4000-8000-000000000100', '20000000-0000-4000-8000-000000000211', 'Квалифицируй интерес, предложи консультацию, назначь задачу на менеджера.', true, interval '30 minutes', 'Following up to make sure we schedule your consultation. Does {{datetime}} work for you?'),
-  ('20000000-0000-4000-8000-000000000222', '10000000-0000-4000-8000-000000000100', '20000000-0000-4000-8000-000000000212', 'Подготовь предложение, отправь email и уточни готовность.', false, interval '1 day', 'Just checking in to see if you had a chance to review the proposal. Happy to answer any questions!')
+  (
+    '20000000-0000-4000-8000-000000000220',
+    '00000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000100',
+    '20000000-0000-4000-8000-000000000210',
+    'Приветствуй клиента, собирай email и тип услуги. Уточни, что ответишь на английском.',
+    true,
+    interval '0 minutes',
+    'Hi {{contact_name}}, thanks for reaching out! I''ll collect a few details to get you to the right specialist.'
+  ),
+  (
+    '20000000-0000-4000-8000-000000000221',
+    '00000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000100',
+    '20000000-0000-4000-8000-000000000211',
+    'Квалифицируй интерес, предложи консультацию, назначь задачу на менеджера.',
+    true,
+    interval '30 minutes',
+    'Following up to make sure we schedule your consultation. Does {{datetime}} work for you?'
+  ),
+  (
+    '20000000-0000-4000-8000-000000000222',
+    '00000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000100',
+    '20000000-0000-4000-8000-000000000212',
+    'Подготовь предложение, отправь email и уточни готовность.',
+    false,
+    interval '1 day',
+    'Just checking in to see if you had a chance to review the proposal. Happy to answer any questions!'
+  )
 on conflict (id) do nothing;
 
-insert into agent_triggers (id, agent_id, name, description)
+insert into agent_triggers (id, org_id, agent_id, name, description)
 values
-  ('30000000-0000-4000-8000-000000000300', '10000000-0000-4000-8000-000000000100', 'Тип услуги "AGENT PARTNERSHIP"', 'Переключить сделку на этап Partnership и уведомить менеджера'),
-  ('30000000-0000-4000-8000-000000000301', '10000000-0000-4000-8000-000000000100', 'Тип услуги "WORK VISA IN POLAND"', 'Перевести лиду на стадию визы и отправить письмо'),
-  ('30000000-0000-4000-8000-000000000302', '10000000-0000-4000-8000-000000000100', 'Тип услуги "SEASONAL VISA IN POLAND"', 'Создать задачу follow-up через 2 дня')
+  (
+    '30000000-0000-4000-8000-000000000300',
+    '00000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000100',
+    'Тип услуги "AGENT PARTNERSHIP"',
+    'Переключить сделку на этап Partnership и уведомить менеджера'
+  ),
+  (
+    '30000000-0000-4000-8000-000000000301',
+    '00000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000100',
+    'Тип услуги "WORK VISA IN POLAND"',
+    'Перевести лиду на стадию визы и отправить письмо'
+  ),
+  (
+    '30000000-0000-4000-8000-000000000302',
+    '00000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000100',
+    'Тип услуги "SEASONAL VISA IN POLAND"',
+    'Создать задачу follow-up через 2 дня'
+  )
 on conflict (id) do nothing;
 
-insert into agent_trigger_conditions (id, trigger_id, condition_type, payload, ordering)
+insert into agent_trigger_conditions (id, trigger_id, org_id, condition_type, payload, ordering)
 values
-  ('30000000-0000-4000-8000-000000000310', '30000000-0000-4000-8000-000000000300', 'service_type_equals', jsonb_build_object('value', 'AGENT PARTNERSHIP'), 0),
-  ('30000000-0000-4000-8000-000000000311', '30000000-0000-4000-8000-000000000301', 'service_type_equals', jsonb_build_object('value', 'WORK VISA IN POLAND'), 0),
-  ('30000000-0000-4000-8000-000000000312', '30000000-0000-4000-8000-000000000302', 'service_type_equals', jsonb_build_object('value', 'SEASONAL VISA IN POLAND'), 0)
+  (
+    '30000000-0000-4000-8000-000000000310',
+    '30000000-0000-4000-8000-000000000300',
+    '00000000-0000-4000-8000-000000000001',
+    'service_type_equals',
+    jsonb_build_object('value', 'AGENT PARTNERSHIP'),
+    0
+  ),
+  (
+    '30000000-0000-4000-8000-000000000311',
+    '30000000-0000-4000-8000-000000000301',
+    '00000000-0000-4000-8000-000000000001',
+    'service_type_equals',
+    jsonb_build_object('value', 'WORK VISA IN POLAND'),
+    0
+  ),
+  (
+    '30000000-0000-4000-8000-000000000312',
+    '30000000-0000-4000-8000-000000000302',
+    '00000000-0000-4000-8000-000000000001',
+    'service_type_equals',
+    jsonb_build_object('value', 'SEASONAL VISA IN POLAND'),
+    0
+  )
 on conflict (id) do nothing;
 
-insert into agent_trigger_actions (id, trigger_id, action_type, payload, ordering)
+insert into agent_trigger_actions (id, trigger_id, org_id, action_type, payload, ordering)
 values
-  ('30000000-0000-4000-8000-000000000320', '30000000-0000-4000-8000-000000000300', 'update_stage', jsonb_build_object('stage_external_id', 'agent_partnership'), 0),
-  ('30000000-0000-4000-8000-000000000321', '30000000-0000-4000-8000-000000000300', 'notify_manager', jsonb_build_object('channel', 'internal'), 1),
-  ('30000000-0000-4000-8000-000000000322', '30000000-0000-4000-8000-000000000301', 'update_stage', jsonb_build_object('stage_external_id', 'work_visa_pl'), 0),
-  ('30000000-0000-4000-8000-000000000323', '30000000-0000-4000-8000-000000000301', 'send_email', jsonb_build_object('template', 'work_visa_intro'), 1),
-  ('30000000-0000-4000-8000-000000000324', '30000000-0000-4000-8000-000000000302', 'create_task', jsonb_build_object('due_in', '2 days', 'description', 'Follow up seasonal visa lead'), 0)
+  (
+    '30000000-0000-4000-8000-000000000320',
+    '30000000-0000-4000-8000-000000000300',
+    '00000000-0000-4000-8000-000000000001',
+    'update_stage',
+    jsonb_build_object('stage_external_id', 'agent_partnership'),
+    0
+  ),
+  (
+    '30000000-0000-4000-8000-000000000321',
+    '30000000-0000-4000-8000-000000000300',
+    '00000000-0000-4000-8000-000000000001',
+    'notify_manager',
+    jsonb_build_object('channel', 'internal'),
+    1
+  ),
+  (
+    '30000000-0000-4000-8000-000000000322',
+    '30000000-0000-4000-8000-000000000301',
+    '00000000-0000-4000-8000-000000000001',
+    'update_stage',
+    jsonb_build_object('stage_external_id', 'work_visa_pl'),
+    0
+  ),
+  (
+    '30000000-0000-4000-8000-000000000323',
+    '30000000-0000-4000-8000-000000000301',
+    '00000000-0000-4000-8000-000000000001',
+    'send_email',
+    jsonb_build_object('template', 'work_visa_intro'),
+    1
+  ),
+  (
+    '30000000-0000-4000-8000-000000000324',
+    '30000000-0000-4000-8000-000000000302',
+    '00000000-0000-4000-8000-000000000001',
+    'create_task',
+    jsonb_build_object('due_in', '2 days', 'description', 'Follow up seasonal visa lead'),
+    0
+  )
 on conflict (id) do nothing;
 
-insert into agent_sequences (id, agent_id, name, description)
+insert into agent_sequences (id, org_id, agent_id, name, description)
 values (
   '31000000-0000-4000-8000-000000000330',
+  '00000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000100',
   'Primary Follow-up',
   '3-step follow-up for cold leads'
 )
 on conflict (id) do nothing;
 
-insert into agent_sequence_steps (id, sequence_id, step_index, wait_interval, channel, template)
+insert into agent_sequence_steps (id, sequence_id, org_id, step_index, wait_interval, channel, template)
 values
-  ('31000000-0000-4000-8000-000000000331', '31000000-0000-4000-8000-000000000330', 1, interval '0 minutes', 'email', 'Thanks for contacting us! Here is your consultation link.'),
-  ('31000000-0000-4000-8000-000000000332', '31000000-0000-4000-8000-000000000330', 2, interval '1 day', 'email', 'Just checking in if you had a chance to review our offer.'),
-  ('31000000-0000-4000-8000-000000000333', '31000000-0000-4000-8000-000000000330', 3, interval '3 days', 'whatsapp', 'Happy to answer any question over chat — when is a good time to talk?')
+  (
+    '31000000-0000-4000-8000-000000000331',
+    '31000000-0000-4000-8000-000000000330',
+    '00000000-0000-4000-8000-000000000001',
+    1,
+    interval '0 minutes',
+    'email',
+    'Thanks for contacting us! Here is your consultation link.'
+  ),
+  (
+    '31000000-0000-4000-8000-000000000332',
+    '31000000-0000-4000-8000-000000000330',
+    '00000000-0000-4000-8000-000000000001',
+    2,
+    interval '1 day',
+    'email',
+    'Just checking in if you had a chance to review our offer.'
+  ),
+  (
+    '31000000-0000-4000-8000-000000000333',
+    '31000000-0000-4000-8000-000000000330',
+    '00000000-0000-4000-8000-000000000001',
+    3,
+    interval '3 days',
+    'whatsapp',
+    'Happy to answer any question over chat — when is a good time to talk?'
+  )
 on conflict (id) do nothing;
 
 insert into sequence_executions (id, org_id, sequence_id, agent_id, lead_id, status, current_step, execution_context)

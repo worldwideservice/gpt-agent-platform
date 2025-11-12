@@ -2,6 +2,14 @@ import '@testing-library/jest-dom'
 import { expect, afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 
+if (typeof (globalThis as any).Element === 'undefined') {
+  ;(globalThis as any).Element = class {}
+}
+
+if (typeof (globalThis as any).window === 'undefined') {
+  ;(globalThis as any).window = globalThis
+}
+
 // Мокаем ResizeObserver для тестов
 global.ResizeObserver = class ResizeObserver {
   observe = vi.fn()

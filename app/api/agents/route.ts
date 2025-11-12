@@ -2,8 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { z } from 'zod'
 
 import { auth } from '@/auth'
-import { getAgents } from '@/lib/repositories/agents'
 import { createErrorResponse } from '@/lib/utils/error-handler'
+import { listAgents, createAgent as createAgentService } from '@/lib/services/agents'
 
 const querySchema = z.object({
  search: z.string().optional(),
@@ -19,8 +19,6 @@ const querySchema = z.object({
  .transform((value) => Number.parseInt(value, 10))
  .optional(),
 })
-
-import { createAgent } from '@/lib/repositories/agents'
 
 /**
  * @swagger
@@ -227,13 +225,12 @@ export const GET = async (request: NextRequest) => {
  }
 
  try {
- const result = await getAgents({
- organizationId: session.user.orgId,
- page: parsedParams.data.page,
- limit: parsedParams.data.limit,
- search: parsedParams.data.search,
- status: parsedParams.data.status,
- })
+    const result = await listAgents(session.user.orgId, {
+      page: parsedParams.data.page,
+      limit: parsedParams.data.limit,
+      search: parsedParams.data.search,
+      status: parsedParams.data.status,
+    })
 
  return NextResponse.json({
  success: true,
@@ -302,16 +299,7 @@ export const POST = async (request: NextRequest) => {
  )
  }
 
- const agent = await createAgent(session.user.orgId, {
- name: parsed.data.name,
- status: parsed.data.status,
- model: parsed.data.model,
- instructions: parsed.data.instructions,
- temperature: parsed.data.temperature,
- maxTokens: parsed.data.maxTokens,
- responseDelaySeconds: parsed.data.responseDelaySeconds,
- settings: parsed.data.settings ?? {},
- })
+    const agent = await createAgentService(session.user.orgId, parsed.data)
 
  // Логируем создание агента
  const { ActivityLogger } = await import('@/lib/services/activity-logger')

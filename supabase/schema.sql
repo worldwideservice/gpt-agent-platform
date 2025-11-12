@@ -428,6 +428,7 @@ create index if not exists idx_audit_logs_entity on audit_logs(org_id, entity, e
 -- Pipelines and stages -----------------------------------------------------
 create table if not exists agent_pipelines (
   id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references organizations(id) on delete cascade,
   agent_id uuid not null references agents(id) on delete cascade,
   pipeline_external_id text not null,
   name text not null,
@@ -438,6 +439,7 @@ create table if not exists agent_pipelines (
 create table if not exists agent_pipeline_stages (
   id uuid primary key default gen_random_uuid(),
   pipeline_id uuid not null references agent_pipelines(id) on delete cascade,
+  org_id uuid not null references organizations(id) on delete cascade,
   stage_external_id text not null,
   name text not null,
   order_index integer not null,
@@ -446,6 +448,7 @@ create table if not exists agent_pipeline_stages (
 
 create table if not exists agent_channels (
   id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references organizations(id) on delete cascade,
   agent_id uuid not null references agents(id) on delete cascade,
   channel_key text not null,
   is_enabled boolean not null default true,
@@ -455,6 +458,7 @@ create table if not exists agent_channels (
 -- Stage specific behaviour -------------------------------------------------
 create table if not exists agent_stage_policies (
   id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references organizations(id) on delete cascade,
   agent_id uuid not null references agents(id) on delete cascade,
   stage_id uuid not null references agent_pipeline_stages(id) on delete cascade,
   instructions text,
@@ -473,6 +477,7 @@ for each row execute procedure trigger_set_timestamp();
 -- Triggers -----------------------------------------------------------------
 create table if not exists agent_triggers (
   id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references organizations(id) on delete cascade,
   agent_id uuid not null references agents(id) on delete cascade,
   name text not null,
   description text,
@@ -488,6 +493,7 @@ for each row execute procedure trigger_set_timestamp();
 create table if not exists agent_trigger_conditions (
   id uuid primary key default gen_random_uuid(),
   trigger_id uuid not null references agent_triggers(id) on delete cascade,
+  org_id uuid not null references organizations(id) on delete cascade,
   condition_type text not null,
   payload jsonb not null,
   ordering integer not null default 0
@@ -496,6 +502,7 @@ create table if not exists agent_trigger_conditions (
 create table if not exists agent_trigger_actions (
   id uuid primary key default gen_random_uuid(),
   trigger_id uuid not null references agent_triggers(id) on delete cascade,
+  org_id uuid not null references organizations(id) on delete cascade,
   action_type text not null,
   payload jsonb not null,
   ordering integer not null default 0
@@ -504,6 +511,7 @@ create table if not exists agent_trigger_actions (
 -- Sequences (follow-ups) ---------------------------------------------------
 create table if not exists agent_sequences (
   id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references organizations(id) on delete cascade,
   agent_id uuid not null references agents(id) on delete cascade,
   name text not null,
   description text,
@@ -519,11 +527,12 @@ for each row execute procedure trigger_set_timestamp();
 create table if not exists agent_sequence_steps (
   id uuid primary key default gen_random_uuid(),
   sequence_id uuid not null references agent_sequences(id) on delete cascade,
+  org_id uuid not null references organizations(id) on delete cascade,
   step_index integer not null,
   wait_interval interval not null default interval '0 minutes',
   channel text not null,
   template text not null,
- metadata jsonb default '{}'::jsonb
+  metadata jsonb default '{}'::jsonb
 );
 
 -- Automation Rules --------------------------------------------------------
