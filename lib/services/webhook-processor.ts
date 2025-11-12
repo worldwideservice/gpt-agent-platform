@@ -10,6 +10,12 @@ import { addJobToQueue } from '@/lib/queue'
 import { getCrmConnectionData } from '@/lib/repositories/crm-connection'
 import { KommoAPI } from '@/lib/crm/kommo'
 
+export interface WebhookMetadata {
+  eventSubtype?: string
+  entityId?: string
+  entityType?: string
+}
+
 export interface WebhookEvent {
   id: string
   org_id: string
@@ -44,11 +50,7 @@ export const saveWebhookEvent = async (
   provider: string,
   eventType: string,
   payload: Record<string, unknown>,
-  metadata?: {
-    eventSubtype?: string
-    entityId?: string
-    entityType?: string
-  }
+  metadata?: WebhookMetadata
 ): Promise<string> => {
   const supabase = getSupabaseServiceRoleClient()
 
@@ -74,6 +76,87 @@ export const saveWebhookEvent = async (
   }
 
   return data.id
+}
+
+export const extractWebhookMetadata = (
+  eventType: string,
+  eventData: unknown,
+): WebhookMetadata => {
+  const metadata: WebhookMetadata = {}
+
+  try {
+    const data = eventData as Record<string, unknown>
+
+    if (!metadata.entityType) {
+      metadata.entityType = eventType.slice(0, -1)
+    }
+
+    if (eventType === 'leads') {
+      const leads = data.leads || data
+
+      if (Array.isArray(leads)) {
+        if (leads.length > 0 && leads[0]?.id) {
+          metadata.entityId = String(leads[0].id)
+        }
+      } else if (typeof leads === 'object' && leads !== null) {
+        const statusArray = (leads as Record<string, unknown>).status as Array<Record<string, unknown>> | undefined
+        const addArray = (leads as Record<string, unknown>).add as Array<Record<string, unknown>> | undefined
+        const updateArray = (leads as Record<string, unknown>).update as Array<Record<string, unknown>> | undefined
+
+        const firstLead = statusArray?.[0] || addArray?.[0] || updateArray?.[0]
+
+        if (firstLead?.id) {
+          metadata.entityId = String(firstLead.id)
+        }
+
+        if (statusArray && statusArray.length > 0) {
+          metadata.eventSubtype = 'lead_status_changed'
+        } else if (addArray && addArray.length > 0) {
+          metadata.eventSubtype = 'lead_created'
+        } else if (updateArray && updateArray.length > 0) {
+          metadata.eventSubtype = 'lead_updated'
+        }
+      }
+    } else if (eventType === 'contacts') {
+      const contacts = data.contacts || data
+
+      if (Array.isArray(contacts) && contacts.length > 0 && contacts[0]?.id) {
+        metadata.entityId = String(contacts[0].id)
+        metadata.eventSubtype = 'contact_created'
+      } else if (typeof contacts === 'object' && contacts !== null) {
+        const addArray = (contacts as Record<string, unknown>).add as Array<Record<string, unknown>> | undefined
+        const updateArray = (contacts as Record<string, unknown>).update as Array<Record<string, unknown>> | undefined
+
+        const firstContact = addArray?.[0] || updateArray?.[0]
+        if (firstContact?.id) {
+          metadata.entityId = String(firstContact.id)
+          metadata.eventSubtype = addArray ? 'contact_created' : 'contact_updated'
+        }
+      }
+    } else if (eventType === 'tasks') {
+      const tasks = data.tasks || data
+
+      if (Array.isArray(tasks) && tasks.length > 0) {
+        const task = tasks[0] as Record<string, unknown>
+        if (task.id) {
+          metadata.entityId = String(task.id)
+        }
+        if (task.entity_type) {
+          metadata.entityType = String(task.entity_type)
+        }
+
+        if (task.status === 'completed') {
+          metadata.eventSubtype = 'task_completed'
+        } else {
+          metadata.eventSubtype = 'task_created'
+        }
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to extract webhook metadata', { eventType, error })
+  }
+
+  return metadata
 }
 
 /**

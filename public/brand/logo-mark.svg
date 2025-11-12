@@ -1,0 +1,20 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">TON 18 логотип</title>
+  <desc id="desc">Абстрактный знак с градиентом, состоящий из концентрических кругов и лучей</desc>
+  <defs>
+    <linearGradient id="brandGradient" x1="16" y1="12" x2="120" y2="116" gradientUnits="userSpaceOnUse">
+      <stop stop-color="hsl(355, 78%, 56%)" />
+      <stop offset="1" stop-color="hsl(16, 100%, 60%)" />
+    </linearGradient>
+    <radialGradient id="highlight" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(40 32) rotate(45) scale(96)">
+      <stop stop-color="rgba(255,255,255,0.9)" />
+      <stop offset="1" stop-color="rgba(255,255,255,0)" />
+    </radialGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#brandGradient)" />
+  <rect width="128" height="128" rx="28" fill="url(#highlight)" />
+  <path d="M64 30C46.3269 30 32 44.3269 32 62C32 79.6731 46.3269 94 64 94C81.6731 94 96 79.6731 96 62" stroke="white" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M64 46C55.1634 46 48 53.1634 48 62C48 70.8366 55.1634 78 64 78C72.8366 78 80 70.8366 80 62" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M94 30V62" stroke="white" stroke-width="10" stroke-linecap="round" />
+  <circle cx="100" cy="28" r="10" fill="white" />
+</svg>

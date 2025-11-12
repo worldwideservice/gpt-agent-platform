@@ -1,7 +1,6 @@
-/**
- * Structured Logging для Worker
- * Логирование с корреляцией job IDs и контекстом
- */
+import pino, { type Logger as PinoLogger, type LoggerOptions } from 'pino'
+import { trace } from '@opentelemetry/api'
+import { Sentry } from './sentry'
 
 interface LogContext {
   jobId?: string
@@ -12,61 +11,61 @@ interface LogContext {
   [key: string]: unknown
 }
 
+const isProduction = process.env.NODE_ENV === 'production'
+
+const options: LoggerOptions = {
+  level: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug'),
+  base: { service: 'worker' },
+  transport: isProduction
+    ? undefined
+    : {
+        target: 'pino-pretty',
+        options: {
+          colorize: true,
+          translateTime: 'HH:MM:ss.l',
+        },
+      },
+}
+
+const baseLogger: PinoLogger = pino(options)
+
 class Logger {
-  private formatMessage(level: string, message: string, context?: LogContext): string {
-    const timestamp = new Date().toISOString()
-    const contextStr = context ? JSON.stringify(context) : ''
-    
-    return JSON.stringify({
-      timestamp,
-      level,
-      service: 'worker',
-      message,
-      ...context,
-    })
-  }
+  constructor(private readonly logger: PinoLogger) {}
 
-  /**
-   * Log info message
-   */
   info(message: string, context?: LogContext): void {
-    console.log(this.formatMessage('info', message, context))
+    this.logger.info(context ?? {}, message)
+    this.annotateSpan('info', message, context)
   }
 
-  /**
-   * Log warning message
-   */
   warn(message: string, context?: LogContext): void {
-    console.warn(this.formatMessage('warn', message, context))
+    this.logger.warn(context ?? {}, message)
+    this.annotateSpan('warn', message, context)
   }
 
-  /**
-   * Log error message
-   */
   error(message: string, error?: Error | unknown, context?: LogContext): void {
-    const errorContext = {
+    const payload = {
       ...context,
-      error: error instanceof Error ? {
+      err: error instanceof Error ? {
         message: error.message,
         stack: error.stack,
         name: error.name,
-      } : String(error),
+      } : error,
     }
-    console.error(this.formatMessage('error', message, errorContext))
+
+    this.logger.error(payload, message)
+
+    if (error instanceof Error) {
+      Sentry.captureException(error, { extra: context })
+    }
+
+    this.annotateSpan('error', message, { ...context, error })
   }
 
-  /**
-   * Log debug message (only in development)
-   */
   debug(message: string, context?: LogContext): void {
-    if (process.env.NODE_ENV !== 'production') {
-      console.debug(this.formatMessage('debug', message, context))
-    }
+    this.logger.debug(context ?? {}, message)
+    this.annotateSpan('debug', message, context)
   }
 
-  /**
-   * Log job start with correlation ID
-   */
   jobStart(jobId: string, jobName: string, data?: unknown): void {
     this.info(`Job started: ${jobName}`, {
       jobId,
@@ -76,9 +75,6 @@ class Logger {
     })
   }
 
-  /**
-   * Log job completion with duration
-   */
   jobComplete(jobId: string, jobName: string, duration: number, result?: unknown): void {
     this.info(`Job completed: ${jobName}`, {
       jobId,
@@ -89,9 +85,6 @@ class Logger {
     })
   }
 
-  /**
-   * Log job failure with error details
-   */
   jobFailed(jobId: string, jobName: string, error: Error | unknown, duration?: number): void {
     this.error(`Job failed: ${jobName}`, error, {
       jobId,
@@ -101,9 +94,6 @@ class Logger {
     })
   }
 
-  /**
-   * Log Redis connection events
-   */
   redisConnect(): void {
     this.info('Redis connected', {
       event: 'redis.connect',
@@ -128,8 +118,15 @@ class Logger {
       attempt,
     })
   }
+
+  private annotateSpan(level: string, message: string, context?: LogContext): void {
+    const span = trace.getActiveSpan()
+    span?.addEvent(`worker.log.${level}`, {
+      message,
+      ...(context ?? {}),
+    })
+  }
 }
 
-// Singleton instance
-export const logger = new Logger()
+export const logger = new Logger(baseLogger)
 

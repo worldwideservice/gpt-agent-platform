@@ -1,0 +1,48 @@
+{
+  "dashboard": {
+    "title": "Next.js API Dashboard",
+    "tags": ["next", "api"],
+    "timezone": "browser",
+    "schemaVersion": 27,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Request latency (p95)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(next_api_request_duration_seconds_bucket[5m])) by (le))",
+            "legendFormat": "p95 latency"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+      },
+      {
+        "id": 2,
+        "title": "Error count (5m)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "increase(next_api_request_errors_total[5m])",
+            "legendFormat": "Errors"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+      },
+      {
+        "id": 3,
+        "title": "Request rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(next_api_request_duration_seconds_count[5m]))",
+            "legendFormat": "req/s"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 }
+      }
+    ]
+  }
+}

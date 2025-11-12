@@ -33,88 +33,50 @@ cp env.example .env.local
 nano .env.local
 ```
 
-### 2. Запуск с Docker Compose
+### 2. Запуск сервисов через Docker
 
 ```bash
-# Запустить все сервисы (Redis)
-docker-compose up -d redis
+# Полное dev-окружение (Next + Fastify + Worker + Redis + Supabase)
+make dev
 
-# Или запустить все сервисы
-docker-compose up -d
+# Остановить контейнеры
+make dev-down
 
-# Проверить статус
-docker-compose ps
-
-# Просмотр логов
-docker-compose logs -f
+# Поднять monitoring-стек (Prometheus + Grafana + Alertmanager)
+make monitoring
 ```
 
-### 3. Установка зависимостей и запуск приложения
+### 3. Альтернатива: запуск без Docker
 
 ```bash
 # Установить зависимости
 npm install
 
-# Запустить приложение в режиме разработки
+# Запустить Next.js (используя локальные сервисы)
 npm run dev
 
-# Приложение будет доступно на http://localhost:3000
+# Запустить Fastify API и worker при необходимости
+npm run api:dev
+(cd services/worker && npm run dev)
 ```
 
 ---
 
 ## Структура Docker
 
-### docker-compose.yml
+### docker-compose.dev.yml
 
-Основной файл для оркестрации сервисов:
+Dev-конфигурация разворачивает полный стек:
 
-```yaml
-version: '3.8'
+- `next`: Next.js в режиме разработки с hot-reload.
+- `fastify`: API на Fastify (`npm run api:dev`).
+- `worker`: BullMQ worker + health-сервер на `3001`.
+- `redis`: локальный Redis для очередей.
+- `supabase`: контейнер с Postgres (заменяет Supabase для локальной работы).
 
-services:
-  # Redis для очередей задач и кэширования
-  redis:
-    image: redis:7-alpine
-    container_name: gpt-agent-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    command: redis-server --appendonly yes
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
+### docker-compose.staging.yml
 
-  # Next.js приложение (опционально, для production)
-  app:
-    build: .
-    container_name: gpt-agent-app
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-    env_file:
-      - .env.local
-    depends_on:
-      - redis
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-volumes:
-  redis-data:
-
-networks:
-  default:
-    name: gpt-agent-network
-```
+Staging-вариант эмулирует продакшен: контейнеры собираются из исходников (`npm install --omit=dev`), сервисы стартуют в production-режиме.
 
 ### Dockerfile
 

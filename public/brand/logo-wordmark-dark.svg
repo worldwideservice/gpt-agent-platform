@@ -1,0 +1,21 @@
+<svg width="240" height="80" viewBox="0 0 240 80" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">TON 18 wordmark dark</title>
+  <desc id="desc">Светлый логотип TON 18 для тёмной темы</desc>
+  <defs>
+    <linearGradient id="markGradientDark" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+      <stop stop-color="hsl(356, 86%, 62%)" />
+      <stop offset="1" stop-color="hsl(16, 100%, 65%)" />
+    </linearGradient>
+  </defs>
+  <rect width="240" height="80" rx="24" fill="#0B1120" />
+  <g transform="translate(4 4)">
+    <rect width="72" height="72" rx="20" fill="url(#markGradientDark)" />
+    <path d="M36 18C24.9543 18 16 26.9543 16 38C16 49.0457 24.9543 58 36 58C47.0457 58 56 49.0457 56 38" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M36 28C30.4772 28 26 32.4772 26 38C26 43.5228 30.4772 48 36 48C41.5228 48 46 43.5228 46 38" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M56 18V38" stroke="white" stroke-width="8" stroke-linecap="round" />
+    <circle cx="60" cy="16" r="7" fill="white" />
+  </g>
+  <text x="92" y="46" fill="#F8FAFC" font-family="'Inter', 'Segoe UI', sans-serif" font-size="30" font-weight="600" letter-spacing="0.04em">TON</text>
+  <text x="158" y="46" fill="#F8FAFC" font-family="'Inter', 'Segoe UI', sans-serif" font-size="30" font-weight="600" letter-spacing="0.08em">18</text>
+  <text x="92" y="66" fill="#E2E8F0" font-family="'Inter', 'Segoe UI', sans-serif" font-size="14" font-weight="500" letter-spacing="0.24em">CREATE INFINITY</text>
+</svg>

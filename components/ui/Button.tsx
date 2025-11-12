@@ -8,15 +8,15 @@ interface ButtonProps extends React.ComponentProps<"button"> {
   asChild?: boolean
 }
 
-function Button({ className, variant = "default", size = "default", asChild = false, ...props }: ButtonProps) {
+function Button({ className, variant = "default", size = "default", asChild = false, type, ...props }: ButtonProps) {
   const Comp = asChild ? Slot : "button"
   const variantClasses = {
-    default: "bg-black text-white hover:bg-black/90",
-    destructive: "bg-red-600 text-white hover:bg-red-700",
-    outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+    default: "bg-brand-accent text-brand-accentForeground hover:bg-brand-accent/90",
+    destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+    outline: "border border-input bg-background hover:bg-brand-accent/10 hover:text-foreground",
     secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-    ghost: "hover:bg-accent hover:text-accent-foreground",
-    link: "text-primary underline-offset-4 hover:underline",
+    ghost: "hover:bg-brand-accent/10 hover:text-brand-accent",
+    link: "text-brand-accent underline-offset-4 hover:underline",
   }
 
   const sizeClasses = {
@@ -26,15 +26,17 @@ function Button({ className, variant = "default", size = "default", asChild = fa
     icon: "size-9",
   }
 
+  const componentProps = asChild ? props : { type: type ?? "button", ...props }
+
   return (
     <Comp
       className={cn(
-        "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 outline-none",
+        "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:ring-2 focus-visible:ring-brand-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         variantClasses[variant],
         sizeClasses[size],
         className,
       )}
-      {...props}
+      {...componentProps}
     />
   )
 }
@@ -42,12 +44,12 @@ function Button({ className, variant = "default", size = "default", asChild = fa
 // Helper function for buttonVariants compatibility
 function buttonVariants({ variant = "default", size = "default" }: { variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link", size?: "default" | "sm" | "lg" | "icon" } = {}) {
   const variantClasses = {
-    default: "bg-black text-white hover:bg-black/90",
-    destructive: "bg-red-600 text-white hover:bg-red-700",
-    outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+    default: "bg-brand-accent text-brand-accentForeground hover:bg-brand-accent/90",
+    destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+    outline: "border border-input bg-background hover:bg-brand-accent/10 hover:text-foreground",
     secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-    ghost: "hover:bg-accent hover:text-accent-foreground",
-    link: "text-primary underline-offset-4 hover:underline",
+    ghost: "hover:bg-brand-accent/10 hover:text-brand-accent",
+    link: "text-brand-accent underline-offset-4 hover:underline",
   }
 
   const sizeClasses = {
