@@ -45,7 +45,78 @@ export interface WorkspaceSummary {
   }>
 }
 
+const DEMO_FLAG_VALUES = new Set(['1', 'true'])
+const matchesDemoFlag = (value?: string) => (value ? DEMO_FLAG_VALUES.has(value.toLowerCase()) : false)
+const isDemoEnvironment = () =>
+  matchesDemoFlag(process.env.DEMO_MODE) ||
+  matchesDemoFlag(process.env.E2E_ONBOARDING_FAKE) ||
+  matchesDemoFlag(process.env.PLAYWRIGHT_DEMO_MODE)
+
+export const createDemoWorkspaceSummary = (_organizationId: string): WorkspaceSummary => {
+  const now = new Date()
+  const today = now.toISOString().split('T')[0]
+  const timestamp = now.toISOString()
+
+  return {
+    agents: {
+      total: 3,
+      active: 3,
+      inactive: 0,
+    },
+    knowledge: {
+      categories: 2,
+      publishedArticles: 5,
+      pendingAssets: 1,
+    },
+    integrations: {
+      kommoConnected: true,
+      kommoDomain: 'demo.kommo.com',
+      lastWebhookEvent: {
+        id: 'demo-webhook-event',
+        eventType: 'demo.event.processed',
+        status: 'processed',
+        createdAt: timestamp,
+        error: null,
+      },
+      webhookHistory: [
+        {
+          id: 'demo-webhook-1',
+          eventType: 'demo.event.processed',
+          status: 'processed',
+          createdAt: timestamp,
+        },
+        {
+          id: 'demo-webhook-2',
+          eventType: 'demo.event.failed',
+          status: 'failed',
+          createdAt: timestamp,
+        },
+      ],
+      webhookSuccessRate: 50,
+    },
+    knowledgeTimeline: [
+      {
+        date: today,
+        count: 2,
+        pending: 1,
+      },
+    ],
+    knowledgeHeatmap: [
+      {
+        date: today,
+        count: 2,
+        pending: 1,
+        intensity: 100,
+      },
+    ],
+  }
+}
+
 export const getWorkspaceSummary = async (organizationId: string): Promise<WorkspaceSummary> => {
+  if (isDemoEnvironment()) {
+    return createDemoWorkspaceSummary(organizationId)
+  }
+
   const supabase = getSupabaseServiceRoleClient()
 
   const [

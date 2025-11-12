@@ -3,6 +3,13 @@ import { generateEmbeddingsForDocument } from '@/lib/services/embeddings'
 
 import type { KnowledgeBaseArticle, KnowledgeBaseCategory, KnowledgeBaseStatsSummary } from '@/types'
 
+const DEMO_FLAG_VALUES = new Set(['1', 'true'])
+const matchesDemoFlag = (value?: string) => (value ? DEMO_FLAG_VALUES.has(value.toLowerCase()) : false)
+const isDemoEnvironment = () =>
+  matchesDemoFlag(process.env.DEMO_MODE) ||
+  matchesDemoFlag(process.env.E2E_ONBOARDING_FAKE) ||
+  matchesDemoFlag(process.env.PLAYWRIGHT_DEMO_MODE)
+
 interface CategoryRow {
  id: string
  org_id: string
@@ -57,11 +64,19 @@ const defaultKnowledgeBaseStats: KnowledgeBaseStatsSummary = {
 }
 
 export const getKnowledgeBaseStats = async (
- organizationId: string,
+  organizationId: string,
 ): Promise<KnowledgeBaseStatsSummary> => {
- const supabase = getSupabaseServiceRoleClient()
+  if (isDemoEnvironment()) {
+    return {
+      categoriesCount: 2,
+      publishedArticlesCount: 5,
+      pendingAssetsCount: 1,
+    }
+  }
 
- try {
+  const supabase = getSupabaseServiceRoleClient()
+
+  try {
  const [categoriesResult, articlesResult, assetsResult] = await Promise.all([
  supabase
  .from('knowledge_base_categories')

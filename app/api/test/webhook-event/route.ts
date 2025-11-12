@@ -4,6 +4,18 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import {
+  deleteDemoWebhookEvent,
+  saveDemoWebhookEvent,
+  type DemoWebhookEvent,
+} from '@/lib/demo/webhook-events'
+
+const DEMO_FLAG_VALUES = new Set(['1', 'true'])
+const matchesDemoFlag = (value?: string) => (value ? DEMO_FLAG_VALUES.has(value.toLowerCase()) : false)
+const isDemoEnvironment = () =>
+  matchesDemoFlag(process.env.DEMO_MODE) ||
+  matchesDemoFlag(process.env.E2E_ONBOARDING_FAKE) ||
+  matchesDemoFlag(process.env.PLAYWRIGHT_DEMO_MODE)
 
 const ensureE2EMode = () => {
   if (process.env.E2E_ONBOARDING_FAKE !== '1') {
@@ -25,6 +37,20 @@ export const POST = async (request: NextRequest) => {
 
   try {
     const payload = await request.json().catch(() => ({}))
+    if (isDemoEnvironment()) {
+      const event: DemoWebhookEvent = {
+        id: randomUUID(),
+        org_id: session.user.orgId,
+        provider: 'kommo',
+        event_type: payload.eventType ?? 'playwright.webhook',
+        status: payload.status ?? 'failed',
+        payload: payload.payload ?? { source: 'playwright' },
+        error: payload.error ?? 'Playwright injected failure',
+        created_at: new Date().toISOString(),
+      }
+      saveDemoWebhookEvent(event)
+      return NextResponse.json({ success: true, data: event })
+    }
     const supabase = getSupabaseServiceRoleClient()
     const { data, error } = await supabase
       .from('webhook_events')
@@ -67,6 +93,10 @@ export const DELETE = async (request: NextRequest) => {
   }
 
   try {
+    if (isDemoEnvironment()) {
+      deleteDemoWebhookEvent(eventId)
+      return NextResponse.json({ success: true })
+    }
     const supabase = getSupabaseServiceRoleClient()
     const { error } = await supabase
       .from('webhook_events')
