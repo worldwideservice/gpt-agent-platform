@@ -1,46 +1,83 @@
 'use client'
 
 import { useState } from 'react'
-import { Bell, Search, UserCircle2 } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useSession } from 'next-auth/react'
 
-import { Button, Input } from '@/components/ui'
 import { useTenant } from '@/components/providers/TenantProvider'
+import { GlobalSearch } from './GlobalSearch'
+import { LicenseAlert } from './LicenseAlert'
+import { NotificationsButton } from './NotificationsButton'
+import { NotificationsPanel } from './NotificationsPanel'
+import { UserMenu } from './UserMenu'
 
 export function ManageHeader() {
-  const [query, setQuery] = useState('')
-  const { tenantId, organizationName } = useTenant()
-  const tLayout = useTranslations('manage.layout')
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const { tenantId } = useTenant()
+  const { data: session } = useSession()
+
+  // TODO: Get actual license expiry date from API/database
+  const licenseExpiryDate = new Date('2025-10-30')
+
+  // TODO: Get actual notifications from API
+  const mockNotifications = [
+    {
+      id: '1',
+      title: 'Лицензия истекла: ответы ИИ отключены',
+      description: `Для "World Wide Services" ответы ИИ отключены, так как срок действия вашей лицензии истек.`,
+      timestamp: new Date(Date.now() - 15 * 60 * 1000), // 15 minutes ago
+      read: false,
+      actionLabel: 'Продлить лицензию',
+      actionHref: `/manage/${tenantId}/pricing`,
+    },
+  ]
+
+  const notificationsCount = mockNotifications.filter((n) => !n.read).length
+
+  const handleMarkAllRead = () => {
+    // TODO: Implement mark all as read API call
+    console.log('Mark all as read')
+  }
+
+  const handleDeleteAll = () => {
+    // TODO: Implement delete all notifications API call
+    console.log('Delete all notifications')
+  }
+
+  const handleDeleteOne = (id: string) => {
+    // TODO: Implement delete single notification API call
+    console.log('Delete notification:', id)
+  }
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-white/80 px-4 backdrop-blur dark:bg-gray-950/70">
-      <div className="hidden flex-1 items-center gap-3 lg:flex">
-        <div className="relative w-96">
-          <Input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={tLayout('searchPlaceholder')}
-            className="pl-9"
-          />
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+    <>
+      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-white/80 px-4 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/80">
+        <div className="flex flex-1 items-center gap-4">
+          <GlobalSearch />
         </div>
-      </div>
 
-      <div className="flex flex-1 items-center justify-end gap-2">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute right-1 top-1 inline-flex h-2 w-2 rounded-full bg-rose-500" />
-        </Button>
-        <Button variant="outline" size="sm" className="hidden md:flex">
-          <span className="text-xs uppercase text-gray-500">{tLayout('workspaceLabel')}</span>
-          <span className="ml-2 font-semibold text-gray-800 dark:text-gray-200">
-            {organizationName ?? tenantId}
-          </span>
-        </Button>
-        <Button variant="ghost" size="icon">
-          <UserCircle2 className="h-6 w-6" />
-        </Button>
-      </div>
-    </header>
+        <div className="flex items-center gap-2">
+          <LicenseAlert expiryDate={licenseExpiryDate} tenantId={tenantId} />
+          <NotificationsButton
+            count={notificationsCount}
+            onClick={() => setNotificationsOpen(!notificationsOpen)}
+            isActive={notificationsOpen}
+          />
+          <UserMenu
+            userName={session?.user?.name || 'Admin'}
+            userEmail={session?.user?.email || undefined}
+            userImage={session?.user?.image || undefined}
+          />
+        </div>
+      </header>
+
+      <NotificationsPanel
+        open={notificationsOpen}
+        onOpenChange={setNotificationsOpen}
+        notifications={mockNotifications}
+        onMarkAllRead={handleMarkAllRead}
+        onDeleteAll={handleDeleteAll}
+        onDeleteOne={handleDeleteOne}
+      />
+    </>
   )
 }

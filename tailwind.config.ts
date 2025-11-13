@@ -7,6 +7,10 @@ import {
   radiusTokens,
   fontTokens,
   brandTokens,
+  spacingTokens,
+  shadowTokens,
+  fontSizeTokens,
+  fontWeightTokens,
 } from './design-tokens'
 
 const config: Config = {
@@ -25,8 +29,12 @@ const config: Config = {
         chart: chartColorTokens,
         brand: brandTokens,
       },
+      spacing: spacingTokens,
       borderRadius: radiusTokens,
+      boxShadow: shadowTokens,
       fontFamily: fontTokens,
+      fontSize: fontSizeTokens,
+      fontWeight: fontWeightTokens,
       keyframes: {
         'accordion-down': {
           from: {

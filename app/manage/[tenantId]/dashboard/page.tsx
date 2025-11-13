@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { WorkspaceSummaryIntegrationInsights } from '@/components/features/manage/WorkspaceSummaryIntegrationInsights'
 import { WorkspaceSummaryKnowledgeInsights } from '@/components/features/manage/WorkspaceSummaryKnowledgeInsights'
 import { WebhookActivityCard } from '@/components/features/manage/WebhookActivityCard'
+import { MonthlyResponsesChart } from '@/components/features/dashboard/MonthlyResponsesChart'
+import { DailyResponsesChart } from '@/components/features/dashboard/DailyResponsesChart'
 import { loadManageDashboardData } from '@/lib/repositories/manage-data'
 
 interface DashboardPageProps {
@@ -143,9 +145,39 @@ async function DashboardMetrics({ organizationId }: DashboardMetricsProps) {
     },
   ]
 
+  // Mock data for monthly chart (June 2025 - November 2025)
+  const monthlyData = [
+    { month: 'июнь 2025', responses: 8000 },
+    { month: 'июль 2025', responses: 10000 },
+    { month: 'август 2025', responses: 12000 },
+    { month: 'сентябрь 2025', responses: 14000 },
+    { month: 'октябрь 2025', responses: 18000 },
+    { month: 'ноябрь 2025', responses: 3000 },
+  ]
+
+  // Mock data for daily chart (Oct 29 - Nov 06)
+  const dailyData = [
+    { day: 'срд, окт 29', responses: 300 },
+    { day: 'чтв, окт 30', responses: 350 },
+    { day: 'птн, окт 31', responses: 400 },
+    { day: 'сбт, ноя 01', responses: 550 },
+    { day: 'вск, ноя 02', responses: 500 },
+    { day: 'пнд, ноя 03', responses: 300 },
+    { day: 'втр, ноя 04', responses: 200 },
+    { day: 'срд, ноя 05', responses: 150 },
+    { day: 'чтв, ноя 06', responses: 100 },
+  ]
+
   return (
     <>
       <StatsGrid metrics={metrics} />
+
+      {/* Charts Section */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <MonthlyResponsesChart data={monthlyData} />
+        <DailyResponsesChart data={dailyData} />
+      </div>
+
       {summary ? (
         <>
           <WorkspaceSummaryKnowledgeInsights summary={summary} />

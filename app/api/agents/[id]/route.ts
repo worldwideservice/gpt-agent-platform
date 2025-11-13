@@ -16,17 +16,28 @@ const settingsSchema = z
  createTaskOnNotFound: z.boolean().optional(),
  notFoundMessage: z.string().optional(),
  checkBeforeSending: z.boolean().optional(),
+ autoDetectLanguage: z.boolean().optional(),
+ creativity: z.enum(['precise', 'balanced', 'creative']).optional(),
  })
  .optional()
 
 const updateSchema = z.object({
  name: z.string().min(1).optional(),
  status: z.enum(['active', 'inactive', 'draft']).optional(),
+ isActive: z.boolean().optional(),
  model: z.string().optional(),
  instructions: z.string().optional(),
  temperature: z.number().min(0).max(2).optional(),
  maxTokens: z.number().int().min(128).max(8000).optional(),
  responseDelaySeconds: z.number().int().min(0).max(86400).optional(),
+ requiresApproval: z.boolean().optional(),
+ pipelines: z.array(z.string()).optional(),
+ allChannels: z.boolean().optional(),
+ channels: z.array(z.string()).optional(),
+ allCategories: z.boolean().optional(),
+ categories: z.array(z.string()).optional(),
+ createTaskIfNoAnswer: z.boolean().optional(),
+ noAnswerMessage: z.string().optional(),
  settings: settingsSchema,
 })
 

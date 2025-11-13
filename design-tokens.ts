@@ -79,14 +79,58 @@ export const chartColorTokens = {
   5: 'hsl(var(--chart-5))',
 } as const
 
-export const radiusTokens = {
-  lg: 'var(--radius)',
-  md: 'calc(var(--radius) - 2px)',
-  sm: 'calc(var(--radius) - 4px)',
+// Spacing tokens extracted from KWID references
+export const spacingTokens = {
+  xs: '4px',
+  sm: '8px',
+  md: '16px',
+  lg: '24px',
+  xl: '32px',
+  '2xl': '48px',
+  '3xl': '64px',
 } as const
 
+// Border radius tokens from KWID references
+export const radiusTokens = {
+  sm: '4px',
+  md: '6px',
+  lg: '8px',
+  xl: '12px',
+  '2xl': '16px',
+  full: '9999px',
+} as const
+
+// Shadow tokens from KWID references
+export const shadowTokens = {
+  sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+  md: '0 1px 3px rgba(0, 0, 0, 0.1)',
+  lg: '0 4px 6px rgba(0, 0, 0, 0.05)',
+  xl: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+  '2xl': '0 20px 25px rgba(0, 0, 0, 0.15)',
+} as const
+
+// Typography tokens from KWID references
 export const fontTokens = {
-  sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+  sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+  mono: ['JetBrains Mono', 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Consolas', 'Courier New', 'monospace'],
+} as const
+
+export const fontSizeTokens = {
+  xs: '12px',
+  sm: '14px',
+  base: '16px',
+  lg: '18px',
+  xl: '20px',
+  '2xl': '24px',
+  '3xl': '32px',
+  '4xl': '40px',
+} as const
+
+export const fontWeightTokens = {
+  normal: '400',
+  medium: '500',
+  semibold: '600',
+  bold: '700',
 } as const
 
 export const brandTokens = {
@@ -103,8 +147,12 @@ export const designTokens = {
     chart: chartColorTokens,
     brand: brandTokens,
   },
+  spacing: spacingTokens,
   radii: radiusTokens,
+  shadows: shadowTokens,
   fonts: fontTokens,
+  fontSizes: fontSizeTokens,
+  fontWeights: fontWeightTokens,
 } as const
 
 export type DesignTokens = typeof designTokens
