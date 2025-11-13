@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useSession } from 'next-auth/react'
 
 import {
   Button,
@@ -33,6 +34,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import type { Agent } from '@/types'
+import { trackAgentCreated } from '@/lib/analytics/examples'
 
 interface AgentFormProps {
   tenantId: string
@@ -50,9 +52,10 @@ type AgentFormValues = {
   maxTokens: number
 }
 
-export function AgentForm({ agent }: AgentFormProps) {
+export function AgentForm({ agent, tenantId }: AgentFormProps) {
   const router = useRouter()
   const t = useTranslations('manage.agents.form')
+  const { data: session } = useSession()
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   const schema = useMemo(
@@ -114,6 +117,26 @@ export function AgentForm({ agent }: AgentFormProps) {
       if (!response.ok) {
         const payload = await response.json().catch(() => ({ error: 'Unknown error' }))
         throw new Error(payload.error || t('messages.error'))
+      }
+
+      const result = await response.json()
+
+      // Track agent creation (only for new agents, not updates)
+      if (!agent && result.agent) {
+        try {
+          const user = session?.user as any
+          trackAgentCreated({
+            id: result.agent.id,
+            name: values.name,
+            model: values.model,
+            organizationId: user?.organizationId || tenantId,
+            userId: user?.id || 'unknown',
+            hasInstructions: !!values.instructions,
+            hasKnowledge: false, // Knowledge base is added separately
+          })
+        } catch (analyticsError) {
+          console.warn('[AgentForm] Analytics tracking failed:', analyticsError)
+        }
       }
 
       router.refresh()

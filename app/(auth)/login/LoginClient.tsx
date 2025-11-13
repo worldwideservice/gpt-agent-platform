@@ -22,6 +22,7 @@ import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/toast-context'
+import { trackLogin } from '@/lib/analytics/examples'
 
 const formSchema = z.object({
   email: z.string().email('Введите корректный email'),
@@ -215,21 +216,38 @@ export const LoginClient = () => {
               console.log('[LoginClient] Successfully got tenant-id, redirecting...', {
                 tenantId: redirectData.tenantId,
               })
-              
+
+              // Track successful login
+              try {
+                const currentSession = await getSession()
+                if (currentSession?.user) {
+                  const user = currentSession.user as any
+                  trackLogin({
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
+                    organizationId: user.organizationId || redirectData.tenantId,
+                    plan: user.plan,
+                  })
+                }
+              } catch (analyticsError) {
+                console.warn('[LoginClient] Analytics tracking failed:', analyticsError)
+              }
+
               pushToast({
                 title: 'Вход выполнен! ✅',
                 description: `Добро пожаловать, ${data.email}!`,
                 variant: 'success',
               })
-              
+
               // Используем window.location.href для гарантированного полного редиректа
               // Это обновляет всю страницу и гарантирует корректную работу сессии
               const redirectUrl = `/manage/${redirectData.tenantId}`
               console.log('[LoginClient] Redirecting to:', redirectUrl)
-              
+
               // Небольшая задержка для отображения toast
               await new Promise(resolve => setTimeout(resolve, 300))
-              
+
               window.location.href = redirectUrl
               return
             } else {
