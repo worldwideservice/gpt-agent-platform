@@ -9,6 +9,7 @@ import { startSequence } from './sequences'
 import { addJobToQueue } from '@/lib/queue'
 import { getCrmConnectionData } from '@/lib/repositories/crm-connection'
 import { KommoAPI } from '@/lib/crm/kommo'
+import { logger } from '@/lib/utils/logger'
 
 export interface WebhookMetadata {
   eventSubtype?: string
@@ -153,7 +154,7 @@ export const extractWebhookMetadata = (
       }
     }
   } catch (error) {
-    console.warn('Failed to extract webhook metadata', { eventType, error })
+    logger.warn('Failed to extract webhook metadata', { eventType, error })
   }
 
   return metadata
@@ -173,13 +174,13 @@ export const processWebhookEvent = async (eventId: string): Promise<boolean> => 
     .single()
 
   if (fetchError || !event) {
-    console.error(`Failed to fetch webhook event ${eventId}:`, fetchError)
+    logger.error(`Failed to fetch webhook event ${eventId}`, fetchError, { eventId })
     return false
   }
 
   // Проверяем, не обрабатывается ли уже
   if (event.status === 'processing') {
-    console.log(`Webhook event ${eventId} is already being processed`)
+    logger.info(`Webhook event ${eventId} is already being processed`, { eventId, status: event.status })
     return false
   }
 
@@ -219,7 +220,7 @@ export const processWebhookEvent = async (eventId: string): Promise<boolean> => 
         success = await handleCustomerEvent(event.org_id, event.payload, eventSubtype)
         break
       default:
-        console.warn(`Unknown webhook event type: ${eventType}`)
+        logger.warn(`Unknown webhook event type: ${eventType}`, { eventType, orgId: event.org_id })
         success = false
     }
 
@@ -231,7 +232,11 @@ export const processWebhookEvent = async (eventId: string): Promise<boolean> => 
         entityType: event.entity_type,
         payload: event.payload,
       }).catch((error) => {
-        console.error('Failed to trigger Rule Engine:', error)
+        logger.error('Failed to trigger Rule Engine', error, {
+          orgId: event.org_id,
+          eventType,
+          eventSubtype
+        })
       })
 
       // Запускаем Sequences для соответствующих событий
@@ -241,7 +246,11 @@ export const processWebhookEvent = async (eventId: string): Promise<boolean> => 
           entityType: event.entity_type,
           payload: event.payload,
         }).catch((error) => {
-          console.error('Failed to trigger Sequences:', error)
+          logger.error('Failed to trigger Sequences', error, {
+            orgId: event.org_id,
+            eventType,
+            eventSubtype
+          })
         })
       }
     }
@@ -264,11 +273,11 @@ export const processWebhookEvent = async (eventId: string): Promise<boolean> => 
           description: `Обработано событие ${eventType}${eventSubtype ? ` (${eventSubtype})` : ''}`,
           metadata: { event_type: eventType, event_subtype: eventSubtype, entity_id: event.entity_id },
         }).catch((error: unknown) => {
-          console.error('Failed to log webhook activity:', error)
+          logger.error('Failed to log webhook activity', error, { orgId: event.org_id, eventType })
         })
       } catch (error) {
         // Не критично, если не удалось залогировать
-        console.error('Failed to import logActivity:', error)
+        logger.error('Failed to import logActivity', error, { orgId: event.org_id })
       }
     }
 
@@ -313,7 +322,7 @@ export const processWebhookEvent = async (eventId: string): Promise<boolean> => 
       })
     }
 
-    console.error(`Failed to process webhook event ${eventId}:`, error)
+    logger.error(`Failed to process webhook event ${eventId}`, error, { eventId, orgId: event.org_id })
     return false
   }
 }
@@ -362,12 +371,12 @@ async function handleLeadEvent(
       // Здесь можно добавить синхронизацию с локальной БД
       // Обновление данных сделки, создание/обновление записей и т.д.
 
-      console.log(`Lead event processed: ${leadId}, pipeline: ${pipelineId}, status: ${statusId}`)
+      logger.info(`Lead event processed: ${leadId}`, { leadId, pipelineId, statusId, orgId })
     }
 
     return true
   } catch (error) {
-    console.error('Error handling lead event:', error)
+    logger.error('Error handling lead event', error, { orgId, eventSubtype })
     return false
   }
 }
@@ -401,12 +410,12 @@ async function handleContactEvent(
       const contactId = String(contact.id || '')
       if (!contactId) continue
 
-      console.log(`Contact event processed: ${contactId}`)
+      logger.info(`Contact event processed: ${contactId}`, { contactId, orgId, eventSubtype })
     }
 
     return true
   } catch (error) {
-    console.error('Error handling contact event:', error)
+    logger.error('Error handling contact event', error, { orgId, eventSubtype })
     return false
   }
 }
@@ -472,12 +481,12 @@ async function handleTaskEvent(
           })
 
         if (taskError && taskError.code !== '42P01') { // 42P01 = table doesn't exist
-          console.error(`Error saving task ${taskId}:`, taskError)
+          logger.error(`Error saving task ${taskId}`, taskError, { taskId, orgId })
         }
       } catch (tableError) {
         // Таблица может не существовать - это не критично
         if (process.env.NODE_ENV === 'development') {
-          console.log(`Table crm_tasks may not exist, skipping save for task ${taskId}`)
+          logger.debug(`Table crm_tasks may not exist, skipping save for task ${taskId}`, { taskId })
         }
       }
 
@@ -512,16 +521,16 @@ async function handleTaskEvent(
           }
         } catch (conversationError) {
           // Не критично, если не удалось создать заметку
-          console.error(`Error creating conversation note for task ${taskId}:`, conversationError)
+          logger.error(`Error creating conversation note for task ${taskId}`, conversationError, { taskId, orgId })
         }
       }
 
-      console.log(`Task event processed: ${taskId}, entity: ${entityType}:${entityId}, completed: ${isCompleted}`)
+      logger.info(`Task event processed: ${taskId}`, { taskId, entityType, entityId, isCompleted, orgId })
     }
 
     return true
   } catch (error) {
-    console.error('Error handling task event:', error)
+    logger.error('Error handling task event', error, { orgId, eventSubtype })
     return false
   }
 }
@@ -565,9 +574,9 @@ async function handleMessageEvent(
 
       // Извлекаем данные письма из payload
       const emailParams = message.params as Record<string, unknown> | undefined
-      
+
       if (!emailParams) {
-        console.warn(`Message ${messageId}: No params found`)
+        logger.warn(`Message ${messageId}: No params found`, { messageId, orgId })
         continue
       }
 
@@ -577,11 +586,11 @@ async function handleMessageEvent(
       const text = String(emailParams.text || emailParams.html || '')
 
       if (!from || !text) {
-        console.warn(`Message ${messageId}: Missing email data (from or text)`)
+        logger.warn(`Message ${messageId}: Missing email data (from or text)`, { messageId, from, orgId })
         continue
       }
 
-      console.log(`Processing incoming email in lead ${entityId} from ${from}`)
+      logger.info(`Processing incoming email in lead ${entityId} from ${from}`, { entityId, from, subject, orgId })
 
       // Обрабатываем email через агента (асинхронно, не блокируем обработку)
       handleIncomingEmailForAgentAsync(orgId, {
@@ -593,14 +602,14 @@ async function handleMessageEvent(
         messageId,
         timestamp: message.created_at ? String(message.created_at) : undefined,
       }).catch(error => {
-        console.error(`Failed to handle email in lead ${entityId}:`, error)
+        logger.error(`Failed to handle email in lead ${entityId}`, error, { entityId, orgId })
         // Не выбрасываем ошибку, чтобы не помечать событие как failed
       })
     }
 
     return true
   } catch (error) {
-    console.error('Error handling message event:', error)
+    logger.error('Error handling message event', error, { orgId, eventSubtype })
     return false
   }
 }
@@ -625,12 +634,20 @@ async function handleIncomingEmailForAgentAsync(
     const result = await handleIncomingEmailForAgent(orgId, emailData)
 
     if (result.success) {
-      console.log(`Agent ${result.agentId} successfully responded to email in lead ${emailData.leadId}`)
+      logger.info(`Agent ${result.agentId} successfully responded to email in lead ${emailData.leadId}`, {
+        agentId: result.agentId,
+        leadId: emailData.leadId,
+        orgId
+      })
     } else {
-      console.warn(`Failed to handle email in lead ${emailData.leadId}: ${result.error}`)
+      logger.warn(`Failed to handle email in lead ${emailData.leadId}: ${result.error}`, {
+        leadId: emailData.leadId,
+        error: result.error,
+        orgId
+      })
     }
   } catch (error) {
-    console.error('Error in async email handler:', error)
+    logger.error('Error in async email handler', error, { orgId, leadId: emailData.leadId })
     throw error
   }
 }
@@ -695,12 +712,12 @@ async function handleCallEvent(
           })
 
         if (callError && callError.code !== '42P01') { // 42P01 = table doesn't exist
-          console.error(`Error saving call ${callId}:`, callError)
+          logger.error(`Error saving call ${callId}`, callError, { callId, orgId })
         }
       } catch (tableError) {
         // Таблица может не существовать - это не критично
         if (process.env.NODE_ENV === 'development') {
-          console.log(`Table crm_calls may not exist, skipping save for call ${callId}`)
+          logger.debug(`Table crm_calls may not exist, skipping save for call ${callId}`, { callId })
         }
       }
 
@@ -751,22 +768,22 @@ async function handleCallEvent(
                   task_type_id: 1, // звонок
                 },
               }).catch(error => {
-                console.error(`Failed to create callback task for missed call ${callId}:`, error)
+                logger.error(`Failed to create callback task for missed call ${callId}`, error, { callId, orgId })
               })
             }
           }
         } catch (conversationError) {
           // Не критично, если не удалось создать заметку
-          console.error(`Error creating conversation note for call ${callId}:`, conversationError)
+          logger.error(`Error creating conversation note for call ${callId}`, conversationError, { callId, orgId })
         }
       }
 
-      console.log(`Call event processed: ${callId}, entity: ${entityType}:${entityId}, status: ${callStatus}, duration: ${callDuration}`)
+      logger.info(`Call event processed: ${callId}`, { callId, entityType, entityId, callStatus, callDuration, orgId })
     }
 
     return true
   } catch (error) {
-    console.error('Error handling call event:', error)
+    logger.error('Error handling call event', error, { orgId, eventSubtype })
     return false
   }
 }
@@ -819,12 +836,12 @@ async function handleCompanyEvent(
           })
 
         if (companyError && companyError.code !== '42P01') { // 42P01 = table doesn't exist
-          console.error(`Error saving company ${companyId}:`, companyError)
+          logger.error(`Error saving company ${companyId}`, companyError, { companyId, orgId })
         }
       } catch (tableError) {
         // Таблица может не существовать - это не критично
         if (process.env.NODE_ENV === 'development') {
-          console.log(`Table crm_companies may not exist, skipping save for company ${companyId}`)
+          logger.debug(`Table crm_companies may not exist, skipping save for company ${companyId}`, { companyId })
         }
       }
 
@@ -838,19 +855,19 @@ async function handleCompanyEvent(
           description: `Событие компании в Kommo: ${eventSubtype || 'unknown'}`,
           metadata: { company_id: companyId, event_subtype: eventSubtype },
         }).catch((error: unknown) => {
-          console.error('Failed to log company activity:', error)
+          logger.error('Failed to log company activity', error, { companyId, orgId })
         })
       } catch (error) {
         // Не критично
-        console.error('Failed to import logActivity for company:', error)
+        logger.error('Failed to import logActivity for company', error, { companyId, orgId })
       }
 
-      console.log(`Company event processed: ${companyId}, name: ${companyName}, subtype: ${eventSubtype}`)
+      logger.info(`Company event processed: ${companyId}`, { companyId, companyName, eventSubtype, orgId })
     }
 
     return true
   } catch (error) {
-    console.error('Error handling company event:', error)
+    logger.error('Error handling company event', error, { orgId, eventSubtype })
     return false
   }
 }
@@ -903,12 +920,12 @@ async function handleCustomerEvent(
           })
 
         if (customerError && customerError.code !== '42P01') { // 42P01 = table doesn't exist
-          console.error(`Error saving customer ${customerId}:`, customerError)
+          logger.error(`Error saving customer ${customerId}`, customerError, { customerId, orgId })
         }
       } catch (tableError) {
         // Таблица может не существовать - это не критично
         if (process.env.NODE_ENV === 'development') {
-          console.log(`Table crm_customers may not exist, skipping save for customer ${customerId}`)
+          logger.debug(`Table crm_customers may not exist, skipping save for customer ${customerId}`, { customerId })
         }
       }
 
@@ -922,19 +939,19 @@ async function handleCustomerEvent(
           description: `Событие покупателя в Kommo: ${eventSubtype || 'unknown'}`,
           metadata: { customer_id: customerId, event_subtype: eventSubtype },
         }).catch((error: unknown) => {
-          console.error('Failed to log customer activity:', error)
+          logger.error('Failed to log customer activity', error, { customerId, orgId })
         })
       } catch (error) {
         // Не критично
-        console.error('Failed to import logActivity for customer:', error)
+        logger.error('Failed to import logActivity for customer', error, { customerId, orgId })
       }
 
-      console.log(`Customer event processed: ${customerId}, name: ${customerName}, subtype: ${eventSubtype}`)
+      logger.info(`Customer event processed: ${customerId}`, { customerId, customerName, eventSubtype, orgId })
     }
 
     return true
   } catch (error) {
-    console.error('Error handling customer event:', error)
+    logger.error('Error handling customer event', error, { orgId, eventSubtype })
     return false
   }
 }
@@ -980,10 +997,15 @@ async function triggerRuleEngine(
     const results = await executeRules(ruleContext)
 
     if (results.length > 0) {
-      console.log(`Rule Engine executed ${results.length} rules for event ${eventType}:${eventSubtype}`)
+      logger.info(`Rule Engine executed ${results.length} rules for event ${eventType}:${eventSubtype}`, {
+        ruleCount: results.length,
+        eventType,
+        eventSubtype,
+        orgId
+      })
     }
   } catch (error) {
-    console.error('Error triggering Rule Engine:', error)
+    logger.error('Error triggering Rule Engine', error, { orgId, eventType, eventSubtype })
     // Не выбрасываем ошибку, чтобы не прервать обработку webhook
   }
 }
@@ -1017,7 +1039,7 @@ async function triggerSequences(
     }
 
     // Фильтруем последовательности по типу триггера
-    const matchingSequences = sequences.filter((seq) => {
+    const matchingSequences = sequences.filter((seq: { trigger_type: string; id: string }) => {
       if (seq.trigger_type === 'lead_created' && eventSubtype === 'lead_created') {
         return true
       }
@@ -1046,13 +1068,13 @@ async function triggerSequences(
           )
         }
       } catch (sequenceError) {
-        console.error(`Failed to start sequence ${sequence.id}:`, sequenceError)
+        logger.error(`Failed to start sequence ${sequence.id}`, sequenceError, { sequenceId: sequence.id, orgId })
       }
     }
 
     return true
   } catch (error) {
-    console.error('Error triggering Sequences:', error)
+    logger.error('Error triggering Sequences', error, { orgId, eventType, eventSubtype })
     return false
   }
 }
@@ -1075,7 +1097,7 @@ export const getEventsForRetry = async (limit = 10): Promise<WebhookEvent[]> => 
     .limit(limit)
 
   if (error) {
-    console.error('Error fetching events for retry:', error)
+    logger.error('Error fetching events for retry', error, { limit })
     return []
   }
 
