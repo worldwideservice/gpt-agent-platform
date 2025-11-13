@@ -1,5 +1,9 @@
 # GPT Agent AI Platform
 
+[![Test Coverage](https://github.com/worldwideservice/gpt-agent-platform/actions/workflows/test-coverage.yml/badge.svg)](https://github.com/worldwideservice/gpt-agent-platform/actions/workflows/test-coverage.yml)
+[![codecov](https://codecov.io/gh/worldwideservice/gpt-agent-platform/branch/main/graph/badge.svg)](https://codecov.io/gh/worldwideservice/gpt-agent-platform)
+![Coverage](https://img.shields.io/badge/coverage-80%25-green)
+
 > Платформа для создания и управления AI агентами с интеграцией CRM (Kommo/amoCRM)
 
 ## 🚀 Быстрый старт
