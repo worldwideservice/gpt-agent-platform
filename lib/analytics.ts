@@ -1,4 +1,5 @@
 // Analytics utility for tracking events and metrics
+import { logger } from '@/lib/utils'
 
 interface AnalyticsEvent {
  event: string
@@ -58,10 +59,10 @@ class Analytics {
  })
 
  if (!response.ok) {
- console.error('Failed to track analytics event:', response.statusText)
+ logger.error('Failed to track analytics event', new Error(response.statusText), { statusText: response.statusText })
  }
  } catch (error) {
- console.error('Analytics tracking error:', error)
+ logger.error('Analytics tracking error', error instanceof Error ? error : new Error(String(error)), { userId: this.userId, sessionId: this.sessionId })
  }
  }
 

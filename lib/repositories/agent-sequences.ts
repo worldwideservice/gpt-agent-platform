@@ -1,4 +1,5 @@
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils/logger'
 
 import type { Json } from '@/types/supabase'
 
@@ -107,7 +108,7 @@ export const getAgentSequences = async (
  .order('created_at', { ascending: true })
 
  if (error) {
- console.error('Failed to fetch agent sequences', error)
+ logger.error('Failed to fetch agent sequences', { organizationId, agentId, error })
  throw new Error('Не удалось загрузить цепочки')
  }
 
@@ -139,7 +140,7 @@ export const getAgentSequenceById = async (
  .maybeSingle()
 
  if (error) {
- console.error('Failed to fetch agent sequence', error)
+ logger.error('Failed to fetch agent sequence', { sequenceId, organizationId, agentId, error })
  throw new Error('Не удалось загрузить цепочку')
  }
 
@@ -188,7 +189,7 @@ export const createAgentSequence = async (
  .single()
 
  if (error || !data) {
- console.error('Failed to create agent sequence', error)
+ logger.error('Failed to create agent sequence', { organizationId, agentId, name: input.name, error })
  throw new Error('Не удалось создать цепочку')
  }
 
@@ -206,7 +207,7 @@ export const createAgentSequence = async (
  const { error: stepsError } = await supabase.from('agent_sequence_steps').insert(stepRows)
 
  if (stepsError) {
- console.error('Failed to create agent sequence steps', stepsError)
+ logger.error('Failed to create agent sequence steps', { sequenceId: sequenceRow.id, organizationId, agentId, error: stepsError })
  throw new Error('Не удалось сохранить шаги цепочки')
  }
  }
@@ -254,7 +255,7 @@ export const updateAgentSequence = async (
  .eq('agent_id', agentId)
 
  if (error) {
- console.error('Failed to update agent sequence', error)
+ logger.error('Failed to update agent sequence', { sequenceId, organizationId, agentId, error })
  throw new Error('Не удалось обновить цепочку')
  }
  }
@@ -274,7 +275,7 @@ export const updateAgentSequence = async (
  const { error: stepInsertError } = await supabase.from('agent_sequence_steps').insert(stepRows)
 
  if (stepInsertError) {
- console.error('Failed to update agent sequence steps', stepInsertError)
+ logger.error('Failed to update agent sequence steps', { sequenceId, organizationId, agentId, error: stepInsertError })
  throw new Error('Не удалось обновить шаги цепочки')
  }
  }
@@ -304,7 +305,7 @@ export const deleteAgentSequence = async (
  .eq('agent_id', agentId)
 
  if (error) {
- console.error('Failed to delete agent sequence', error)
+ logger.error('Failed to delete agent sequence', { sequenceId, organizationId, agentId, error })
  throw new Error('Не удалось удалить цепочку')
  }
 }
@@ -323,7 +324,7 @@ export const getAgentChannels = async (
  .order('channel', { ascending: true })
 
  if (error) {
- console.error('Failed to fetch agent channels', error)
+ logger.error('Failed to fetch agent channels', { organizationId, agentId, error })
  throw new Error('Не удалось загрузить каналы')
  }
 
@@ -354,7 +355,7 @@ export const upsertAgentChannel = async (
  .single()
 
  if (error || !data) {
- console.error('Failed to upsert agent channel', error)
+ logger.error('Failed to upsert agent channel', { organizationId, agentId, channel, error })
  throw new Error('Не удалось обновить канал')
  }
 
@@ -376,7 +377,7 @@ export const deleteAgentChannel = async (
  .eq('channel', channel)
 
  if (error) {
- console.error('Failed to delete agent channel', error)
+ logger.error('Failed to delete agent channel', { organizationId, agentId, channel, error })
  throw new Error('Не удалось удалить канал')
  }
 }

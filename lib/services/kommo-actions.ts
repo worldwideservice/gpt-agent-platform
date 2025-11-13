@@ -1,5 +1,6 @@
 import { KommoAPI, KommoLead, KommoContact, KommoTask, KommoNote } from '@/lib/crm/kommo'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils'
 
 // Типы для config из базы данных
 interface KommoConfig {
@@ -66,7 +67,7 @@ export class KommoActionsService {
 
  return true
  } catch (error) {
- console.error('Failed to initialize Kommo API:', error)
+ logger.error('initializeKommoApi: Failed to initialize Kommo API', error as Error, { organizationId: this.organizationId })
  return false
  }
  }
@@ -348,7 +349,7 @@ export class KommoActionsService {
 
  return data as EmailTemplate
  } catch (error) {
- console.error('Failed to get email template:', error)
+ logger.error('getEmailTemplate: Failed to get email template', error as Error, { templateId, organizationId: this.organizationId })
  return null
  }
  }
@@ -470,7 +471,7 @@ export class KommoActionsService {
  const contact = await this.kommoApi!.getContact(contactRef.id)
  contacts.push(contact)
  } catch (error) {
- console.error(`Failed to load contact ${contactRef.id}:`, error)
+ logger.error(`getLeadContext: Failed to load contact`, error as Error, { contactId: contactRef.id, leadId })
  }
  }
  }

@@ -4,6 +4,7 @@
  */
 
 import { createHash } from 'crypto'
+import { logger } from '@/lib/utils'
 
 import { cached, cacheConfig, cacheKeys } from '@/lib/cache'
 import {
@@ -441,7 +442,7 @@ export const processConversationMemory = async (
       conversationMessages,
     )
   } catch (error) {
-    console.error('Error processing conversation memory', error)
+    logger.error('Error processing conversation memory', error instanceof Error ? error : new Error(String(error)), { organizationId, agentId, clientIdentifier })
   }
 }
 

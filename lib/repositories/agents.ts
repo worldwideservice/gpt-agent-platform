@@ -1,5 +1,6 @@
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { getCachedAgent, setCachedAgent, invalidateAgentCache } from '@/lib/utils/cache'
+import { logger } from '@/lib/utils/logger'
 
 import type { Agent, AgentSettings } from '@/types'
 import type {
@@ -135,7 +136,7 @@ const fetchActivityMetrics = async (
  .order('activity_date', { ascending: true })
 
  if (error) {
- console.error('Failed to load agent activity metrics', error)
+ logger.error('Failed to load agent activity metrics', { organizationId, error })
  return []
  }
 
@@ -167,7 +168,7 @@ export const getAgents = async (params: AgentListParams): Promise<AgentListResul
  const { data, count, error } = await query.range(from, to)
 
  if (error) {
- console.error('Failed to fetch agents from Supabase', error)
+ logger.error('Failed to fetch agents from Supabase', { organizationId, error })
  throw new Error('Не удалось загрузить агентов')
  }
 
@@ -352,7 +353,7 @@ const loadDashboardStatsFromView = async (
  .maybeSingle()
 
  if (error) {
- console.warn('Dashboard KPI view is not available', error)
+ logger.warn('Dashboard KPI view is not available', { organizationId, error })
  return null
  }
 
@@ -386,7 +387,7 @@ const loadDashboardStatsFromFunction = async (
  .single()
 
  if (error) {
- console.warn('Dashboard stats function is not available', error)
+ logger.warn('Dashboard stats function is not available', { organizationId, error })
  return null
  }
 
@@ -423,7 +424,7 @@ const buildDashboardStatsFromAgents = async (
  .eq('org_id', organizationId)
 
  if (error) {
- console.error('Failed to load agent activity metrics', error)
+ logger.error('Failed to load agent activity metrics', { organizationId, error })
  return {
  monthlyResponses: 0,
  monthlyChange: 0,
@@ -508,7 +509,7 @@ const countAgents = async (
  .eq('org_id', organizationId)
 
  if (error) {
- console.error('Failed to count agents', error)
+ logger.error('Failed to count agents', { organizationId, error })
  return 0
  }
 
@@ -605,7 +606,7 @@ export const getAgentById = async (
     .maybeSingle()
 
   if (error) {
-    console.error('Failed to fetch agent from Supabase', error)
+    logger.error('Failed to fetch agent from Supabase', { agentId, organizationId, error })
     throw new Error('Не удалось загрузить агента')
   }
 
@@ -639,7 +640,7 @@ export const updateAgentStatus = async (
  .single()
 
  if (error) {
- console.error('Failed to update agent status', error)
+ logger.error('Failed to update agent status', { agentId, organizationId, status, error })
  throw new Error('Не удалось обновить статус агента')
  }
 
@@ -685,7 +686,7 @@ export const createAgent = async (
  .single()
 
  if (error) {
- console.error('Failed to create agent', error)
+ logger.error('Failed to create agent', { organizationId, name: agentData.name, error })
  throw new Error('Не удалось создать агента')
  }
 
@@ -765,7 +766,7 @@ export const updateAgent = async (
  .single()
 
  if (error) {
- console.error('Failed to update agent', error)
+ logger.error('Failed to update agent', { agentId, organizationId, error })
  throw new Error('Не удалось обновить агента')
  }
 
@@ -786,7 +787,7 @@ export const deleteAgent = async (agentId: string, organizationId: string): Prom
  .eq('org_id', organizationId)
 
  if (error) {
- console.error('Failed to delete agent', error)
+ logger.error('Failed to delete agent', { agentId, organizationId, error })
  throw new Error('Не удалось удалить агента')
  }
 }

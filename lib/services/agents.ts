@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { logger } from '@/lib/utils'
 
 import {
   getAgents,
@@ -73,7 +74,7 @@ export const listAgents = async (
       limit: parsed?.limit,
     })
   } catch (error) {
-    console.error('AgentsService.listAgents failed', { error, organizationId })
+    logger.error('listAgents: Failed to get agents list', error as Error, { organizationId })
     throw new Error('Не удалось получить список агентов')
   }
 }
@@ -98,7 +99,7 @@ export const createAgent = async (
       settings: data.settings ?? {},
     })
   } catch (error) {
-    console.error('AgentsService.createAgent failed', { error, organizationId })
+    logger.error('createAgent: Failed to create agent', error as Error, { organizationId })
     throw new Error('Не удалось создать агента')
   }
 }
@@ -128,7 +129,7 @@ export const updateAgent = async (
       settings: data.settings ?? undefined,
     })
   } catch (error) {
-    console.error('AgentsService.updateAgent failed', { error, organizationId, agentId })
+    logger.error('updateAgent: Failed to update agent', error as Error, { organizationId, agentId })
     throw new Error('Не удалось обновить агента')
   }
 }
@@ -146,7 +147,7 @@ export const deleteAgent = async (
   try {
     await deleteAgentRepository(agentId, organizationId)
   } catch (error) {
-    console.error('AgentsService.deleteAgent failed', { error, organizationId, agentId })
+    logger.error('deleteAgent: Failed to delete agent', error as Error, { organizationId, agentId })
     throw new Error('Не удалось удалить агента')
   }
 }
@@ -164,7 +165,7 @@ export const getAgent = async (
   try {
     return await getAgentById(agentId, organizationId)
   } catch (error) {
-    console.error('AgentsService.getAgent failed', { error, organizationId, agentId })
+    logger.error('getAgent: Failed to get agent', error as Error, { organizationId, agentId })
     throw new Error('Не удалось получить данные агента')
   }
 }

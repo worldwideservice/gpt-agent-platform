@@ -1,4 +1,5 @@
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils'
 
 import type { SubscriptionRow } from '@/types/supabase'
 
@@ -20,7 +21,7 @@ export const getSubscription = async (organizationId: string): Promise<Subscript
  .maybeSingle()
 
  if (error) {
- console.error('Failed to fetch subscription', error)
+ logger.error('Failed to fetch subscription', error instanceof Error ? error : new Error(String(error)), { organizationId })
  return null
  }
 
@@ -81,7 +82,7 @@ export const updateSubscription = async (
  .single()
 
  if (error) {
- console.error('Failed to update subscription', error)
+ logger.error('Failed to update subscription', error instanceof Error ? error : new Error(String(error)), { organizationId })
  throw new Error('Не удалось обновить подписку')
  }
 

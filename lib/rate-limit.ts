@@ -1,6 +1,7 @@
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import { UserRepository } from '@/lib/repositories/users'
+import { logger } from '@/lib/utils/logger'
 
 // User tiers
 export enum UserTier {
@@ -80,12 +81,106 @@ class MemoryStore {
 // Initialize rate limiter
 let ratelimit: Ratelimit | null = null
 
-// TEMPORARILY DISABLE REDIS - USE MEMORY STORE ONLY
-// TODO: Re-enable Redis when Upstash is properly configured
-console.log('Rate limiting: Using memory store (Redis disabled for stability)')
+// Initialize Redis if credentials are available
+const upstashUrl = process.env.UPSTASH_REDIS_REST_URL
+const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN
+
+if (upstashUrl && upstashToken) {
+  try {
+    const redis = new Redis({
+      url: upstashUrl,
+      token: upstashToken,
+    })
+
+    ratelimit = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(100, '1 m'),
+      analytics: true,
+      prefix: '@upstash/ratelimit',
+    })
+
+    logger.info('Rate limiting initialized with Redis/Upstash', {
+      service: 'rate-limit',
+      backend: 'upstash-redis',
+    })
+  } catch (error) {
+    logger.error('Failed to initialize Upstash Redis', error, {
+      service: 'rate-limit',
+    })
+    logger.warn('Falling back to in-memory rate limiting', {
+      service: 'rate-limit',
+      backend: 'memory-store',
+    })
+  }
+} else {
+  logger.warn('Upstash Redis credentials not found, using in-memory rate limiting', {
+    service: 'rate-limit',
+    backend: 'memory-store',
+    note: 'Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN for production',
+  })
+}
 
 // Fallback to memory store
 const memoryStore = new MemoryStore()
+
+/**
+ * Health check for Redis connection
+ * @returns Object with status and backend information
+ */
+export async function checkRateLimitHealth(): Promise<{
+  status: 'healthy' | 'degraded' | 'unhealthy'
+  backend: 'redis' | 'memory'
+  message: string
+  details?: Record<string, unknown>
+}> {
+  if (ratelimit) {
+    try {
+      // Test Redis connection with a simple rate limit check
+      const testIdentifier = `health-check:${Date.now()}`
+      const result = await ratelimit.limit(testIdentifier)
+
+      return {
+        status: 'healthy',
+        backend: 'redis',
+        message: 'Redis rate limiting operational',
+        details: {
+          testSuccess: result.success,
+          upstashConfigured: true,
+        },
+      }
+    } catch (error) {
+      logger.error('Redis health check failed', error, {
+        service: 'rate-limit',
+      })
+
+      return {
+        status: 'unhealthy',
+        backend: 'redis',
+        message: 'Redis health check failed',
+        details: {
+          error: error instanceof Error ? error.message : String(error),
+        },
+      }
+    }
+  }
+
+  return {
+    status: 'degraded',
+    backend: 'memory',
+    message: 'Using in-memory rate limiting (Redis not configured)',
+    details: {
+      upstashConfigured: false,
+      recommendation: 'Configure UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN for production',
+    },
+  }
+}
+
+/**
+ * Get current rate limiting backend
+ */
+export function getRateLimitBackend(): 'redis' | 'memory' {
+  return ratelimit ? 'redis' : 'memory'
+}
 
 export const rateLimit = async (
   identifier: string,
@@ -137,7 +232,10 @@ export const rateLimit = async (
       }
     }
   } catch (error) {
-    console.error('Rate limiting error:', error)
+    logger.error('Rate limiting error', error, {
+      service: 'rate-limit',
+      identifier,
+    })
     // Allow request in case of error
     return {
       success: true,

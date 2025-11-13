@@ -4,6 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import type { User, DatabaseUser, Subscription, Plan } from '@/types/user'
+import { logger } from '@/lib/utils/logger'
 
 let cachedSupabaseClient: SupabaseClient | null = null
 
@@ -17,7 +18,7 @@ export function getSupabaseClient(): SupabaseClient {
     cachedSupabaseClient = getSupabaseServiceRoleClient() as unknown as SupabaseClient
     return cachedSupabaseClient
   } catch (error) {
-    console.error('Failed to create Supabase client:', error)
+    logger.error('Failed to create Supabase client', error)
     throw error
   }
 }
@@ -90,7 +91,7 @@ export class UserRepository {
  updatedAt: new Date(userData.updated_at),
  }
  } catch (error) {
- console.error('Error fetching user:', error)
+ logger.error('Error fetching user', error)
  return null
  }
  }
@@ -133,7 +134,7 @@ export class UserRepository {
  // Default to FREE tier
  return UserTier.FREE
  } catch (error) {
- console.error('Error determining user tier:', error)
+ logger.error('Error determining user tier', error)
  return UserTier.FREE
  }
  }
@@ -154,7 +155,7 @@ export class UserRepository {
 
  return (data as any).tier as UserTier
  } catch (error) {
- console.error('Error fetching plan tier:', error)
+ logger.error('Error fetching plan tier', error)
  return null
  }
  }
@@ -189,7 +190,7 @@ export class UserRepository {
 
  return !error
  } catch (error) {
- console.error('Error updating user tier:', error)
+ logger.error('Error updating user tier', error)
  return false
  }
  }
@@ -242,7 +243,7 @@ export class UserRepository {
  updatedAt: new Date(user.updated_at),
  }))
  } catch (error) {
- console.error('Error fetching users:', error)
+ logger.error('Error fetching users', error)
  return []
  }
  }
@@ -290,7 +291,7 @@ export class UserRepository {
  updatedAt: new Date(user.updated_at),
  }))
  } catch (error) {
- console.error('Error searching users:', error)
+ logger.error('Error searching users', error)
  return []
  }
  }
@@ -298,10 +299,10 @@ export class UserRepository {
  // Find user by email (database user)
  static async findUserByEmail(email: string): Promise<DatabaseUser | null> {
  try {
- console.log('[UserRepository] Finding user by email:', email)
+ logger.info('Finding user by email', { email })
  const client = await getSupabaseClient()
- console.log('[UserRepository] Client created, querying users table...')
- 
+ logger.info('Client created, querying users table')
+
  const { data, error } = await client
  .from('users')
  .select('*')
@@ -309,8 +310,7 @@ export class UserRepository {
  .single()
 
  if (error) {
- console.error('[UserRepository] Error finding user:', {
- error: error.message,
+ logger.error('Error finding user', error, {
  code: error.code,
  details: error.details,
  hint: error.hint,
@@ -320,11 +320,11 @@ export class UserRepository {
  }
 
  if (!data) {
- console.log('[UserRepository] User not found for email:', email)
+ logger.info('User not found for email', { email })
  return null
  }
 
- console.log('[UserRepository] User found:', data.id, data.email)
+ logger.info('User found', { userId: data.id, email: data.email })
  return {
  id: data.id,
  email: data.email,
@@ -339,10 +339,7 @@ export class UserRepository {
  updated_at: data.updated_at,
  }
  } catch (error) {
- console.error('[UserRepository] Exception finding user by email:', error)
- if (error instanceof Error) {
- console.error('[UserRepository] Exception details:', error.message, error.stack)
- }
+ logger.error('Exception finding user by email', error, { email })
  return null
  }
  }
@@ -396,7 +393,7 @@ export class UserRepository {
  updatedAt: new Date(data.updated_at),
  }
  } catch (error) {
- console.error('Error getting user by email:', error)
+ logger.error('Error getting user by email', error)
  return null
  }
  }
@@ -428,7 +425,7 @@ export class UserRepository {
 
  return !error
  } catch (error) {
- console.error('Error updating user:', error)
+ logger.error('Error updating user', error)
  return false
  }
  }
@@ -446,7 +443,7 @@ static async updateUserLastSignIn(id: string): Promise<boolean> {
 
  return !error
  } catch (error) {
- console.error('Error updating user last sign in:', error)
+ logger.error('Error updating user last sign in', error)
  return false
  }
  }
@@ -463,13 +460,13 @@ static async updateUserLastSignIn(id: string): Promise<boolean> {
  .eq('id', id)
 
  if (error) {
- console.error('Error updating user password hash:', error)
+ logger.error('Error updating user password hash', error, { userId: id })
  return false
  }
 
  return true
  } catch (error) {
- console.error('Error updating user password hash:', error)
+ logger.error('Error updating user password hash', error, { userId: id })
  return false
  }
  }
@@ -504,23 +501,23 @@ static async updateUserLastSignIn(id: string): Promise<boolean> {
  .single()
 
  if (error) {
- console.error('Error creating user - Supabase error:', {
- message: error.message,
+ logger.error('Error creating user - Supabase error', error, {
  details: error.details,
  hint: error.hint,
  code: error.code,
+ email
  })
  throw new Error(`Не удалось создать пользователя: ${error.message || error.details || 'Неизвестная ошибка'}`)
  }
 
  if (!data) {
- console.error('Error creating user - No data returned from insert')
+ logger.error('Error creating user - No data returned from insert', undefined, { email })
  throw new Error('Не удалось создать пользователя: нет данных в ответе')
  }
 
  return data as DatabaseUser
  } catch (error) {
- console.error('Error creating user - Exception:', error)
+ logger.error('Error creating user - Exception', error, { email })
  if (error instanceof Error) {
  throw error
  }

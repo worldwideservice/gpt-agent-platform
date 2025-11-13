@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { logger } from '@/lib/utils'
 
 import {
   getKnowledgeBaseStats,
@@ -71,7 +72,7 @@ export const getKnowledgeOverview = async (
       agentOptions,
     }
   } catch (error) {
-    console.error('KnowledgeService.getKnowledgeOverview failed', { error, organizationId })
+    logger.error('KnowledgeService.getKnowledgeOverview failed', error instanceof Error ? error : new Error(String(error)), { organizationId })
     throw new Error('Не удалось загрузить данные базы знаний')
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { checkCacheHealth } from '@/lib/cache'
+import { checkRateLimitHealth, getRateLimitBackend } from '@/lib/rate-limit'
 import { logger } from '@/lib/utils/logger'
 
 export const GET = async (request: NextRequest) => {
@@ -60,6 +61,21 @@ health.redis = 'error'
 health.redis_error = redisError instanceof Error ? redisError.message : 'Unknown error'
 }
 
+ // Check rate limiting backend
+ try {
+   const rateLimitHealth = await checkRateLimitHealth()
+   health.rateLimit = rateLimitHealth.status
+   health.rateLimit_backend = rateLimitHealth.backend
+   health.rateLimit_message = rateLimitHealth.message
+
+   if (rateLimitHealth.details) {
+     health.rateLimit_details = rateLimitHealth.details
+   }
+ } catch (rateLimitError) {
+   health.rateLimit = 'error'
+   health.rateLimit_error = rateLimitError instanceof Error ? rateLimitError.message : 'Unknown error'
+ }
+
  // Check external API (OpenRouter)
  try {
  const response = await fetch('https://openrouter.ai/api/v1/models', {
@@ -79,10 +95,11 @@ health.redis_error = redisError instanceof Error ? redisError.message : 'Unknown
  }
 
  // Determine overall health status
- const services = ['database', 'redis', 'openrouter']
+ const services = ['database', 'redis', 'rateLimit', 'openrouter']
  const hasErrors = services.some(service => health[service] === 'error')
+ const hasDegraded = services.some(service => health[service] === 'degraded')
 
- health.overall_status = hasErrors ? 'degraded' : 'healthy'
+ health.overall_status = hasErrors ? 'degraded' : (hasDegraded ? 'degraded' : 'healthy')
 
  const statusCode = hasErrors ? 200 : 200 // Still return 200, but with degraded status
 

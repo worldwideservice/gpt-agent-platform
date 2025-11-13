@@ -1,4 +1,5 @@
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils'
 
 import { createNotification } from '@/lib/repositories/notifications'
 
@@ -26,7 +27,7 @@ export const notifyOrganization = async (
  try {
  await createNotification(organizationId, data)
  } catch (error) {
- console.error('Failed to notify organization', error)
+ logger.error('Failed to notify organization', error instanceof Error ? error : new Error(String(error)), { organizationId, notificationType: data.type })
  }
 }
 

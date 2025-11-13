@@ -4,6 +4,7 @@
  */
 
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils/logger'
 
 // Внутренние типы для данных из Supabase
 interface AgentData {
@@ -134,7 +135,7 @@ export const recordMetric = async (
 
  return !error
  } catch (error) {
- console.error('Error recording metric', error)
+ logger.error('Error recording metric', { orgId, metricType, error })
  return false
  }
 }
@@ -170,7 +171,7 @@ export const getMetrics = async (
  const { data, error } = await query
 
  if (error) {
- console.error('Error getting metrics', error)
+ logger.error('Error getting metrics', { orgId, metricTypes, error })
  return []
  }
 
@@ -335,7 +336,7 @@ const getTopPerformingAgents = async (
  })
 
  if (error) {
- console.error('Error getting top performing agents', error)
+ logger.error('Error getting top performing agents', { orgId, error })
  return []
  }
 
@@ -368,7 +369,7 @@ const getUsageByPeriod = async (
  })
 
  if (error) {
- console.error('Error getting usage by period', error)
+ logger.error('Error getting usage by period', { orgId, error })
  return []
  }
 
@@ -398,7 +399,7 @@ const getChannelBreakdown = async (
  .lte('created_at', endDate.toISOString())
 
  if (error) {
- console.error('Error getting channel breakdown', error)
+ logger.error('Error getting channel breakdown', { orgId, error })
  return []
  }
 
@@ -474,13 +475,13 @@ export const generateAnalyticsReport = async (
  .single()
 
  if (error) {
- console.error('Error saving analytics report', error)
+ logger.error('Error saving analytics report', { orgId, reportType, error })
  return null
  }
 
  return { ...report, id: data.id }
  } catch (error) {
- console.error('Error generating analytics report', error)
+ logger.error('Error generating analytics report', { orgId, reportType, error })
  return null
  }
 }
@@ -653,7 +654,7 @@ export const getAnalyticsReports = async (
  const { data, error } = await query
 
  if (error) {
- console.error('Error getting analytics reports', error)
+ logger.error('Error getting analytics reports', { orgId, reportType, error })
  return []
  }
 
@@ -684,7 +685,7 @@ export const exportAnalyticsData = async (
  return null
  }
  } catch (error) {
- console.error('Error exporting analytics data', error)
+ logger.error('Error exporting analytics data', { orgId, exportType, error })
  return null
  }
 }

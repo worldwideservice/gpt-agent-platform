@@ -1,4 +1,5 @@
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils'
 
 import type { Json, OrganizationSettingsRow } from '@/types/supabase'
 
@@ -135,7 +136,7 @@ export const getOrganizationAiSettings = async (
     .maybeSingle()
 
   if (error) {
-    console.error('Failed to load organization settings', error)
+    logger.error('Failed to load organization settings', error instanceof Error ? error : new Error(String(error)), { organizationId })
     return null
   }
 
