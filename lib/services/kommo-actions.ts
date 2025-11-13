@@ -1,9 +1,19 @@
 import { KommoAPI, KommoLead, KommoContact, KommoTask, KommoNote } from '@/lib/crm/kommo'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
+// Типы для config из базы данных
+interface KommoConfig {
+  domain: string
+  client_id: string
+  client_secret: string
+  redirect_uri: string
+  access_token: string
+  refresh_token: string
+}
+
 export interface AgentAction {
  type: 'create_lead' | 'update_lead' | 'create_contact' | 'update_contact' | 'create_task' | 'send_email' | 'create_call_note' | 'create_meeting_note' | 'add_note'
- data: Record<string, any>
+ data: Record<string, unknown>
  entityId?: number
  entityType?: 'leads' | 'contacts' | 'companies'
 }
@@ -43,7 +53,7 @@ export class KommoActionsService {
  return false
  }
 
- const config = settings.config as any
+ const config = settings.config as KommoConfig
 
  this.kommoApi = new KommoAPI({
  domain: config.domain,
@@ -64,7 +74,7 @@ export class KommoActionsService {
  /**
  * Выполнение действия агента
  */
- async executeAction(action: AgentAction): Promise<any> {
+ async executeAction(action: AgentAction): Promise<KommoLead | KommoContact | KommoTask | KommoNote | unknown> {
  if (!this.kommoApi) {
  const initialized = await this.initializeKommoApi()
  if (!initialized) {
@@ -86,19 +96,19 @@ export class KommoActionsService {
  return this.updateContact(action.entityId!, action.data)
 
  case 'create_task':
- return this.createTask(action.data as any, action.entityId!, action.entityType!)
+ return this.createTask(action.data as Parameters<typeof this.createTask>[0], action.entityId!, action.entityType!)
 
  case 'send_email':
- return this.sendEmail(action.data as any, action.entityId!)
+ return this.sendEmail(action.data as Parameters<typeof this.sendEmail>[0], action.entityId!)
 
  case 'create_call_note':
- return this.createCallNote(action.data as any, action.entityId!, action.entityType!)
+ return this.createCallNote(action.data as Parameters<typeof this.createCallNote>[0], action.entityId!, action.entityType!)
 
  case 'create_meeting_note':
- return this.createMeetingNote(action.data as any, action.entityId!, action.entityType!)
+ return this.createMeetingNote(action.data as Parameters<typeof this.createMeetingNote>[0], action.entityId!, action.entityType!)
 
  case 'add_note':
- return this.addNote(action.data as any, action.entityId!, action.entityType!)
+ return this.addNote(action.data as Parameters<typeof this.addNote>[0], action.entityId!, action.entityType!)
 
  default:
  throw new Error(`Неизвестный тип действия: ${action.type}`)
@@ -108,13 +118,13 @@ export class KommoActionsService {
  /**
  * Создание сделки
  */
- private async createLead(data: Record<string, any>): Promise<KommoLead> {
+ private async createLead(data: Record<string, unknown>): Promise<KommoLead> {
  const lead: KommoLead = {
- name: data.name,
- price: data.price,
- status_id: data.status_id,
- pipeline_id: data.pipeline_id,
- responsible_user_id: data.responsible_user_id,
+ name: data.name as string,
+ price: data.price as number | undefined,
+ status_id: data.status_id as number | undefined,
+ pipeline_id: data.pipeline_id as number | undefined,
+ responsible_user_id: data.responsible_user_id as number | undefined,
  }
 
  // Если есть контактные данные, создаем контакт и связываем
@@ -152,11 +162,12 @@ export class KommoActionsService {
  /**
  * Создание контакта
  */
- private async createContact(data: Record<string, any>): Promise<KommoContact> {
- const [firstName, ...lastNameParts] = data.name.split(' ')
+ private async createContact(data: Record<string, unknown>): Promise<KommoContact> {
+ const nameStr = (data.name as string) || ''
+ const [firstName, ...lastNameParts] = nameStr.split(' ')
 
  const contact: KommoContact = {
- name: data.name,
+ name: nameStr,
  first_name: firstName,
  last_name: lastNameParts.join(' '),
  }
@@ -169,7 +180,7 @@ export class KommoActionsService {
  // Предполагаем, что поле телефона имеет ID 1 (нужно настроить)
  contact.custom_fields_values.push({
  field_id: 1,
- values: [{ value: data.phone }],
+ values: [{ value: data.phone as string }],
  })
  }
 
@@ -177,7 +188,7 @@ export class KommoActionsService {
  // Предполагаем, что поле email имеет ID 2
  contact.custom_fields_values.push({
  field_id: 2,
- values: [{ value: data.email }],
+ values: [{ value: data.email as string }],
  })
  }
 
