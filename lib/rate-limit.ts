@@ -64,7 +64,7 @@ class MemoryStore {
     if (!entry) return null
 
     // Check if window has expired
-    if (Date.now() > entry.resetTime) {
+    if (Date.now() >= entry.resetTime) {
       this.store.delete(identifier)
       return null
     }
@@ -87,7 +87,10 @@ console.log('Rate limiting: Using memory store (Redis disabled for stability)')
 // Fallback to memory store
 const memoryStore = new MemoryStore()
 
-export async function rateLimit(identifier: string, config: RateLimitConfig = rateLimitConfigs.api) {
+export const rateLimit = async (
+  identifier: string,
+  config: RateLimitConfig = rateLimitConfigs.api,
+) => {
   try {
     if (ratelimit) {
       // Use Upstash rate limiter

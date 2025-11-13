@@ -11,17 +11,24 @@ const dirname =
   typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
+const isCI = process.env.CI === 'true';
+const coverageEnabled = process.env.VITEST_COVERAGE === 'true' || isCI;
+const reportSuffix = process.env.VITEST_REPORT_SUFFIX ? `-${process.env.VITEST_REPORT_SUFFIX}` : '';
+const coverageDir = reportSuffix ? path.join('coverage', process.env.VITEST_REPORT_SUFFIX!) : 'coverage';
+
 export default defineConfig({
-  plugins: [
-    // Временно отключен для ускорения unit/integration тестов
-    // storybookTest({ configDir: path.join(dirname, '.storybook') }),
-  ],
+  plugins: [],
   test: {
     globals: true,
     environment: 'node', // По умолчанию node, переопределяется в проектах
-    include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'], // Включаем .test.tsx для компонентных тестов
+    include: [],
     exclude: ['node_modules', '.next', 'dist'],
     setupFiles: ['./tests/setup.ts'],
+    environmentMatchGlobs: [
+      ['tests/hooks/**', 'jsdom'],
+      ['tests/unit/hooks/**', 'jsdom'],
+      ['tests/unit/**/*.test.tsx', 'jsdom'],
+    ],
     // ОГРАНИЧИВАЕМ КОЛИЧЕСТВО ВОРКЕРОВ ДЛЯ СНИЖЕНИЯ НАГРУЗКИ НА НОУТБУК
     // Используем только 2 воркера вместо всех доступных ядер CPU
     pool: 'threads',
@@ -40,7 +47,9 @@ export default defineConfig({
     teardownTimeout: 5000,
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      enabled: coverageEnabled,
+      reportsDirectory: coverageDir,
+      reporter: ['text', 'json-summary', 'json', 'html'],
       exclude: [
         'node_modules/',
         'tests/',
@@ -48,55 +57,22 @@ export default defineConfig({
         'dist/',
         '**/*.config.*',
         '**/*.d.ts',
+        '**/stories/**',
       ],
-      // Coverage отключен по умолчанию - включать только через --coverage флаг
-      enabled: false,
+      thresholds: {
+        lines: 70,
+        statements: 70,
+        functions: 65,
+        branches: 50,
+      },
     },
-    projects: [
-      {
-        name: 'unit',
-        extends: true,
-        test: {
-          include: ['tests/unit/**/*.test.ts'],
-          exclude: ['tests/components/**', 'tests/integration/**'],
-        },
-      },
-      {
-        name: 'integration',
-        extends: true,
-        test: {
-          include: ['tests/integration/**/*.test.ts'],
-          exclude: ['tests/components/**', 'tests/unit/**'],
-        },
-      },
-      {
-        name: 'components',
-        extends: true,
-        test: {
-          name: 'components',
-          include: ['tests/components/**/*.test.tsx'],
-          exclude: ['node_modules', '.next', 'dist', 'tests/unit/**', 'tests/integration/**'],
-          environment: 'jsdom', // Для тестирования React компонентов
-        },
-      },
-      // Временно отключен Storybook проект для ускорения тестов
-      // {
-      //   extends: true,
-      //   plugins: [
-      //     storybookTest({ configDir: path.join(dirname, '.storybook') }),
-      //   ],
-      //   test: {
-      //     name: 'storybook',
-      //     browser: {
-      //       enabled: true,
-      //       headless: true,
-      //       provider: playwright({}),
-      //       instances: [{ browser: 'chromium' }],
-      //     },
-      //     setupFiles: ['.storybook/vitest.setup.ts'],
-      //   },
-      // },
-    ],
+    reporters: isCI
+      ? [
+          'default',
+          ['junit', { outputFile: `test-results/vitest-junit${reportSuffix}.xml` }],
+          ['json', { outputFile: `test-results/vitest-report${reportSuffix}.json` }],
+        ]
+      : ['default'],
   },
   resolve: {
     alias: {

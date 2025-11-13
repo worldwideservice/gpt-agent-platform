@@ -63,6 +63,34 @@ class Logger {
     this.annotateSpan('error', message, { ...context, error })
   }
 
+  /**
+   * Логирует показатели производительности
+   */
+  performance(operation: string, durationMs: number, context?: LogContext): void {
+    const payload = {
+      duration: `${durationMs}ms`,
+      ...context,
+    }
+
+    if (this.isDevelopment) {
+      console.debug(`[PERF] ${operation}`, payload)
+    } else {
+      // В продакшене выводим только ключевую информацию, без лишнего шума
+      console.log(`[PERF] ${operation}`, payload)
+    }
+  }
+
+  /**
+   * Логирует с контекстом (для структурированного логирования)
+   */
+  logWithContext(level: LogLevel, message: string, context: LogContext): void {
+    const timestamp = new Date().toISOString()
+    const logEntry = {
+      timestamp,
+      level,
+      message,
+      ...context,
+    }
   debug(message: string, context?: LogContext): void {
     this.logger.debug(context ?? {}, message)
     this.annotateSpan('debug', message, context)

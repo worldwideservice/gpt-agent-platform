@@ -39,7 +39,7 @@ class PerformanceMonitor {
         ...metric.context,
       })
     } else {
-      logger.debug(`[PerformanceMonitor] ${metric.name}`, { duration: `${metric.duration}ms`, ...metric.context })
+      logger.performance(metric.name, metric.duration, metric.context)
     }
   }
 

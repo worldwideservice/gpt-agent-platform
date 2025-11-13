@@ -56,9 +56,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Run unit tests
-        run: npm run test:unit:light
-        continue-on-error: true
+      - name: Run unit tests (coverage)
+        run: npm run test:unit:ci
         env:
           CI: true
           E2E_ONBOARDING_FAKE: '1'
@@ -75,12 +74,21 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
       
+      - name: Run component tests
+        run: npm run test:components:ci
+        env:
+          CI: true
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
-      
+
+      - name: Run Storybook interaction tests
+        run: npm run test:storybook
+        env:
+          CI: true
+
       - name: Run E2E tests
         run: npm run test:e2e:light -- --max-failures=10
-        continue-on-error: true
         env:
           CI: true
           E2E_ONBOARDING_FAKE: '1'
@@ -97,6 +105,10 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
       
+      - name: Collect Vitest metrics
+        if: always()
+        run: npm run report:tests || true
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -104,7 +116,15 @@ jobs:
           name: test-results
           path: test-results/
           retention-days: 7
-      
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: coverage/
+          retention-days: 7
+
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
@@ -112,6 +132,10 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+
+      - name: Collect Playwright metrics
+        if: always()
+        run: npm run report:playwright || true
 
   build:
     name: Build
@@ -154,6 +178,9 @@ jobs:
           name: build-artifacts
           path: .next/
           retention-days: 1
+
+      - name: Storybook smoke build
+        run: npm run storybook:smoke
 
   deploy-preview:
     name: Deploy Preview

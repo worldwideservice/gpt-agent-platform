@@ -100,7 +100,11 @@ export const loadManageKnowledgeData = cache(async (organizationId: string): Pro
 
   const summary = summaryResult.status === 'fulfilled' ? summaryResult.value : null
 
-  const error = results.some((result) => result.status === 'rejected') ? ('fetchFailed' as ManageDataError) : undefined
+  const knowledgeFailed = overviewResult.status === 'rejected'
+  const agentsFailed = agentsResult.status === 'rejected'
+  const summaryFailed = summaryResult.status === 'rejected'
+
+  const error = knowledgeFailed && agentsFailed && summaryFailed ? ('fetchFailed' as ManageDataError) : undefined
 
   return {
     stats: overview.stats,

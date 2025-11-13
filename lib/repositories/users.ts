@@ -1,19 +1,26 @@
 // @ts-nocheck
 import { hash } from 'bcryptjs'
-// import { UserTier } from '@/lib/rate-limit' // Removed to avoid circular dependency
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import type { User, DatabaseUser, Subscription, Plan } from '@/types/user'
+
+let cachedSupabaseClient: SupabaseClient | null = null
 
 // Helper function to get Supabase client
-async function getSupabaseClient() {
- try {
- // Use validated Supabase client with proper env loading
- const { getSupabaseServiceRoleClient } = await import('@/lib/supabase/admin')
- return getSupabaseServiceRoleClient()
- } catch (error) {
- console.error('Failed to create Supabase client:', error)
- throw error
- }
+export function getSupabaseClient(): SupabaseClient {
+  if (cachedSupabaseClient) {
+    return cachedSupabaseClient
+  }
+
+  try {
+    cachedSupabaseClient = getSupabaseServiceRoleClient() as unknown as SupabaseClient
+    return cachedSupabaseClient
+  } catch (error) {
+    console.error('Failed to create Supabase client:', error)
+    throw error
+  }
 }
-import type { User, DatabaseUser, Subscription, Plan } from '@/types/user'
 
 // Repository for user operations
 export class UserRepository {
@@ -426,26 +433,8 @@ export class UserRepository {
  }
  }
 
- // Update user password hash
- static async updateUserPasswordHash(id: string, passwordHash: string): Promise<boolean> {
- try {
- const { error } = await getSupabaseClient()
- .from('users')
- .update({
- password_hash: passwordHash,
- updated_at: new Date().toISOString()
- })
- .eq('id', id)
-
- return !error
- } catch (error) {
- console.error('Error updating user password:', error)
- return false
- }
- }
-
- // Update user last sign in
- static async updateUserLastSignIn(id: string): Promise<boolean> {
+// Update user last sign in
+static async updateUserLastSignIn(id: string): Promise<boolean> {
  try {
  const { error } = await getSupabaseClient()
  .from('users')
