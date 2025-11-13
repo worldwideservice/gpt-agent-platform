@@ -4,7 +4,7 @@
  */
 
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { logger } from '@/lib/utils'
+import { logger } from '@/lib/utils/logger'
 
 export type ActivityType =
   | 'agent_created'
@@ -55,11 +55,11 @@ export const logActivity = async (data: ActivityLogData): Promise<void> => {
     })
 
     if (error) {
-      logger.error('Failed to log activity', error instanceof Error ? error : new Error(String(error)), { activityType: data.activityType, orgId: data.orgId })
+      logger.error('Failed to log activity:', error)
       // Не выбрасываем ошибку, чтобы не прервать выполнение основного кода
     }
   } catch (error) {
-    logger.error('Error logging activity', error instanceof Error ? error : new Error(String(error)), { activityType: data.activityType, orgId: data.orgId })
+    logger.error('Error logging activity:', error)
     // Не выбрасываем ошибку, чтобы не прервать выполнение основного кода
   }
 }

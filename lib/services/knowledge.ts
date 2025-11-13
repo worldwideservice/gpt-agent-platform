@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { logger } from '@/lib/utils'
 
 import {
   getKnowledgeBaseStats,
@@ -15,6 +14,7 @@ import type {
   KnowledgeBaseStatsSummary,
 } from '@/types'
 import type { AgentAsset } from '@/lib/repositories/agent-assets'
+import { logger } from '@/lib/utils/logger'
 
 const overviewSchema = z
   .object({
@@ -72,7 +72,7 @@ export const getKnowledgeOverview = async (
       agentOptions,
     }
   } catch (error) {
-    logger.error('KnowledgeService.getKnowledgeOverview failed', error instanceof Error ? error : new Error(String(error)), { organizationId })
+    logger.error('KnowledgeService.getKnowledgeOverview failed', { error, organizationId })
     throw new Error('Не удалось загрузить данные базы знаний')
   }
 }

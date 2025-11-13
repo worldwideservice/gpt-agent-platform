@@ -4,7 +4,6 @@
  */
 
 import { createHash } from 'crypto'
-import { logger } from '@/lib/utils'
 
 import { cached, cacheConfig, cacheKeys } from '@/lib/cache'
 import {
@@ -20,6 +19,7 @@ import {
   extractAndSaveMemoryFromConversation,
 } from './agent-memory'
 import { processScript, type ScriptContext } from './script-processor'
+import { logger } from '@/lib/utils/logger'
 
 interface AgentContext {
   companyKnowledge: string
@@ -442,7 +442,7 @@ export const processConversationMemory = async (
       conversationMessages,
     )
   } catch (error) {
-    logger.error('Error processing conversation memory', error instanceof Error ? error : new Error(String(error)), { organizationId, agentId, clientIdentifier })
+    logger.error('Error processing conversation memory', error)
   }
 }
 

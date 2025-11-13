@@ -1,7 +1,7 @@
 import { type OpenRouterMessage } from '@/lib/services/ai/openrouter.client'
 import { resolveOpenRouterClient } from '@/lib/services/ai/openrouter-resolver'
 import { resolveOrganizationAiConfiguration } from '@/lib/services/ai/configuration-resolver'
-import { logger } from '@/lib/utils'
+import { logger } from '@/lib/utils/logger'
 
 /**
  * Сервис для работы с LLM через OpenRouter
@@ -136,9 +136,10 @@ export const getAvailableModels = async (): Promise<
       description: model.description,
     }))
   } catch (error) {
-    logger.warn('Failed to fetch models from OpenRouter, returning default list', {
-      error: error instanceof Error ? error.message : String(error),
-    })
+    logger.warn(
+      'Failed to fetch models from OpenRouter, returning default list',
+      error,
+    )
     return defaultModels
   }
 }

@@ -3,7 +3,7 @@
  */
 
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { logger } from '@/lib/utils'
+import { logger } from '@/lib/utils/logger'
 
 export interface ChatMessage {
  id: string
@@ -53,7 +53,7 @@ export const createConversation = async (
  .single()
 
  if (error) {
- logger.error('createConversation: Failed to create conversation', error as Error, { organizationId })
+ logger.error('Failed to create conversation', error)
  throw new Error('Не удалось создать диалог')
  }
 
@@ -109,7 +109,7 @@ export const getConversations = async (
  const { data, count, error } = await query
 
  if (error) {
- logger.error('getConversations: Failed to fetch conversations', error as Error, { organizationId })
+ logger.error('Failed to fetch conversations', error)
  return { conversations: [], total: 0 }
  }
 
@@ -148,7 +148,7 @@ export const getConversationById = async (
  .maybeSingle()
 
  if (error) {
- logger.error('getConversationById: Failed to fetch conversation', error as Error, { conversationId, organizationId })
+ logger.error('Failed to fetch conversation', error)
  return null
  }
 
@@ -193,7 +193,7 @@ export const addMessageToConversation = async (
  .single()
 
  if (error) {
- logger.error('addMessageToConversation: Failed to add message', error as Error, { conversationId })
+ logger.error('Failed to add message', error)
  throw new Error('Не удалось сохранить сообщение')
  }
 
@@ -242,7 +242,7 @@ export const getConversationMessages = async (
  const { data, error } = await query
 
  if (error) {
- logger.error('getConversationMessages: Failed to fetch messages', error as Error, { conversationId })
+ logger.error('Failed to fetch messages', error)
  return []
  }
 

@@ -1,7 +1,7 @@
 import { z } from 'zod'
-import { logger } from '@/lib/utils'
 
 import { getCrmConnectionData } from '@/lib/repositories/crm-connection'
+import { logger } from '@/lib/utils/logger'
 
 const overviewSchema = z
   .object({
@@ -41,7 +41,7 @@ export const getIntegrationOverview = async (
       credentials: data.credentials,
     }
   } catch (error) {
-    logger.error('IntegrationsService.getIntegrationOverview failed', error instanceof Error ? error : new Error(String(error)), { organizationId, provider })
+    logger.error('IntegrationsService.getIntegrationOverview failed', { error, organizationId, provider })
     throw new Error('Не удалось загрузить данные интеграции')
   }
 }

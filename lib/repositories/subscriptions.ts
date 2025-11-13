@@ -1,7 +1,7 @@
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { logger } from '@/lib/utils'
 
 import type { SubscriptionRow } from '@/types/supabase'
+import { logger } from '@/lib/utils/logger'
 
 export interface SubscriptionData {
  plan: string
@@ -21,7 +21,7 @@ export const getSubscription = async (organizationId: string): Promise<Subscript
  .maybeSingle()
 
  if (error) {
- logger.error('Failed to fetch subscription', error instanceof Error ? error : new Error(String(error)), { organizationId })
+ logger.error('Failed to fetch subscription', error)
  return null
  }
 
@@ -82,7 +82,7 @@ export const updateSubscription = async (
  .single()
 
  if (error) {
- logger.error('Failed to update subscription', error instanceof Error ? error : new Error(String(error)), { organizationId })
+ logger.error('Failed to update subscription', error)
  throw new Error('Не удалось обновить подписку')
  }
 

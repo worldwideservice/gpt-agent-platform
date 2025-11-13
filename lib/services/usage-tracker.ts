@@ -4,8 +4,8 @@
  */
 
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { logger } from '@/lib/utils'
 import { getOrganizationSubscription } from './billing'
+import { logger } from '@/lib/utils/logger'
 
 export type ResourceType = 'tokens' | 'messages' | 'storage' | 'agents'
 
@@ -43,7 +43,7 @@ export const recordUsage = async (
       metadata: metadata || {},
     })
   } catch (error) {
-    logger.error('Failed to record usage', error instanceof Error ? error : new Error(String(error)), { orgId, resourceType, amount })
+    logger.error('Failed to record usage', error)
     // Не выбрасываем ошибку, чтобы не прервать выполнение основного кода
   }
 }
@@ -125,7 +125,7 @@ export const checkUsageLimit = async (
       limit,
     }
   } catch (error) {
-    logger.error('Failed to check usage limit', error instanceof Error ? error : new Error(String(error)), { orgId, resourceType, amount })
+    logger.error('Failed to check usage limit', error)
     // В случае ошибки разрешаем использование (fail-open)
     return {
       allowed: true,

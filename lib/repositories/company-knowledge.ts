@@ -4,7 +4,7 @@
  */
 
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { logger } from '@/lib/utils'
+import { logger } from '@/lib/utils/logger'
 
 export interface CompanyKnowledge {
  id: string
@@ -85,7 +85,7 @@ export const getCompanyKnowledgeForContext = async (
  const { data, error } = await query
 
  if (error) {
- logger.error('getCompanyKnowledgeForContext: Failed to fetch company knowledge', error as Error, { organizationId })
+ logger.error('Failed to fetch company knowledge', error)
  throw new Error('Не удалось загрузить знания компании')
  }
 
@@ -134,7 +134,7 @@ export const getSalesScriptForStage = async (
  const { data, error } = await query
 
  if (error) {
- logger.error('getSalesScriptForStage: Failed to fetch sales scripts', error as Error, { organizationId, pipelineStageId })
+ logger.error('Failed to fetch sales scripts', error)
  throw new Error('Не удалось загрузить скрипты продаж')
  }
 
@@ -178,7 +178,7 @@ export const getObjectionResponses = async (
  const { data, error } = await query
 
  if (error) {
- logger.error('getObjectionResponses: Failed to fetch objection responses', error as Error, { organizationId })
+ logger.error('Failed to fetch objection responses', error)
  throw new Error('Не удалось загрузить ответы на возражения')
  }
 
@@ -234,7 +234,7 @@ export const createCompanyKnowledge = async (
  .single()
 
  if (error || !knowledge) {
- logger.error('createCompanyKnowledge: Failed to create company knowledge', error as Error, { organizationId })
+ logger.error('Failed to create company knowledge', error)
  throw new Error('Не удалось создать знание о компании')
  }
 

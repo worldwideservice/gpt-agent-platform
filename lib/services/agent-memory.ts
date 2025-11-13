@@ -4,7 +4,7 @@
  */
 
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { logger } from '@/lib/utils'
+import { logger } from '@/lib/utils/logger'
 
 export interface MemoryItem {
  id: string
@@ -65,13 +65,13 @@ export const saveMemoryItem = async (
  .single()
 
  if (error) {
- logger.error('saveMemoryItem: Failed to save memory item', error as Error, { orgId, clientIdentifier })
+ logger.error('Failed to save memory item', error)
  return null
  }
 
  return data.id
  } catch (error) {
- logger.error('saveMemoryItem: Error saving memory item', error as Error, { orgId, clientIdentifier })
+ logger.error('Error saving memory item', error)
  return null
  }
 }
@@ -107,7 +107,7 @@ export const getClientMemory = async (
  const { data, error } = await query
 
  if (error) {
- logger.error('getClientMemory: Failed to get client memory', error as Error, { orgId, clientIdentifier })
+ logger.error('Failed to get client memory', error)
  return []
  }
 
@@ -253,7 +253,7 @@ export const extractAndSaveMemoryFromConversation = async (
  )
  }
  } catch (error) {
- logger.error('extractAndSaveMemoryFromConversation: Error extracting memory from conversation', error as Error, { orgId, clientIdentifier })
+ logger.error('Error extracting memory from conversation', error)
  }
 }
 
@@ -361,7 +361,7 @@ export const cleanupExpiredMemory = async (): Promise<void> => {
  .lt('expires_at', new Date().toISOString())
 
  if (error) {
- logger.error('cleanupExpiredMemory: Error cleaning up expired memory', error as Error)
+ logger.error('Error cleaning up expired memory', error)
  }
 }
 
