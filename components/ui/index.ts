@@ -106,3 +106,23 @@ export {
   SheetDescription,
 } from './sheet'
 
+// Command компоненты
+export {
+  Command,
+  CommandDialog,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandShortcut,
+  CommandSeparator,
+} from './command'
+
+// RadioGroup компоненты
+export { RadioGroup, RadioGroupItem } from './radio-group'
+
+// MultiSelect компонент
+export { MultiSelect } from './multi-select'
+export type { MultiSelectOption } from './multi-select'
+
