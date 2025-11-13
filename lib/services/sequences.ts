@@ -5,6 +5,13 @@
 
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
+// Тип для шаблона email
+interface EmailTemplate {
+  subject?: string
+  html?: string
+  body?: string
+}
+
 export interface SequenceStep {
  id: string
  sequence_id: string
@@ -19,11 +26,11 @@ export interface SequenceStep {
  task_description?: string
  kommo_action?: {
  type: 'create_lead' | 'update_lead' | 'create_contact' | 'update_contact' | 'create_task' | 'send_email' | 'create_call_note' | 'create_meeting_note' | 'add_note'
- data: Record<string, any>
+ data: Record<string, unknown>
  entity_id?: number
  entity_type?: 'leads' | 'contacts' | 'companies'
  }
- metadata: Record<string, any>
+ metadata: Record<string, unknown>
 }
 
 export interface Sequence {
@@ -33,10 +40,10 @@ export interface Sequence {
  name: string
  description?: string
  trigger_type: 'manual' | 'lead_created' | 'stage_changed' | 'subscription' | 'event'
- trigger_conditions?: Record<string, any> // условия запуска последовательности
+ trigger_conditions?: Record<string, unknown> // условия запуска последовательности
  is_active: boolean
  steps: SequenceStep[]
- metadata: Record<string, any>
+ metadata: Record<string, unknown>
  created_at: string
  updated_at: string
 }
@@ -56,7 +63,7 @@ export interface SequenceExecution {
  started_at: string
  completed_at?: string
  next_execution_at?: string
- execution_context: Record<string, any>
+ execution_context: Record<string, unknown>
  error_message?: string
 }
 
@@ -151,7 +158,7 @@ export const getSequences = async (
  return []
  }
 
- return (data ?? []).map(seq => ({
+ return ((data ?? []) as Sequence[]).map((seq: Sequence) => ({
  ...seq,
  steps: seq.steps || [],
  }))
@@ -165,7 +172,7 @@ export const startSequence = async (
   orgId: string,
   leadId: string,
   contactId?: string,
-  initialData: Record<string, any> = {},
+  initialData: Record<string, unknown> = {},
 ): Promise<string | null> => {
   const supabase = getSupabaseServiceRoleClient()
 
@@ -400,7 +407,7 @@ export const executeSequenceStep = async (
  */
 const executeStepAction = async (
  step: SequenceStep,
- execution: any,
+ execution: SequenceExecution,
 ): Promise<boolean> => {
  try {
  switch (step.action_type) {
@@ -441,7 +448,7 @@ const executeStepAction = async (
  */
 const executeSendMessageStep = async (
  step: SequenceStep,
- execution: any,
+ execution: SequenceExecution,
 ): Promise<boolean> => {
  if (!step.template) return false
 
@@ -460,7 +467,7 @@ const executeSendMessageStep = async (
  */
 const executeCreateTaskStep = async (
  step: SequenceStep,
- execution: any,
+ execution: SequenceExecution,
 ): Promise<boolean> => {
  if (!step.task_title) return false
 
@@ -479,7 +486,7 @@ const executeCreateTaskStep = async (
  */
 const executeSendEmailStep = async (
  step: SequenceStep,
- execution: any,
+ execution: SequenceExecution,
 ): Promise<boolean> => {
  if (!step.template || !step.recipient) return false
 
@@ -494,13 +501,14 @@ const executeSendEmailStep = async (
 
     // Отправляем email
     // template может быть строкой или объектом
-    const templateStr = typeof step.template === 'string' 
-      ? step.template 
-      : (step.template as any)?.html || (step.template as any)?.body || ''
-    
+    const templateObj = typeof step.template === 'object' ? step.template as EmailTemplate : null
+    const templateStr = typeof step.template === 'string'
+      ? step.template
+      : templateObj?.html || templateObj?.body || ''
+
     const subject = typeof step.template === 'string'
       ? 'Сообщение от World Wide Services'
-      : (step.template as any)?.subject || 'Сообщение от World Wide Services'
+      : templateObj?.subject || 'Сообщение от World Wide Services'
 
     const success = await sendTemplateEmail(
       step.recipient || '',
@@ -534,7 +542,7 @@ const executeSendEmailStep = async (
  */
 const executeWebhookStep = async (
  step: SequenceStep,
- execution: any,
+ execution: SequenceExecution,
 ): Promise<boolean> => {
  if (!step.webhook_url) return false
 
@@ -561,7 +569,7 @@ const executeWebhookStep = async (
  */
 const executeAiResponseStep = async (
  step: SequenceStep,
- execution: any,
+ execution: SequenceExecution,
 ): Promise<boolean> => {
  if (!step.ai_prompt) return false
 
@@ -669,7 +677,7 @@ export const deleteSequence = async (
  */
 const executeKommoActionStep = async (
  step: SequenceStep,
- execution: any,
+ execution: SequenceExecution,
 ): Promise<boolean> => {
  if (!step.kommo_action) return false
 
@@ -681,11 +689,11 @@ const executeKommoActionStep = async (
  const action = {
  type: step.kommo_action.type,
  data: step.kommo_action.data,
- entityId: step.kommo_action.entity_id || execution.lead_id,
- entityType: step.kommo_action.entity_type || 'leads',
+ entityId: String(step.kommo_action.entity_id || execution.lead_id),
+ entityType: step.kommo_action.entity_type || ('leads' as const),
  }
 
- await kommoService.executeAction(action)
+ await kommoService.executeAction(action as unknown as Parameters<typeof kommoService.executeAction>[0])
  return true
  } catch (error) {
  console.error('Kommo action execution failed', error)
