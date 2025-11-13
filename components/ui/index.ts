@@ -94,3 +94,15 @@ export {
  PopoverAnchor,
 } from './popover'
 
+// Sheet компоненты
+export {
+  Sheet,
+  SheetTrigger,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+} from './sheet'
+
