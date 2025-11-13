@@ -1,4 +1,5 @@
 import { Redis } from 'ioredis'
+import { logger } from '@/lib/utils/logger'
 
 // Redis client instance
 let redisClient: Redis | null = null
@@ -14,7 +15,7 @@ export const getRedisClient = (): Redis | null => {
   try {
     const redisUrl = process.env.REDIS_URL
     if (!redisUrl || redisUrl.includes('your-redis-host')) {
-      console.warn(
+      logger.warn(
         'REDIS_URL not configured or using placeholder, caching disabled',
       )
       return null
@@ -23,17 +24,17 @@ export const getRedisClient = (): Redis | null => {
     redisClient = new Redis(redisUrl)
 
     redisClient.on('error', (err) => {
-      console.error('Redis connection error:', err.message)
+      logger.error('Redis connection error', { error: err.message })
       redisClient = null
     })
 
     redisClient.on('connect', () => {
-      console.log('Connected to Redis')
+      logger.info('Connected to Redis')
     })
 
     return redisClient
   } catch (error) {
-    console.error('Failed to initialize Redis client:', error)
+    logger.error('Failed to initialize Redis client', { error })
     return null
   }
 }
@@ -94,7 +95,7 @@ export class Cache {
 
       return JSON.parse(data)
     } catch (error) {
-      console.error('Cache get error:', error)
+      logger.error('Cache get error', { key, error })
       return null
     }
   }
@@ -111,7 +112,7 @@ export class Cache {
       await this.client.setex(key, ttl, serialized)
       return true
     } catch (error) {
-      console.error('Cache set error:', error)
+      logger.error('Cache set error', { key, ttl, error })
       return false
     }
   }
@@ -123,7 +124,7 @@ export class Cache {
       await this.client.del(key)
       return true
     } catch (error) {
-      console.error('Cache del error:', error)
+      logger.error('Cache del error', { key, error })
       return false
     }
   }
@@ -138,7 +139,7 @@ export class Cache {
       }
       return true
     } catch (error) {
-      console.error('Cache delPattern error:', error)
+      logger.error('Cache delPattern error', { pattern, error })
       return false
     }
   }
@@ -150,7 +151,7 @@ export class Cache {
       const result = await this.client.exists(key)
       return result === 1
     } catch (error) {
-      console.error('Cache exists error:', error)
+      logger.error('Cache exists error', { key, error })
       return false
     }
   }
@@ -162,7 +163,7 @@ export class Cache {
       await this.client.flushdb()
       return true
     } catch (error) {
-      console.error('Cache clear error:', error)
+      logger.error('Cache clear error', { error })
       return false
     }
   }
@@ -190,7 +191,7 @@ export class Cache {
         ),
       }
     } catch (error) {
-      console.error('Cache stats error:', error)
+      logger.error('Cache stats error', { error })
       return {
         connected: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -218,18 +219,18 @@ export const cached = async <T>(
     // Try to get from cache first
     const cached = await cache.get<T>(key)
     if (cached !== null) {
-      console.log(`Cache hit for key: ${key}`)
+      logger.info('Cache hit', { key })
       return cached
     }
 
     // Execute function and cache result
-    console.log(`Cache miss for key: ${key}`)
+    logger.info('Cache miss', { key })
     const result = await fn()
     await cache.set(key, result, ttl)
 
     return result
   } catch (error) {
-    console.error('Cached function error:', error)
+    logger.error('Cached function error', { key, error })
     // Fallback to executing function without cache
     return fn()
   }
@@ -268,7 +269,7 @@ export const withCache = (
       // Try to get from cache
       const cached = await cache.get(cacheKey)
       if (cached) {
-        console.log(`API cache hit for: ${cacheKey}`)
+        logger.info('API cache hit', { cacheKey })
         return new Response(JSON.stringify(cached), {
           headers: {
             'Content-Type': 'application/json',
@@ -278,7 +279,7 @@ export const withCache = (
       }
 
       // Execute handler and cache result
-      console.log(`API cache miss for: ${cacheKey}`)
+      logger.info('API cache miss', { cacheKey })
       const response = await handler(request)
 
       if (
@@ -303,7 +304,7 @@ export const withCache = (
 
       return response
     } catch (error) {
-      console.error('Cache middleware error:', error)
+      logger.error('Cache middleware error', { cacheKey, error })
       return handler(request)
     }
   }

@@ -1,5 +1,6 @@
 import { Server as HTTPServer } from 'http'
 import { Server as SocketServer } from 'socket.io'
+import { logger } from '@/lib/utils/logger'
 
 import { UserRepository } from '@/lib/repositories/users'
 
@@ -80,13 +81,13 @@ export function initializeWebSocketServer(httpServer: HTTPServer) {
 
  next()
  } catch (error) {
- console.error('WebSocket auth error:', error)
+ logger.error('WebSocket auth error', { error })
  next(new Error('Authentication failed'))
  }
  })
 
  io.on('connection', async (socket) => {
- console.log('User connected:', socket.data.userId || 'anonymous')
+ logger.info('User connected', { userId: socket.data.userId || 'anonymous', socketId: socket.id })
 
  const userId = socket.data.userId
  const orgId = socket.data.orgId || userId
@@ -152,24 +153,24 @@ export function initializeWebSocketServer(httpServer: HTTPServer) {
  read: true,
  })
  } catch (error) {
- console.error('Error marking notification as read:', error)
+ logger.error('Error marking notification as read', { notificationId, userId, error })
  }
  })
 
  // Handle job subscriptions
  socket.on('job:subscribe', (jobId: string) => {
  socket.join(`job:${jobId}`)
- console.log(`User ${userId} subscribed to job ${jobId}`)
+ logger.debug('User subscribed to job', { userId, jobId })
  })
 
  socket.on('job:unsubscribe', (jobId: string) => {
  socket.leave(`job:${jobId}`)
- console.log(`User ${userId} unsubscribed from job ${jobId}`)
+ logger.debug('User unsubscribed from job', { userId, jobId })
  })
 
  // Handle disconnect
  socket.on('disconnect', () => {
- console.log('User disconnected:', userId || 'anonymous')
+ logger.info('User disconnected', { userId: userId || 'anonymous', socketId: socket.id })
 
  if (userId && orgId) {
  // Remove from online users
@@ -193,7 +194,7 @@ export function initializeWebSocketServer(httpServer: HTTPServer) {
  })
  })
 
- console.log('WebSocket server initialized')
+ logger.info('WebSocket server initialized')
  return io
 }
 
@@ -295,5 +296,5 @@ export function getOnlineUsers(orgId?: string): string[] {
 async function markNotificationAsRead(notificationId: string, userId: string) {
  // This would update the notification in the database
  // For now, just log it
- console.log(`Marking notification ${notificationId} as read for user ${userId}`)
+ logger.debug('Marking notification as read', { notificationId, userId })
 }

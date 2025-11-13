@@ -3,6 +3,8 @@
  * Документация: https://www.amocrm.ru/developers/content/crm_platform/platform-abilities
  */
 
+import { logger } from '@/lib/utils'
+
 const DEMO_FLAG_VALUES = new Set(['1', 'true'])
 const matchesDemoFlag = (value?: string) => (value ? DEMO_FLAG_VALUES.has(value.toLowerCase()) : false)
 const isDemoEnvironment = () =>
@@ -801,7 +803,7 @@ export class KommoAPI {
 
  if (!eventType) {
  // Если тип не найден, пробуем определить по структуре
- console.warn('Unknown webhook event format:', Object.keys(payload))
+ logger.warn('Unknown webhook event format', { payloadKeys: Object.keys(payload) })
  return {
    type: 'unknown',
    data: payload,

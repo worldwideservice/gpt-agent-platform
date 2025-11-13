@@ -1,4 +1,5 @@
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils/logger'
 
 export interface TriggerCondition {
   id: string
@@ -113,7 +114,7 @@ export const getTriggers = async (organizationId: string, agentId: string): Prom
     .order('created_at', { ascending: false })
 
   if (error) {
-    console.error('Failed to fetch triggers', error)
+    logger.error('Failed to fetch triggers', { organizationId, agentId, error })
     throw new Error('Не удалось загрузить триггеры')
   }
 
@@ -138,7 +139,7 @@ export const getTriggerById = async (
     .maybeSingle()
 
   if (error) {
-    console.error('Failed to fetch trigger', error)
+    logger.error('Failed to fetch trigger', { triggerId, organizationId, agentId, error })
     throw new Error('Не удалось загрузить триггер')
   }
 
@@ -175,7 +176,7 @@ export const createTrigger = async (
     .single()
 
   if (triggerError) {
-    console.error('Failed to create trigger', triggerError)
+    logger.error('Failed to create trigger', { organizationId, agentId, name: data.name, error: triggerError })
     throw new Error('Не удалось создать триггер')
   }
 
@@ -193,7 +194,7 @@ export const createTrigger = async (
     )
 
     if (conditionsError) {
-      console.error('Failed to create trigger conditions', conditionsError)
+      logger.error('Failed to create trigger conditions', { triggerId: triggerRow.id, organizationId, error: conditionsError })
       throw new Error('Не удалось создать условия триггера')
     }
   }
@@ -210,7 +211,7 @@ export const createTrigger = async (
     )
 
     if (actionsError) {
-      console.error('Failed to create trigger actions', actionsError)
+      logger.error('Failed to create trigger actions', { triggerId: triggerRow.id, organizationId, error: actionsError })
       throw new Error('Не удалось создать действия триггера')
     }
   }
@@ -256,7 +257,7 @@ export const updateTrigger = async (
     .single()
 
   if (triggerError) {
-    console.error('Failed to update trigger', triggerError)
+    logger.error('Failed to update trigger', { triggerId, organizationId, agentId, error: triggerError })
     throw new Error('Не удалось обновить триггер')
   }
 
@@ -285,7 +286,7 @@ export const updateTrigger = async (
       )
 
       if (conditionsError) {
-        console.error('Failed to update trigger conditions', conditionsError)
+        logger.error('Failed to update trigger conditions', { triggerId, organizationId, error: conditionsError })
         throw new Error('Не удалось обновить условия триггера')
       }
     }
@@ -310,7 +311,7 @@ export const updateTrigger = async (
       )
 
       if (actionsError) {
-        console.error('Failed to update trigger actions', actionsError)
+        logger.error('Failed to update trigger actions', { triggerId, organizationId, error: actionsError })
         throw new Error('Не удалось обновить действия триггера')
       }
     }
@@ -334,7 +335,7 @@ export const deleteTrigger = async (
     .eq('agent_id', agentId)
 
   if (error) {
-    console.error('Failed to delete trigger', error)
+    logger.error('Failed to delete trigger', { triggerId, organizationId, agentId, error })
     throw new Error('Не удалось удалить триггер')
   }
 }
@@ -357,7 +358,7 @@ export const updateTriggerStatus = async (
     .single()
 
   if (error) {
-    console.error('Failed to update trigger status', error)
+    logger.error('Failed to update trigger status', { triggerId, organizationId, agentId, isActive, error })
     throw new Error('Не удалось обновить статус триггера')
   }
 

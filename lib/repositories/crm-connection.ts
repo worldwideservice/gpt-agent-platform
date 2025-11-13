@@ -1,5 +1,6 @@
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { KommoAPI, type KommoConfig } from '@/lib/crm/kommo'
+import { logger } from '@/lib/utils'
 
 const DEMO_FLAG_VALUES = new Set(['1', 'true'])
 const matchesDemo = (value?: string) => (value ? DEMO_FLAG_VALUES.has(value.toLowerCase()) : false)
@@ -66,7 +67,7 @@ export const getCrmConnectionData = async (
     .maybeSingle()
 
   if (connectionError) {
-    console.error('Failed to fetch CRM connection', connectionError)
+    logger.error('getCrmConnectionData: Failed to fetch CRM connection', connectionError as Error, { organizationId, provider })
   }
 
   // Получаем credentials (для refresh token нужны, но не критичны для базовых операций)
@@ -78,7 +79,7 @@ export const getCrmConnectionData = async (
     .maybeSingle()
 
   if (credentialsError) {
-    console.error('Failed to fetch CRM credentials', credentialsError)
+    logger.error('getCrmConnectionData: Failed to fetch CRM credentials', credentialsError as Error, { organizationId, provider })
   }
 
   return {
@@ -129,7 +130,7 @@ export const createKommoApiForOrg = async (
 
  return new KommoAPI(config)
  } catch (error) {
- console.error('Failed to create KommoAPI for org', error)
+ logger.error('createKommoApiForOrg: Failed to create KommoAPI for org', error as Error, { organizationId })
  return null
  }
 }

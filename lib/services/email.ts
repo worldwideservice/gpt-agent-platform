@@ -4,6 +4,7 @@
  */
 
 import nodemailer from 'nodemailer'
+import { logger } from '@/lib/utils'
 
 let transporter: nodemailer.Transporter | null = null
 
@@ -75,7 +76,7 @@ export const sendEmail = async (options: SendEmailOptions): Promise<boolean> => 
 
     const info = await emailTransporter.sendMail(mailOptions)
 
-    console.log('Email sent successfully:', {
+    logger.info('Email sent successfully', {
       messageId: info.messageId,
       to: options.to,
       subject: options.subject,
@@ -83,7 +84,10 @@ export const sendEmail = async (options: SendEmailOptions): Promise<boolean> => 
 
     return true
   } catch (error) {
-    console.error('Error sending email:', error)
+    logger.error('Error sending email', error instanceof Error ? error : new Error(String(error)), {
+      to: options.to,
+      subject: options.subject,
+    })
     return false
   }
 }

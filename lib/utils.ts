@@ -48,7 +48,15 @@ class Logger {
  // In production, you might want to send to a logging service
  if (process.env.NODE_ENV === 'production') {
  // Send to logging service (e.g., Sentry, DataDog, etc.)
- console.log(JSON.stringify(logEntry))
+ try {
+   // Use standard console for the logger implementation itself
+   // eslint-disable-next-line no-console
+   console.log(JSON.stringify(logEntry))
+ } catch (e) {
+   // Fallback if JSON serialization fails
+   // eslint-disable-next-line no-console
+   console.log(`[${level.toUpperCase()}] ${timestamp} ${message}`)
+ }
  } else {
  // Pretty print in development
  const color = {
@@ -58,9 +66,12 @@ class Logger {
  [LogLevel.DEBUG]: '\x1b[35m', // Magenta
  }[level] || '\x1b[0m'
 
+ // eslint-disable-next-line no-console
  console.log(`${color}[${level.toUpperCase()}] ${timestamp} ${message}\x1b[0m`)
+        // eslint-disable-next-line no-console
         if (data) console.log('Data:', data)
- if (error) console.error('Error:', error)
+ // eslint-disable-next-line no-console
+ if (error) console.log('Error:', error)
  }
  }
 

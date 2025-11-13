@@ -5,6 +5,7 @@
 
 import Stripe from 'stripe'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils/logger'
 
 let stripe: Stripe | null = null
 
@@ -93,7 +94,7 @@ export const createStripeCustomer = async (
 
  return customer.id
  } catch (error) {
- console.error('Error creating Stripe customer', error)
+ logger.error('Error creating Stripe customer', error, { orgId, email })
  return null
  }
 }
@@ -164,7 +165,7 @@ export const createSubscriptionSession = async (
 
  return session.url || null
  } catch (error) {
- console.error('Error creating subscription session', error)
+ logger.error('Error creating subscription session', error, { orgId, planId })
  return null
  }
 }
@@ -193,11 +194,11 @@ export const handleStripeWebhook = async (
  return await handleSubscriptionDeleted(event.data.object as Stripe.Subscription)
 
  default:
- console.log('Unhandled webhook event:', event.type)
+ logger.info('Unhandled webhook event', { eventType: event.type })
  return true
  }
  } catch (error) {
- console.error('Error handling Stripe webhook', error)
+ logger.error('Error handling Stripe webhook', error, { eventType: event.type })
  return false
  }
 }
@@ -211,7 +212,7 @@ const handleCheckoutCompleted = async (session: Stripe.Checkout.Session): Promis
  const planId = session.metadata?.plan_id
 
  if (!orgId || !planId) {
- console.error('Missing org_id or plan_id in session metadata')
+ logger.error('Missing org_id or plan_id in session metadata', undefined, { orgId, planId })
  return false
  }
 
@@ -234,13 +235,13 @@ const handleCheckoutCompleted = async (session: Stripe.Checkout.Session): Promis
  })
 
  if (error) {
- console.error('Error saving subscription', error)
+ logger.error('Error saving subscription', error, { orgId, planId })
  return false
  }
 
  return true
  } catch (error) {
- console.error('Error handling checkout completed', error)
+ logger.error('Error handling checkout completed', error, { orgId, planId })
  return false
  }
 }
@@ -250,7 +251,7 @@ const handleCheckoutCompleted = async (session: Stripe.Checkout.Session): Promis
  */
 const handleInvoicePaymentSucceeded = async (invoice: Stripe.Invoice): Promise<boolean> => {
  // Логика обработки успешной оплаты
- console.log('Invoice payment succeeded:', invoice.id)
+ logger.info('Invoice payment succeeded', { invoiceId: invoice.id })
  return true
 }
 
@@ -259,7 +260,7 @@ const handleInvoicePaymentSucceeded = async (invoice: Stripe.Invoice): Promise<b
  */
 const handleInvoicePaymentFailed = async (invoice: Stripe.Invoice): Promise<boolean> => {
  // Логика обработки неудачной оплаты
- console.log('Invoice payment failed:', invoice.id)
+ logger.warn('Invoice payment failed', { invoiceId: invoice.id })
  return true
 }
 
@@ -283,7 +284,7 @@ const handleSubscriptionUpdated = async (subscription: Stripe.Subscription): Pro
 
  return !error
  } catch (error) {
- console.error('Error updating subscription', error)
+ logger.error('Error updating subscription', error, { subscriptionId: subscription.id })
  return false
  }
 }
@@ -306,7 +307,7 @@ const handleSubscriptionDeleted = async (subscription: Stripe.Subscription): Pro
 
  return !error
  } catch (error) {
- console.error('Error deleting subscription', error)
+ logger.error('Error deleting subscription', error, { subscriptionId: subscription.id })
  return false
  }
 }
@@ -348,7 +349,7 @@ export const getBillingPlans = async (): Promise<BillingPlan[]> => {
  .order('price_cents', { ascending: true })
 
  if (error) {
- console.error('Error getting billing plans', error)
+ logger.error('Error getting billing plans', error)
  return []
  }
 
@@ -383,7 +384,7 @@ export const recordUsage = async (
  })
 
  if (error) {
- console.error('Error recording usage', error)
+ logger.error('Error recording usage', error, { orgId, resourceType, amount })
  return false
  }
 
@@ -392,7 +393,7 @@ export const recordUsage = async (
 
  return true
  } catch (error) {
- console.error('Error recording usage', error)
+ logger.error('Error recording usage', error, { orgId, resourceType, amount })
  return false
  }
 }
@@ -415,7 +416,7 @@ export const getUsageStats = async (
  .lte('recorded_at', endDate.toISOString())
 
  if (error) {
- console.error('Error getting usage stats', error)
+ logger.error('Error getting usage stats', error, { orgId })
  return {}
  }
 
@@ -448,12 +449,12 @@ const checkUsageLimits = async (
 
  if (limit && current >= limit * 0.9) { // 90% от лимита
  // Отправляем предупреждение (можно реализовать позже)
- console.warn(`Usage limit warning for ${resourceType}: ${current}/${limit}`)
+ logger.warn('Usage limit warning', { resourceType, current, limit, orgId })
  }
 
  if (limit && current >= limit) {
  // Превышен лимит - можно заблокировать или отправить уведомление
- console.error(`Usage limit exceeded for ${resourceType}: ${current}/${limit}`)
+ logger.error('Usage limit exceeded', { resourceType, current, limit, orgId })
  }
 }
 
@@ -480,7 +481,7 @@ export const cancelSubscription = async (
 
  return true
  } catch (error) {
- console.error('Error canceling subscription', error)
+ logger.error('Error canceling subscription', error, { orgId, cancelAtPeriodEnd })
  return false
  }
 }
@@ -501,7 +502,7 @@ export const resumeSubscription = async (orgId: string): Promise<boolean> => {
 
  return true
  } catch (error) {
- console.error('Error resuming subscription', error)
+ logger.error('Error resuming subscription', error, { orgId })
  return false
  }
 }

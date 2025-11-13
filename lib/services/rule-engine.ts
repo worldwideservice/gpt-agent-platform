@@ -6,6 +6,7 @@
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { generateChatResponse } from './llm'
 import { createKommoApiForOrg } from '@/lib/repositories/crm-connection'
+import { logger } from '@/lib/utils/logger'
 
 // Тип для шаблона email
 interface EmailTemplate {
@@ -83,13 +84,13 @@ export const createRule = async (
  .single()
 
  if (error) {
- console.error('Failed to create rule', error)
+ logger.error('Failed to create rule', error, { orgId })
  return null
  }
 
  return data.id
  } catch (error) {
- console.error('Error creating rule', error)
+ logger.error('Error creating rule', error, { orgId })
  return null
  }
 }
@@ -121,7 +122,7 @@ export const getRules = async (
  const { data, error } = await query
 
  if (error) {
- console.error('Failed to get rules', error)
+ logger.error('Failed to get rules', error, { orgId, agentId, activeOnly })
  return []
  }
 
@@ -176,7 +177,7 @@ export const executeRules = async (
  })
 
  } catch (error) {
- console.error(`Rule execution failed for rule ${rule.id}`, error)
+ logger.error(`Rule execution failed for rule ${rule.id}`, error, { ruleId: rule.id, organizationId })
  results.push({
  ruleId: rule.id,
  actions: rule.actions,
@@ -254,7 +255,7 @@ const evaluateCondition = async (
  const func = new Function('context', `return ${condition.customLogic}`)
  return !!func(context)
  } catch (error) {
- console.error('Custom condition evaluation failed', error)
+ logger.error('Custom condition evaluation failed', error)
  return false
  }
 
@@ -344,7 +345,7 @@ const executeActions = async (
  const success = await executeAction(action, context)
  results.push({ action, success })
  } catch (error) {
- console.error('Action execution failed', error)
+ logger.error('Action execution failed', error, { actionType: action.type, organizationId: context.organizationId })
  results.push({
  action,
  success: false,
@@ -400,7 +401,7 @@ const executeSendMessage = async (action: RuleAction, context: RuleExecutionCont
 
   const kommoApi = await createKommoApiForOrg(context.organizationId)
   if (!kommoApi) {
-    console.warn('Kommo API not configured for organization', context.organizationId)
+    logger.warn('Kommo API not configured for organization', { organizationId: context.organizationId })
     return false
   }
 
@@ -422,7 +423,7 @@ const executeSendMessage = async (action: RuleAction, context: RuleExecutionCont
 
     return true
   } catch (error) {
-    console.error('Failed to send message through Kommo', error)
+    logger.error('Failed to send message through Kommo', error, { organizationId: context.organizationId, leadId: context.leadId })
     return false
   }
 }
@@ -437,7 +438,7 @@ const executeChangeStage = async (action: RuleAction, context: RuleExecutionCont
 
   const kommoApi = await createKommoApiForOrg(context.organizationId)
   if (!kommoApi) {
-    console.warn('Kommo API not available for stage change')
+    logger.warn('Kommo API not available for stage change', { organizationId: context.organizationId })
     return false
   }
 
@@ -452,7 +453,7 @@ const executeChangeStage = async (action: RuleAction, context: RuleExecutionCont
     await kommoApi.updateLead(leadId, { status_id: newStageId })
     return true
   } catch (error) {
-    console.error('Failed to change stage in Kommo', error)
+    logger.error('Failed to change stage in Kommo', error, { organizationId: context.organizationId, leadId: context.leadId })
     return false
   }
 }
@@ -467,7 +468,7 @@ const executeCreateTask = async (action: RuleAction, context: RuleExecutionConte
 
   const kommoApi = await createKommoApiForOrg(context.organizationId)
   if (!kommoApi) {
-    console.warn('Kommo API unavailable for creating task')
+    logger.warn('Kommo API unavailable for creating task', { organizationId: context.organizationId })
     return false
   }
 
@@ -492,7 +493,7 @@ const executeCreateTask = async (action: RuleAction, context: RuleExecutionConte
     })
     return true
   } catch (error) {
-    console.error('Failed to create Kommo task', error)
+    logger.error('Failed to create Kommo task', error, { organizationId: context.organizationId, leadId: context.leadId })
     return false
   }
 }
@@ -507,7 +508,7 @@ const executeUpdateField = async (action: RuleAction, context: RuleExecutionCont
 
   const kommoApi = await createKommoApiForOrg(context.organizationId)
   if (!kommoApi) {
-    console.warn('Kommo API unavailable for update field')
+    logger.warn('Kommo API unavailable for update field', { organizationId: context.organizationId })
     return false
   }
 
@@ -522,7 +523,7 @@ const executeUpdateField = async (action: RuleAction, context: RuleExecutionCont
     })
     return true
   } catch (error) {
-    console.error('Failed to update field in Kommo', error)
+    logger.error('Failed to update field in Kommo', error, { organizationId: context.organizationId, leadId: context.leadId })
     return false
   }
 }
@@ -564,21 +565,21 @@ const executeSendEmail = async (
     )
 
     if (!success) {
-      console.error('Failed to send email in rule action:', {
+      logger.error('Failed to send email in rule action', undefined, {
         recipient: action.recipient,
         actionType: action.type,
       })
       return false
     }
 
-    console.log('Rule: Email sent successfully', {
+    logger.info('Rule: Email sent successfully', {
       recipient: action.recipient,
       actionType: action.type,
     })
 
     return true
   } catch (error) {
-    console.error('Error sending email in rule action:', error)
+    logger.error('Error sending email in rule action', error, { recipient: action.recipient })
     return false
   }
 }
@@ -605,7 +606,7 @@ const executeWebhook = async (
 
  return response.ok
  } catch (error) {
- console.error('Webhook execution failed', error)
+ logger.error('Webhook execution failed', error, { webhookUrl: action.webhookUrl })
  return false
  }
 }
@@ -625,7 +626,7 @@ const executeAiResponse = async (
  })
  return true
  } catch (error) {
- console.error('AI response generation failed', error)
+ logger.error('AI response generation failed', error, { organizationId: context.organizationId })
  return false
  }
 }
@@ -656,7 +657,7 @@ const logRuleExecution = async (
  executed_at: new Date().toISOString(),
  })
  } catch (error) {
- console.error('Failed to log rule execution', error)
+ logger.error('Failed to log rule execution', error, { ruleId, organizationId: context.organizationId })
  }
 }
 

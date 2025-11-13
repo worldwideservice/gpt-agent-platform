@@ -5,6 +5,7 @@
 import { getSupabaseServiceRoleClient } from "@/lib/supabase/admin";
 import { parseTenantId } from "./tenant";
 import { getOrganizationsForUser } from "@/lib/repositories/organizations";
+import { logger } from "@/lib/utils";
 
 /**
  * Находит организацию по slug из tenant-id
@@ -40,25 +41,25 @@ export async function validateTenantIdAccess(
  // Парсим tenant-id
  const parsed = parseTenantId(tenantId);
  if (!parsed || !parsed.slug) {
- console.warn("[validateTenantIdAccess] Invalid tenant-id format", { tenantId });
+ logger.warn("validateTenantIdAccess: Invalid tenant-id format", { tenantId });
  return { valid: false };
  }
 
  // Находим организацию по slug
  const organization = await findOrganizationBySlug(parsed.slug);
  if (!organization) {
- console.warn("[validateTenantIdAccess] Organization not found", { slug: parsed.slug });
+ logger.warn("validateTenantIdAccess: Organization not found", { slug: parsed.slug });
  return { valid: false };
  }
 
  // Получаем список организаций пользователя
  const userOrganizations = await getOrganizationsForUser(userId);
- 
+
  // Проверяем, что организация принадлежит пользователю
  const hasAccess = userOrganizations.some(org => org.id === organization.id);
- 
+
  if (!hasAccess) {
- console.warn("[validateTenantIdAccess] User doesn't have access to organization", {
+ logger.warn("validateTenantIdAccess: User doesn't have access to organization", {
  userId,
  organizationId: organization.id,
  });
@@ -70,9 +71,8 @@ export async function validateTenantIdAccess(
  organization,
  };
  } catch (error) {
- console.error("[validateTenantIdAccess] Error validating tenant-id", {
+ logger.error("validateTenantIdAccess: Error validating tenant-id", error as Error, {
  tenantId,
- error: error instanceof Error ? error.message : String(error),
  });
  return { valid: false };
  }

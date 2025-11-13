@@ -1,4 +1,5 @@
 import { io, Socket } from 'socket.io-client'
+import { logger } from '@/lib/utils/logger'
 import type { ServerToClientEvents, ClientToServerEvents } from './server'
 
 const SOCKET_PATH = '/api/socket/io'
@@ -40,7 +41,7 @@ class WebSocketClient {
  try {
  await fetch(SOCKET_PATH, { method: 'GET', cache: 'no-store' })
  } catch (error) {
- console.error('Failed to initialize WebSocket endpoint', error)
+ logger.error('Failed to initialize WebSocket endpoint', { error })
  }
 
  const socketUrl = process.env.NODE_ENV === 'production'
@@ -82,13 +83,13 @@ class WebSocketClient {
 
  // Connection events
  this.socket.on('connect', () => {
- console.log('WebSocket connected')
+ logger.info('WebSocket connected')
  this.connected = true
  this.reconnectAttempts = 0
  })
 
  this.socket.on('disconnect', (reason) => {
- console.log('WebSocket disconnected:', reason)
+ logger.info('WebSocket disconnected', { reason })
  this.connected = false
 
  if (reason === 'io server disconnect') {
@@ -98,47 +99,47 @@ class WebSocketClient {
  })
 
  this.socket.on('connect_error', (error) => {
- console.error('WebSocket connection error:', error)
+ logger.error('WebSocket connection error', { error })
  this.attemptReconnect()
  })
 
  // Application events
  this.socket.on('notification:new', (notification) => {
- console.log('New notification:', notification)
+ logger.debug('New notification received', { notificationId: notification?.id })
  this.listeners.notification.forEach(listener => listener(notification))
  })
 
  this.socket.on('job:updated', (job) => {
- console.log('Job updated:', job)
+ logger.debug('Job updated', { jobId: job?.id })
  this.listeners.jobUpdate.forEach(listener => listener(job))
  })
 
  this.socket.on('agent:status_changed', (agent) => {
- console.log('Agent status changed:', agent)
+ logger.debug('Agent status changed', { agentId: agent?.agentId, status: agent?.status })
  this.listeners.agentStatusChange.forEach(listener => listener(agent))
  })
 
  this.socket.on('system:announcement', (announcement) => {
- console.log('System announcement:', announcement)
+ logger.info('System announcement received', { type: announcement?.type })
  this.listeners.systemAnnouncement.forEach(listener => listener(announcement))
  })
 
  this.socket.on('user:online_status', (users) => {
- console.log('Online users updated:', users)
+ logger.debug('Online users updated', { count: users?.length })
  this.listeners.onlineStatus.forEach(listener => listener(users))
  })
  }
 
  private attemptReconnect() {
  if (this.reconnectAttempts >= this.maxReconnectAttempts) {
- console.error('Max reconnection attempts reached')
+ logger.error('Max reconnection attempts reached', { maxAttempts: this.maxReconnectAttempts })
  return
  }
 
  this.reconnectAttempts++
  const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1)
 
- console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`)
+ logger.info('Attempting to reconnect', { delay, attempt: this.reconnectAttempts })
 
  setTimeout(() => {
  if (this.socket && !this.socket.connected) {

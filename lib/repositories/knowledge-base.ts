@@ -1,5 +1,6 @@
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { generateEmbeddingsForDocument } from '@/lib/services/embeddings'
+import { logger } from '@/lib/utils/logger'
 
 import type { KnowledgeBaseArticle, KnowledgeBaseCategory, KnowledgeBaseStatsSummary } from '@/types'
 
@@ -112,7 +113,7 @@ export const getKnowledgeBaseStats = async (
  pendingAssetsCount: assetsResult.count ?? 0,
  }
  } catch (error) {
- console.error('Failed to load knowledge base stats', error)
+ logger.error('Failed to load knowledge base stats', { organizationId, error })
  return defaultKnowledgeBaseStats
  }
 }
@@ -157,10 +158,10 @@ const reindexArticleKnowledge = async (
  const { error } = await supabase.from('knowledge_chunks').insert(rows)
 
  if (error) {
- console.error('Failed to store knowledge embeddings', error)
+ logger.error('Failed to store knowledge embeddings', { articleId, error })
  }
  } catch (error) {
- console.error('Knowledge article reindex failed', error)
+ logger.error('Knowledge article reindex failed', { articleId, error })
  }
 }
 
@@ -175,7 +176,7 @@ export const getKnowledgeBaseCategories = async (organizationId: string): Promis
  .order('name', { ascending: true })
 
  if (error) {
- console.error('Failed to fetch knowledge base categories', error)
+ logger.error('Failed to fetch knowledge base categories', { organizationId, error })
  throw new Error('Не удалось загрузить категории')
  }
 
@@ -212,7 +213,7 @@ export const getKnowledgeBaseCategoryById = async (
  .maybeSingle()
 
  if (error) {
- console.error('Failed to fetch knowledge base category', error)
+ logger.error('Failed to fetch knowledge base category', { categoryId, organizationId, error })
  throw new Error('Не удалось загрузить категорию')
  }
 
@@ -247,7 +248,7 @@ export const createKnowledgeBaseCategory = async (
  .single()
 
  if (error) {
- console.error('Failed to create knowledge base category', error)
+ logger.error('Failed to create knowledge base category', { organizationId, name: data.name, error })
  throw new Error('Не удалось создать категорию')
  }
 
@@ -284,7 +285,7 @@ export const updateKnowledgeBaseCategory = async (
  .single()
 
  if (error) {
- console.error('Failed to update knowledge base category', error)
+ logger.error('Failed to update knowledge base category', { categoryId, organizationId, error })
  throw new Error('Не удалось обновить категорию')
  }
 
@@ -311,7 +312,7 @@ export const deleteKnowledgeBaseCategory = async (categoryId: string, organizati
  .eq('org_id', organizationId)
 
  if (error) {
- console.error('Failed to delete knowledge base category', error)
+ logger.error('Failed to delete knowledge base category', { categoryId, organizationId, error })
  throw new Error('Не удалось удалить категорию')
  }
 }
@@ -341,7 +342,7 @@ export const getKnowledgeBaseArticles = async (
   const { data, error } = await query
 
   if (error) {
-    console.error('Failed to fetch knowledge base articles', error)
+    logger.error('Failed to fetch knowledge base articles', { organizationId, categoryId, search, error })
     throw new Error('Не удалось загрузить статьи')
   }
 
@@ -362,7 +363,7 @@ export const getKnowledgeBaseArticleById = async (
  .maybeSingle()
 
  if (error) {
- console.error('Failed to fetch knowledge base article', error)
+ logger.error('Failed to fetch knowledge base article', { articleId, organizationId, error })
  throw new Error('Не удалось загрузить статью')
  }
 
@@ -393,7 +394,7 @@ export const createKnowledgeBaseArticle = async (
  .single()
 
  if (error) {
- console.error('Failed to create knowledge base article', error)
+ logger.error('Failed to create knowledge base article', { organizationId, title: data.title, error })
  throw new Error('Не удалось создать статью')
  }
 
@@ -446,7 +447,7 @@ export const updateKnowledgeBaseArticle = async (
  .single()
 
  if (error) {
- console.error('Failed to update knowledge base article', error)
+ logger.error('Failed to update knowledge base article', { articleId, organizationId, error })
  throw new Error('Не удалось обновить статью')
  }
 
@@ -477,7 +478,7 @@ export const deleteKnowledgeBaseArticle = async (articleId: string, organization
  .eq('org_id', organizationId)
 
  if (error) {
- console.error('Failed to delete knowledge base article', error)
+ logger.error('Failed to delete knowledge base article', { articleId, organizationId, error })
  throw new Error('Не удалось удалить статью')
  }
 }

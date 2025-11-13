@@ -4,6 +4,7 @@
  */
 
 import { Redis } from 'ioredis'
+import { logger } from '@/lib/utils/logger'
 
 let redisClient: Redis | null = null
 
@@ -17,7 +18,7 @@ function getRedisClient(): Redis | null {
 
   const redisUrl = process.env.REDIS_URL
   if (!redisUrl) {
-    console.warn('[cache] REDIS_URL not configured, caching disabled')
+    logger.warn('[cache] REDIS_URL not configured, caching disabled')
     return null
   }
 
@@ -30,13 +31,13 @@ function getRedisClient(): Redis | null {
     })
 
     redisClient.on('error', (error) => {
-      console.error('[cache] Redis connection error:', error.message)
+      logger.error('[cache] Redis connection error', { error: error.message })
       redisClient = null
     })
 
     return redisClient
   } catch (error) {
-    console.error('[cache] Failed to initialize Redis:', error)
+    logger.error('[cache] Failed to initialize Redis', { error })
     return null
   }
 }
@@ -69,7 +70,7 @@ export async function getCache<T>(key: string): Promise<T | null> {
 
     return JSON.parse(value) as T
   } catch (error) {
-    console.error(`[cache] Failed to get key ${key}:`, error)
+    logger.error('[cache] Failed to get key', { key, error })
     return null
   }
 }
@@ -87,7 +88,7 @@ export async function setCache<T>(key: string, value: T, ttl: number = DEFAULT_T
     await client.setex(key, ttl, JSON.stringify(value))
     return true
   } catch (error) {
-    console.error(`[cache] Failed to set key ${key}:`, error)
+    logger.error('[cache] Failed to set key', { key, ttl, error })
     return false
   }
 }
@@ -105,7 +106,7 @@ export async function deleteCache(key: string): Promise<boolean> {
     await client.del(key)
     return true
   } catch (error) {
-    console.error(`[cache] Failed to delete key ${key}:`, error)
+    logger.error('[cache] Failed to delete key', { key, error })
     return false
   }
 }
@@ -190,7 +191,7 @@ export async function invalidateOrgCache(orgId: string): Promise<void> {
       await client.del(...keys, ...crmKeys)
     }
   } catch (error) {
-    console.error(`[cache] Failed to invalidate org cache for ${orgId}:`, error)
+    logger.error('[cache] Failed to invalidate org cache', { orgId, error })
   }
 }
 

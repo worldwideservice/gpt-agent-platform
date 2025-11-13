@@ -1,4 +1,5 @@
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils'
 
 // Admin access control
 export async function checkAdminAccess(userId: string): Promise<boolean> {
@@ -36,7 +37,7 @@ export async function checkAdminAccess(userId: string): Promise<boolean> {
 
  return false
  } catch (error) {
- console.error('Error checking admin access:', error)
+ logger.error('checkAdminAccess: Error checking admin access', error as Error)
  return false
  }
 }
@@ -141,7 +142,7 @@ export async function getAdminStats() {
  },
  }
  } catch (error) {
- console.error('Error getting admin stats:', error)
+ logger.error('getAdminStats: Error getting admin stats', error as Error)
  throw error
  }
 }
@@ -171,7 +172,7 @@ export async function performAdminAction(action: string, payload: Record<string,
  throw new Error(`Unknown admin action: ${action}`)
  }
  } catch (error) {
- console.error('Error performing admin action:', error)
+ logger.error('performAdminAction: Error performing admin action', error as Error)
  throw error
  }
 }
@@ -206,7 +207,7 @@ async function deleteUser(userId: string) {
 async function updateFeatureFlag(flagKey: string, updates: Record<string, unknown>) {
  // This would update feature flags in database/cache
  // For now, just log the action
- console.log('Updating feature flag:', flagKey, updates)
+ logger.info('updateFeatureFlag: Updating feature flag', { flagKey, updates })
  return { success: true }
 }
 
@@ -214,7 +215,7 @@ async function clearCache() {
  // Clear Redis cache
  try {
  // This would connect to Redis and clear cache
- console.log('Clearing cache...')
+ logger.info('clearCache: Clearing cache')
  return { success: true }
  } catch (error) {
  throw error
@@ -225,7 +226,7 @@ async function restartWorker() {
  // Restart background worker
  try {
  // This would send signal to restart worker process
- console.log('Restarting worker...')
+ logger.info('restartWorker: Restarting worker')
  return { success: true }
  } catch (error) {
  throw error

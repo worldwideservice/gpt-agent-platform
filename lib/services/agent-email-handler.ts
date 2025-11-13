@@ -10,6 +10,7 @@ import { buildFullSystemPrompt } from './agent-context-builder'
 import { generateChatResponse } from './llm'
 import { getCrmConnectionData } from '@/lib/repositories/crm-connection'
 import { KommoAPI } from '@/lib/crm/kommo'
+import { logger } from '@/lib/utils'
 
 export interface IncomingEmailData {
   leadId: string | number
@@ -81,7 +82,7 @@ export const handleIncomingEmailForAgent = async (
     const agentIds = await getAgentsForPipelineStage(orgId, pipelineId, stageId)
 
     if (agentIds.length === 0) {
-      console.log(`No agents configured for pipeline ${pipelineId} stage ${stageId}`)
+      logger.info('handleIncomingEmailForAgent: No agents configured for this pipeline stage', { pipelineId, stageId })
       return {
         success: false,
         error: 'No agents configured for this pipeline stage',
@@ -145,7 +146,7 @@ export const handleIncomingEmailForAgent = async (
       text: llmResponse.content, // plain text версия
     })
 
-    console.log(`Agent ${agentId} responded to email from ${emailData.from} in lead ${leadId}`)
+    logger.info('handleIncomingEmailForAgent: Agent responded to email', { agentId, from: emailData.from, leadId })
 
     return {
       success: true,
@@ -153,7 +154,7 @@ export const handleIncomingEmailForAgent = async (
       response: llmResponse.content,
     }
   } catch (error) {
-    console.error('Error handling incoming email for agent:', error)
+    logger.error('handleIncomingEmailForAgent: Error handling incoming email for agent', error as Error, { orgId, leadId: emailData.leadId })
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

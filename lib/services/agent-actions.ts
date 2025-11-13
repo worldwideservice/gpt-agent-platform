@@ -3,6 +3,7 @@ import { generateChatResponse } from './llm'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { retryApiCall } from '@/lib/utils/retry'
 import { ActivityLogger } from './activity-logger'
+import { logger } from '@/lib/utils'
 
 export interface AgentActionContext {
  organizationId: string
@@ -53,10 +54,10 @@ export class AgentActionsService {
          }
        )
        if (leadContext?.lead?.name) {
-         console.log('Получен контекст сделки:', leadContext.lead.name)
+         logger.info('analyzeAndSuggestActions: Lead context received', { leadName: leadContext.lead.name })
        }
      } catch (error) {
-       console.error('Failed to fetch lead context (non-critical):', error)
+       logger.error('analyzeAndSuggestActions: Failed to fetch lead context (non-critical)', error as Error)
        // Не критично - продолжаем без контекста
      }
    }
@@ -83,8 +84,8 @@ export class AgentActionsService {
    suggestions.sort((a, b) => b.confidence - a.confidence)
 
  } catch (error) {
-   console.error('Failed to analyze actions:', error)
-   
+   logger.error('analyzeAndSuggestActions: Failed to analyze actions', error as Error, { organizationId: context.organizationId, agentId: context.agentId })
+
    // Логируем ошибку в Activity Logger
    ActivityLogger.errorOccurred(
      context.organizationId,
@@ -134,7 +135,7 @@ export class AgentActionsService {
 
  return response.content.toLowerCase().trim()
  } catch (error) {
- console.error('Failed to analyze user intent:', error)
+ logger.error('analyzeUserIntent: Failed to analyze user intent', error as Error)
  return 'other'
  }
  }
@@ -376,7 +377,7 @@ export class AgentActionsService {
    error = err instanceof Error ? err : new Error(String(err))
    const duration = Date.now() - startTime
 
-   console.error('Failed to execute suggested action:', error)
+   logger.error('executeSuggestedAction: Failed to execute suggested action', error)
 
    // Логируем ошибку выполнения действия
    await ActivityLogger.errorOccurred(

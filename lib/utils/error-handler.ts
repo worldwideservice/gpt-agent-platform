@@ -4,6 +4,7 @@
  */
 
 import * as Sentry from '@sentry/nextjs'
+import { logger } from '@/lib/utils'
 
 import { recordApiError } from '@/lib/monitoring/metrics'
 
@@ -143,9 +144,12 @@ export function createErrorResponse(
     })
   }
 
-  // Логируем в консоль для разработки
+  // Логируем для разработки
   if (process.env.NODE_ENV === 'development') {
-    console.error(`[error-handler] ${errorType}:`, error)
+    logger.error(`[error-handler] ${errorType}`, error instanceof Error ? error : new Error(String(error)), {
+      code: context?.code,
+      details: context?.details,
+    })
   }
 
   if (context?.route && context?.method && status >= 500) {
@@ -202,9 +206,11 @@ export async function withGracefulDegradation<T>(
   try {
     return await fn()
   } catch (error) {
-    console.warn(
+    logger.warn(
       errorMessage || 'Graceful degradation: operation failed, using fallback',
-      error
+      {
+        error: error instanceof Error ? error.message : String(error),
+      }
     )
     return fallback
   }
