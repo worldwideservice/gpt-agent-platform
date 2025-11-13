@@ -4,6 +4,7 @@
  */
 
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/utils/logger'
 
 // Тип для шаблона email
 interface EmailTemplate {
@@ -94,7 +95,7 @@ export const createSequence = async (
  .single()
 
  if (sequenceError || !sequence) {
- console.error('Failed to create sequence', sequenceError)
+ logger.error('Failed to create sequence', sequenceError, { orgId })
  return null
  }
 
@@ -110,7 +111,7 @@ export const createSequence = async (
  .insert(stepsWithSequenceId)
 
  if (stepsError) {
- console.error('Failed to create sequence steps', stepsError)
+ logger.error('Failed to create sequence steps', stepsError, { orgId, sequenceId: sequence.id })
  // Удаляем последовательность если шаги не создались
  await supabase.from('sequences').delete().eq('id', sequence.id)
  return null
@@ -119,7 +120,7 @@ export const createSequence = async (
 
  return sequence.id
  } catch (error) {
- console.error('Error creating sequence', error)
+ logger.error('Error creating sequence', error, { orgId })
  return null
  }
 }
@@ -154,7 +155,7 @@ export const getSequences = async (
  const { data, error } = await query
 
  if (error) {
- console.error('Failed to get sequences', error)
+ logger.error('Failed to get sequences', error, { orgId, agentId, activeOnly })
  return []
  }
 
@@ -189,7 +190,7 @@ export const startSequence = async (
       .single()
 
     if (seqError || !sequence || !sequence.is_active) {
-      console.error('Sequence not found or inactive', seqError)
+      logger.error('Sequence not found or inactive', seqError, { sequenceId, orgId, leadId })
       return null
     }
 
@@ -210,7 +211,7 @@ export const startSequence = async (
       .single()
 
     if (execError || !execution) {
-      console.error('Failed to create sequence execution', execError)
+      logger.error('Failed to create sequence execution', execError, { sequenceId, orgId, leadId })
       return null
     }
 
@@ -231,7 +232,7 @@ export const startSequence = async (
         steps_count: sequence.steps?.length || 0,
       },
     }).catch((error) => {
-      console.error('Failed to log sequence start to activity_logs:', error)
+      logger.error('Failed to log sequence start to activity_logs', error, { sequenceId, orgId })
     })
 
     // Планируем первый шаг
@@ -239,7 +240,7 @@ export const startSequence = async (
 
     return execution.id
   } catch (error) {
-    console.error('Error starting sequence', error)
+    logger.error('Error starting sequence', error, { sequenceId, orgId, leadId })
     return null
   }
 }
@@ -293,7 +294,7 @@ const scheduleNextStep = async (
           status: 'completed',
         },
       }).catch((error) => {
-        console.error('Failed to log sequence completion to activity_logs:', error)
+        logger.error('Failed to log sequence completion to activity_logs', error, { executionId })
       })
     }
 
@@ -325,7 +326,7 @@ const queueStepExecution = async (
 ): Promise<void> => {
  // Здесь должна быть интеграция с BullMQ для отложенного выполнения
  // Пока просто логируем
- console.log('Queueing step execution:', {
+ logger.info('Queueing step execution', {
  executionId,
  stepId: step.id,
  executeAt: executeAt.toISOString(),
@@ -356,7 +357,7 @@ export const executeSequenceStep = async (
  .single()
 
  if (execError || !execution) {
- console.error('Execution not found', execError)
+ logger.error('Execution not found', execError, { executionId })
  return false
  }
 
@@ -364,7 +365,7 @@ export const executeSequenceStep = async (
  const currentStep = sequence.steps.find((step: SequenceStep) => step.step_order === execution.current_step)
 
  if (!currentStep) {
- console.error('Current step not found')
+ logger.error('Current step not found', undefined, { executionId, currentStepOrder: execution.current_step })
  return false
  }
 
@@ -387,7 +388,7 @@ export const executeSequenceStep = async (
 
  return success
  } catch (error) {
- console.error('Error executing sequence step', error)
+ logger.error('Error executing sequence step', error, { executionId })
 
  // Помечаем выполнение как failed
  await supabase
@@ -434,11 +435,11 @@ const executeStepAction = async (
  return await executeKommoActionStep(step, execution)
 
  default:
- console.error('Unknown step action type:', step.action_type)
+ logger.error('Unknown step action type', undefined, { actionType: step.action_type, stepId: step.id })
  return false
  }
  } catch (error) {
- console.error('Step action execution failed', error)
+ logger.error('Step action execution failed', error, { stepId: step.id, actionType: step.action_type })
  return false
  }
 }
@@ -453,10 +454,11 @@ const executeSendMessageStep = async (
  if (!step.template) return false
 
  // Здесь должна быть интеграция с Kommo API
- console.log('Sequence: Sending message', {
+ logger.info('Sequence: Sending message', {
  leadId: execution.lead_id,
  template: step.template,
- executionData: execution.execution_context,
+ orgId: execution.org_id,
+ executionId: execution.id,
  })
 
  return true
@@ -472,10 +474,12 @@ const executeCreateTaskStep = async (
  if (!step.task_title) return false
 
  // Здесь должна быть интеграция с Kommo API
- console.log('Sequence: Creating task', {
+ logger.info('Sequence: Creating task', {
  leadId: execution.lead_id,
  title: step.task_title,
  description: step.task_description,
+ orgId: execution.org_id,
+ executionId: execution.id,
  })
 
  return true
@@ -518,21 +522,22 @@ const executeSendEmailStep = async (
     )
 
     if (!success) {
-      console.error('Failed to send email in sequence step:', {
+      logger.error('Failed to send email in sequence step', undefined, {
         recipient: step.recipient,
         stepOrder: step.step_order,
+        stepId: step.id,
       })
       return false
     }
 
-    console.log('Sequence: Email sent successfully', {
+    logger.info('Sequence: Email sent successfully', {
  recipient: step.recipient,
       stepId: step.id,
  })
 
  return true
   } catch (error) {
-    console.error('Error sending email in sequence step:', error)
+    logger.error('Error sending email in sequence step', error, { recipient: step.recipient, stepId: step.id })
     return false
   }
 }
@@ -559,7 +564,7 @@ const executeWebhookStep = async (
 
  return response.ok
  } catch (error) {
- console.error('Webhook execution failed', error)
+ logger.error('Webhook execution failed', error, { webhookUrl: step.webhook_url, stepId: step.id })
  return false
  }
 }
@@ -574,9 +579,11 @@ const executeAiResponseStep = async (
  if (!step.ai_prompt) return false
 
  // Здесь должна быть интеграция с AI
- console.log('Sequence: AI response', {
+ logger.info('Sequence: AI response', {
  leadId: execution.lead_id,
  prompt: step.ai_prompt,
+ orgId: execution.org_id,
+ executionId: execution.id,
  })
 
  return true
@@ -601,7 +608,7 @@ export const getPendingSequenceExecutions = async (): Promise<Array<{
  .limit(100)
 
  if (error) {
- console.error('Failed to get pending executions', error)
+ logger.error('Failed to get pending executions', error)
  return []
  }
 
@@ -630,7 +637,7 @@ export const updateSequence = async (
 
  return !error
  } catch (error) {
- console.error('Error updating sequence', error)
+ logger.error('Error updating sequence', error, { sequenceId, orgId })
  return false
  }
 }
@@ -667,7 +674,7 @@ export const deleteSequence = async (
 
  return !error
  } catch (error) {
- console.error('Error deleting sequence', error)
+ logger.error('Error deleting sequence', error, { sequenceId, orgId })
  return false
  }
 }
@@ -696,7 +703,12 @@ const executeKommoActionStep = async (
  await kommoService.executeAction(action as unknown as Parameters<typeof kommoService.executeAction>[0])
  return true
  } catch (error) {
- console.error('Kommo action execution failed', error)
+ logger.error('Kommo action execution failed', error, {
+   orgId: execution.org_id,
+   leadId: execution.lead_id,
+   actionType: step.kommo_action.type,
+   stepId: step.id,
+ })
  return false
  }
 }
