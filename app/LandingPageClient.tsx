@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { 
   Bot, 
   Brain, 
@@ -164,13 +165,13 @@ export function LandingPageClient() {
           <ScrollAnimation direction="fade" delay={100}>
             <div className="mx-auto flex max-w-[980px] flex-col items-center gap-4 text-center">
               <Badge variant="secondary" className="mb-2 animate-pulse">
-                <Sparkles className="mr-2 h-3 w-3 animate-spin-slow" />
+                <Sparkles className="mr-2 h-3 w-3 animate-spin-slow" aria-hidden="true" />
                 create infinity
               </Badge>
               <h1 className="text-3xl font-bold leading-tight tracking-tighter md:text-5xl lg:leading-[1.1] bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
                 Создавайте и автоматизируйте
                 <br />
-                <span className="bg-gradient-to-r from-[#E63946] via-[#FF6B35] to-[#E63946] bg-clip-text text-transparent animate-gradient">
+                <span className="bg-gradient-to-r from-[hsl(var(--brand-accent))] via-[hsl(var(--brand-accent-strong))] to-[hsl(var(--brand-accent))] bg-clip-text text-transparent animate-gradient">
                   с AI-агентами
                 </span>
               </h1>
@@ -198,36 +199,52 @@ export function LandingPageClient() {
                   ) : (
                     <>
                       Перейти на платформу
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                      <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                     </>
                   )}
                 </Button>
               </>
             ) : (
               <>
-                <Link href="/register">
-                <Button 
-                  size="lg" 
-                  className="text-base group hover:scale-105 hover:shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:ring-offset-2"
-                  aria-label="Начать бесплатную регистрацию"
+                <Button
+                  size="lg"
+                  className="group text-base transition-transform duration-300 hover:scale-105 hover:shadow-lg"
+                  asChild
                 >
-                  Начать бесплатно
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" aria-hidden="true" />
+                  <Link href="/register" aria-label="Начать бесплатную регистрацию">
+                    Начать бесплатно
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
+                  </Link>
                 </Button>
-                </Link>
-                <Link href="/login">
-                <Button 
-                  variant="outline" 
-                  size="lg" 
-                  className="text-base hover:scale-105 hover:border-[#E63946] hover:text-[#E63946] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:ring-offset-2"
-                  aria-label="Войти в аккаунт"
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="group text-base hover:border-brand-accent hover:text-brand-accent"
+                  asChild
                 >
-                  Войти в аккаунт
+                  <Link href="/login" aria-label="Войти в аккаунт">
+                    Войти в аккаунт
+                  </Link>
                 </Button>
-                </Link>
               </>
             )}
           </div>
+          <ScrollAnimation direction="up" delay={160}>
+            <div className="relative mx-auto mt-8 max-w-5xl">
+              <Image
+                src="/brand/hero-illustration.svg"
+                alt="Иллюстрация интерфейса TON 18 с панелями и графиками"
+                width={640}
+                height={480}
+                priority
+                className="w-full rounded-3xl border border-white/40 shadow-2xl ring-1 ring-brand-focus/10 dark:ring-brand-focus/20"
+              />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-br from-white/10 via-transparent to-brand-accent/10"
+              />
+            </div>
+          </ScrollAnimation>
         </div>
       </section>
 
@@ -245,16 +262,16 @@ export function LandingPageClient() {
         </ScrollAnimation>
         <div className="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3">
             <ScrollAnimation direction="up" delay={100}>
-            <Card 
-              className="group hover:scale-105 hover:shadow-xl transition-all duration-300 cursor-pointer border-2 hover:border-[#FF6B35]/20 focus-within:ring-2 focus-within:ring-[#FF6B35] focus-within:ring-offset-2"
+            <Card
+              className="group hover:scale-105 hover:shadow-xl transition-all duration-300 cursor-pointer border-2 hover:border-brand-accent/20 focus-within:ring-2 focus-within:ring-brand-focus focus-within:ring-offset-2 focus-within:ring-offset-background"
               role="article"
               aria-label="Умные AI-агенты"
             >
               <CardHeader>
-                <div className="mb-4 h-10 w-10 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center group-hover:bg-[#FF6B35]/20 transition-colors duration-300 group-hover:scale-110" aria-hidden="true">
-                  <Bot className="h-6 w-6 text-[#FF6B35] transition-transform duration-300" />
+                <div className="mb-4 h-10 w-10 rounded-lg bg-brand-accent/10 flex items-center justify-center group-hover:bg-brand-accent/20 transition-colors duration-300 group-hover:scale-110" aria-hidden="true">
+                  <Bot className="h-6 w-6 text-brand-accent transition-transform duration-300" />
                 </div>
-                <CardTitle className="group-hover:text-[#FF6B35] transition-colors duration-300">Умные AI-агенты</CardTitle>
+                <CardTitle className="group-hover:text-brand-accent transition-colors duration-300">Умные AI-агенты</CardTitle>
                 <CardDescription className="transition-colors duration-300">
                   Создавайте и настраивайте AI-агентов с помощью передовых моделей ИИ. 
                   Выбирайте из 100+ моделей, включая GPT-4o, Claude и другие.
@@ -351,11 +368,11 @@ export function LandingPageClient() {
           <div className="grid gap-6 md:grid-cols-3">
             <ScrollAnimation direction="left" delay={200}>
               <div className="flex flex-col space-y-4 group hover:scale-105 transition-transform duration-300">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#FF6B35] text-white group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-brand-accent text-brand-accentForeground group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
                   <span className="text-xl font-bold">1</span>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-semibold group-hover:text-[#FF6B35] transition-colors duration-300">Создайте агента</h3>
+                  <h3 className="text-xl font-semibold group-hover:text-brand-accent transition-colors duration-300">Создайте агента</h3>
                   <p className="text-gray-600">
                     Зарегистрируйтесь и создайте своего первого AI-агента. 
                     Настройте базовые параметры и инструкции.
@@ -365,11 +382,11 @@ export function LandingPageClient() {
             </ScrollAnimation>
             <ScrollAnimation direction="up" delay={300}>
               <div className="flex flex-col space-y-4 group hover:scale-105 transition-transform duration-300">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#FF6B35] text-white group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-brand-accent text-brand-accentForeground group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
                   <span className="text-xl font-bold">2</span>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-semibold group-hover:text-[#FF6B35] transition-colors duration-300">Обучите агента</h3>
+                  <h3 className="text-xl font-semibold group-hover:text-brand-accent transition-colors duration-300">Обучите агента</h3>
                   <p className="text-gray-600">
                     Загрузите файлы, создайте базу знаний и настройте работу агента. 
                     Интегрируйте с вашей CRM системой.
@@ -379,11 +396,11 @@ export function LandingPageClient() {
             </ScrollAnimation>
             <ScrollAnimation direction="right" delay={400}>
               <div className="flex flex-col space-y-4 group hover:scale-105 transition-transform duration-300">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#FF6B35] text-white group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-brand-accent text-brand-accentForeground group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
                   <span className="text-xl font-bold">3</span>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-semibold group-hover:text-[#FF6B35] transition-colors duration-300">Автоматизируйте</h3>
+                  <h3 className="text-xl font-semibold group-hover:text-brand-accent transition-colors duration-300">Автоматизируйте</h3>
                   <p className="text-gray-600">
                     Настройте автоматизацию и наблюдайте, как агент работает с клиентами 
                     и обрабатывает задачи в реальном времени.
@@ -401,23 +418,23 @@ export function LandingPageClient() {
           <div className="grid gap-6 md:grid-cols-3">
             <ScrollAnimation direction="up" delay={100}>
               <div className="flex flex-col items-center text-center space-y-2 group hover:scale-105 transition-transform duration-300">
-                <AnimatedCounter 
-                  value={100} 
-                  suffix="+" 
-                  className="text-4xl font-bold text-[#E63946] group-hover:text-[#FF6B35] transition-colors duration-300" 
+                <AnimatedCounter
+                  value={100}
+                  suffix="+"
+                  className="text-4xl font-bold text-brand-accent group-hover:text-brand-accentStrong transition-colors duration-300"
                 />
                 <div className="text-gray-600">Моделей ИИ</div>
               </div>
             </ScrollAnimation>
             <ScrollAnimation direction="up" delay={200}>
               <div className="flex flex-col items-center text-center space-y-2 group hover:scale-105 transition-transform duration-300">
-                <div className="text-4xl font-bold text-[#E63946] group-hover:text-[#FF6B35] transition-colors duration-300">24/7</div>
+                <div className="text-4xl font-bold text-brand-accent group-hover:text-brand-accentStrong transition-colors duration-300">24/7</div>
                 <div className="text-gray-600">Работа агентов</div>
               </div>
             </ScrollAnimation>
             <ScrollAnimation direction="up" delay={300}>
               <div className="flex flex-col items-center text-center space-y-2 group hover:scale-105 transition-transform duration-300">
-                <div className="text-4xl font-bold text-[#E63946] group-hover:text-[#FF6B35] transition-colors duration-300">∞</div>
+                <div className="text-4xl font-bold text-brand-accent group-hover:text-brand-accentStrong transition-colors duration-300">∞</div>
                 <div className="text-gray-600">Масштабируемость</div>
               </div>
             </ScrollAnimation>
@@ -445,26 +462,26 @@ export function LandingPageClient() {
                   Бесплатная регистрация, без кредитной карты.
                 </p>
                 <div className="flex w-full items-center justify-center space-x-4 py-4">
-                  <Link href="/register">
-                    <Button 
-                      size="lg" 
-                      className="text-base group hover:scale-105 hover:shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:ring-offset-2"
-                      aria-label="Начать бесплатную регистрацию"
-                    >
+                  <Button
+                    size="lg"
+                    className="group text-base transition-transform duration-300 hover:scale-105 hover:shadow-lg"
+                    asChild
+                  >
+                    <Link href="/register" aria-label="Начать бесплатную регистрацию">
                       Начать бесплатно
-                      <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" aria-hidden="true" />
-                    </Button>
-                  </Link>
-                  <Link href="/login">
-                    <Button 
-                      variant="outline" 
-                      size="lg" 
-                      className="text-base hover:scale-105 hover:border-[#E63946] hover:text-[#E63946] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:ring-offset-2"
-                      aria-label="Войти в аккаунт"
-                    >
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="group text-base hover:border-brand-accent hover:text-brand-accent"
+                    asChild
+                  >
+                    <Link href="/login" aria-label="Войти в аккаунт">
                       Войти в аккаунт
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 </div>
               </div>
             </ScrollAnimation>
@@ -492,12 +509,12 @@ export function LandingPageClient() {
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Продукт</h4>
                 <ul className="flex flex-col gap-3">
                   <li>
-                    <Link href="#features" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#E63946] dark:hover:text-[#E63946] transition-colors">
+                    <Link href="#features" className="text-sm text-gray-600 dark:text-gray-400 hover:text-brand-accent dark:hover:text-brand-accent transition-colors">
                       Возможности
                     </Link>
                   </li>
                   <li>
-                    <Link href="/pricing" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#E63946] dark:hover:text-[#E63946] transition-colors">
+                    <Link href="/pricing" className="text-sm text-gray-600 dark:text-gray-400 hover:text-brand-accent dark:hover:text-brand-accent transition-colors">
                       Тарифы
                     </Link>
                   </li>
@@ -507,17 +524,17 @@ export function LandingPageClient() {
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Аккаунт</h4>
                 <ul className="flex flex-col gap-3">
                   <li>
-                    <Link href="/login" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#E63946] dark:hover:text-[#E63946] transition-colors">
+                    <Link href="/login" className="text-sm text-gray-600 dark:text-gray-400 hover:text-brand-accent dark:hover:text-brand-accent transition-colors">
                       Войти
                     </Link>
                   </li>
                   <li>
-                    <Link href="/register" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#E63946] dark:hover:text-[#E63946] transition-colors">
+                    <Link href="/register" className="text-sm text-gray-600 dark:text-gray-400 hover:text-brand-accent dark:hover:text-brand-accent transition-colors">
                       Зарегистрироваться
                     </Link>
                   </li>
                   <li>
-                    <Link href="/reset-password/request" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#E63946] dark:hover:text-[#E63946] transition-colors">
+                    <Link href="/reset-password/request" className="text-sm text-gray-600 dark:text-gray-400 hover:text-brand-accent dark:hover:text-brand-accent transition-colors">
                       Восстановить пароль
                     </Link>
                   </li>
@@ -527,7 +544,7 @@ export function LandingPageClient() {
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Поддержка</h4>
                 <ul className="flex flex-col gap-3">
                   <li>
-                    <Link href="/support" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#E63946] dark:hover:text-[#E63946] transition-colors">
+                    <Link href="/support" className="text-sm text-gray-600 dark:text-gray-400 hover:text-brand-accent dark:hover:text-brand-accent transition-colors">
                       Помощь
                     </Link>
                   </li>

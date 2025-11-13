@@ -3,6 +3,8 @@
  * Отслеживание метрик для мониторинга Worker
  */
 
+import { collectDefaultMetrics, Counter, Gauge, Histogram, Registry } from 'prom-client'
+
 interface Metrics {
   jobs: {
     total: number
@@ -56,6 +58,42 @@ class MetricsCollector {
 
   private jobStartTimes: Map<string, number> = new Map()
   private processingTimes: number[] = []
+  private registry = new Registry()
+  private jobDurationHistogram = new Histogram({
+    name: 'worker_job_duration_seconds',
+    help: 'Duration of processed jobs in seconds',
+    labelNames: ['job_name'],
+    buckets: [0.1, 0.5, 1, 2, 5, 10, 30, 60],
+    registers: [this.registry],
+  })
+  private jobCompletedCounter = new Counter({
+    name: 'worker_jobs_completed_total',
+    help: 'Total completed jobs',
+    labelNames: ['job_name'],
+    registers: [this.registry],
+  })
+  private jobFailedCounter = new Counter({
+    name: 'worker_jobs_failed_total',
+    help: 'Total failed jobs',
+    labelNames: ['job_name'],
+    registers: [this.registry],
+  })
+  private jobInFlightGauge = new Gauge({
+    name: 'worker_jobs_in_flight',
+    help: 'Number of jobs currently being processed',
+    registers: [this.registry],
+  })
+  private redisConnectedGauge = new Gauge({
+    name: 'worker_redis_connected',
+    help: 'Redis connection status (1 = connected)',
+    registers: [this.registry],
+  })
+  private redisReconnectCounter = new Counter({
+    name: 'worker_redis_reconnect_total',
+    help: 'Number of Redis reconnect attempts',
+    registers: [this.registry],
+  })
+  private jobDurationTimers: Map<string, () => void> = new Map()
 
   /**
    * Инициализация метрик Worker
@@ -64,6 +102,7 @@ class MetricsCollector {
     this.metrics.worker.queueName = queueName
     this.metrics.worker.concurrency = concurrency
     this.metrics.worker.uptime = process.uptime()
+    collectDefaultMetrics({ register: this.registry, prefix: 'worker_' })
   }
 
   /**
@@ -73,6 +112,8 @@ class MetricsCollector {
     this.metrics.jobs.total++
     this.metrics.jobs.processing++
     this.jobStartTimes.set(jobId, Date.now())
+    this.jobInFlightGauge.inc()
+    this.jobDurationTimers.set(jobId, this.jobDurationHistogram.startTimer({ job_name: jobName }))
 
     if (!this.metrics.jobs.byType[jobName]) {
       this.metrics.jobs.byType[jobName] = {
@@ -107,6 +148,11 @@ class MetricsCollector {
 
     this.metrics.jobs.completed++
     this.metrics.jobs.processing = Math.max(0, this.metrics.jobs.processing - 1)
+    this.jobCompletedCounter.inc({ job_name: jobName })
+    this.jobInFlightGauge.dec()
+    const timer = this.jobDurationTimers.get(jobId)
+    timer?.()
+    this.jobDurationTimers.delete(jobId)
   }
 
   /**
@@ -132,6 +178,11 @@ class MetricsCollector {
 
     this.metrics.jobs.failed++
     this.metrics.jobs.processing = Math.max(0, this.metrics.jobs.processing - 1)
+    this.jobFailedCounter.inc({ job_name: jobName })
+    this.jobInFlightGauge.dec()
+    const timer = this.jobDurationTimers.get(jobId)
+    timer?.()
+    this.jobDurationTimers.delete(jobId)
 
     if (error) {
       console.error(`[metrics] Job ${jobId} (${jobName}) failed:`, error.message)
@@ -167,6 +218,7 @@ class MetricsCollector {
   redisConnected() {
     this.metrics.redis.connected = true
     this.metrics.redis.lastError = null
+    this.redisConnectedGauge.set(1)
   }
 
   /**
@@ -174,6 +226,7 @@ class MetricsCollector {
    */
   redisDisconnected() {
     this.metrics.redis.connected = false
+    this.redisConnectedGauge.set(0)
   }
 
   /**
@@ -182,6 +235,7 @@ class MetricsCollector {
   redisError(error: Error) {
     this.metrics.redis.connected = false
     this.metrics.redis.lastError = error.message
+    this.redisConnectedGauge.set(0)
   }
 
   /**
@@ -189,6 +243,7 @@ class MetricsCollector {
    */
   redisReconnectAttempt() {
     this.metrics.redis.reconnectAttempts++
+    this.redisReconnectCounter.inc()
   }
 
   /**
@@ -215,54 +270,16 @@ class MetricsCollector {
    * Получить метрики в формате Prometheus (опционально)
    */
   getPrometheusMetrics(): string {
-    const m = this.getMetrics()
-    const lines: string[] = []
+    const uptimeGauge = new Gauge({
+      name: 'worker_uptime_seconds',
+      help: 'Worker uptime in seconds',
+      registers: [this.registry],
+    })
+    uptimeGauge.set(process.uptime())
 
-    // Worker метрики
-    lines.push(`# HELP worker_uptime_seconds Worker uptime in seconds`)
-    lines.push(`# TYPE worker_uptime_seconds gauge`)
-    lines.push(`worker_uptime_seconds ${m.worker.uptime}`)
-
-    lines.push(`# HELP worker_jobs_total Total number of jobs processed`)
-    lines.push(`# TYPE worker_jobs_total counter`)
-    lines.push(`worker_jobs_total ${m.jobs.total}`)
-
-    lines.push(`# HELP worker_jobs_completed Total number of completed jobs`)
-    lines.push(`# TYPE worker_jobs_completed counter`)
-    lines.push(`worker_jobs_completed ${m.jobs.completed}`)
-
-    lines.push(`# HELP worker_jobs_failed Total number of failed jobs`)
-    lines.push(`# TYPE worker_jobs_failed counter`)
-    lines.push(`worker_jobs_failed ${m.jobs.failed}`)
-
-    lines.push(`# HELP worker_jobs_processing Current number of jobs being processed`)
-    lines.push(`# TYPE worker_jobs_processing gauge`)
-    lines.push(`worker_jobs_processing ${m.jobs.processing}`)
-
-    lines.push(`# HELP worker_redis_connected Redis connection status`)
-    lines.push(`# TYPE worker_redis_connected gauge`)
-    lines.push(`worker_redis_connected ${m.redis.connected ? 1 : 0}`)
-
-    lines.push(`# HELP worker_avg_processing_time_ms Average job processing time in milliseconds`)
-    lines.push(`# TYPE worker_avg_processing_time_ms gauge`)
-    lines.push(`worker_avg_processing_time_ms ${m.performance.avgProcessingTime}`)
-
-    // Метрики по типам jobs
-    for (const [jobType, stats] of Object.entries(m.jobs.byType)) {
-      lines.push(`# HELP worker_jobs_by_type_${jobType}_completed Completed jobs of type ${jobType}`)
-      lines.push(`# TYPE worker_jobs_by_type_${jobType}_completed counter`)
-      lines.push(`worker_jobs_by_type_${jobType}_completed ${stats.completed}`)
-
-      lines.push(`# HELP worker_jobs_by_type_${jobType}_failed Failed jobs of type ${jobType}`)
-      lines.push(`# TYPE worker_jobs_by_type_${jobType}_failed counter`)
-      lines.push(`worker_jobs_by_type_${jobType}_failed ${stats.failed}`)
-
-      lines.push(`# HELP worker_jobs_by_type_${jobType}_avg_time_ms Average processing time for ${jobType} in milliseconds`)
-      lines.push(`# TYPE worker_jobs_by_type_${jobType}_avg_time_ms gauge`)
-      lines.push(`worker_jobs_by_type_${jobType}_avg_time_ms ${stats.avgTime}`)
-    }
-
-    return lines.join('\n')
+    const metricsSnapshot = this.registry.metrics()
+    this.registry.removeSingleMetric('worker_uptime_seconds')
+    return metricsSnapshot
   }
 
   /**

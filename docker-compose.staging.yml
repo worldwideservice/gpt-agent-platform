@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  next:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gpt-agent-next-staging
+    env_file:
+      - env.staging.example
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: '1'
+    depends_on:
+      - fastify
+      - worker
+      - redis
+      - supabase
+    ports:
+      - "3000:3000"
+
+  fastify:
+    image: node:20-bullseye
+    container_name: gpt-agent-api-staging
+    working_dir: /app
+    command: sh -c "npm install --omit=dev && npm run api:start"
+    volumes:
+      - ./:/app
+    env_file:
+      - env.staging.example
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      REDIS_URL: redis://redis:6379
+      SUPABASE_URL: http://supabase:5432
+    depends_on:
+      - redis
+      - supabase
+    ports:
+      - "4000:4000"
+
+  worker:
+    build:
+      context: ./services/worker
+      dockerfile: Dockerfile
+    container_name: gpt-agent-worker-staging
+    env_file:
+      - env.staging.example
+    environment:
+      NODE_ENV: production
+      REDIS_URL: redis://redis:6379
+      SUPABASE_URL: http://supabase:5432
+    depends_on:
+      - redis
+      - supabase
+    ports:
+      - "3001:3001"
+
+  redis:
+    image: redis:7-alpine
+    container_name: gpt-agent-redis-staging
+    ports:
+      - "6379:6379"
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis_data:/data
+
+  supabase:
+    image: supabase/postgres:15.1.1.61
+    container_name: gpt-agent-supabase-staging
+    environment:
+      POSTGRES_DB: supabase
+      POSTGRES_USER: supabase
+      POSTGRES_PASSWORD: supabase
+    volumes:
+      - supabase_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  redis_data:
+  supabase_data:

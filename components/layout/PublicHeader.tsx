@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Zap, PlayCircle, CreditCard } from 'lucide-react'
+import { Zap, PlayCircle, CreditCard, HelpCircle } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import { Button } from '@/components/ui'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
@@ -34,42 +34,59 @@ export function PublicHeader({ showNav = true, alwaysShowAuthButtons = false }: 
         <Logo href="/" />
         {showNav && (
           <nav className="hidden md:flex items-center gap-2">
-            <Link 
-              href={isHomePage ? "#features" : "/#features"} 
-              className="group relative flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#E63946] dark:hover:text-[#E63946] focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:ring-offset-2"
+            <Link
+              href={isHomePage ? "#features" : "/#features"}
+              className="group relative flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-brand-accent dark:hover:text-brand-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               aria-label="Перейти к разделу Возможности"
             >
               <Zap className="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
               <span className="relative">
                 Возможности
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#E63946] to-[#FF6B6B] group-hover:w-full transition-all duration-300"></span>
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[hsl(var(--brand-accent))] to-[hsl(var(--brand-accent-strong))] group-hover:w-full transition-all duration-300"></span>
               </span>
             </Link>
-            <Link 
-              href={isHomePage ? "#how-it-works" : "/#how-it-works"} 
-              className="group relative flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#E63946] dark:hover:text-[#E63946] focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:ring-offset-2"
+            <Link
+              href={isHomePage ? "#how-it-works" : "/#how-it-works"}
+              className="group relative flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-brand-accent dark:hover:text-brand-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               aria-label="Перейти к разделу Как это работает"
             >
               <PlayCircle className="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
               <span className="relative">
                 Как это работает
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#E63946] to-[#FF6B6B] group-hover:w-full transition-all duration-300"></span>
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[hsl(var(--brand-accent))] to-[hsl(var(--brand-accent-strong))] group-hover:w-full transition-all duration-300"></span>
               </span>
             </Link>
-            <Link 
-              href="/pricing" 
-              className={`group relative flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:ring-offset-2 ${
+            <Link
+              href="/pricing"
+              className={`group relative flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
                 pathname === '/pricing'
-                  ? 'text-[#E63946] dark:text-[#E63946] bg-gray-100 dark:bg-gray-800'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#E63946] dark:hover:text-[#E63946]'
+                  ? 'text-brand-accent dark:text-brand-accent bg-gray-100 dark:bg-gray-800'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-brand-accent dark:hover:text-brand-accent'
               }`}
               aria-label="Перейти к разделу Тарифы"
             >
               <CreditCard className="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
               <span className="relative">
                 Тарифы
-                <span className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-[#E63946] to-[#FF6B6B] transition-all duration-300 ${
+                <span className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-[hsl(var(--brand-accent))] to-[hsl(var(--brand-accent-strong))] transition-all duration-300 ${
                   pathname === '/pricing' ? 'w-full' : 'w-0 group-hover:w-full'
+                }`}></span>
+              </span>
+            </Link>
+            <Link
+              href="/faq"
+              className={`group relative flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                pathname === '/faq'
+                  ? 'text-brand-accent dark:text-brand-accent bg-gray-100 dark:bg-gray-800'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-brand-accent dark:hover:text-brand-accent'
+              }`}
+              aria-label="Перейти к разделу Частые вопросы"
+            >
+              <HelpCircle className="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
+              <span className="relative">
+                FAQ
+                <span className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-[hsl(var(--brand-accent))] to-[hsl(var(--brand-accent-strong))] transition-all duration-300 ${
+                  pathname === '/faq' ? 'w-full' : 'w-0 group-hover:w-full'
                 }`}></span>
               </span>
             </Link>

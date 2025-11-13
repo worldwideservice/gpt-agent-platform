@@ -15,6 +15,8 @@
 ### 1.1 UI / App Router (`app/`, `components/`, `messages/`, `stories/`)
 - **Рабочие страницы `app/(public)`**: лендинг, тарифы, политика,
   условия и т.д. опубликованы; контент статичен и использует пары RU/EN.
+- **Маркетинговый контур** пополнен страницей `app/faq` и единым `ProductAnalyticsProvider`
+  для публичной части (Segment + PostHog), события page view уже прокидываются.
 - **Личный кабинет `/manage/[tenantId]`** готов как shell:
   `layout.tsx`, `ManageSidebar`, `ManageHeader`, страницы `dashboard`,
   `ai-agents`, `knowledge-base`, `integrations`, `test-chat`, `settings`
@@ -85,7 +87,9 @@
 - README и PROJECT_STRUCTURE уже обновлены для нового `/manage`.
 - В `docs/` лежат планы по AI, Kommo, BullMQ, websockets, env,
   implementation plan. Надо синхронизировать фактическое состояние с
-  прогрессом (часть чекбоксов ещё пустые).
+  прогрессом (часть чекбоксов ещё пустые). Добавлены новые артефакты по
+  поддержке (`docs/support.md`), продуктовой аналитике (`docs/PRODUCT_ANALYTICS.md`)
+  и GTM (`docs/GTM_PLAYBOOK.md`) — требуется встроить их в рабочий процесс.
 
 ---
 
@@ -105,36 +109,40 @@
    Playwright сценарии не покрывают `/manage`.
 7. **Дизайн-система**: нет единого файла дизайн-токенов, новые страницы
    используют разные шрифты/spacing; доступность не проверена.
+8. **Продуктовая аналитика**: события page view завелись, но нет identify,
+   кастомных ивентов (активация, retention) и связки с GTM-дашбордами.
 
 ---
 
 ## 3. План действий по ролям
 
 ### 3.1 Senior Fullstack / Platform Engineers
-1. **Завершить `/manage`**  
+1. **Завершить `/manage`**
    - Подключить Supabase клиент в серверных компонентов (React Server
      Components) и передавать реальные данные (агенты, знания,
-     интеграции).  
+     интеграции).
    - Добавить формы создания/редактирования агентов, загрузки знаний,
      подключения интеграций.  
    - Встроить `useTenantId` (есть хук-заготовка) и общий `TenantContext`.
-2. **AI слой**  
+2. **AI слой**
    - Перевести `generateChatResponse` на org-specific конфигурацию:
      хранить ключи и модели в Supabase (`organization_settings`).  
    - Доделать `buildAgentContext`: knowledge graph из Supabase, кеш
      инструкций в Redis, добавить контроль длины промпта.  
    - Обновить `/api/chat` и test chat UI → использовать новые поля
      (`agentInstructions`, memory, knowledgeGraph).
-3. **CRM/Rule Engine**  
+3. **CRM/Rule Engine**
    - UI для Kommo OAuth + статус интеграции.  
    - Rule Engine/Sequences (`lib/services/rule-engine.ts`,
      `sequences.ts`) привязать к Kommo API действиям и BullMQ задачам.  
    - Обработчики вебхуков + очередь `crm:sync:*`.
-4. **Docs & DX**  
+4. **Docs & DX**
    - Синхронизировать `docs/IMPLEMENTATION_PLAN.md` (отметить выполненные
-     пункты), описать новые API в `/docs`.  
+     пункты), описать новые API в `/docs`.
    - Привести `lib/lib/*` (дубликат) к автоматической синхронизации
      (скрипт или удалить дубликаты).
+   - Интегрировать GTM/аналитику из новых документов в дорожную карту
+     (identify, события конверсии, PostHog dashboard).
 
 ### 3.2 Senior DevOps / SRE
 1. **Окружения**  
@@ -153,7 +161,7 @@
    - Прокинуть метрики Fastify/Worker в `monitoring/prometheus`.  
    - Настроить Grafana dashboards (LLM latency, Kommo sync, очередь).  
    - Alertmanager правила (долгая очередь, 5xx API, истекающие токены).
-5. **Observability/Logging**  
+5. **Observability/Logging**
    - Логгирование через Pino + Transport в Elasticsearch/Sentry.  
    - Трассировки (OpenTelemetry) для LLM/Kommo вызовов.
 
@@ -207,3 +215,9 @@
 Документ можно расширять по мере выполнения пунктов (добавлять ссылки
 на задачи, коммиты, диаграммы). Это станет единой точкой входа для
 Senior инженеров и дизайнеров.
+6. **Product & GTM**
+   - Подключить identify/alias в ProductAnalyticsProvider и настроить
+     отправку ключевых событий (signup, onboarding_completed, agent_created).
+   - Импортировать тарифные планы и SLA из `docs/GTM_PLAYBOOK.md` в UI и
+     коммуникационные цепочки.
+   - Реализовать FAQ/Support как часть постоянного контента (RSS/ссылки в кабинете).

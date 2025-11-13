@@ -15,6 +15,7 @@ const envSchema = z.object({
   JOB_CONCURRENCY: z.coerce.number().int().positive().default(25), // Увеличено для обработки высокой нагрузки (135k-450k jobs/день)
   SENTRY_DSN: z.string().url().optional(), // Sentry DSN для мониторинга ошибок
   NODE_ENV: z.string().default('production'),
+  KOMMO_WEBHOOK_SECRET: z.string().min(16).optional(),
 })
 
 // Валидация переменных окружения с понятными сообщениями об ошибках
@@ -30,6 +31,7 @@ try {
     OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
     JOB_QUEUE_NAME: process.env.JOB_QUEUE_NAME,
     JOB_CONCURRENCY: process.env.JOB_CONCURRENCY,
+    KOMMO_WEBHOOK_SECRET: process.env.KOMMO_WEBHOOK_SECRET,
   })
 } catch (error) {
   if (error instanceof z.ZodError && error.errors) {

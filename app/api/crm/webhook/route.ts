@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { KommoAPI } from '@/lib/crm/kommo'
-import { saveWebhookEvent, processWebhookEvent } from '@/lib/services/webhook-processor'
+import { saveWebhookEvent, processWebhookEvent, extractWebhookMetadata } from '@/lib/services/webhook-processor'
 import { getCrmConnectionData } from '@/lib/repositories/crm-connection'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
  }
 
  // Определяем метаданные события (subtype, entity_id, entity_type)
- const metadata = extractEventMetadata(event.type, event.data)
+ const metadata = extractWebhookMetadata(event.type, event.data)
 
  // Сохраняем событие в БД
  const eventId = await saveWebhookEvent(
@@ -120,148 +120,6 @@ async function determineOrgIdFromWebhook(
  } catch (error) {
  console.error('Error determining orgId from webhook:', error)
  return null
- }
-}
-
-/**
- * Извлекает метаданные события (subtype, entity_id, entity_type)
- */
-function extractEventMetadata(
- eventType: string,
- eventData: unknown
-): {
- eventSubtype?: string
- entityId?: string
- entityType?: string
-} {
- const metadata: {
- eventSubtype?: string
- entityId?: string
- entityType?: string
- } = {}
-
- try {
- const data = eventData as Record<string, unknown>
-
- // Определяем entity_type
- metadata.entityType = eventType.slice(0, -1) // 'leads' -> 'lead', 'contacts' -> 'contact'
-
- // Парсим данные для извлечения entity_id и subtype
- if (eventType === 'leads') {
-   const leads = data.leads || data
-   
-   if (Array.isArray(leads)) {
-     if (leads.length > 0 && leads[0]?.id) {
-       metadata.entityId = String(leads[0].id)
-     }
-   } else if (typeof leads === 'object' && leads !== null) {
-     // Проверяем формат { status: [...], add: [...], update: [...] }
-     const statusArray = (leads as Record<string, unknown>).status as Array<Record<string, unknown>> | undefined
-     const addArray = (leads as Record<string, unknown>).add as Array<Record<string, unknown>> | undefined
-     const updateArray = (leads as Record<string, unknown>).update as Array<Record<string, unknown>> | undefined
-     
-     const firstLead = statusArray?.[0] || addArray?.[0] || updateArray?.[0]
-     
-     if (firstLead?.id) {
-       metadata.entityId = String(firstLead.id)
-     }
-     
-     if (statusArray && statusArray.length > 0) {
-       metadata.eventSubtype = 'lead_status_changed'
-     } else if (addArray && addArray.length > 0) {
-       metadata.eventSubtype = 'lead_created'
-     } else if (updateArray && updateArray.length > 0) {
-       metadata.eventSubtype = 'lead_updated'
-     }
-   }
- } else if (eventType === 'contacts') {
-   const contacts = data.contacts || data
-   
-   if (Array.isArray(contacts) && contacts.length > 0 && contacts[0]?.id) {
-     metadata.entityId = String(contacts[0].id)
-     metadata.eventSubtype = 'contact_created'
-   } else if (typeof contacts === 'object' && contacts !== null) {
-     const addArray = (contacts as Record<string, unknown>).add as Array<Record<string, unknown>> | undefined
-     const updateArray = (contacts as Record<string, unknown>).update as Array<Record<string, unknown>> | undefined
-     
-     const firstContact = addArray?.[0] || updateArray?.[0]
-     if (firstContact?.id) {
-       metadata.entityId = String(firstContact.id)
-       metadata.eventSubtype = addArray ? 'contact_created' : 'contact_updated'
-     }
-   }
- } else if (eventType === 'tasks') {
-   const tasks = data.tasks || data
-   
-   if (Array.isArray(tasks) && tasks.length > 0) {
-     const task = tasks[0] as Record<string, unknown>
-     if (task.id) {
-       metadata.entityId = String(task.id)
-     }
-     if (task.entity_id && task.entity_type) {
-       metadata.entityId = String(task.entity_id)
-       metadata.entityType = String(task.entity_type)
-     }
-     metadata.eventSubtype = 'task_created'
-   }
- } else if (eventType === 'messages') {
-   const messages = data.messages || data
-   
-   if (Array.isArray(messages) && messages.length > 0) {
-     const message = messages[0] as Record<string, unknown>
-     
-     // Определяем тип сообщения (входящее/исходящее)
-     const params = message.params as Record<string, unknown> | undefined
-     const direction = params?.direction || message.direction
-     
-     // Получаем entity_id и entity_type
-     if (message.entity_id) {
-       metadata.entityId = String(message.entity_id)
-     }
-     if (message.entity_type) {
-       metadata.entityType = String(message.entity_type)
-     }
-     
-     // Определяем подтип события
-     if (direction === 'in' || !direction || typeof direction === 'undefined') {
-       metadata.eventSubtype = 'message_received'
-     } else {
-       metadata.eventSubtype = 'message_sent'
-     }
-   } else if (typeof messages === 'object' && messages !== null) {
-     // Формат { add: [...], update: [...] }
-     const addArray = (messages as Record<string, unknown>).add as Array<Record<string, unknown>> | undefined
-     
-     if (addArray && addArray.length > 0) {
-       const message = addArray[0]
-       if (message.entity_id) {
-         metadata.entityId = String(message.entity_id)
-       }
-       if (message.entity_type) {
-         metadata.entityType = String(message.entity_type)
-       }
-       
-       const params = message.params as Record<string, unknown> | undefined
-       const direction = params?.direction || message.direction
-       metadata.eventSubtype = direction === 'in' || !direction ? 'message_received' : 'message_sent'
-     }
-   }
- } else if (eventType === 'calls') {
-   const calls = data.calls || data
-   
-   if (Array.isArray(calls) && calls.length > 0) {
-     const call = calls[0] as Record<string, unknown>
-     if (call.id) {
-       metadata.entityId = String(call.id)
-     }
-     metadata.eventSubtype = 'call_started'
-   }
- }
-
- return metadata
- } catch (error) {
- console.error('Error extracting event metadata:', error)
- return {}
  }
 }
 

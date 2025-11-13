@@ -1,70 +1,66 @@
-/**
- * Централизованная система логирования
- * Согласно Context7 best practices: console.log должен быть защищен проверкой NODE_ENV
- */
+import pino, { type Logger as PinoLogger, type LoggerOptions } from 'pino'
+import * as Sentry from '@sentry/nextjs'
+import { trace } from '@opentelemetry/api'
 
-type LogLevel = 'log' | 'info' | 'warn' | 'error' | 'debug'
+export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal'
 
-interface LogContext {
+export interface LogContext {
   [key: string]: unknown
 }
 
-/**
- * Безопасный логгер для разработки и продакшена
- */
+const isProduction = process.env.NODE_ENV === 'production'
+
+const pinoOptions: LoggerOptions = {
+  level: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug'),
+  base: { service: 'next-app' },
+  redact: ['password', 'token', 'headers.authorization'],
+  transport: isProduction
+    ? undefined
+    : {
+        target: 'pino-pretty',
+        options: {
+          colorize: true,
+          translateTime: 'HH:MM:ss.l',
+          ignore: 'pid,hostname',
+        },
+      },
+}
+
+const baseLogger: PinoLogger = pino(pinoOptions)
+
 class Logger {
-  private isDevelopment = process.env.NODE_ENV === 'development'
-  private isProduction = process.env.NODE_ENV === 'production'
+  constructor(private readonly logger: PinoLogger) {}
 
-  /**
-   * Логирует сообщение только в development режиме
-   */
-  log(message: string, ...args: unknown[]): void {
-    if (this.isDevelopment) {
-      console.log(`[LOG] ${message}`, ...args)
-    }
+  info(message: string, context?: LogContext): void {
+    this.logger.info(context ?? {}, message)
+    this.annotateSpan('info', message, context)
   }
 
-  /**
-   * Логирует информационное сообщение
-   */
-  info(message: string, ...args: unknown[]): void {
-    if (this.isDevelopment) {
-      console.info(`[INFO] ${message}`, ...args)
-    }
+  warn(message: string, context?: LogContext): void {
+    this.logger.warn(context ?? {}, message)
+    this.annotateSpan('warn', message, context)
   }
 
-  /**
-   * Логирует предупреждение (всегда видно)
-   */
-  warn(message: string, ...args: unknown[]): void {
-    console.warn(`[WARN] ${message}`, ...args)
-    // В продакшене можно отправлять в Sentry
-    if (this.isProduction) {
-      // TODO: Интеграция с Sentry для warnings
-    }
-  }
-
-  /**
-   * Логирует ошибку (всегда видно)
-   */
   error(message: string, error?: unknown, context?: LogContext): void {
-    console.error(`[ERROR] ${message}`, error || '', context || '')
-    
-    // В продакшене отправляем в Sentry
-    if (this.isProduction && error) {
-      // TODO: Интеграция с Sentry
-      // Sentry.captureException(error, { extra: context })
+    const payload = {
+      ...context,
+      err: error instanceof Error ? {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      } : error,
     }
-  }
 
-  /**
-   * Логирует отладочное сообщение только в development
-   */
-  debug(message: string, ...args: unknown[]): void {
-    if (this.isDevelopment) {
-      console.debug(`[DEBUG] ${message}`, ...args)
+    this.logger.error(payload, message)
+
+    if (error instanceof Error && isProduction) {
+      Sentry.captureException(error, {
+        extra: context,
+        tags: { service: 'next-app' },
+      })
     }
+
+    this.annotateSpan('error', message, { ...context, error })
   }
 
   /**
@@ -95,31 +91,24 @@ class Logger {
       message,
       ...context,
     }
+  debug(message: string, context?: LogContext): void {
+    this.logger.debug(context ?? {}, message)
+    this.annotateSpan('debug', message, context)
+  }
 
-    switch (level) {
-      case 'log':
-      case 'info':
-        if (this.isDevelopment) {
-          console.log(`[${level.toUpperCase()}] ${message}`, logEntry)
-        }
-        break
-      case 'warn':
-        console.warn(`[WARN] ${message}`, logEntry)
-        break
-      case 'error':
-        console.error(`[ERROR] ${message}`, logEntry)
-        break
-      case 'debug':
-        if (this.isDevelopment) {
-          console.debug(`[DEBUG] ${message}`, logEntry)
-        }
-        break
+  child(bindings: LogContext): Logger {
+    return new Logger(this.logger.child(bindings))
+  }
+
+  private annotateSpan(level: LogLevel, message: string, context?: LogContext): void {
+    const span = trace.getActiveSpan()
+    if (span) {
+      span.addEvent(`log.${level}`, {
+        message,
+        ...(context ?? {}),
+      })
     }
   }
 }
 
-// Экспортируем singleton экземпляр
-export const logger = new Logger()
-
-// Экспортируем типы для использования в других файлах
-export type { LogLevel, LogContext }
+export const logger = new Logger(baseLogger)
