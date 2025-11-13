@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { SessionProviderWrapper } from '@/components/providers/SessionProviderWrapper'
 import { ProductAnalyticsProvider } from '@/components/providers/ProductAnalyticsProvider'
 import { ToastProvider } from '@/components/ui/toast-context'
+import { ThemeProvider } from '@/lib/providers/theme-provider'
 
 import './globals.css'
 
@@ -114,11 +115,13 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       </head>
       <body className={inter.className}>
-        <SessionProviderWrapper>
-          <ProductAnalyticsProvider context="public">
-            <ToastProvider>{children}</ToastProvider>
-          </ProductAnalyticsProvider>
-        </SessionProviderWrapper>
+        <ThemeProvider defaultTheme="system" storageKey="gpt-agent-theme">
+          <SessionProviderWrapper>
+            <ProductAnalyticsProvider context="public">
+              <ToastProvider>{children}</ToastProvider>
+            </ProductAnalyticsProvider>
+          </SessionProviderWrapper>
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>
