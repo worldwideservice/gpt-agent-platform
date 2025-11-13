@@ -106,7 +106,7 @@ export const getNotifications = async (
  const { data, error } = await query
 
  if (error) {
- logger.error('Failed to fetch notifications', { organizationId, userId, error })
+ logger.error('Failed to fetch notifications', error, { organizationId, userId, unreadOnly: options?.unreadOnly })
  throw new Error('Не удалось загрузить уведомления')
  }
 
@@ -123,7 +123,7 @@ export const markNotificationAsRead = async (notificationId: string, organizatio
  .eq('org_id', organizationId)
 
  if (error) {
- logger.error('Failed to mark notification as read', { notificationId, organizationId, error })
+ logger.error('Failed to mark notification as read', error, { notificationId, organizationId })
  throw new Error('Не удалось отметить уведомление как прочитанное')
  }
 }
@@ -146,7 +146,7 @@ export const markAllNotificationsAsRead = async (organizationId: string, userId?
  const { error } = await query
 
  if (error) {
- logger.error('Failed to mark all notifications as read', { organizationId, userId, error })
+ logger.error('Failed to mark all notifications as read', error, { organizationId, userId })
  throw new Error('Не удалось отметить все уведомления как прочитанные')
  }
 }
@@ -161,7 +161,7 @@ export const deleteNotification = async (notificationId: string, organizationId:
  .eq('org_id', organizationId)
 
  if (error) {
- logger.error('Failed to delete notification', { notificationId, organizationId, error })
+ logger.error('Failed to delete notification', error, { notificationId, organizationId })
  throw new Error('Не удалось удалить уведомление')
  }
 }
@@ -180,7 +180,7 @@ export const deleteAllNotifications = async (organizationId: string, userId?: st
  const { error } = await query
 
  if (error) {
- logger.error('Failed to delete all notifications', { organizationId, userId, error })
+ logger.error('Failed to delete all notifications', error, { organizationId, userId })
  throw new Error('Не удалось удалить все уведомления')
  }
 }
@@ -203,7 +203,7 @@ export const getUnreadCount = async (organizationId: string, userId?: string | n
  const { count, error } = await query
 
  if (error) {
- logger.error('Failed to get unread count', { organizationId, userId, error })
+ logger.error('Failed to get unread count', error, { organizationId, userId })
  return 0
  }
 
@@ -240,7 +240,7 @@ export const createNotification = async (
  .single()
 
  if (error) {
- logger.error('Failed to create notification', { organizationId, title: data.title, error })
+ logger.error('Failed to create notification', error, { organizationId, userId: data.userId, title: data.title, type: data.type })
  throw new Error('Не удалось создать уведомление')
  }
 
