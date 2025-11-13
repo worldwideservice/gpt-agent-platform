@@ -6,7 +6,7 @@ const OpenRouterEnvSchema = z.object({
   defaultModel: z.string().default('openai/gpt-4o-mini'),
   embeddingModel: z.string().default('openai/text-embedding-3-large'),
   referer: z.string().default('http://localhost:3000'),
-  appTitle: z.string().default('GPT Agent AI Platform'),
+  appTitle: z.string().default('GPT Agent Platform'),
 })
 
 export type OpenRouterClientConfig = z.infer<typeof OpenRouterEnvSchema>
@@ -90,7 +90,7 @@ export class OpenRouterClient {
 
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`OpenRouter chat error: ${response.status} ${response.statusText} - ${errorText}`)
+      throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
     }
 
     return (await response.json()) as OpenRouterChatResponse
@@ -110,7 +110,7 @@ export class OpenRouterClient {
 
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`OpenRouter embeddings error: ${response.status} ${response.statusText} - ${errorText}`)
+      throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
     }
 
     return (await response.json()) as OpenRouterEmbeddingResponse

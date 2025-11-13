@@ -99,6 +99,7 @@ dump.rdb
 test-results/
 test-screenshots/
 playwright-report/
+storybook-static-smoke/
 
 # Temporary files
 *.tmp

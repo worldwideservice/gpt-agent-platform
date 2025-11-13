@@ -19,10 +19,10 @@ class Analytics {
  this.sessionId = this.generateSessionId()
 
  // Try to get user ID from localStorage or generate anonymous ID
- if (typeof window !== 'undefined') {
- this.userId = localStorage.getItem('user_id') || this.generateAnonymousId()
- localStorage.setItem('user_id', this.userId)
- }
+    if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
+      this.userId = window.localStorage.getItem('user_id') || this.generateAnonymousId()
+      window.localStorage.setItem('user_id', this.userId)
+    }
  }
 
  private generateSessionId(): string {
@@ -35,10 +35,10 @@ class Analytics {
 
  setUserId(userId: string) {
  this.userId = userId
- if (typeof window !== 'undefined') {
- localStorage.setItem('user_id', userId)
- }
- }
+    if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
+      window.localStorage.setItem('user_id', userId)
+    }
+  }
 
  async track(event: AnalyticsEvent) {
  try {
