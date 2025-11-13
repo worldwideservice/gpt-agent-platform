@@ -2,18 +2,33 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Edit } from 'lucide-react'
+import { Edit, Columns3 } from 'lucide-react'
 
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@/components/ui'
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Input,
+  Switch,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  Label,
+} from '@/components/ui'
 import { AgentCopyButton } from './AgentCopyButton'
 import { AgentDeleteButton } from './AgentDeleteButton'
 
 export type AgentListItem = {
   id: string
   name: string
+  isActive: boolean
   status: string
   model?: string | null
   ownerName?: string | null
+  createdAt?: string
   updatedAt?: string
 }
 
@@ -40,6 +55,23 @@ export function AgentsTable({
   const [loading, setLoading] = useState(!initialAgents?.length && !initialError)
   const [error, setError] = useState<string | null>(initialError ?? null)
   const filtersReadyRef = useRef(false)
+
+  // Column visibility state (persisted in localStorage)
+  const [showCreatedAt, setShowCreatedAt] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('agentsTable.showCreatedAt')
+      return saved !== null ? saved === 'true' : false
+    }
+    return false
+  })
+
+  const [showUpdatedAt, setShowUpdatedAt] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('agentsTable.showUpdatedAt')
+      return saved !== null ? saved === 'true' : true
+    }
+    return true
+  })
 
   useEffect(() => {
     if (initialAgents) {
@@ -119,6 +151,53 @@ export function AgentsTable({
     agent.name.toLowerCase().includes(search.toLowerCase()),
   )
 
+  const toggleCreatedAt = () => {
+    setShowCreatedAt((prev) => {
+      const newValue = !prev
+      localStorage.setItem('agentsTable.showCreatedAt', String(newValue))
+      return newValue
+    })
+  }
+
+  const toggleUpdatedAt = () => {
+    setShowUpdatedAt((prev) => {
+      const newValue = !prev
+      localStorage.setItem('agentsTable.showUpdatedAt', String(newValue))
+      return newValue
+    })
+  }
+
+  const handleToggleActive = async (agentId: string, isActive: boolean) => {
+    // Optimistic update
+    setAgents((prev) =>
+      prev.map((agent) =>
+        agent.id === agentId ? { ...agent, isActive } : agent
+      )
+    )
+
+    try {
+      // TODO: Replace with actual API call
+      const response = await fetch(`/api/tenants/${tenantId}/agents/${agentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update agent status')
+      }
+    } catch (error) {
+      console.error('Error updating agent status:', error)
+      // Revert on error
+      setAgents((prev) =>
+        prev.map((agent) =>
+          agent.id === agentId ? { ...agent, isActive: !isActive } : agent
+        )
+      )
+      // TODO: Show error toast
+    }
+  }
+
   return (
     <Card>
       <CardHeader className="space-y-4">
@@ -139,20 +218,48 @@ export function AgentsTable({
             <Button size="sm">Создать агента</Button>
           </div>
         </div>
-        <div className="grid gap-3 md:grid-cols-2">
-          <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Поиск по имени агента" />
-          <div>
-          <select
-            className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
-          >
-              <option value="all">Все статусы</option>
-              <option value="active">Активные</option>
-              <option value="inactive">Выключенные</option>
-              <option value="draft">Черновики</option>
-            </select>
-          </div>
+        <div className="flex gap-3">
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Поиск..."
+            className="flex-1"
+          />
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="default">
+                <Columns3 className="mr-2 h-4 w-4" />
+                Переключить столбцы
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48" align="end">
+              <div className="space-y-4">
+                <h4 className="font-medium text-sm">Столбцы</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="col-created" className="text-sm font-normal">
+                      Created at
+                    </Label>
+                    <Switch
+                      id="col-created"
+                      checked={showCreatedAt}
+                      onCheckedChange={toggleCreatedAt}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="col-updated" className="text-sm font-normal">
+                      Updated at
+                    </Label>
+                    <Switch
+                      id="col-updated"
+                      checked={showUpdatedAt}
+                      onCheckedChange={toggleUpdatedAt}
+                    />
+                  </div>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </CardHeader>
       <CardContent>
@@ -172,10 +279,9 @@ export function AgentsTable({
               <thead className="text-left text-xs uppercase text-gray-500">
                 <tr>
                   <th className="p-2 font-medium">Название</th>
-                  <th className="p-2 font-medium">Статус</th>
-                  <th className="p-2 font-medium">Модель</th>
-                  <th className="p-2 font-medium">Владелец</th>
-                  <th className="p-2 font-medium">Обновлён</th>
+                  <th className="p-2 font-medium">Активно</th>
+                  {showCreatedAt && <th className="p-2 font-medium">Created at</th>}
+                  {showUpdatedAt && <th className="p-2 font-medium">Updated at</th>}
                   <th className="p-2 font-medium">Действия</th>
                 </tr>
               </thead>
@@ -184,15 +290,22 @@ export function AgentsTable({
                   <tr key={agent.id}>
                     <td className="p-2 font-medium text-gray-900 dark:text-gray-50">{agent.name}</td>
                     <td className="p-2">
-                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs capitalize">
-                        {agent.status}
-                      </span>
+                      <Switch
+                        checked={agent.isActive}
+                        onCheckedChange={(checked) => handleToggleActive(agent.id, checked)}
+                        aria-label={`Переключить активность агента ${agent.name}`}
+                      />
                     </td>
-                    <td className="p-2 text-gray-500">{agent.model ?? '—'}</td>
-                    <td className="p-2 text-gray-500">{agent.ownerName ?? '—'}</td>
-                    <td className="p-2 text-gray-500">
-                      {agent.updatedAt ? new Date(agent.updatedAt).toLocaleDateString('ru-RU') : '—'}
-                    </td>
+                    {showCreatedAt && (
+                      <td className="p-2 text-gray-500">
+                        {agent.createdAt ? new Date(agent.createdAt).toLocaleDateString('ru-RU') : '—'}
+                      </td>
+                    )}
+                    {showUpdatedAt && (
+                      <td className="p-2 text-gray-500">
+                        {agent.updatedAt ? new Date(agent.updatedAt).toLocaleDateString('ru-RU') : '—'}
+                      </td>
+                    )}
                     <td className="p-2">
                       <div className="flex items-center gap-1">
                         <Button
