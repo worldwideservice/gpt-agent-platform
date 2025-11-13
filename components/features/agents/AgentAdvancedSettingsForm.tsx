@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
   Input,
+  useToast,
 } from '@/components/ui'
 
 interface Agent {
@@ -63,6 +64,7 @@ const AI_MODELS = [
 
 export function AgentAdvancedSettingsForm({ agent, tenantId }: AgentAdvancedSettingsFormProps) {
   const router = useRouter()
+  const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Form state
@@ -78,15 +80,16 @@ export function AgentAdvancedSettingsForm({ agent, tenantId }: AgentAdvancedSett
     setIsSubmitting(true)
 
     try {
-      // TODO: Replace with actual API call
-      const response = await fetch(`/api/tenants/${tenantId}/agents/${agent.id}`, {
+      const response = await fetch(`/api/agents/${agent.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model,
-          autoDetectLanguage,
-          creativity,
-          responseDelay,
+          settings: {
+            autoDetectLanguage,
+            creativity,
+          },
+          responseDelaySeconds: responseDelay,
         }),
       })
 
@@ -94,10 +97,18 @@ export function AgentAdvancedSettingsForm({ agent, tenantId }: AgentAdvancedSett
         throw new Error('Failed to update agent')
       }
 
+      toast({
+        title: 'Успешно',
+        description: 'Дополнительные настройки обновлены',
+      })
+
       router.refresh()
     } catch (error) {
-      console.error('Error updating agent:', error)
-      // TODO: Show error toast
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось обновить настройки',
+        variant: 'destructive',
+      })
     } finally {
       setIsSubmitting(false)
     }

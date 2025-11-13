@@ -14,6 +14,7 @@ import {
   Label,
   Switch,
   Textarea,
+  useToast,
 } from '@/components/ui'
 
 interface Agent {
@@ -48,6 +49,7 @@ interface Channel {
 
 export function AgentBasicsForm({ agent, tenantId }: AgentBasicsFormProps) {
   const router = useRouter()
+  const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Form state
@@ -77,8 +79,28 @@ export function AgentBasicsForm({ agent, tenantId }: AgentBasicsFormProps) {
   )
 
   const handleSyncCRM = async () => {
-    // TODO: Implement CRM sync
-    console.log('Syncing with CRM...')
+    try {
+      const response = await fetch(`/api/agents/${agent.id}/sync-crm`, {
+        method: 'POST',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to sync CRM')
+      }
+
+      toast({
+        title: 'Успешно',
+        description: 'Синхронизация с CRM выполнена успешно',
+      })
+
+      router.refresh()
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось синхронизировать с CRM',
+        variant: 'destructive',
+      })
+    }
   }
 
   const togglePipeline = (pipelineId: string) => {
@@ -106,8 +128,7 @@ export function AgentBasicsForm({ agent, tenantId }: AgentBasicsFormProps) {
     setIsSubmitting(true)
 
     try {
-      // TODO: Replace with actual API call
-      const response = await fetch(`/api/tenants/${tenantId}/agents/${agent.id}`, {
+      const response = await fetch(`/api/agents/${agent.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -129,10 +150,18 @@ export function AgentBasicsForm({ agent, tenantId }: AgentBasicsFormProps) {
         throw new Error('Failed to update agent')
       }
 
+      toast({
+        title: 'Успешно',
+        description: 'Настройки агента обновлены',
+      })
+
       router.refresh()
     } catch (error) {
-      console.error('Error updating agent:', error)
-      // TODO: Show error toast
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось обновить агента',
+        variant: 'destructive',
+      })
     } finally {
       setIsSubmitting(false)
     }

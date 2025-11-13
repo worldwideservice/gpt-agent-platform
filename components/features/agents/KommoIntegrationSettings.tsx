@@ -12,6 +12,7 @@ import {
   CardTitle,
   Label,
   Switch,
+  useToast,
 } from '@/components/ui'
 
 interface Agent {
@@ -27,6 +28,7 @@ interface KommoIntegrationSettingsProps {
 
 export function KommoIntegrationSettings({ agent, tenantId }: KommoIntegrationSettingsProps) {
   const router = useRouter()
+  const { toast } = useToast()
   const [isActive, setIsActive] = useState(agent.kommoActive ?? true)
   const [isSyncing, setIsSyncing] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -34,8 +36,7 @@ export function KommoIntegrationSettings({ agent, tenantId }: KommoIntegrationSe
   const handleSyncCRM = async () => {
     setIsSyncing(true)
     try {
-      // TODO: Implement actual CRM sync API call
-      const response = await fetch(`/api/tenants/${tenantId}/agents/${agent.id}/sync-crm`, {
+      const response = await fetch(`/api/agents/${agent.id}/sync-crm`, {
         method: 'POST',
       })
 
@@ -43,10 +44,18 @@ export function KommoIntegrationSettings({ agent, tenantId }: KommoIntegrationSe
         throw new Error('Failed to sync CRM')
       }
 
+      toast({
+        title: 'Успешно',
+        description: 'Синхронизация с CRM выполнена успешно',
+      })
+
       router.refresh()
     } catch (error) {
-      console.error('Error syncing CRM:', error)
-      // TODO: Show error toast
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось синхронизировать с CRM',
+        variant: 'destructive',
+      })
     } finally {
       setIsSyncing(false)
     }
@@ -57,8 +66,7 @@ export function KommoIntegrationSettings({ agent, tenantId }: KommoIntegrationSe
     setIsSubmitting(true)
 
     try {
-      // TODO: Replace with actual API call
-      const response = await fetch(`/api/tenants/${tenantId}/agents/${agent.id}/integrations/kommo`, {
+      const response = await fetch(`/api/agents/${agent.id}/integrations/kommo`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -70,10 +78,18 @@ export function KommoIntegrationSettings({ agent, tenantId }: KommoIntegrationSe
         throw new Error('Failed to update Kommo integration')
       }
 
+      toast({
+        title: 'Успешно',
+        description: 'Настройки интеграции Kommo обновлены',
+      })
+
       router.push(`/manage/${tenantId}/ai-agents/${agent.id}/available-integrations`)
     } catch (error) {
-      console.error('Error updating Kommo integration:', error)
-      // TODO: Show error toast
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось обновить интеграцию Kommo',
+        variant: 'destructive',
+      })
     } finally {
       setIsSubmitting(false)
     }

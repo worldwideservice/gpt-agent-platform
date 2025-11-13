@@ -13,6 +13,7 @@ import {
   Textarea,
   Switch,
   MultiSelect,
+  useToast,
 } from '@/components/ui'
 import type { MultiSelectOption } from '@/components/ui'
 
@@ -56,6 +57,7 @@ interface FieldUpdateRule {
 
 export function AgentLeadsContactsForm({ agent, tenantId }: AgentLeadsContactsFormProps) {
   const router = useRouter()
+  const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
 
@@ -88,7 +90,7 @@ export function AgentLeadsContactsForm({ agent, tenantId }: AgentLeadsContactsFo
   const handleSyncCRM = async () => {
     setIsSyncing(true)
     try {
-      const response = await fetch(`/api/tenants/${tenantId}/agents/${agent.id}/sync-crm`, {
+      const response = await fetch(`/api/agents/${agent.id}/sync-crm`, {
         method: 'POST',
       })
 
@@ -96,10 +98,18 @@ export function AgentLeadsContactsForm({ agent, tenantId }: AgentLeadsContactsFo
         throw new Error('Failed to sync CRM')
       }
 
+      toast({
+        title: 'Успешно',
+        description: 'Синхронизация с CRM выполнена успешно',
+      })
+
       router.refresh()
     } catch (error) {
-      console.error('Error syncing CRM:', error)
-      // TODO: Show error toast
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось синхронизировать с CRM',
+        variant: 'destructive',
+      })
     } finally {
       setIsSyncing(false)
     }
@@ -110,7 +120,7 @@ export function AgentLeadsContactsForm({ agent, tenantId }: AgentLeadsContactsFo
     setIsSubmitting(true)
 
     try {
-      const response = await fetch(`/api/tenants/${tenantId}/agents/${agent.id}/leads-contacts`, {
+      const response = await fetch(`/api/agents/${agent.id}/leads-contacts`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -125,10 +135,18 @@ export function AgentLeadsContactsForm({ agent, tenantId }: AgentLeadsContactsFo
         throw new Error('Failed to update agent')
       }
 
+      toast({
+        title: 'Успешно',
+        description: 'Настройки сделок и контактов обновлены',
+      })
+
       router.refresh()
     } catch (error) {
-      console.error('Error updating agent:', error)
-      // TODO: Show error toast
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось обновить настройки',
+        variant: 'destructive',
+      })
     } finally {
       setIsSubmitting(false)
     }
