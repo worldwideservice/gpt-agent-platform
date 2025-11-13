@@ -29,6 +29,8 @@ const pinoOptions: LoggerOptions = {
 const baseLogger: PinoLogger = pino(pinoOptions)
 
 class Logger {
+  private readonly isDevelopment = !isProduction
+
   constructor(private readonly logger: PinoLogger) {}
 
   info(message: string, context?: LogContext): void {
@@ -91,6 +93,9 @@ class Logger {
       message,
       ...context,
     }
+    // TODO: Implement structured logging
+  }
+
   debug(message: string, context?: LogContext): void {
     this.logger.debug(context ?? {}, message)
     this.annotateSpan('debug', message, context)
