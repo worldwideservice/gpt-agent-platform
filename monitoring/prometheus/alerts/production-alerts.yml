@@ -1,0 +1,392 @@
+# Production Alert Rules - GPT Agent Platform
+# These rules cover critical production scenarios
+
+groups:
+  # ============================================================================
+  # CRITICAL SYSTEM ALERTS (SEV 1)
+  # ============================================================================
+  - name: critical_system
+    interval: 30s
+    rules:
+      # Application completely down
+      - alert: ApplicationDown
+        expr: up{job="next-app"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          sev: "1"
+          component: next-app
+          oncall: "true"
+        annotations:
+          summary: "🚨 Application is DOWN"
+          description: "Next.js application is not responding for 2+ minutes. IMMEDIATE ACTION REQUIRED."
+          runbook: "https://github.com/your-org/your-repo/docs/INCIDENT_RESPONSE.md#scenario-1-complete-outage"
+          dashboard: "http://grafana:3000/d/production"
+
+      # Health check failing
+      - alert: HealthCheckFailing
+        expr: probe_success{job="health-check"} == 0
+        for: 3m
+        labels:
+          severity: critical
+          sev: "1"
+          oncall: "true"
+        annotations:
+          summary: "🚨 Health check failing"
+          description: "Application health endpoint returning errors for 3+ minutes"
+          runbook: "https://github.com/your-org/your-repo/docs/DEPLOYMENT_RUNBOOK.md#issue-health-check-failed"
+
+      # Database connection lost
+      - alert: DatabaseConnectionLost
+        expr: database_connected == 0
+        for: 1m
+        labels:
+          severity: critical
+          sev: "1"
+          component: database
+          oncall: "true"
+        annotations:
+          summary: "🚨 Database connection lost"
+          description: "Cannot connect to Supabase database for 1+ minute"
+          runbook: "https://github.com/your-org/your-repo/docs/INCIDENT_RESPONSE.md#scenario-2-database-issues"
+
+      # Redis down (affects queue and rate limiting)
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 2m
+        labels:
+          severity: critical
+          sev: "1"
+          component: redis
+          oncall: "true"
+        annotations:
+          summary: "🚨 Redis is DOWN"
+          description: "Redis connection lost for 2+ minutes. Queue and rate limiting affected."
+
+  # ============================================================================
+  # MAJOR ALERTS (SEV 2)
+  # ============================================================================
+  - name: major_issues
+    interval: 30s
+    rules:
+      # High error rate
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{status=~"5.."}[5m])) /
+            sum(rate(http_requests_total[5m]))
+          ) * 100 > 5
+        for: 5m
+        labels:
+          severity: major
+          sev: "2"
+          component: next-app
+        annotations:
+          summary: "⚠️ High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+          runbook: "https://github.com/your-org/your-repo/docs/INCIDENT_RESPONSE.md#scenario-4-high-error-rate"
+
+      # High response time
+      - alert: HighResponseTime
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le)
+          ) > 2
+        for: 10m
+        labels:
+          severity: major
+          sev: "2"
+          component: next-app
+        annotations:
+          summary: "⚠️ High response time"
+          description: "P95 response time is {{ $value }}s (threshold: 2s)"
+          runbook: "https://github.com/your-org/your-repo/docs/INCIDENT_RESPONSE.md#scenario-6-performance-degradation"
+
+      # Worker queue backed up
+      - alert: WorkerQueueBackedUp
+        expr: worker_queue_length > 1000
+        for: 10m
+        labels:
+          severity: major
+          sev: "2"
+          component: worker
+        annotations:
+          summary: "⚠️ Worker queue backed up"
+          description: "Queue has {{ $value }} jobs pending for 10+ minutes"
+          runbook: "https://github.com/your-org/your-repo/docs/INCIDENT_RESPONSE.md#scenario-3-worker-queue-backed-up"
+
+      # Database query slow
+      - alert: SlowDatabaseQueries
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(database_query_duration_seconds_bucket[5m])) by (le)
+          ) > 1
+        for: 10m
+        labels:
+          severity: major
+          sev: "2"
+          component: database
+        annotations:
+          summary: "⚠️ Slow database queries"
+          description: "P95 query time is {{ $value }}s (threshold: 1s)"
+
+      # Memory usage high
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            process_resident_memory_bytes /
+            container_spec_memory_limit_bytes
+          ) * 100 > 85
+        for: 10m
+        labels:
+          severity: major
+          sev: "2"
+          component: system
+        annotations:
+          summary: "⚠️ High memory usage"
+          description: "Memory usage is {{ $value | humanizePercentage }} (threshold: 85%)"
+          runbook: "https://github.com/your-org/your-repo/docs/INCIDENT_RESPONSE.md#issue-memory-leak-suspected"
+
+  # ============================================================================
+  # WARNING ALERTS (SEV 3)
+  # ============================================================================
+  - name: warnings
+    interval: 1m
+    rules:
+      # Elevated error rate
+      - alert: ElevatedErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{status=~"5.."}[10m])) /
+            sum(rate(http_requests_total[10m]))
+          ) * 100 > 1
+        for: 15m
+        labels:
+          severity: warning
+          sev: "3"
+        annotations:
+          summary: "Elevated error rate"
+          description: "Error rate is {{ $value | humanizePercentage }} for 15+ minutes"
+
+      # Slow endpoints
+      - alert: SlowEndpoint
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le, endpoint)
+          ) > 1
+        for: 15m
+        labels:
+          severity: warning
+          sev: "3"
+        annotations:
+          summary: "Slow endpoint detected"
+          description: "Endpoint {{ $labels.endpoint }} P95 latency is {{ $value }}s"
+
+      # Worker job failure rate
+      - alert: WorkerJobFailures
+        expr: |
+          (
+            sum(rate(worker_jobs_failed_total[10m])) /
+            sum(rate(worker_jobs_total[10m]))
+          ) * 100 > 5
+        for: 15m
+        labels:
+          severity: warning
+          sev: "3"
+          component: worker
+        annotations:
+          summary: "Worker job failure rate elevated"
+          description: "Job failure rate is {{ $value | humanizePercentage }}"
+
+      # CPU usage high
+      - alert: HighCPUUsage
+        expr: |
+          (
+            rate(process_cpu_seconds_total[5m]) * 100
+          ) > 80
+        for: 15m
+        labels:
+          severity: warning
+          sev: "3"
+          component: system
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value | humanizePercentage }} for 15+ minutes"
+
+  # ============================================================================
+  # BUSINESS METRICS ALERTS
+  # ============================================================================
+  - name: business_metrics
+    interval: 5m
+    rules:
+      # No user signups
+      - alert: NoUserSignups
+        expr: increase(user_signups_total[1h]) == 0
+        for: 2h
+        labels:
+          severity: warning
+          sev: "3"
+          category: business
+        annotations:
+          summary: "No user signups in 2 hours"
+          description: "No new user registrations detected in the last 2 hours"
+
+      # Agent creation rate dropped
+      - alert: AgentCreationRateDropped
+        expr: |
+          (
+            rate(agents_created_total[1h]) <
+            rate(agents_created_total[1h] offset 24h) * 0.5
+          )
+        for: 1h
+        labels:
+          severity: warning
+          sev: "3"
+          category: business
+        annotations:
+          summary: "Agent creation rate dropped"
+          description: "Agent creation rate is 50% below yesterday's rate"
+
+      # High CRM sync failures
+      - alert: HighCRMSyncFailures
+        expr: |
+          sum(rate(crm_sync_failures_total[15m])) > 5
+        for: 30m
+        labels:
+          severity: warning
+          sev: "3"
+          component: crm
+        annotations:
+          summary: "High CRM sync failure rate"
+          description: "CRM sync failing at {{ $value }} per second"
+
+  # ============================================================================
+  # SECURITY ALERTS
+  # ============================================================================
+  - name: security
+    interval: 1m
+    rules:
+      # High rate limit hits
+      - alert: HighRateLimitHits
+        expr: increase(rate_limit_exceeded_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          sev: "3"
+          category: security
+        annotations:
+          summary: "High rate limit hits"
+          description: "{{ $value }} rate limit violations in last 5 minutes. Possible abuse."
+
+      # Suspicious authentication failures
+      - alert: SuspiciousAuthFailures
+        expr: increase(auth_failures_total[5m]) > 50
+        for: 5m
+        labels:
+          severity: warning
+          sev: "3"
+          category: security
+        annotations:
+          summary: "High authentication failure rate"
+          description: "{{ $value }} failed auth attempts in 5 minutes. Possible brute force attack."
+
+      # Unauthorized access attempts
+      - alert: UnauthorizedAccessAttempts
+        expr: increase(http_requests_total{status="403"}[10m]) > 100
+        for: 10m
+        labels:
+          severity: warning
+          sev: "3"
+          category: security
+        annotations:
+          summary: "High unauthorized access attempts"
+          description: "{{ $value }} 403 responses in 10 minutes"
+
+  # ============================================================================
+  # INFRASTRUCTURE ALERTS
+  # ============================================================================
+  - name: infrastructure
+    interval: 1m
+    rules:
+      # Disk space low
+      - alert: DiskSpaceLow
+        expr: |
+          (
+            node_filesystem_avail_bytes{mountpoint="/"} /
+            node_filesystem_size_bytes{mountpoint="/"}
+          ) * 100 < 15
+        for: 10m
+        labels:
+          severity: warning
+          sev: "3"
+          component: system
+        annotations:
+          summary: "Disk space low"
+          description: "Only {{ $value | humanizePercentage }} disk space remaining"
+
+      # Container restarts
+      - alert: FrequentContainerRestarts
+        expr: increase(container_restarts_total[15m]) > 3
+        for: 15m
+        labels:
+          severity: warning
+          sev: "3"
+          component: system
+        annotations:
+          summary: "Frequent container restarts"
+          description: "Container {{ $labels.container }} restarted {{ $value }} times in 15 minutes"
+
+      # Network errors
+      - alert: HighNetworkErrors
+        expr: increase(node_network_receive_errs_total[10m]) > 100
+        for: 10m
+        labels:
+          severity: warning
+          sev: "3"
+          component: network
+        annotations:
+          summary: "High network errors"
+          description: "{{ $value }} network errors in 10 minutes"
+
+  # ============================================================================
+  # DEPENDENCY ALERTS
+  # ============================================================================
+  - name: dependencies
+    interval: 2m
+    rules:
+      # OpenRouter API errors
+      - alert: OpenRouterAPIErrors
+        expr: increase(openrouter_api_errors_total[10m]) > 10
+        for: 10m
+        labels:
+          severity: warning
+          sev: "3"
+          component: ai-provider
+        annotations:
+          summary: "OpenRouter API errors elevated"
+          description: "{{ $value }} OpenRouter API errors in 10 minutes"
+
+      # Kommo CRM API errors
+      - alert: KommoAPIErrors
+        expr: increase(kommo_api_errors_total[15m]) > 5
+        for: 15m
+        labels:
+          severity: warning
+          sev: "3"
+          component: crm
+        annotations:
+          summary: "Kommo CRM API errors"
+          description: "{{ $value }} Kommo API errors in 15 minutes"
+
+      # Supabase RLS policy violations
+      - alert: SupabaseRLSViolations
+        expr: increase(supabase_rls_violations_total[10m]) > 20
+        for: 10m
+        labels:
+          severity: warning
+          sev: "3"
+          component: database
+          category: security
+        annotations:
+          summary: "Supabase RLS policy violations"
+          description: "{{ $value }} RLS violations in 10 minutes. Check for misconfigured policies."

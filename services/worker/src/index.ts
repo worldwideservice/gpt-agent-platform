@@ -61,9 +61,16 @@ const connection = new Redis(redisUrl, {
   // Убираем принудительный family, позволяем системе выбрать
   retryStrategy: (times) => {
     const delay = Math.min(times * 50, 2000)
-    console.log(`[worker] Redis retry attempt ${times}, delay: ${delay}ms`)
+    logger.debug(`Redis retry attempt ${times}, delay: ${delay}ms`, {
+      event: 'redis.retry',
+      attempt: times,
+      delay,
+    })
     if (times > 10) {
-      console.error(`[worker] Redis connection failed after ${times} attempts`)
+      logger.error(`Redis connection failed after ${times} attempts`, undefined, {
+        event: 'redis.retry.exhausted',
+        attempts: times,
+      })
     }
     return delay
   },

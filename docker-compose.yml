@@ -36,33 +36,29 @@ services:
       retries: 5
     restart: unless-stopped
 
-  # Backend API Service
-  # Примечание: Запускайте отдельно через npm run dev в services/api
-  # или создайте Dockerfile для продакшена
-  # api:
-  #   build:
-  #     context: .
-  #     dockerfile: services/api/Dockerfile
-  #   ports:
-  #     - "4000:4000"
-  #   env_file:
-  #     - services/api/.env
-  #   depends_on:
-  #     - redis
-  #   restart: unless-stopped
-
-  # Worker Service
-  # Примечание: Запускайте отдельно через npm run dev в services/worker
-  # или создайте Dockerfile для продакшена
-  # worker:
-  #   build:
-  #     context: .
-  #     dockerfile: services/worker/Dockerfile
-  #   env_file:
-  #     - services/worker/.env
-  #   depends_on:
-  #     - redis
-  #   restart: unless-stopped
+  # Worker Service для фоновых задач (CRM sync, AI processing)
+  worker:
+    build:
+      context: .
+      dockerfile: services/worker/Dockerfile
+    container_name: gpt-agent-worker
+    env_file:
+      - .env.local
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - gpt-agent-network
 
 volumes:
   redis-data:

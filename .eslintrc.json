@@ -9,7 +9,15 @@
       }
     ],
     "@typescript-eslint/no-explicit-any": "warn",
-    "@next/next/no-img-element": "warn"
+    "@next/next/no-img-element": "warn",
+    "no-console": "error",
+    "no-warning-comments": [
+      "warn",
+      {
+        "terms": ["TODO", "FIXME"],
+        "location": "start"
+      }
+    ]
   },
   "overrides": [
     {
@@ -33,17 +41,9 @@
       }
     },
     {
-      "files": [
-        "lib/lib/providers/**/*.ts",
-        "lib/lib/queue.ts",
-        "lib/lib/rate-limit.ts",
-        "lib/lib/repositories/**/*.ts",
-        "lib/lib/services/**/*.ts",
-        "lib/lib/utils.ts",
-        "lib/lib/websocket/**/*.ts"
-      ],
+      "files": ["scripts/**/*.ts", "scripts/**/*.js", "tests/**/*.ts", "**/*.test.ts", "**/*.test.tsx"],
       "rules": {
-        "@typescript-eslint/no-explicit-any": "off"
+        "no-console": "off"
       }
     }
   ]

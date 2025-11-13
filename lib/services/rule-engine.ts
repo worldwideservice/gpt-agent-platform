@@ -7,11 +7,18 @@ import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { generateChatResponse } from './llm'
 import { createKommoApiForOrg } from '@/lib/repositories/crm-connection'
 
+// Тип для шаблона email
+interface EmailTemplate {
+  subject?: string
+  html?: string
+  body?: string
+}
+
 export interface RuleCondition {
  type: 'field_value' | 'stage_changed' | 'time_elapsed' | 'event_triggered' | 'custom_condition'
  field?: string // название поля в CRM
  operator?: 'equals' | 'contains' | 'greater_than' | 'less_than' | 'changed_to' | 'not_empty'
- value?: any
+ value?: unknown
  timeUnit?: 'minutes' | 'hours' | 'days' | 'weeks'
  timeValue?: number
  customLogic?: string // JavaScript код для кастомных условий
@@ -19,9 +26,9 @@ export interface RuleCondition {
 
 export interface RuleAction {
  type: 'send_message' | 'change_stage' | 'create_task' | 'update_field' | 'send_email' | 'webhook' | 'ai_response'
- template?: string // шаблон сообщения/задачи
+ template?: string | EmailTemplate // шаблон сообщения/задачи
  targetField?: string // поле для обновления
- newValue?: any
+ newValue?: unknown
  recipient?: string // получатель email/сообщения
  webhookUrl?: string // URL для webhook
  aiPrompt?: string // промпт для AI-ответа
@@ -40,7 +47,7 @@ export interface AutomationRule {
  priority: number // порядок выполнения (1 = самый высокий)
  cooldown_minutes?: number // минимальный интервал между выполнениями
  max_executions_per_day?: number // лимит выполнений в день
- metadata: Record<string, any>
+ metadata: Record<string, unknown>
  created_at: string
  updated_at: string
 }
@@ -51,9 +58,9 @@ export interface RuleExecutionContext {
  leadId?: string
  contactId?: string
  triggerType: string
- triggerData: Record<string, any>
- previousState?: Record<string, any>
- currentState?: Record<string, any>
+ triggerData: Record<string, unknown>
+ previousState?: Record<string, unknown>
+ currentState?: Record<string, unknown>
 }
 
 /**
@@ -222,7 +229,7 @@ const evaluateCondition = async (
  case 'time_elapsed':
  if (!condition.timeUnit || !condition.timeValue) return false
 
- const createdAt = new Date(triggerData.created_at || Date.now())
+ const createdAt = new Date((triggerData.created_at as string | number) || Date.now())
  const now = new Date()
  const diffMs = now.getTime() - createdAt.getTime()
 
@@ -259,7 +266,7 @@ const evaluateCondition = async (
 /**
  * Оценивает оператор сравнения
  */
-const evaluateOperator = (operator: string, actualValue: any, expectedValue: any): boolean => {
+const evaluateOperator = (operator: string, actualValue: unknown, expectedValue: unknown): boolean => {
  switch (operator) {
  case 'equals':
  return actualValue === expectedValue
@@ -408,7 +415,7 @@ const executeSendMessage = async (action: RuleAction, context: RuleExecutionCont
       entity_type: 'leads',
       note_type: 'common',
       params: {
-        text: action.template,
+        text: typeof action.template === 'string' ? action.template : (action.template?.body || action.template?.html || ''),
         source: 'rule_engine',
       },
     })
@@ -476,7 +483,7 @@ const executeCreateTask = async (action: RuleAction, context: RuleExecutionConte
       Number.isFinite(candidateResponsibleId) && candidateResponsibleId > 0 ? candidateResponsibleId : defaultResponsibleId
 
     await kommoApi.createTask({
-      text: action.template,
+      text: typeof action.template === 'string' ? action.template : (action.template?.body || action.template?.html || ''),
       complete_till: Math.floor(Date.now() / 1000 + 60 * 60),
       task_type_id: 1,
       responsible_user_id: responsibleId,
@@ -541,12 +548,13 @@ const executeSendEmail = async (
 
     // Отправляем email
     // template может быть строкой или объектом
-    const templateSubject = typeof action.template === 'string' 
+    const templateObj = typeof action.template === 'object' ? action.template as EmailTemplate : null
+    const templateSubject = typeof action.template === 'string'
       ? 'Сообщение от World Wide Services'
-      : (action.template as any)?.subject || 'Сообщение от World Wide Services'
+      : templateObj?.subject || 'Сообщение от World Wide Services'
     const templateBody = typeof action.template === 'string'
       ? action.template
-      : (action.template as any)?.html || (action.template as any)?.body || ''
+      : templateObj?.html || templateObj?.body || ''
     
     const success = await sendTemplateEmail(
       action.recipient,
