@@ -42,13 +42,13 @@ export function AgentCopyButton({
     setIsCopying(true)
 
     try {
-      // TODO: Replace with actual API call
-      const response = await fetch(`/api/tenants/${tenantId}/agents/${agentId}/copy`, {
+      const response = await fetch(`/api/agents/${agentId}/copy`, {
         method: 'POST',
       })
 
       if (!response.ok) {
-        throw new Error('Failed to copy agent')
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to copy agent')
       }
 
       toast({
@@ -63,7 +63,7 @@ export function AgentCopyButton({
       console.error('Error copying agent:', error)
       toast({
         title: 'Ошибка копирования',
-        description: `Не удалось скопировать агента "${agentName}"`,
+        description: error instanceof Error ? error.message : `Не удалось скопировать агента "${agentName}"`,
         variant: 'error',
       })
     } finally {

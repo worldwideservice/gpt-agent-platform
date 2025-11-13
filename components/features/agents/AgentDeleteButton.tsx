@@ -42,13 +42,13 @@ export function AgentDeleteButton({
     setIsDeleting(true)
 
     try {
-      // TODO: Replace with actual API call
-      const response = await fetch(`/api/tenants/${tenantId}/agents/${agentId}`, {
+      const response = await fetch(`/api/agents/${agentId}`, {
         method: 'DELETE',
       })
 
       if (!response.ok) {
-        throw new Error('Failed to delete agent')
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to delete agent')
       }
 
       toast({
@@ -63,7 +63,7 @@ export function AgentDeleteButton({
       console.error('Error deleting agent:', error)
       toast({
         title: 'Ошибка удаления',
-        description: `Не удалось удалить агента "${agentName}"`,
+        description: error instanceof Error ? error.message : `Не удалось удалить агента "${agentName}"`,
         variant: 'error',
       })
     } finally {

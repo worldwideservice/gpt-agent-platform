@@ -71,7 +71,6 @@ export function AgentsTable({
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
-
   const [agents, setAgents] = useState<AgentListItem[]>(initialAgents ?? [])
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialStatusFilter ?? 'all')
@@ -306,27 +305,32 @@ export function AgentsTable({
     )
 
     try {
-      // TODO: Replace with actual API call
-      const response = await fetch(`/api/tenants/${tenantId}/agents/${agentId}`, {
+      const response = await fetch(`/api/agents/${agentId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive }),
       })
 
       if (!response.ok) {
-        throw new Error('Failed to update agent status')
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to update agent status')
       }
+
+      toast({
+        title: 'Успешно',
+        description: `Агент ${isActive ? 'активирован' : 'деактивирован'}`,
+      })
     } catch (error) {
-      console.error('Error updating agent status:', error)
       // Revert on error
       setAgents((prev) =>
         prev.map((agent) =>
           agent.id === agentId ? { ...agent, isActive: !isActive } : agent
         )
       )
+
       toast({
         title: 'Ошибка',
-        description: 'Не удалось изменить статус агента',
+        description: error instanceof Error ? error.message : 'Не удалось изменить статус агента',
         variant: 'error',
       })
     }
