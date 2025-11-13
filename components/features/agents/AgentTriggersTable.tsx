@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Edit, Trash2 } from 'lucide-react'
+import { Edit, Trash2, Plus, ArrowUp, ArrowDown, X } from 'lucide-react'
 import {
   Button,
   Card,
@@ -34,12 +34,19 @@ interface AgentTriggersTableProps {
   tenantId: string
 }
 
+interface TriggerAction {
+  id: string
+  type: string
+}
+
 interface Trigger {
   id: string
   name: string
   isActive: boolean
   condition: string
-  action: string
+  actions: TriggerAction[]
+  responseMessage?: string
+  runLimit?: number
 }
 
 const TRIGGER_ACTIONS = [
@@ -67,7 +74,12 @@ export function AgentTriggersTable({ agent, tenantId }: AgentTriggersTableProps)
       name: 'Тип услуги "AGENT PARTNERSHIP"',
       isActive: true,
       condition: 'Когда ты понял, что это клиент по продукту AGENT P...',
-      action: 'change-stage',
+      actions: [
+        { id: '1', type: 'change-stage' },
+        { id: '2', type: 'create-task' },
+      ],
+      responseMessage: 'Я создал задачу для нашей команды.',
+      runLimit: 1,
     },
   ])
 
@@ -76,7 +88,7 @@ export function AgentTriggersTable({ agent, tenantId }: AgentTriggersTableProps)
     name: '',
     isActive: true,
     condition: '',
-    action: '',
+    actions: [{ id: '1', type: '' }] as TriggerAction[],
     responseMessage: '',
     runLimit: 0,
   })
@@ -93,13 +105,56 @@ export function AgentTriggersTable({ agent, tenantId }: AgentTriggersTableProps)
     )
   }
 
+  const handleAddAction = () => {
+    setNewTrigger({
+      ...newTrigger,
+      actions: [...newTrigger.actions, { id: Date.now().toString(), type: '' }],
+    })
+  }
+
+  const handleRemoveAction = (actionId: string) => {
+    if (newTrigger.actions.length > 1) {
+      setNewTrigger({
+        ...newTrigger,
+        actions: newTrigger.actions.filter((a) => a.id !== actionId),
+      })
+    }
+  }
+
+  const handleMoveActionUp = (index: number) => {
+    if (index > 0) {
+      const newActions = [...newTrigger.actions]
+      ;[newActions[index - 1], newActions[index]] = [newActions[index], newActions[index - 1]]
+      setNewTrigger({ ...newTrigger, actions: newActions })
+    }
+  }
+
+  const handleMoveActionDown = (index: number) => {
+    if (index < newTrigger.actions.length - 1) {
+      const newActions = [...newTrigger.actions]
+      ;[newActions[index], newActions[index + 1]] = [newActions[index + 1], newActions[index]]
+      setNewTrigger({ ...newTrigger, actions: newActions })
+    }
+  }
+
+  const handleUpdateAction = (actionId: string, type: string) => {
+    setNewTrigger({
+      ...newTrigger,
+      actions: newTrigger.actions.map((a) =>
+        a.id === actionId ? { ...a, type } : a
+      ),
+    })
+  }
+
   const handleCreateTrigger = () => {
     const trigger: Trigger = {
       id: Date.now().toString(),
       name: newTrigger.name,
       isActive: newTrigger.isActive,
       condition: newTrigger.condition,
-      action: newTrigger.action,
+      actions: newTrigger.actions.filter((a) => a.type), // Only include actions with type
+      responseMessage: newTrigger.responseMessage,
+      runLimit: newTrigger.runLimit,
     }
 
     setTriggers([...triggers, trigger])
@@ -108,7 +163,7 @@ export function AgentTriggersTable({ agent, tenantId }: AgentTriggersTableProps)
       name: '',
       isActive: true,
       condition: '',
-      action: '',
+      actions: [{ id: '1', type: '' }],
       responseMessage: '',
       runLimit: 0,
     })
@@ -116,6 +171,10 @@ export function AgentTriggersTable({ agent, tenantId }: AgentTriggersTableProps)
 
   const handleDeleteTrigger = (triggerId: string) => {
     setTriggers(triggers.filter((t) => t.id !== triggerId))
+  }
+
+  const getActionLabel = (type: string) => {
+    return TRIGGER_ACTIONS.find((a) => a.value === type)?.label || type
   }
 
   return (
@@ -179,26 +238,75 @@ export function AgentTriggersTable({ agent, tenantId }: AgentTriggersTableProps)
                   </p>
                 </div>
 
-                {/* Действия */}
-                <div className="space-y-2">
-                  <Label htmlFor="trigger-action">
-                    Действие <span className="text-rose-500">*</span>
+                {/* Действия (множественные) */}
+                <div className="space-y-3">
+                  <Label>
+                    Действия <span className="text-rose-500">*</span>
                   </Label>
-                  <Select
-                    value={newTrigger.action}
-                    onValueChange={(value) => setNewTrigger({ ...newTrigger, action: value })}
+                  <div className="space-y-2">
+                    {newTrigger.actions.map((action, index) => (
+                      <div key={action.id} className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <Select
+                            value={action.type}
+                            onValueChange={(value) => handleUpdateAction(action.id, value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Выбрать действие" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {TRIGGER_ACTIONS.map((actionType) => (
+                                <SelectItem key={actionType.value} value={actionType.value}>
+                                  {actionType.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleMoveActionUp(index)}
+                            disabled={index === 0}
+                          >
+                            <ArrowUp className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleMoveActionDown(index)}
+                            disabled={index === newTrigger.actions.length - 1}
+                          >
+                            <ArrowDown className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveAction(action.id)}
+                            disabled={newTrigger.actions.length === 1}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddAction}
                   >
-                    <SelectTrigger id="trigger-action">
-                      <SelectValue placeholder="Выбрать вариант" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TRIGGER_ACTIONS.map((action) => (
-                        <SelectItem key={action.value} value={action.value}>
-                          {action.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Добавить действие
+                  </Button>
+                  <p className="text-xs text-gray-500">
+                    Действия будут выполнены в указанном порядке
+                  </p>
                 </div>
 
                 {/* Ответное сообщение */}
@@ -268,6 +376,7 @@ export function AgentTriggersTable({ agent, tenantId }: AgentTriggersTableProps)
                   <th className="p-2 font-medium">Название</th>
                   <th className="p-2 font-medium">Активно</th>
                   <th className="p-2 font-medium">Условие</th>
+                  <th className="p-2 font-medium">Действия</th>
                   <th className="p-2 font-medium">Actions</th>
                 </tr>
               </thead>
@@ -283,7 +392,22 @@ export function AgentTriggersTable({ agent, tenantId }: AgentTriggersTableProps)
                         onCheckedChange={() => handleToggleActive(trigger.id)}
                       />
                     </td>
-                    <td className="p-2 text-gray-500">{trigger.condition}</td>
+                    <td className="p-2 text-gray-500 max-w-xs truncate">
+                      {trigger.condition}
+                    </td>
+                    <td className="p-2 text-gray-500">
+                      {trigger.actions.length > 0 ? (
+                        <div className="flex flex-col gap-1">
+                          {trigger.actions.map((action, idx) => (
+                            <span key={action.id} className="text-xs">
+                              {idx + 1}. {getActionLabel(action.type)}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
                     <td className="p-2">
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="sm">
