@@ -1,6 +1,7 @@
 import { createServer, IncomingMessage, ServerResponse } from 'http'
 import type { Redis } from 'ioredis'
 import { metrics } from './metrics'
+import { logger } from './lib/logger'
 
 const PORT = process.env.PORT || 3001
 
@@ -81,7 +82,9 @@ function handlePrometheusMetrics(res: ServerResponse) {
     res.writeHead(200, { 'Content-Type': 'text/plain' })
     res.end(prometheusMetrics)
   } catch (error) {
-    console.error('[health] Error getting Prometheus metrics:', error)
+    logger.error('Error getting Prometheus metrics', error, {
+      event: 'health.prometheus.error',
+    })
     res.writeHead(500, { 'Content-Type': 'text/plain' })
     res.end(`# Error getting metrics: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
@@ -101,7 +104,10 @@ export function startHealthServer() {
         res.end(JSON.stringify({ error: 'Not Found' }))
       }
     } catch (error) {
-      console.error('[health] Error handling request:', error)
+      logger.error('Error handling health check request', error, {
+        event: 'health.request.error',
+        url: req.url,
+      })
       res.writeHead(500, { 'Content-Type': 'application/json' })
       res.end(
         JSON.stringify({
@@ -113,10 +119,15 @@ export function startHealthServer() {
   })
 
   server.listen(PORT, () => {
-    console.log(`[worker] Health check server listening on port ${PORT}`)
-    console.log(`[worker] Health endpoint: http://localhost:${PORT}/health`)
-    console.log(`[worker] Metrics endpoint: http://localhost:${PORT}/metrics`)
-    console.log(`[worker] Prometheus metrics: http://localhost:${PORT}/metrics/prometheus`)
+    logger.info(`Health check server listening on port ${PORT}`, {
+      event: 'health.server.start',
+      port: PORT,
+      endpoints: {
+        health: `/health`,
+        metrics: `/metrics`,
+        prometheus: `/metrics/prometheus`,
+      },
+    })
   })
 
   return server

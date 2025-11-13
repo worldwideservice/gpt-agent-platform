@@ -213,6 +213,32 @@ export const generateDashboardStats = async (
  ? satisfactionScores.reduce((sum, score) => sum + score, 0) / satisfactionScores.length
  : 0
 
+ // Вычисляем среднее время разрешения (resolution time)
+ const completedConversations = conversations.filter((c: any) => c.status === 'completed' || c.status === 'resolved')
+ const resolutionTimes = completedConversations
+ .filter((c: any) => c.created_at && c.updated_at)
+ .map((c: any) => {
+ const start = new Date(c.created_at).getTime()
+ const end = new Date(c.updated_at).getTime()
+ return (end - start) / 1000 // конвертируем в секунды
+ })
+ const averageResolutionTime = resolutionTimes.length > 0
+ ? resolutionTimes.reduce((sum, time) => sum + time, 0) / resolutionTimes.length
+ : 0
+
+ // Вычисляем уровень автоматизации (automation rate)
+ // Разговор считается автоматизированным, если в нем не было вмешательства человека (operator/human messages)
+ const conversationIds = conversations.map((c: any) => c.id)
+ const conversationsWithHumanIntervention = new Set(
+ messages
+ .filter((m: any) => conversationIds.includes(m.conversation_id) && (m.role === 'operator' || m.role === 'human'))
+ .map((m: any) => m.conversation_id)
+ )
+ const fullyAutomatedConversations = conversations.length - conversationsWithHumanIntervention.size
+ const automationRate = conversations.length > 0
+ ? (fullyAutomatedConversations / conversations.length) * 100
+ : 0
+
  // Получаем топ агентов
  const topPerformingAgents = await getTopPerformingAgents(orgId, startDate, endDate, 5)
 
@@ -236,9 +262,9 @@ export const generateDashboardStats = async (
  usageByPeriod,
  performanceMetrics: {
  averageFirstResponseTime: averageResponseTime,
- averageResolutionTime: 0, // TODO: реализовать
+ averageResolutionTime,
  customerSatisfaction,
- automationRate: 0, // TODO: реализовать
+ automationRate,
  },
  channelBreakdown,
  }
@@ -487,13 +513,73 @@ const generateRevenueReport = async (
  endDate: Date,
 ): Promise<Record<string, any>> => {
  // Получаем данные из биллинга
- const { getUsageStats } = await import('./billing')
+ const { getUsageStats, getOrganizationSubscription, getBillingPlans } = await import('./billing')
  const usageStats = await getUsageStats(orgId, startDate, endDate)
+ const subscription = await getOrganizationSubscription(orgId)
+
+ // Рассчитываем доход
+ let totalRevenue = 0
+ let subscriptionRevenue = 0
+ let overageCharges: Record<string, number> = {}
+
+ if (subscription && subscription.status === 'active') {
+ // Получаем план подписки
+ const plans = await getBillingPlans()
+ const plan = plans.find(p => p.id === subscription.plan_id)
+
+ if (plan) {
+ // Рассчитываем базовую стоимость подписки за период
+ const periodStartMs = new Date(subscription.current_period_start).getTime()
+ const periodEndMs = new Date(subscription.current_period_end).getTime()
+ const reportStartMs = startDate.getTime()
+ const reportEndMs = endDate.getTime()
+
+ // Вычисляем долю периода подписки, покрываемую отчетом
+ const overlapStart = Math.max(periodStartMs, reportStartMs)
+ const overlapEnd = Math.min(periodEndMs, reportEndMs)
+ const overlapDays = Math.max(0, (overlapEnd - overlapStart) / (1000 * 60 * 60 * 24))
+ const totalPeriodDays = (periodEndMs - periodStartMs) / (1000 * 60 * 60 * 24)
+
+ // Пропорциональная стоимость подписки
+ const planCost = plan.price_cents / 100 // конвертируем центы в основную валюту
+ subscriptionRevenue = overlapDays > 0 ? (planCost * overlapDays) / totalPeriodDays : 0
+
+ // Рассчитываем доп. charges за превышение лимитов (если есть)
+ // Примерные цены за превышение (можно настроить):
+ const overagePricing: Record<string, number> = {
+ 'ai_messages': 0.002, // $0.002 за сообщение
+ 'ai_tokens': 0.00001, // $0.00001 за токен
+ 'storage': 0.10, // $0.10 за GB
+ }
+
+ Object.entries(usageStats).forEach(([resourceType, usage]) => {
+ const limit = plan.limits[resourceType as keyof typeof plan.limits] || 0
+ if (usage > limit) {
+ const overage = usage - limit
+ const pricePerUnit = overagePricing[resourceType] || 0
+ overageCharges[resourceType] = overage * pricePerUnit
+ }
+ })
+ }
+ }
+
+ const totalOverage = Object.values(overageCharges).reduce((sum, charge) => sum + charge, 0)
+ totalRevenue = subscriptionRevenue + totalOverage
 
  return {
  usage: usageStats,
  revenue: {
- // TODO: рассчитать доход на основе использования и тарифов
+ total: parseFloat(totalRevenue.toFixed(2)),
+ subscription: parseFloat(subscriptionRevenue.toFixed(2)),
+ overage: parseFloat(totalOverage.toFixed(2)),
+ overageDetails: Object.fromEntries(
+ Object.entries(overageCharges).map(([key, value]) => [key, parseFloat(value.toFixed(2))])
+ ),
+ currency: subscription?.metadata?.currency || 'USD',
+ period: {
+ start: startDate.toISOString(),
+ end: endDate.toISOString(),
+ },
  },
  }
 }

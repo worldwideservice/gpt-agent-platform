@@ -4,6 +4,7 @@
  */
 
 import { collectDefaultMetrics, Counter, Gauge, Histogram, Registry } from 'prom-client'
+import { logger } from './lib/logger'
 
 interface Metrics {
   jobs: {
@@ -185,7 +186,12 @@ class MetricsCollector {
     this.jobDurationTimers.delete(jobId)
 
     if (error) {
-      console.error(`[metrics] Job ${jobId} (${jobName}) failed:`, error.message)
+      logger.debug(`Job ${jobId} (${jobName}) failed`, {
+        event: 'metrics.job.failed',
+        jobId,
+        jobName,
+        errorMessage: error.message,
+      })
     }
   }
 
