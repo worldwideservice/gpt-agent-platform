@@ -5,14 +5,59 @@
 
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
+// Внутренние типы для данных из Supabase
+interface AgentData {
+  id: string
+  name: string
+  is_active: boolean
+  created_at: string
+}
+
+interface ConversationData {
+  id: string
+  agent_id: string
+  created_at: string
+  updated_at: string
+  status: string
+  channel?: string
+}
+
+interface MessageData {
+  id: string
+  conversation_id: string
+  role: string
+  created_at: string
+}
+
+interface TokenData {
+  conversation_id: string
+  tokens_used: number
+  created_at: string
+}
+
+interface TopAgentData {
+  agent_id: string
+  name: string
+  conversations_count: number
+  messages_count: number
+  tokens_used: number
+}
+
+interface UsageByPeriodData {
+  period: string
+  conversations: number
+  messages: number
+  tokens: number
+}
+
 export interface AnalyticsMetric {
  id: string
  org_id: string
  metric_type: string
  value: number
- dimensions: Record<string, any>
+ dimensions: Record<string, unknown>
  timestamp: string
- metadata: Record<string, any>
+ metadata: Record<string, unknown>
 }
 
 export interface AnalyticsReport {
@@ -25,9 +70,9 @@ export interface AnalyticsReport {
  start: string
  end: string
  }
- data: Record<string, any>
+ data: Record<string, unknown>
  generated_at: string
- metadata: Record<string, any>
+ metadata: Record<string, unknown>
 }
 
 export interface DashboardStats {
@@ -71,8 +116,8 @@ export const recordMetric = async (
  orgId: string,
  metricType: string,
  value: number,
- dimensions: Record<string, any> = {},
- metadata: Record<string, any> = {},
+ dimensions: Record<string, unknown> = {},
+ metadata: Record<string, unknown> = {},
 ): Promise<boolean> => {
  const supabase = getSupabaseServiceRoleClient()
 
@@ -102,7 +147,7 @@ export const getMetrics = async (
  metricTypes: string[],
  startDate: Date,
  endDate: Date,
- dimensions?: Record<string, any>,
+ dimensions?: Record<string, unknown>,
 ): Promise<AnalyticsMetric[]> => {
  const supabase = getSupabaseServiceRoleClient()
 
@@ -163,7 +208,7 @@ export const generateDashboardStats = async (
  .eq('org_id', orgId)
  .gte('created_at', startDate.toISOString())
  .lte('created_at', endDate.toISOString())
- .then(result => result.data || []),
+ .then((result: { data: ConversationData[] | null }) => (result.data || []) as ConversationData[]),
 
  // Статистика сообщений
  supabase
@@ -172,7 +217,7 @@ export const generateDashboardStats = async (
  .eq('org_id', orgId)
  .gte('created_at', startDate.toISOString())
  .lte('created_at', endDate.toISOString())
- .then(result => result.data || []),
+ .then((result: { data: MessageData[] | null }) => (result.data || []) as MessageData[]),
 
  // Статистика токенов
  supabase
@@ -181,58 +226,58 @@ export const generateDashboardStats = async (
  .eq('org_id', orgId)
  .gte('created_at', startDate.toISOString())
  .lte('created_at', endDate.toISOString())
- .then(result => result.data || []),
+ .then((result: { data: TokenData[] | null }) => (result.data || []) as TokenData[]),
 
  // Метрики производительности
  getMetrics(orgId, ['response_time', 'resolution_time', 'satisfaction'], startDate, endDate),
  ])
 
  // Обрабатываем данные агентов
- const agents = agentsResult.data ?? []
- const activeAgents = agents.filter((agent: any) => agent.is_active)
+ const agents = (agentsResult.data ?? []) as AgentData[]
+ const activeAgents = agents.filter(agent => agent.is_active)
 
  // Обрабатываем данные токенов
- const totalTokensUsed = tokens.reduce((sum: number, record: any) => sum + (record.tokens_used || 0), 0)
+ const totalTokensUsed = tokens.reduce((sum: number, record: TokenData) => sum + (record.tokens_used || 0), 0)
 
  // Обрабатываем метрики производительности
  const performanceMetrics = performanceData
 
  // Вычисляем среднее время ответа
  const responseTimes = performanceMetrics
- .filter(m => m.metric_type === 'response_time')
- .map(m => m.value)
+ .filter((m: AnalyticsMetric) => m.metric_type === 'response_time')
+ .map((m: AnalyticsMetric) => m.value)
  const averageResponseTime = responseTimes.length > 0
- ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length
+ ? responseTimes.reduce((sum: number, time: number) => sum + time, 0) / responseTimes.length
  : 0
 
  // Вычисляем уровень удовлетворенности
  const satisfactionScores = performanceMetrics
- .filter(m => m.metric_type === 'satisfaction')
- .map(m => m.value)
+ .filter((m: AnalyticsMetric) => m.metric_type === 'satisfaction')
+ .map((m: AnalyticsMetric) => m.value)
  const customerSatisfaction = satisfactionScores.length > 0
- ? satisfactionScores.reduce((sum, score) => sum + score, 0) / satisfactionScores.length
+ ? satisfactionScores.reduce((sum: number, score: number) => sum + score, 0) / satisfactionScores.length
  : 0
 
  // Вычисляем среднее время разрешения (resolution time)
- const completedConversations = conversations.filter((c: any) => c.status === 'completed' || c.status === 'resolved')
+ const completedConversations = conversations.filter((c: ConversationData) => c.status === 'completed' || c.status === 'resolved')
  const resolutionTimes = completedConversations
- .filter((c: any) => c.created_at && c.updated_at)
- .map((c: any) => {
+ .filter((c: ConversationData) => c.created_at && c.updated_at)
+ .map((c: ConversationData) => {
  const start = new Date(c.created_at).getTime()
  const end = new Date(c.updated_at).getTime()
  return (end - start) / 1000 // конвертируем в секунды
  })
  const averageResolutionTime = resolutionTimes.length > 0
- ? resolutionTimes.reduce((sum, time) => sum + time, 0) / resolutionTimes.length
+ ? resolutionTimes.reduce((sum: number, time: number) => sum + time, 0) / resolutionTimes.length
  : 0
 
  // Вычисляем уровень автоматизации (automation rate)
  // Разговор считается автоматизированным, если в нем не было вмешательства человека (operator/human messages)
- const conversationIds = conversations.map((c: any) => c.id)
+ const conversationIds = conversations.map((c: ConversationData) => c.id)
  const conversationsWithHumanIntervention = new Set(
  messages
- .filter((m: any) => conversationIds.includes(m.conversation_id) && (m.role === 'operator' || m.role === 'human'))
- .map((m: any) => m.conversation_id)
+ .filter((m: MessageData) => conversationIds.includes(m.conversation_id) && (m.role === 'operator' || m.role === 'human'))
+ .map((m: MessageData) => m.conversation_id)
  )
  const fullyAutomatedConversations = conversations.length - conversationsWithHumanIntervention.size
  const automationRate = conversations.length > 0
@@ -256,7 +301,7 @@ export const generateDashboardStats = async (
  totalTokensUsed,
  averageResponseTime,
  successRate: conversations.length > 0
- ? (conversations.filter((c: any) => c.status === 'completed').length / conversations.length) * 100
+ ? (conversations.filter((c: ConversationData) => c.status === 'completed').length / conversations.length) * 100
  : 0,
  topPerformingAgents,
  usageByPeriod,
@@ -294,7 +339,7 @@ const getTopPerformingAgents = async (
  return []
  }
 
- return (data ?? []).map((agent: any) => ({
+ return ((data ?? []) as TopAgentData[]).map(agent => ({
  agentId: agent.agent_id,
  name: agent.name,
  conversationsCount: agent.conversations_count,
@@ -327,7 +372,7 @@ const getUsageByPeriod = async (
  return []
  }
 
- return (data ?? []).map((record: any) => ({
+ return ((data ?? []) as UsageByPeriodData[]).map(record => ({
  period: record.period,
  conversations: record.conversations,
  messages: record.messages,
@@ -391,7 +436,7 @@ export const generateAnalyticsReport = async (
  const supabase = getSupabaseServiceRoleClient()
 
  try {
- let reportData: Record<string, any> = {}
+ let reportData: Record<string, unknown> = {}
 
  switch (reportType) {
  case 'usage':
@@ -447,7 +492,7 @@ const generateUsageReport = async (
  orgId: string,
  startDate: Date,
  endDate: Date,
-): Promise<Record<string, any>> => {
+): Promise<Record<string, unknown>> => {
  const dashboardStats = await generateDashboardStats(orgId, startDate, endDate)
 
  return {
@@ -470,7 +515,7 @@ const generatePerformanceReport = async (
  orgId: string,
  startDate: Date,
  endDate: Date,
-): Promise<Record<string, any>> => {
+): Promise<Record<string, unknown>> => {
  const dashboardStats = await generateDashboardStats(orgId, startDate, endDate)
 
  return {
@@ -488,7 +533,7 @@ const generateEngagementReport = async (
  orgId: string,
  startDate: Date,
  endDate: Date,
-): Promise<Record<string, any>> => {
+): Promise<Record<string, unknown>> => {
  const supabase = getSupabaseServiceRoleClient()
 
  const { data: engagementData } = await supabase
@@ -511,7 +556,7 @@ const generateRevenueReport = async (
  orgId: string,
  startDate: Date,
  endDate: Date,
-): Promise<Record<string, any>> => {
+): Promise<Record<string, unknown>> => {
  // Получаем данные из биллинга
  const { getUsageStats, getOrganizationSubscription, getBillingPlans } = await import('./billing')
  const usageStats = await getUsageStats(orgId, startDate, endDate)
@@ -621,7 +666,7 @@ export const getAnalyticsReports = async (
 export const exportAnalyticsData = async (
  orgId: string,
  exportType: 'csv' | 'json' | 'pdf',
- data: Record<string, any>,
+ data: Record<string, unknown>,
 ): Promise<string | null> => {
  try {
  switch (exportType) {
@@ -647,11 +692,15 @@ export const exportAnalyticsData = async (
 /**
  * Преобразует данные в CSV
  */
-const convertToCSV = (data: Record<string, any>): string => {
+const convertToCSV = (data: Record<string, unknown>): string => {
  const rows: string[] = []
 
- const flattenObject = (obj: any, prefix = ''): Array<[string, any]> => {
- const result: Array<[string, any]> = []
+ const flattenObject = (obj: unknown, prefix = ''): Array<[string, unknown]> => {
+ const result: Array<[string, unknown]> = []
+
+ if (typeof obj !== 'object' || obj === null) {
+ return [[prefix, obj]]
+ }
 
  for (const [key, value] of Object.entries(obj)) {
  const fullKey = prefix ? `${prefix}.${key}` : key
