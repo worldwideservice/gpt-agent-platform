@@ -30,14 +30,14 @@ jobs:
       - name: TypeScript check
         run: npm run type-check
         continue-on-error: false
-      
+
       - name: ESLint check
-        run: npm run lint || echo "⚠️ Linter warnings (non-blocking)"
-        continue-on-error: true
-      
+        run: npm run lint
+        continue-on-error: false
+
       - name: Format check
-        run: npm run format:check || echo "⚠️ Format warnings (non-blocking)"
-        continue-on-error: true
+        run: npm run format:check
+        continue-on-error: false
 
   test:
     name: Tests
@@ -157,8 +157,6 @@ jobs:
       - name: Build application
         run: npm run build
         env:
-          E2E_ONBOARDING_FAKE: '1'
-          DEMO_MODE: 'true'
           NODE_ENV: 'production'
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -237,11 +235,11 @@ jobs:
         run: npm ci
       
       - name: 🗄️ Run Database Migrations
-        run: npm run db:migrate || echo "⚠️ Migrations failed but continuing deployment"
+        run: npm run db:migrate
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        continue-on-error: true
+        continue-on-error: false
       
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
@@ -259,13 +257,59 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       
       - name: Deploy Project Artifacts to Vercel
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        id: deploy
+        run: |
+          DEPLOYMENT_URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "deployment_url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+          echo "Deployed to: $DEPLOYMENT_URL"
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      
+
+      - name: Wait for deployment
+        run: sleep 30
+
       - name: Health check
+        id: health_check
         run: |
-          sleep 10
-          curl -f https://gpt-agent-kwid-1i1j7zlgl-world-wide-services-62780b79.vercel.app/api/health || echo "⚠️ Health check failed (non-blocking)"
+          echo "Running health check..."
+          MAX_RETRIES=5
+          RETRY_COUNT=0
+
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            echo "Attempt $((RETRY_COUNT + 1)) of $MAX_RETRIES"
+
+            if curl -f -s --max-time 10 https://gpt-agent-kwid-1i1j7zlgl-world-wide-services-62780b79.vercel.app/api/health; then
+              echo "✅ Health check passed!"
+              exit 0
+            fi
+
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+              echo "Health check failed, retrying in 10s..."
+              sleep 10
+            fi
+          done
+
+          echo "❌ Health check failed after $MAX_RETRIES attempts"
+          exit 1
+        continue-on-error: false
+
+      - name: Rollback on failure
+        if: failure() && steps.deploy.outcome == 'success'
+        run: |
+          echo "🔄 Deployment failed, initiating rollback..."
+          # Get previous deployment
+          PREV_DEPLOYMENT=$(vercel ls --token=${{ secrets.VERCEL_TOKEN }} | grep PRODUCTION | head -2 | tail -1 | awk '{print $1}')
+
+          if [ -n "$PREV_DEPLOYMENT" ]; then
+            echo "Rolling back to: $PREV_DEPLOYMENT"
+            vercel rollback $PREV_DEPLOYMENT --token=${{ secrets.VERCEL_TOKEN }} --yes
+            echo "✅ Rollback completed"
+          else
+            echo "⚠️ No previous deployment found for rollback"
+          fi
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         continue-on-error: true

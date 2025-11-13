@@ -33,6 +33,9 @@ COPY --from=base /app/scripts ./scripts
 # Устанавливаем только production зависимости
 RUN npm ci --only=production
 
+# Устанавливаем curl для health check
+RUN apk add --no-cache curl
+
 # Создаем пользователя для безопасности
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -43,6 +46,10 @@ USER nextjs
 
 # Экспонируем порт
 EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:3000/api/health || exit 1
 
 # Запускаем приложение
 CMD ["npm", "start"]
