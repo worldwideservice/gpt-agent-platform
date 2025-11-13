@@ -20,9 +20,19 @@ interface AgentDeleteButtonProps {
   agentId: string
   agentName: string
   tenantId: string
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
+  size?: 'default' | 'sm' | 'lg' | 'icon'
+  showLabel?: boolean
 }
 
-export function AgentDeleteButton({ agentId, agentName, tenantId }: AgentDeleteButtonProps) {
+export function AgentDeleteButton({
+  agentId,
+  agentName,
+  tenantId,
+  variant = 'destructive',
+  size = 'default',
+  showLabel = true,
+}: AgentDeleteButtonProps) {
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -52,9 +62,9 @@ export function AgentDeleteButton({ agentId, agentName, tenantId }: AgentDeleteB
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="default">
-          <Trash2 className="mr-2 h-4 w-4" />
-          Удалить
+        <Button variant={variant} size={size} aria-label="Удалить агента">
+          <Trash2 className={showLabel ? 'mr-2 h-4 w-4' : 'h-4 w-4'} />
+          {showLabel && 'Удалить'}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>

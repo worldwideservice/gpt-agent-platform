@@ -2,8 +2,11 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Edit } from 'lucide-react'
 
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@/components/ui'
+import { AgentCopyButton } from './AgentCopyButton'
+import { AgentDeleteButton } from './AgentDeleteButton'
 
 export type AgentListItem = {
   id: string
@@ -190,13 +193,32 @@ export function AgentsTable({
                     <td className="p-2 text-gray-500">
                       {agent.updatedAt ? new Date(agent.updatedAt).toLocaleDateString('ru-RU') : '—'}
                     </td>
-                    <td className="p-2 text-right text-xs">
-                      <Link
-                        href={`/manage/${tenantId}/ai-agents/${agent.id}`}
-                        className="font-medium text-primary hover:underline"
-                      >
-                        Настроить
-                      </Link>
+                    <td className="p-2">
+                      <div className="flex items-center gap-1">
+                        <Button
+                          asChild
+                          variant="ghost"
+                          size="sm"
+                          aria-label="Изменить агента"
+                        >
+                          <Link href={`/manage/${tenantId}/ai-agents/${agent.id}/edit`}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Изменить
+                          </Link>
+                        </Button>
+                        <AgentCopyButton
+                          agentId={agent.id}
+                          agentName={agent.name}
+                          tenantId={tenantId}
+                        />
+                        <AgentDeleteButton
+                          agentId={agent.id}
+                          agentName={agent.name}
+                          tenantId={tenantId}
+                          variant="ghost"
+                          size="sm"
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}
