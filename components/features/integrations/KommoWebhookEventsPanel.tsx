@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Separator } from '@/components/ui'
+import { EmptyState } from '@/components/ui/empty-state'
 
 type WebhookEvent = {
   id: string
@@ -50,7 +51,15 @@ export function KommoWebhookEventsPanel() {
         {loading ? (
           <p className="text-gray-500">Загрузка событий…</p>
         ) : events.length === 0 ? (
-          <p className="text-gray-500">События не найдены.</p>
+          <EmptyState
+            type="no-data"
+            title="События не найдены"
+            description="Webhook события от Kommo отсутствуют"
+            action={{
+              label: 'Обновить',
+              onClick: load,
+            }}
+          />
         ) : (
           events.map((event) => (
             <div key={event.id} className="space-y-1 rounded-lg border px-3 py-2">

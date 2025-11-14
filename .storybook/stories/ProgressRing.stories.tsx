@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { ProgressRing } from '@/components/ui/progress-ring'
+import { ProgressRing } from '@/components/landing/progress-ring'
 
 const meta = {
   title: 'UI/ProgressRing',

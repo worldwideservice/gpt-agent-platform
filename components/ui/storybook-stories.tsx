@@ -13,7 +13,7 @@
 // Example template for ScrollAnimation
 export const ScrollAnimationTemplate = `
 import type { Meta, StoryObj } from '@storybook/react'
-import { ScrollAnimation } from '@/components/ui/scroll-animation'
+import { ScrollAnimation } from '@/components/landing/scroll-animation'
 
 const meta = {
   title: 'UI/ScrollAnimation',
@@ -49,7 +49,7 @@ export const SlideUp: Story = {
 // Example template for AnimatedCounter
 export const AnimatedCounterTemplate = `
 import type { Meta, StoryObj } from '@storybook/react'
-import { AnimatedCounter } from '@/components/ui/animated-counter'
+import { AnimatedCounter } from '@/components/landing/animated-counter'
 
 const meta = {
   title: 'UI/AnimatedCounter',
@@ -105,7 +105,7 @@ export const Default: Story = {
 // Example template for GlassCard
 export const GlassCardTemplate = `
 import type { Meta, StoryObj } from '@storybook/react'
-import { GlassCard, CardHeader, CardTitle, CardDescription } from '@/components/ui/glass-card'
+import { GlassCard, CardHeader, CardTitle, CardDescription } from '@/components/landing/glass-card'
 
 const meta = {
   title: 'UI/GlassCard',

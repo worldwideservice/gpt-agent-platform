@@ -28,6 +28,7 @@ import {
   PaginationNext,
   PaginationEllipsis,
 } from '@/components/ui/pagination'
+import { EmptyState } from '@/components/ui/empty-state'
 import { AgentCopyButton } from './AgentCopyButton'
 import { AgentDeleteButton } from './AgentDeleteButton'
 
@@ -394,7 +395,27 @@ export function AgentsTable({
           </p>
         )}
         {!loading && !error && filteredAgents.length === 0 && (
-          <p className="text-sm text-gray-500">Агенты не найдены. Создайте первого, чтобы начать.</p>
+          <EmptyState
+            type={search ? 'no-results' : 'no-data'}
+            title={search ? 'Агенты не найдены' : 'Нет агентов'}
+            description={
+              search
+                ? `По запросу "${search}" ничего не найдено. Попробуйте изменить параметры поиска.`
+                : 'Создайте первого AI агента для начала работы'
+            }
+            action={
+              !search
+                ? {
+                    label: 'Создать агента',
+                    onClick: () => router.push(`/manage/${tenantId}/ai-agents/create`),
+                  }
+                : {
+                    label: 'Сбросить поиск',
+                    onClick: () => setSearch(''),
+                    variant: 'secondary',
+                  }
+            }
+          />
         )}
 
         {sortedAgents.length > 0 && (

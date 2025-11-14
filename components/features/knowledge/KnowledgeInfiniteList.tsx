@@ -6,6 +6,7 @@ import { InfiniteScroll } from '@/components/ui/infinite-scroll'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
 import { Input } from '@/components/ui'
 import { Search } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 
 interface KnowledgeInfiniteListProps {
   tenantId: string
@@ -93,11 +94,16 @@ export function KnowledgeInfiniteList({ tenantId, categoryId }: KnowledgeInfinit
       </InfiniteScroll>
 
       {allArticles.length === 0 && !isLoading && (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-gray-500">Статьи не найдены</p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          type="no-results"
+          title="Статьи не найдены"
+          description="Попробуйте изменить параметры поиска"
+          action={{
+            label: 'Очистить поиск',
+            onClick: () => setSearch(''),
+            variant: 'secondary',
+          }}
+        />
       )}
     </div>
   )

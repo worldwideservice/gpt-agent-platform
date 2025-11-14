@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { ScrollAnimation } from '@/components/ui/scroll-animation'
+import { ScrollAnimation } from '@/components/landing/scroll-animation'
 
 const meta = {
   title: 'UI/ScrollAnimation',

@@ -17,18 +17,16 @@ import {
   Loader2
 } from 'lucide-react'
 
-import { Button } from '@/components/ui'
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Badge } from '@/components/ui'
 import { PublicHeader } from '@/components/layout/PublicHeader'
 import { Logo } from '@/components/ui/Logo'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/shadcn/card'
-import { Badge } from '@/components/ui'
 import { useToast } from '@/components/ui/toast-context'
-import { ScrollAnimation } from '@/components/ui/scroll-animation'
-import { AnimatedCounter } from '@/components/ui/animated-counter'
-import { GlassCard } from '@/components/ui/glass-card'
-import { SkipLink } from '@/components/ui/skip-link'
-import BlurText from '@/components/ui/BlurText'
-import { AuroraBackground } from '@/components/ui/aurora-background'
+import { ScrollAnimation } from '@/components/landing/scroll-animation'
+import { AnimatedCounter } from '@/components/landing/animated-counter'
+import { GlassCard } from '@/components/landing/glass-card'
+import { SkipLink } from '@/components/landing/skip-link'
+import BlurText from '@/components/landing/BlurText'
+import { AuroraBackground } from '@/components/landing/aurora-background'
 
 export function LandingPageClient() {
   const router = useRouter()

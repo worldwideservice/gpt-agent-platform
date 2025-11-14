@@ -2,7 +2,7 @@ import React from 'react'
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { Textarea } from '@/components/ui/shadcn/textarea'
+import { Textarea } from '@/components/ui'
 
 describe('Textarea Component', () => {
   it('should render textarea element', () => {

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { AchievementBadge } from '@/components/ui/achievement-badge'
+import { AchievementBadge } from '@/components/landing/achievement-badge'
 
 const meta = {
   title: 'UI/AchievementBadge',

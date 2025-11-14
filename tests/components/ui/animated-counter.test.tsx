@@ -1,7 +1,7 @@
 import React from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
-import { AnimatedCounter } from '@/components/ui/animated-counter'
+import { AnimatedCounter } from '@/components/landing/animated-counter'
 
 describe('AnimatedCounter Component', () => {
   beforeEach(() => {

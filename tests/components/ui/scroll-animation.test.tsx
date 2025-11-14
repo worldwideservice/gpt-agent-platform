@@ -1,7 +1,7 @@
 import React from 'react'
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { ScrollAnimation } from '@/components/ui/scroll-animation'
+import { ScrollAnimation } from '@/components/landing/scroll-animation'
 
 describe('ScrollAnimation Component', () => {
   it('should render scroll animation', () => {

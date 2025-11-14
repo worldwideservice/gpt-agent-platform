@@ -1,8 +1,15 @@
 // UI Components Library
 // Главный экспорт всех компонентов проекта
 
-// Shadcn UI компоненты (основная библиотека)
-export * from './shadcn'
+// Основные UI компоненты
+export { Button, buttonVariants } from './Button'
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from './Card'
+export { Input } from './Input'
+export { Textarea } from './Textarea'
+export { Badge } from './Badge'
+export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel, SelectSeparator } from './Select'
+export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption } from './Table'
+export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs'
 
 // Breadcrumb компоненты
 export {
@@ -49,18 +56,7 @@ export { Logo, LogoCompact } from './Logo'
 
 // Дополнительные компоненты
 export { Toggle } from './Toggle'
-
-// Legacy aliases for backward compatibility
-export { Button } from './shadcn'
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from './shadcn'
-export { Input } from './shadcn'
-export { Textarea } from './shadcn'
-export { Badge } from './shadcn'
-export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel, SelectSeparator } from './shadcn'
 export { Switch } from './switch'
-export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption } from './shadcn'
-export { Tabs, TabsList, TabsTrigger, TabsContent } from './shadcn'
-export { Modal, ModalTrigger, ModalContent, ModalHeader, ModalFooter, ModalTitle, ModalDescription } from './shadcn'
 
 // Label компонент
 export { Label } from './label'
