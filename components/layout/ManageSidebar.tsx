@@ -19,6 +19,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
+import { WorkspaceSelector } from './WorkspaceSelector'
 
 export function ManageSidebar() {
   const pathname = usePathname()
@@ -29,23 +30,16 @@ export function ManageSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r bg-white dark:bg-gray-950">
-      <SidebarHeader className="h-16 border-b">
-        <div className="flex h-full items-center px-4">
-          {state === 'expanded' ? (
-            <div>
-              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                {organizationName ?? tLayout('organizationFallback')}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{tenantId}</p>
-            </div>
-          ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-              <span className="text-sm font-bold text-primary">
-                {(organizationName ?? tLayout('organizationFallback')).charAt(0).toUpperCase()}
-              </span>
-            </div>
-          )}
-        </div>
+      <SidebarHeader className="border-b p-4">
+        {state === 'expanded' ? (
+          <WorkspaceSelector />
+        ) : (
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+            <span className="text-sm font-bold text-primary">
+              {(organizationName ?? tLayout('organizationFallback')).charAt(0).toUpperCase()}
+            </span>
+          </div>
+        )}
       </SidebarHeader>
 
       <SidebarContent>
