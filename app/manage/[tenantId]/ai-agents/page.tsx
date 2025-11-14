@@ -1,10 +1,13 @@
 import { getTranslations } from 'next-intl/server'
+import Link from 'next/link'
 
 import { auth } from '@/auth'
 import { AgentForm } from '@/components/features/agents/AgentForm'
 import { AgentsDashboardSection } from '@/components/features/manage/AgentsDashboardSection'
 import { WorkspaceSummaryIntegrationInsights } from '@/components/features/manage/WorkspaceSummaryIntegrationInsights'
 import { WorkspaceSummaryKnowledgeInsights } from '@/components/features/manage/WorkspaceSummaryKnowledgeInsights'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
 import { loadManageAgentsData } from '@/lib/repositories/manage-data'
 import type { AgentListItem } from '@/components/features/agents/AgentsTable'
@@ -60,16 +63,21 @@ export default async function AiAgentsPage({ params }: AiAgentsPageProps) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-sm uppercase text-primary">{t('header.eyebrow')}</p>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">{t('header.title')}</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {t.rich('header.subtitle', {
-            tenant: (chunk) => <span className="font-mono">{chunk}</span>,
-            id: params.tenantId,
-          })}
-        </p>
-      </div>
+      {/* Page Header с breadcrumbs согласно KWID */}
+      <PageHeader
+        title={t('header.title')}
+        description={t.rich('header.subtitle', {
+          tenant: (chunk) => <span className="font-mono">{chunk}</span>,
+          id: params.tenantId,
+        }) as any}
+        actions={
+          <Button asChild>
+            <Link href={`/manage/${params.tenantId}/ai-agents/create`}>
+              Создать агента
+            </Link>
+          </Button>
+        }
+      />
 
       <div className="space-y-6">
         <WorkspaceSummaryIntegrationInsights summary={summary} />
