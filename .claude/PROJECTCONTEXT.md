@@ -5,7 +5,7 @@
 Платформа для создания и управления AI агентами с интеграцией CRM (Kommo/amoCRM).
 
 **Версия:** 1.0.5
-**Дата обновления:** 2025-01-26
+**Дата обновления:** 2025-11-14
 
 ## Технологический стек
 
@@ -146,7 +146,10 @@ make dev             # Docker dev окружение
 - [README.md](./README.md) - Основная документация
 - [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md) - Детальная структура
 - [docs/](./docs/) - Техническая документация
-- [references-kwid/](./references-kwid/) - Референсная документация по страницам
+- [docs/FRONTEND_ANALYSIS_REPORT.md](./docs/FRONTEND_ANALYSIS_REPORT.md) - Анализ фронтенда
+- [docs/FRONTEND_ACTION_PLAN.md](./docs/FRONTEND_ACTION_PLAN.md) - План развития фронтенда
+- [docs/PROJECT_IMPROVEMENTS.md](./docs/PROJECT_IMPROVEMENTS.md) - Последние улучшения
+- [references-kwid/](./references-kwid/) - Референсная документация KWID
 
 ## Workflow для разработки
 
@@ -159,10 +162,16 @@ make dev             # Docker dev окружение
 7. Создать Pull Request
 8. После ревью - мерж в `main`
 
+## Текущий статус
+
+**Frontend:** 65-70% готовности (см. FRONTEND_ANALYSIS_REPORT.md)
+**Backend:** 75-80% готовности (см. PROJECT_IMPROVEMENTS.md)
+**Production Ready:** P0 блокеры решены (Redis rate limiting, structured logging)
+
 ## Известные проблемы
 
-- См. GitHub Issues для актуального списка
-- Проверяй CHANGELOG.md для breaking changes
+- См. [TODO_ISSUES.md](./TODO_ISSUES.md) для актуального списка (4 открытых)
+- См. [docs/FRONTEND_ACTION_PLAN.md](./docs/FRONTEND_ACTION_PLAN.md) для плана развития UI
 
 ## Контакты и поддержка
 
