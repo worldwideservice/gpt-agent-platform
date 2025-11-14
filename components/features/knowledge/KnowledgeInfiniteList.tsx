@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useInfiniteArticles } from '@/lib/hooks/useInfiniteKnowledge'
 import { InfiniteScroll } from '@/components/ui/infinite-scroll'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Skeleton } from '@/components/ui'
 import { Input } from '@/components/ui'
 import { Search } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -32,7 +32,16 @@ export function KnowledgeInfiniteList({ tenantId, categoryId }: KnowledgeInfinit
     return (
       <div className="space-y-4">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-24 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" />
+          <Card key={i}>
+            <CardHeader>
+              <Skeleton className="h-6 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-4 w-32" />
+            </CardContent>
+          </Card>
         ))}
       </div>
     )

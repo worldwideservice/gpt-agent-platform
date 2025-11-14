@@ -65,9 +65,6 @@ export { Label } from './label'
 export { ToastProvider, useToast } from './toast-context'
 export { ToastViewport } from './toast-viewport'
 
-// Confirm Dialog компонент
-export { ConfirmDialog } from './ConfirmDialog'
-
 // Dialog компоненты
 export {
   Dialog,
@@ -121,4 +118,23 @@ export { RadioGroup, RadioGroupItem } from './radio-group'
 // MultiSelect компонент
 export { MultiSelect } from './multi-select'
 export type { MultiSelectOption } from './multi-select'
+
+// BulkActions компоненты
+export { BulkActions, BulkSelectHeader, BulkSelectRow } from './bulk-actions'
+
+// EmptyState компоненты
+export {
+  EmptyState,
+  EmptyStateNoData,
+  EmptyStateNoResults,
+  EmptyStateNoAccess,
+  EmptyStateError,
+} from './empty-state'
+export type { EmptyStateType } from './empty-state'
+
+// Skeleton компонент
+export { Skeleton } from './Skeleton'
+
+// Tooltip компоненты
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from './tooltip'
 

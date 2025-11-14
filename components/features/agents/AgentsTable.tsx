@@ -18,6 +18,14 @@ import {
   PopoverContent,
   PopoverTrigger,
   Label,
+  BulkActions,
+  BulkSelectHeader,
+  BulkSelectRow,
+  Skeleton,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  useToast,
 } from '@/components/ui'
 import {
   Pagination,
@@ -62,6 +70,7 @@ export function AgentsTable({
 }: AgentsTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { toast } = useToast()
 
   const [agents, setAgents] = useState<AgentListItem[]>(initialAgents ?? [])
   const [search, setSearch] = useState('')
@@ -69,6 +78,9 @@ export function AgentsTable({
   const [loading, setLoading] = useState(!initialAgents?.length && !initialError)
   const [error, setError] = useState<string | null>(initialError ?? null)
   const filtersReadyRef = useRef(false)
+
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   // Column visibility state (persisted in localStorage)
   const [showCreatedAt, setShowCreatedAt] = useState(() => {
@@ -264,6 +276,11 @@ export function AgentsTable({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, statusFilter])
 
+  // Clear selection when filters or pagination change
+  useEffect(() => {
+    setSelectedIds([])
+  }, [search, statusFilter, currentPage])
+
   const toggleCreatedAt = () => {
     setShowCreatedAt((prev) => {
       const newValue = !prev
@@ -307,9 +324,70 @@ export function AgentsTable({
           agent.id === agentId ? { ...agent, isActive: !isActive } : agent
         )
       )
-      // TODO: Show error toast
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось изменить статус агента',
+        variant: 'error',
+      })
     }
   }
+
+  // Bulk selection handlers
+  const handleSelectAll = () => {
+    setSelectedIds(paginatedAgents.map((agent) => agent.id))
+  }
+
+  const handleDeselectAll = () => {
+    setSelectedIds([])
+  }
+
+  const handleToggleRow = (agentId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedIds((prev) => [...prev, agentId])
+    } else {
+      setSelectedIds((prev) => prev.filter((id) => id !== agentId))
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return
+
+    // TODO: Add confirmation dialog
+    try {
+      // Delete all selected agents in parallel
+      await Promise.all(
+        selectedIds.map((agentId) =>
+          fetch(`/api/tenants/${tenantId}/agents/${agentId}`, {
+            method: 'DELETE',
+          })
+        )
+      )
+
+      // Remove deleted agents from state
+      setAgents((prev) => prev.filter((agent) => !selectedIds.includes(agent.id)))
+      setSelectedIds([])
+
+      toast({
+        title: 'Агенты удалены',
+        description: `Успешно удалено агентов: ${selectedIds.length}`,
+        variant: 'success',
+      })
+    } catch (error) {
+      console.error('Error deleting agents:', error)
+      toast({
+        title: 'Ошибка удаления',
+        description: 'Не удалось удалить выбранные агенты',
+        variant: 'error',
+      })
+    }
+  }
+
+  // Check if all paginated agents are selected
+  const allPaginatedSelected = paginatedAgents.length > 0 &&
+    paginatedAgents.every((agent) => selectedIds.includes(agent.id))
+
+  // Check if some (but not all) paginated agents are selected
+  const someSelected = selectedIds.length > 0 && !allPaginatedSelected
 
   // Render sort indicator icon
   const SortIcon = ({ column }: { column: SortColumn }) => {
@@ -322,6 +400,22 @@ export function AgentsTable({
       <ArrowDown className="ml-1 inline h-4 w-4 text-primary" />
     )
   }
+
+  // Table skeleton loader
+  const TableSkeleton = () => (
+    <div className="space-y-3">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-4">
+          <Skeleton className="h-5 w-5 rounded" />
+          <Skeleton className="h-5 flex-1" />
+          <Skeleton className="h-5 w-20" />
+          {showCreatedAt && <Skeleton className="h-5 w-24" />}
+          {showUpdatedAt && <Skeleton className="h-5 w-24" />}
+          <Skeleton className="h-5 w-32" />
+        </div>
+      ))}
+    </div>
+  )
 
   return (
     <Card>
@@ -388,7 +482,7 @@ export function AgentsTable({
         </div>
       </CardHeader>
       <CardContent>
-        {loading && <p className="text-sm text-gray-500">Загрузка агентов…</p>}
+        {loading && <TableSkeleton />}
         {error && (
           <p className="text-sm text-rose-500">
             {error}. Убедитесь, что вы авторизованы и Supabase настроен.
@@ -423,6 +517,20 @@ export function AgentsTable({
             <table className="min-w-full text-sm">
               <thead className="text-left text-xs uppercase text-gray-500">
                 <tr>
+                  <th className="w-12 p-2">
+                    <BulkSelectHeader
+                      checked={allPaginatedSelected}
+                      indeterminate={someSelected}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          handleSelectAll()
+                        } else {
+                          handleDeselectAll()
+                        }
+                      }}
+                      ariaLabel="Выбрать все агенты на странице"
+                    />
+                  </th>
                   <th
                     className="cursor-pointer p-2 font-medium transition-colors hover:text-gray-700 dark:hover:text-gray-300"
                     onClick={() => handleSort('name')}
@@ -461,6 +569,13 @@ export function AgentsTable({
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {paginatedAgents.map((agent) => (
                   <tr key={agent.id}>
+                    <td className="p-2">
+                      <BulkSelectRow
+                        checked={selectedIds.includes(agent.id)}
+                        onCheckedChange={(checked) => handleToggleRow(agent.id, checked)}
+                        label={agent.name}
+                      />
+                    </td>
                     <td className="p-2 font-medium text-gray-900 dark:text-gray-50">{agent.name}</td>
                     <td className="p-2">
                       <Switch
@@ -481,29 +596,46 @@ export function AgentsTable({
                     )}
                     <td className="p-2">
                       <div className="flex items-center gap-1">
-                        <Button
-                          asChild
-                          variant="ghost"
-                          size="sm"
-                          aria-label="Изменить агента"
-                        >
-                          <Link href={`/manage/${tenantId}/ai-agents/${agent.id}/edit`}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Изменить
-                          </Link>
-                        </Button>
-                        <AgentCopyButton
-                          agentId={agent.id}
-                          agentName={agent.name}
-                          tenantId={tenantId}
-                        />
-                        <AgentDeleteButton
-                          agentId={agent.id}
-                          agentName={agent.name}
-                          tenantId={tenantId}
-                          variant="ghost"
-                          size="sm"
-                        />
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              asChild
+                              variant="ghost"
+                              size="sm"
+                              aria-label="Изменить агента"
+                            >
+                              <Link href={`/manage/${tenantId}/ai-agents/${agent.id}/edit`}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Изменить
+                              </Link>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Редактировать настройки агента</TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <AgentCopyButton
+                              agentId={agent.id}
+                              agentName={agent.name}
+                              tenantId={tenantId}
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent>Создать копию агента</TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <AgentDeleteButton
+                              agentId={agent.id}
+                              agentName={agent.name}
+                              tenantId={tenantId}
+                              variant="ghost"
+                              size="sm"
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent>Удалить агента</TooltipContent>
+                        </Tooltip>
                       </div>
                     </td>
                   </tr>
@@ -630,6 +762,17 @@ export function AgentsTable({
           </div>
         )}
       </CardContent>
+
+      {/* Bulk Actions Panel */}
+      <BulkActions
+        selectedCount={selectedIds.length}
+        totalCount={paginatedAgents.length}
+        entityName="агента"
+        entityNamePlural="агентов"
+        onSelectAll={handleSelectAll}
+        onDeselectAll={handleDeselectAll}
+        onDelete={handleBulkDelete}
+      />
     </Card>
   )
 }

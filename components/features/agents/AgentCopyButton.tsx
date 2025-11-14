@@ -14,6 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
+  useToast,
 } from '@/components/ui'
 
 interface AgentCopyButtonProps {
@@ -34,6 +35,7 @@ export function AgentCopyButton({
   showLabel = false,
 }: AgentCopyButtonProps) {
   const router = useRouter()
+  const { toast } = useToast()
   const [isCopying, setIsCopying] = useState(false)
 
   const handleCopy = async () => {
@@ -49,11 +51,21 @@ export function AgentCopyButton({
         throw new Error('Failed to copy agent')
       }
 
+      toast({
+        title: 'Агент скопирован',
+        description: `Создана копия агента "${agentName}"`,
+        variant: 'success',
+      })
+
       // Refresh the page to show the new copied agent
       router.refresh()
     } catch (error) {
       console.error('Error copying agent:', error)
-      // TODO: Show error toast
+      toast({
+        title: 'Ошибка копирования',
+        description: `Не удалось скопировать агента "${agentName}"`,
+        variant: 'error',
+      })
     } finally {
       setIsCopying(false)
     }
