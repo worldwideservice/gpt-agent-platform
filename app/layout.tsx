@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { SessionProviderWrapper } from '@/components/providers/SessionProviderWrapper'
 import { ProductAnalyticsProvider } from '@/components/providers/ProductAnalyticsProvider'
+import { QueryClientProvider } from '@/components/providers/QueryClientProvider'
 import { ToastProvider } from '@/components/ui/toast-context'
 import { ThemeProvider } from '@/lib/providers/theme-provider'
 
@@ -116,11 +117,13 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
       </head>
       <body className={inter.className}>
         <ThemeProvider defaultTheme="system" storageKey="gpt-agent-theme">
-          <SessionProviderWrapper>
-            <ProductAnalyticsProvider context="public">
-              <ToastProvider>{children}</ToastProvider>
-            </ProductAnalyticsProvider>
-          </SessionProviderWrapper>
+          <QueryClientProvider>
+            <SessionProviderWrapper>
+              <ProductAnalyticsProvider context="public">
+                <ToastProvider>{children}</ToastProvider>
+              </ProductAnalyticsProvider>
+            </SessionProviderWrapper>
+          </QueryClientProvider>
         </ThemeProvider>
         <Analytics />
       </body>

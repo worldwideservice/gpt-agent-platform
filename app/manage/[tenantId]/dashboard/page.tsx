@@ -6,36 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { WorkspaceSummaryIntegrationInsights } from '@/components/features/manage/WorkspaceSummaryIntegrationInsights'
 import { WorkspaceSummaryKnowledgeInsights } from '@/components/features/manage/WorkspaceSummaryKnowledgeInsights'
 import { WebhookActivityCard } from '@/components/features/manage/WebhookActivityCard'
-import { MonthlyResponsesChart } from '@/components/features/dashboard/MonthlyResponsesChart'
-import { DailyResponsesChart } from '@/components/features/dashboard/DailyResponsesChart'
+import { DashboardMetricsClient } from '@/components/features/dashboard/DashboardMetricsClient'
+import { DashboardChartsClient } from '@/components/features/dashboard/DashboardChartsClient'
 import { loadManageDashboardData } from '@/lib/repositories/manage-data'
 
 interface DashboardPageProps {
   params: {
     tenantId: string
   }
-}
-
-type MetricConfig = {
-  key: string
-  label: string
-  helper?: string
-  value: number | null | undefined
-  change?: number | null
-}
-
-const MetricsSkeleton = () => {
-  const cards = Array.from({ length: 4 })
-  return (
-    <div className="grid gap-4 lg:grid-cols-4">
-      {cards.map((_, index) => (
-        <div key={index} className="rounded-xl border bg-white p-4 shadow-sm dark:bg-gray-950">
-          <div className="h-4 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
-          <div className="mt-3 h-6 w-32 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
-        </div>
-      ))}
-    </div>
-  )
 }
 
 export default async function DashboardPage({ params }: DashboardPageProps) {
@@ -56,8 +34,11 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
         </p>
       </header>
 
-      <Suspense fallback={<MetricsSkeleton />}>
-        <DashboardMetrics organizationId={organizationId} />
+      <DashboardMetricsClient tenantId={params.tenantId} />
+      <DashboardChartsClient tenantId={params.tenantId} />
+
+      <Suspense fallback={<div className="h-64 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" />}>
+        <DashboardSummary organizationId={organizationId} />
       </Suspense>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -93,11 +74,11 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   )
 }
 
-interface DashboardMetricsProps {
+interface DashboardSummaryProps {
   organizationId: string | null
 }
 
-async function DashboardMetrics({ organizationId }: DashboardMetricsProps) {
+async function DashboardSummary({ organizationId }: DashboardSummaryProps) {
   const t = await getTranslations('manage.dashboard')
 
   if (!organizationId) {
@@ -114,167 +95,25 @@ async function DashboardMetrics({ organizationId }: DashboardMetricsProps) {
     )
   }
 
-  const { stats, summary, error } = await loadManageDashboardData(organizationId)
+  const { summary, error } = await loadManageDashboardData(organizationId)
 
-  const metrics: MetricConfig[] = [
-    {
-      key: 'monthlyResponses',
-      label: t('metrics.monthlyResponses.label'),
-      helper: t('metrics.monthlyResponses.helper'),
-      value: stats.monthlyResponses,
-      change: stats.monthlyChange,
-    },
-    {
-      key: 'weeklyResponses',
-      label: t('metrics.weeklyResponses.label'),
-      helper: t('metrics.weeklyResponses.helper'),
-      value: stats.weeklyResponses,
-    },
-    {
-      key: 'todayResponses',
-      label: t('metrics.todayResponses.label'),
-      helper: t('metrics.todayResponses.helper'),
-      value: stats.todayResponses,
-      change: stats.todayChange,
-    },
-    {
-      key: 'activeAgents',
-      label: t('metrics.activeAgents.label'),
-      helper: t('metrics.activeAgents.helper'),
-      value: stats.totalAgents,
-    },
-  ]
-
-  // Mock data for monthly chart (June 2025 - November 2025)
-  const monthlyData = [
-    { month: 'июнь 2025', responses: 8000 },
-    { month: 'июль 2025', responses: 10000 },
-    { month: 'август 2025', responses: 12000 },
-    { month: 'сентябрь 2025', responses: 14000 },
-    { month: 'октябрь 2025', responses: 18000 },
-    { month: 'ноябрь 2025', responses: 3000 },
-  ]
-
-  // Mock data for daily chart (Oct 29 - Nov 06)
-  const dailyData = [
-    { day: 'срд, окт 29', responses: 300 },
-    { day: 'чтв, окт 30', responses: 350 },
-    { day: 'птн, окт 31', responses: 400 },
-    { day: 'сбт, ноя 01', responses: 550 },
-    { day: 'вск, ноя 02', responses: 500 },
-    { day: 'пнд, ноя 03', responses: 300 },
-    { day: 'втр, ноя 04', responses: 200 },
-    { day: 'срд, ноя 05', responses: 150 },
-    { day: 'чтв, ноя 06', responses: 100 },
-  ]
-
-  return (
+  return summary ? (
     <>
-      <StatsGrid metrics={metrics} />
-
-      {/* Charts Section */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <MonthlyResponsesChart data={monthlyData} />
-        <DailyResponsesChart data={dailyData} />
-      </div>
-
-      {summary ? (
-        <>
-          <WorkspaceSummaryKnowledgeInsights summary={summary} />
-          <WorkspaceSummaryIntegrationInsights summary={summary} />
-          {summary.integrations.webhookHistory && summary.integrations.webhookHistory.length > 0 && (
-            <WebhookActivityCard history={summary.integrations.webhookHistory} />
-          )}
-        </>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('states.summaryUnavailable.title')}</CardTitle>
-            <CardDescription>{t('states.summaryUnavailable.description')}</CardDescription>
-          </CardHeader>
-          <CardContent className="text-sm text-gray-600 dark:text-gray-300">
-            {error ? t('states.summaryUnavailable.helper') : t('states.summaryUnavailable.empty')}
-          </CardContent>
-        </Card>
+      <WorkspaceSummaryKnowledgeInsights summary={summary} />
+      <WorkspaceSummaryIntegrationInsights summary={summary} />
+      {summary.integrations.webhookHistory && summary.integrations.webhookHistory.length > 0 && (
+        <WebhookActivityCard history={summary.integrations.webhookHistory} />
       )}
     </>
-  )
-}
-
-function StatsGrid({ metrics }: { metrics: MetricConfig[] }) {
-  return (
-    <div className="grid gap-4 lg:grid-cols-4">
-      {metrics.map((metric) => (
-        <StatCard
-          key={metric.key}
-          label={metric.label}
-          value={metric.value}
-          change={metric.change}
-          helper={metric.helper}
-        />
-      ))}
-    </div>
-  )
-}
-
-function StatCard({
-  label,
-  value,
-  change,
-  helper,
-}: {
-  label: string
-  value: number | null | undefined
-  change?: number | null
-  helper?: string
-}) {
-  return (
+  ) : (
     <Card>
-      <CardHeader className="pb-2">
-        <CardDescription>{label}</CardDescription>
-        <CardTitle className="text-3xl">{formatNumber(value)}</CardTitle>
+      <CardHeader>
+        <CardTitle>{t('states.summaryUnavailable.title')}</CardTitle>
+        <CardDescription>{t('states.summaryUnavailable.description')}</CardDescription>
       </CardHeader>
-      {(helper || typeof change === 'number') && (
-        <CardContent className="pt-0 text-xs text-gray-500">
-          {typeof change === 'number' ? (
-            <span className={`font-semibold ${change >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
-              {formatChange(change)}
-            </span>
-          ) : null}
-          {helper ? <span className={typeof change === 'number' ? 'ml-2' : ''}>{helper}</span> : null}
-        </CardContent>
-      )}
+      <CardContent className="text-sm text-gray-600 dark:text-gray-300">
+        {error ? t('states.summaryUnavailable.helper') : t('states.summaryUnavailable.empty')}
+      </CardContent>
     </Card>
   )
-}
-
-const formatNumber = (value?: number | null) => {
-  if (typeof value !== 'number' || Number.isNaN(value)) {
-    return '0'
-  }
-
-  return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(value)
-}
-
-const formatChange = (value: number) => {
-  if (!Number.isFinite(value)) {
-    return '0%'
-  }
-
-  const absValue = Math.abs(value)
-  const formatter = new Intl.NumberFormat('ru-RU', {
-    maximumFractionDigits: absValue < 10 ? 1 : 0,
-  })
-
-  const formatted = formatter.format(absValue)
-
-  if (value > 0) {
-    return `+${formatted}%`
-  }
-
-  if (value < 0) {
-    return `-${formatted}%`
-  }
-
-  return '0%'
 }
