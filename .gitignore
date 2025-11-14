@@ -139,3 +139,6 @@ sentry-page-content.html
 .playwright-mcp/
 *.png
 !public/**/*.png
+
+# MCP Configuration (contains secret tokens)
+.claude/mcp_config.json
