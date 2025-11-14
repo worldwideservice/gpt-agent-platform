@@ -2,6 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useForm, useFieldArray } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { RefreshCw, ChevronDown, ChevronRight, Plus } from 'lucide-react'
 import {
   Button,
@@ -14,6 +17,12 @@ import {
   Switch,
   MultiSelect,
   useToast,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from '@/components/ui'
 import type { MultiSelectOption } from '@/components/ui'
 
@@ -48,6 +57,24 @@ const CONTACT_FIELDS: MultiSelectOption[] = [
   { value: 'cf_491700', label: 'Страна' },
 ]
 
+// Zod schema for field update rules
+const fieldUpdateRuleSchema = z.object({
+  id: z.string(),
+  fieldValue: z.string().min(1, 'Поле обязательно'),
+  overwriteExisting: z.boolean(),
+  updateCondition: z.string().min(1, 'Условие обновления обязательно').max(500, 'Условие не должно превышать 500 символов'),
+})
+
+// Zod schema for the entire form
+const leadsContactsSchema = z.object({
+  selectedLeadFields: z.array(z.string()).min(1, 'Выберите хотя бы одно поле сделки'),
+  selectedContactFields: z.array(z.string()).min(1, 'Выберите хотя бы одно поле контакта'),
+  leadUpdateRules: z.array(fieldUpdateRuleSchema).min(1, 'Должно быть хотя бы одно правило'),
+  contactUpdateRules: z.array(fieldUpdateRuleSchema).min(1, 'Должно быть хотя бы одно правило'),
+})
+
+type LeadsContactsFormData = z.infer<typeof leadsContactsSchema>
+
 interface FieldUpdateRule {
   id: string
   fieldValue: string
@@ -58,34 +85,48 @@ interface FieldUpdateRule {
 export function AgentLeadsContactsForm({ agent, tenantId }: AgentLeadsContactsFormProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
 
-  // Data access settings state
+  // UI state (not part of form)
   const [leadDataExpanded, setLeadDataExpanded] = useState(true)
   const [contactDataExpanded, setContactDataExpanded] = useState(true)
-  const [selectedLeadFields, setSelectedLeadFields] = useState<string[]>(['name', 'responsible_user_id'])
-  const [selectedContactFields, setSelectedContactFields] = useState<string[]>(['name', 'tags'])
-
-  // Data input settings state
   const [leadInputExpanded, setLeadInputExpanded] = useState(false)
   const [contactInputExpanded, setContactInputExpanded] = useState(false)
-  const [leadUpdateRules, setLeadUpdateRules] = useState<FieldUpdateRule[]>([
-    {
-      id: '1',
-      fieldValue: 'cf_564832',
-      overwriteExisting: false,
-      updateCondition: 'Когда клиент говорит о услуге которая его интересует',
+
+  // React Hook Form setup
+  const form = useForm<LeadsContactsFormData>({
+    resolver: zodResolver(leadsContactsSchema),
+    defaultValues: {
+      selectedLeadFields: ['name', 'responsible_user_id'],
+      selectedContactFields: ['name', 'tags'],
+      leadUpdateRules: [
+        {
+          id: '1',
+          fieldValue: 'cf_564832',
+          overwriteExisting: false,
+          updateCondition: 'Когда клиент говорит о услуге которая его интересует',
+        },
+      ],
+      contactUpdateRules: [
+        {
+          id: '1',
+          fieldValue: 'cf_438092',
+          overwriteExisting: true,
+          updateCondition: 'Когда клиент указывает свой email',
+        },
+      ],
     },
-  ])
-  const [contactUpdateRules, setContactUpdateRules] = useState<FieldUpdateRule[]>([
-    {
-      id: '1',
-      fieldValue: 'cf_438092',
-      overwriteExisting: true,
-      updateCondition: 'Когда клиент указывает свой email',
-    },
-  ])
+  })
+
+  const { fields: leadRuleFields, append: appendLeadRule, remove: removeLeadRule } = useFieldArray({
+    control: form.control,
+    name: 'leadUpdateRules',
+  })
+
+  const { fields: contactRuleFields, append: appendContactRule, remove: removeContactRule } = useFieldArray({
+    control: form.control,
+    name: 'contactUpdateRules',
+  })
 
   const handleSyncCRM = async () => {
     setIsSyncing(true)
@@ -115,20 +156,12 @@ export function AgentLeadsContactsForm({ agent, tenantId }: AgentLeadsContactsFo
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-
+  const onSubmit = async (data: LeadsContactsFormData) => {
     try {
       const response = await fetch(`/api/agents/${agent.id}/leads-contacts`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          selectedLeadFields,
-          selectedContactFields,
-          leadUpdateRules,
-          contactUpdateRules,
-        }),
+        body: JSON.stringify(data),
       })
 
       if (!response.ok) {
@@ -147,8 +180,6 @@ export function AgentLeadsContactsForm({ agent, tenantId }: AgentLeadsContactsFo
         description: 'Не удалось обновить настройки',
         variant: 'destructive',
       })
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -156,56 +187,9 @@ export function AgentLeadsContactsForm({ agent, tenantId }: AgentLeadsContactsFo
     router.push(`/manage/${tenantId}/ai-agents`)
   }
 
-  const addLeadUpdateRule = () => {
-    setLeadUpdateRules([
-      ...leadUpdateRules,
-      {
-        id: Date.now().toString(),
-        fieldValue: '',
-        overwriteExisting: false,
-        updateCondition: '',
-      },
-    ])
-  }
-
-  const addContactUpdateRule = () => {
-    setContactUpdateRules([
-      ...contactUpdateRules,
-      {
-        id: Date.now().toString(),
-        fieldValue: '',
-        overwriteExisting: false,
-        updateCondition: '',
-      },
-    ])
-  }
-
-  const removeLeadUpdateRule = (id: string) => {
-    setLeadUpdateRules(leadUpdateRules.filter((rule) => rule.id !== id))
-  }
-
-  const removeContactUpdateRule = (id: string) => {
-    setContactUpdateRules(contactUpdateRules.filter((rule) => rule.id !== id))
-  }
-
-  const updateLeadRule = (id: string, updates: Partial<FieldUpdateRule>) => {
-    setLeadUpdateRules(
-      leadUpdateRules.map((rule) =>
-        rule.id === id ? { ...rule, ...updates } : rule
-      )
-    )
-  }
-
-  const updateContactRule = (id: string, updates: Partial<FieldUpdateRule>) => {
-    setContactUpdateRules(
-      contactUpdateRules.map((rule) =>
-        rule.id === id ? { ...rule, ...updates } : rule
-      )
-    )
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       {/* Настройки доступа к данным */}
       <Card>
         <CardHeader>
@@ -249,20 +233,29 @@ export function AgentLeadsContactsForm({ agent, tenantId }: AgentLeadsContactsFo
                 <p className="text-sm text-gray-500">
                   Выберите поля сделки, которые агент может читать
                 </p>
-                <div className="space-y-2">
-                  <Label>
-                    Выберите поля сделки <span className="text-rose-500">*</span>
-                  </Label>
-                  <MultiSelect
-                    options={LEAD_FIELDS}
-                    selected={selectedLeadFields}
-                    onChange={setSelectedLeadFields}
-                    placeholder="Выберите поля, к которым агент сможет получить доступ..."
-                  />
-                  <p className="text-xs text-gray-500">
-                    Выбирайте только необходимые поля. Дополнительные поля добавляют лишний контекст и могут снизить точность ответов
-                  </p>
-                </div>
+                <FormField
+                  control={form.control}
+                  name="selectedLeadFields"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Выберите поля сделки <span className="text-rose-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <MultiSelect
+                          options={LEAD_FIELDS}
+                          selected={field.value}
+                          onChange={field.onChange}
+                          placeholder="Выберите поля, к которым агент сможет получить доступ..."
+                        />
+                      </FormControl>
+                      <p className="text-xs text-gray-500">
+                        Выбирайте только необходимые поля. Дополнительные поля добавляют лишний контекст и могут снизить точность ответов
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             )}
           </div>
@@ -287,20 +280,29 @@ export function AgentLeadsContactsForm({ agent, tenantId }: AgentLeadsContactsFo
                 <p className="text-sm text-gray-500">
                   Выберите, какие поля контакта агент сможет читать
                 </p>
-                <div className="space-y-2">
-                  <Label>
-                    Выберите поля контакта <span className="text-rose-500">*</span>
-                  </Label>
-                  <MultiSelect
-                    options={CONTACT_FIELDS}
-                    selected={selectedContactFields}
-                    onChange={setSelectedContactFields}
-                    placeholder="Выберите поля, к которым агент сможет получить доступ..."
-                  />
-                  <p className="text-xs text-gray-500">
-                    Выбирайте только необходимые поля. Большее количество полей добавляет дополнительный контекст и может снизить точность ответов.
-                  </p>
-                </div>
+                <FormField
+                  control={form.control}
+                  name="selectedContactFields"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Выберите поля контакта <span className="text-rose-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <MultiSelect
+                          options={CONTACT_FIELDS}
+                          selected={field.value}
+                          onChange={field.onChange}
+                          placeholder="Выберите поля, к которым агент сможет получить доступ..."
+                        />
+                      </FormControl>
+                      <p className="text-xs text-gray-500">
+                        Выбирайте только необходимые поля. Большее количество полей добавляет дополнительный контекст и может снизить точность ответов.
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             )}
           </div>
@@ -340,62 +342,80 @@ export function AgentLeadsContactsForm({ agent, tenantId }: AgentLeadsContactsFo
 
             {leadInputExpanded && (
               <div className="space-y-4 pl-6">
-                {leadUpdateRules.map((rule, index) => (
-                  <div key={rule.id} className="space-y-3 rounded-lg border p-4">
+                {leadRuleFields.map((field, index) => (
+                  <div key={field.id} className="space-y-3 rounded-lg border p-4">
                     <div className="flex items-center justify-between">
                       <h4 className="font-medium text-sm">Правило {index + 1}</h4>
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => removeLeadUpdateRule(rule.id)}
-                        disabled={leadUpdateRules.length === 1}
+                        onClick={() => removeLeadRule(index)}
+                        disabled={leadRuleFields.length === 1}
                       >
                         Удалить
                       </Button>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>
-                        Поле <span className="text-rose-500">*</span>
-                      </Label>
-                      <MultiSelect
-                        options={LEAD_FIELDS}
-                        selected={rule.fieldValue ? [rule.fieldValue] : []}
-                        onChange={(selected) =>
-                          updateLeadRule(rule.id, { fieldValue: selected[0] || '' })
-                        }
-                        placeholder="Выберите поле для обновления"
-                      />
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name={`leadUpdateRules.${index}.fieldValue`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Поле <span className="text-rose-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <MultiSelect
+                              options={LEAD_FIELDS}
+                              selected={field.value ? [field.value] : []}
+                              onChange={(selected) => field.onChange(selected[0] || '')}
+                              placeholder="Выберите поле для обновления"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor={`lead-overwrite-${rule.id}`}>
-                        Перезаписать существующее значение
-                      </Label>
-                      <Switch
-                        id={`lead-overwrite-${rule.id}`}
-                        checked={rule.overwriteExisting}
-                        onCheckedChange={(checked) =>
-                          updateLeadRule(rule.id, { overwriteExisting: checked })
-                        }
-                      />
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name={`leadUpdateRules.${index}.overwriteExisting`}
+                      render={({ field }) => (
+                        <FormItem className="flex items-center justify-between">
+                          <FormLabel htmlFor={`lead-overwrite-${field.name}`}>
+                            Перезаписать существующее значение
+                          </FormLabel>
+                          <FormControl>
+                            <Switch
+                              id={`lead-overwrite-${field.name}`}
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
 
-                    <div className="space-y-2">
-                      <Label htmlFor={`lead-condition-${rule.id}`}>
-                        Условие обновления <span className="text-rose-500">*</span>
-                      </Label>
-                      <Textarea
-                        id={`lead-condition-${rule.id}`}
-                        value={rule.updateCondition}
-                        onChange={(e) =>
-                          updateLeadRule(rule.id, { updateCondition: e.target.value })
-                        }
-                        placeholder="Например: когда клиент упоминает цену"
-                        rows={3}
-                      />
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name={`leadUpdateRules.${index}.updateCondition`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Условие обновления <span className="text-rose-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Textarea
+                              {...field}
+                              placeholder="Например: когда клиент упоминает цену"
+                              rows={3}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 ))}
 
@@ -403,7 +423,12 @@ export function AgentLeadsContactsForm({ agent, tenantId }: AgentLeadsContactsFo
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={addLeadUpdateRule}
+                  onClick={() => appendLeadRule({
+                    id: Date.now().toString(),
+                    fieldValue: '',
+                    overwriteExisting: false,
+                    updateCondition: '',
+                  })}
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Добавить поле
@@ -434,62 +459,80 @@ export function AgentLeadsContactsForm({ agent, tenantId }: AgentLeadsContactsFo
 
             {contactInputExpanded && (
               <div className="space-y-4 pl-6">
-                {contactUpdateRules.map((rule, index) => (
-                  <div key={rule.id} className="space-y-3 rounded-lg border p-4">
+                {contactRuleFields.map((field, index) => (
+                  <div key={field.id} className="space-y-3 rounded-lg border p-4">
                     <div className="flex items-center justify-between">
                       <h4 className="font-medium text-sm">Правило {index + 1}</h4>
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => removeContactUpdateRule(rule.id)}
-                        disabled={contactUpdateRules.length === 1}
+                        onClick={() => removeContactRule(index)}
+                        disabled={contactRuleFields.length === 1}
                       >
                         Удалить
                       </Button>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>
-                        Поле <span className="text-rose-500">*</span>
-                      </Label>
-                      <MultiSelect
-                        options={CONTACT_FIELDS}
-                        selected={rule.fieldValue ? [rule.fieldValue] : []}
-                        onChange={(selected) =>
-                          updateContactRule(rule.id, { fieldValue: selected[0] || '' })
-                        }
-                        placeholder="Выберите поле для обновления"
-                      />
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name={`contactUpdateRules.${index}.fieldValue`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Поле <span className="text-rose-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <MultiSelect
+                              options={CONTACT_FIELDS}
+                              selected={field.value ? [field.value] : []}
+                              onChange={(selected) => field.onChange(selected[0] || '')}
+                              placeholder="Выберите поле для обновления"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor={`contact-overwrite-${rule.id}`}>
-                        Перезаписать существующее значение
-                      </Label>
-                      <Switch
-                        id={`contact-overwrite-${rule.id}`}
-                        checked={rule.overwriteExisting}
-                        onCheckedChange={(checked) =>
-                          updateContactRule(rule.id, { overwriteExisting: checked })
-                        }
-                      />
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name={`contactUpdateRules.${index}.overwriteExisting`}
+                      render={({ field }) => (
+                        <FormItem className="flex items-center justify-between">
+                          <FormLabel htmlFor={`contact-overwrite-${field.name}`}>
+                            Перезаписать существующее значение
+                          </FormLabel>
+                          <FormControl>
+                            <Switch
+                              id={`contact-overwrite-${field.name}`}
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
 
-                    <div className="space-y-2">
-                      <Label htmlFor={`contact-condition-${rule.id}`}>
-                        Условие обновления <span className="text-rose-500">*</span>
-                      </Label>
-                      <Textarea
-                        id={`contact-condition-${rule.id}`}
-                        value={rule.updateCondition}
-                        onChange={(e) =>
-                          updateContactRule(rule.id, { updateCondition: e.target.value })
-                        }
-                        placeholder="Например: когда клиент упоминает цену"
-                        rows={3}
-                      />
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name={`contactUpdateRules.${index}.updateCondition`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Условие обновления <span className="text-rose-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Textarea
+                              {...field}
+                              placeholder="Например: когда клиент упоминает цену"
+                              rows={3}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 ))}
 
@@ -497,7 +540,12 @@ export function AgentLeadsContactsForm({ agent, tenantId }: AgentLeadsContactsFo
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={addContactUpdateRule}
+                  onClick={() => appendContactRule({
+                    id: Date.now().toString(),
+                    fieldValue: '',
+                    overwriteExisting: false,
+                    updateCondition: '',
+                  })}
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Добавить поле
@@ -510,18 +558,19 @@ export function AgentLeadsContactsForm({ agent, tenantId }: AgentLeadsContactsFo
 
       {/* Кнопки действий */}
       <div className="flex items-center gap-3">
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Сохранение...' : 'Сохранить'}
+        <Button type="submit" disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting ? 'Сохранение...' : 'Сохранить'}
         </Button>
         <Button
           type="button"
           variant="outline"
           onClick={handleCancel}
-          disabled={isSubmitting}
+          disabled={form.formState.isSubmitting}
         >
           Отмена
         </Button>
       </div>
-    </form>
+      </form>
+    </Form>
   )
 }
