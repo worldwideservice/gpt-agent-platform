@@ -8,7 +8,7 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from '@/components/ui/shadcn/card'
+} from '@/components/ui'
 
 describe('Card Component', () => {
   it('should render card element', () => {

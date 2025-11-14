@@ -10,7 +10,7 @@ import {
   TableRow,
   TableCell,
   TableCaption,
-} from '@/components/ui/shadcn/table'
+} from '@/components/ui'
 
 describe('Table Component', () => {
   it('should render table element', () => {
