@@ -4,15 +4,21 @@ import { useState, useRef, useEffect } from 'react'
 import { Search } from 'lucide-react'
 import { Input } from '@/components/ui'
 import { cn } from '@/lib/utils'
+import { useTenant } from '@/components/providers/TenantProvider'
+import { logger } from '@/lib/utils/logger'
 
 interface SearchResult {
   id: string
   title: string
-  type: 'agent' | 'article' | 'setting'
+  description?: string
+  type: 'agent' | 'knowledge' | 'page'
+  category: string
   url: string
+  icon?: string
 }
 
 export function GlobalSearch() {
+  const { tenantId } = useTenant()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [isOpen, setIsOpen] = useState(false)
@@ -86,15 +92,31 @@ export function GlobalSearch() {
         setIsLoading(true)
         setIsOpen(true)
 
-        // TODO: Implement actual search API call
-        // For now, returning empty results
         try {
-          // const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`)
-          // const data = await response.json()
-          // setResults(data.results)
-          setResults([])
+          const response = await fetch(
+            `/api/search?q=${encodeURIComponent(query)}&orgId=${tenantId}&limit=10`
+          )
+
+          if (!response.ok) {
+            throw new Error('Search failed')
+          }
+
+          const data = await response.json()
+
+          // Map API results to SearchResult format
+          const mappedResults: SearchResult[] = data.results.map((r: any) => ({
+            id: r.id,
+            title: r.title,
+            description: r.description,
+            type: r.category,
+            category: r.category,
+            url: r.url,
+            icon: r.icon,
+          }))
+
+          setResults(mappedResults)
         } catch (error) {
-          console.error('Search error:', error)
+          logger.error('Search error', error as Error)
           setResults([])
         } finally {
           setIsLoading(false)

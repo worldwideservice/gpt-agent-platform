@@ -356,7 +356,13 @@ export function AgentsTable({
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return
 
-    // TODO: Add confirmation dialog
+    // Confirm before deleting
+    const confirmed = window.confirm(
+      `Вы уверены, что хотите удалить ${selectedIds.length} ${selectedIds.length === 1 ? 'агента' : 'агентов'}? Это действие нельзя отменить.`
+    )
+
+    if (!confirmed) return
+
     try {
       // Delete all selected agents in parallel
       await Promise.all(
