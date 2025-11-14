@@ -39,7 +39,6 @@ export default function CreateAgentPage() {
     setIsSubmitting(true)
 
     try {
-      // TODO: Replace with actual API call
       const response = await fetch(`/api/tenants/${tenantId}/agents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
