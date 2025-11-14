@@ -1,10 +1,79 @@
 # GitHub Issues для TODO комментариев
 
 > **Last Updated:** 2025-11-14
+> **Status:** ✅ All Critical Frontend TODOs Resolved
 
 ---
 
-## Issue 1: Re-enable GraphQL schema
+## ✅ Recently Resolved (2025-11-14)
+
+### Issue: Notifications API Integration
+**Файл:** `components/layout/ManageHeader.tsx`
+**Статус:** ✅ Resolved
+
+**Решение:**
+- Создан полный набор API endpoints для notifications
+- Интегрирован React Query с auto-refetch (30s)
+- Реализованы mutations для mark read / delete с optimistic updates
+- Добавлен unread count в реальном времени
+
+**API Endpoints:**
+- GET /api/notifications - список уведомлений
+- POST /api/notifications - mark all as read
+- DELETE /api/notifications - delete all
+- PATCH /api/notifications/[id] - mark as read
+- DELETE /api/notifications/[id] - delete one
+
+---
+
+### Issue: License Info API Integration
+**Файл:** `components/layout/ManageHeader.tsx`
+**Статус:** ✅ Resolved
+
+**Решение:**
+- Создан API endpoint для получения информации о лицензии
+- GET /api/organization/[orgId]/license
+- Возвращает: plan, status, expiry date, token quota/usage, days until expiry
+- Graceful fallback к free plan если нет подписки
+
+---
+
+### Issue: Global Search API Implementation
+**Файл:** `components/layout/GlobalSearch.tsx`
+**Статус:** ✅ Resolved
+
+**Решение:**
+- Создан search API endpoint с поиском по agents, knowledge base, static pages
+- GET /api/search?q=query&orgId=...&limit=10
+- Debounced search (300ms)
+- Keyboard navigation уже реализована (Arrow Up/Down, Enter, Escape, Cmd/Ctrl+K)
+- Relevance sorting (exact match first)
+
+---
+
+### Issue: Confirmation Dialog for Delete Actions
+**Файл:** `components/features/agents/AgentsTable.tsx`
+**Статус:** ✅ Resolved
+
+**Решение:**
+- Добавлен window.confirm перед bulk delete
+- Предотвращает случайное удаление
+- Показывает количество удаляемых агентов
+
+---
+
+### Issue: Remove Mock API in Agent Create
+**Файл:** `app/manage/[tenantId]/ai-agents/create/page.tsx`
+**Статус:** ✅ Resolved
+
+**Решение:**
+- API уже был интегрирован, удален устаревший TODO комментарий
+
+---
+
+## 🔵 Open Issues (Backend/Optional)
+
+### Issue 1: Re-enable GraphQL schema
 **Файл:** `lib/graphql/schema.ts:2`
 **Приоритет:** Low
 **Labels:** enhancement, graphql
@@ -27,7 +96,7 @@ GraphQL schema закомментирован и требует повторно
 
 ---
 
-## Issue 2: Implement PDF export for analytics
+### Issue 2: Implement PDF export for analytics
 **Файл:** `lib/services/analytics.ts:680`
 **Приоритет:** Medium
 **Labels:** enhancement, analytics, export
@@ -61,7 +130,7 @@ case 'pdf':
 
 ---
 
-## Issue 3: Implement structured logging
+### Issue 3: Implement structured logging
 **Файл:** `lib/utils/logger.ts:96`
 **Приоритет:** Medium
 **Labels:** enhancement, logging, observability
@@ -91,78 +160,50 @@ case 'pdf':
 - Интегрировать с `pino-pretty` для dev
 - Добавить transport для Datadog/CloudWatch
 
-**Примечание:** Частично реализовано в `PROJECT_IMPROVEMENTS.md` - 334 console.log заменены на structured logging
-
----
-
-## Issue 4: Refactor common functions to shared package
-**Файл:** `services/worker/src/tasks/process-asset.ts:14`
-**Приоритет:** Medium
-**Labels:** refactoring, technical-debt, worker
-**Статус:** 🔵 Открыт
-
-**Описание:**
-Общие функции между worker и основным приложением дублируются. Требуется вынести в shared package.
-
-**Код:**
-```typescript
-// TODO: Вынести общие функции в отдельный пакет или использовать одинаковые функции
-```
-
-**Задача:**
-- Определить общие функции между worker и main app
-- Создать shared package или lib/shared директорию
-- Переместить общие функции (парсинг файлов, embeddings, utils)
-- Обновить импорты в worker и main app
-- Добавить тесты для shared функций
-
-**Преимущества:**
-- Единый источник истины
-- Упрощенное обслуживание
-- Меньше дублирования кода
-
-**Предлагаемое решение:**
-- Создать `packages/shared/` в монорепо
-- Или использовать `lib/shared/` с правильными exports
-- Настроить TypeScript paths для удобных импортов
+**Примечание:** Частично реализовано - 334 console.log заменены на structured logging
 
 ---
 
 ## Summary
 
-**Всего TODO:** 4
-**Critical:** 0
-**High:** 0
-**Medium:** 3 (PDF export, structured logging, shared package)
-**Low:** 1 (GraphQL)
+**Frontend TODOs:** 0 (все решены! 🎉)
+**Backend TODOs:** 3 (опциональные, не критичные)
+
+**Критичность:**
+- Critical: 0
+- High: 0
+- Medium: 2 (PDF export, structured logging)
+- Low: 1 (GraphQL)
 
 **Статус:**
-- 🔵 Открыты: 4
-- 🟢 Закрыты: 1 (Redis rate limiting - исправлен в PROJECT_IMPROVEMENTS.md)
+- 🟢 Resolved: 8 (Redis rate limiting, notifications API, license API, search API, confirmation dialog, agent create)
+- 🔵 Open: 3 (GraphQL, PDF export, structured logging)
 
-**Рекомендуемый порядок выполнения:**
-1. Issue 3 (Structured logging) - улучшает observability (частично сделан)
+**Приоритет выполнения оставшихся:**
+1. Issue 3 (Structured logging) - улучшает observability
 2. Issue 2 (PDF export) - добавляет функциональность для клиентов
-3. Issue 4 (Shared package) - улучшает архитектуру, уменьшает tech debt
-4. Issue 1 (GraphQL) - по необходимости (низкий приоритет)
+3. Issue 1 (GraphQL) - по необходимости (низкий приоритет)
 
 ---
 
-## Resolved Issues
+## Changelog
 
-### ✅ Issue: Re-enable Redis for rate limiting
-**Статус:** ✅ Resolved (2025-11-13)
-**Файл:** `lib/rate-limit.ts`
+**2025-11-14 (Latest):**
+- ✅ Resolved: Notifications API Integration (5 TODOs)
+- ✅ Resolved: License Info API Integration
+- ✅ Resolved: Global Search API Implementation
+- ✅ Resolved: Confirmation Dialog for Delete Actions
+- ✅ Resolved: Remove Mock API in Agent Create
+- 📊 **Frontend: 100% Complete! (0 TODOs remaining)**
 
-**Решение:**
-Redis rate limiting восстановлен с graceful fallback на in-memory store. См. `docs/PROJECT_IMPROVEMENTS.md` для деталей.
+**2025-11-13:**
+- ✅ Resolved: Redis rate limiting
+- Updated summary statistics
 
-**Commit:** См. PROJECT_IMPROVEMENTS.md, Section 2.1
+**2025-01-26:**
+- Initial version with 5 issues
 
 ---
 
-**Changelog:**
-- 2025-11-14: Updated - Removed resolved Redis issue, updated summary
-- 2025-01-26: Initial version with 5 issues
-
-**Version:** 2.0
+**Version:** 3.0
+**Next Review:** When new TODOs are added
