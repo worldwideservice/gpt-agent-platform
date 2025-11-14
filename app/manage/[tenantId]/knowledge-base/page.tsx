@@ -9,6 +9,7 @@ import { WorkspaceSummaryIntegrationInsights } from '@/components/features/manag
 import { WorkspaceSummaryKnowledgeInsights } from '@/components/features/manage/WorkspaceSummaryKnowledgeInsights'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
 import { loadManageKnowledgeData } from '@/lib/repositories/manage-data'
+import { PageBreadcrumbs } from '@/components/layout/PageBreadcrumbs'
 import type { AgentAsset } from '@/lib/repositories/agent-assets'
 import type { KnowledgeBaseArticle, KnowledgeBaseCategory, KnowledgeBaseStatsSummary } from '@/types'
 import type { WorkspaceSummary } from '@/lib/repositories/manage-summary'
@@ -49,6 +50,8 @@ export default async function KnowledgeBasePage({ params }: KnowledgeBasePagePro
 
   return (
     <div className="space-y-6">
+      <PageBreadcrumbs />
+
       <header>
         <p className="text-sm uppercase text-primary">{t('header.eyebrow')}</p>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">{t('header.title')}</h1>

@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label, Switch } from '@/components/ui'
+import { PageBreadcrumbs } from '@/components/layout/PageBreadcrumbs'
 
 interface SettingsPageProps {
   params: {
@@ -9,6 +10,8 @@ interface SettingsPageProps {
 export default function SettingsPage({ params }: SettingsPageProps) {
   return (
     <div className="space-y-6">
+      <PageBreadcrumbs />
+
       <header>
         <p className="text-sm uppercase text-primary">Настройки</p>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Workspace настройки</h1>
