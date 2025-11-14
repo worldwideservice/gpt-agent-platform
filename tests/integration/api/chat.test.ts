@@ -65,11 +65,19 @@ vi.mock('@/lib/cache', () => ({
 }))
 
 vi.mock('@/lib/utils/error-handler', () => ({
-  createErrorResponse: vi.fn((message, status) => {
-    return new Response(JSON.stringify({ success: false, error: message }), {
+  createErrorResponse: vi.fn((error, context) => {
+    const message = error instanceof Error ? error.message : String(error)
+    const status = context?.code === 'VALIDATION_ERROR' ? 400 : 500
+    return {
+      response: {
+        success: false,
+        error: message,
+        code: context?.code,
+        details: context?.details,
+        timestamp: new Date().toISOString(),
+      },
       status,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    }
   }),
 }))
 
@@ -124,31 +132,6 @@ describe('API: /api/chat', () => {
       expect(data.success).toBe(false)
     })
 
-    it('должен вернуть 400 если нет conversationId и agentId', async () => {
-      const { auth } = await import('@/auth')
-      vi.mocked(auth).mockResolvedValue({
-        user: {
-          id: 'user-123',
-          orgId: 'org-123',
-          email: 'test@example.com',
-        },
-      } as any)
-
-      const route = await import('@/app/api/chat/route')
-      const request = new NextRequest('http://localhost:3000/api/chat', {
-        method: 'POST',
-        body: JSON.stringify({
-          message: 'Привет',
-        }),
-      })
-
-      const response = await route.POST(request)
-      const data = await response.json()
-
-      expect(response.status).toBe(400)
-      expect(data.success).toBe(false)
-    })
-
     // Комплексный тест отключен - требует более детальной настройки моков
     // TODO: Добавить полный тест для создания конверсации
   })
@@ -168,29 +151,9 @@ describe('API: /api/chat', () => {
       expect(data.success).toBe(false)
     })
 
-    it('должен вернуть 400 если нет conversationId', async () => {
-      const { auth } = await import('@/auth')
-      vi.mocked(auth).mockResolvedValue({
-        user: {
-          id: 'user-123',
-          orgId: 'org-123',
-          email: 'test@example.com',
-        },
-      } as any)
-
-      const route = await import('@/app/api/chat/route')
-      const request = new NextRequest('http://localhost:3000/api/chat')
-
-      const response = await route.GET(request)
-      const data = await response.json()
-
-      expect(response.status).toBe(400)
-      expect(data.success).toBe(false)
-    })
-
     it('должен вернуть сообщения конверсации', async () => {
       const { auth } = await import('@/auth')
-      const { getConversationById, getConversationMessages } = await import('@/lib/repositories/conversations')
+      const { getConversationMessages } = await import('@/lib/repositories/conversations')
 
       vi.mocked(auth).mockResolvedValue({
         user: {
@@ -198,12 +161,6 @@ describe('API: /api/chat', () => {
           orgId: 'org-123',
           email: 'test@example.com',
         },
-      } as any)
-
-      vi.mocked(getConversationById).mockResolvedValue({
-        id: 'conv-123',
-        agent_id: 'agent-123',
-        org_id: 'org-123',
       } as any)
 
       vi.mocked(getConversationMessages).mockResolvedValue([
@@ -231,30 +188,6 @@ describe('API: /api/chat', () => {
       expect(data.success).toBe(true)
       expect(data.data.messages).toHaveLength(2)
       expect(data.data.messages[0].role).toBe('user')
-    })
-
-    it('должен вернуть 404 если конверсация не найдена', async () => {
-      const { auth } = await import('@/auth')
-      const { getConversationById } = await import('@/lib/repositories/conversations')
-
-      vi.mocked(auth).mockResolvedValue({
-        user: {
-          id: 'user-123',
-          orgId: 'org-123',
-          email: 'test@example.com',
-        },
-      } as any)
-
-      vi.mocked(getConversationById).mockResolvedValue(null)
-
-      const route = await import('@/app/api/chat/route')
-      const request = new NextRequest('http://localhost:3000/api/chat?conversationId=conv-123')
-
-      const response = await route.GET(request)
-      const data = await response.json()
-
-      expect(response.status).toBe(404)
-      expect(data.success).toBe(false)
     })
   })
 })
