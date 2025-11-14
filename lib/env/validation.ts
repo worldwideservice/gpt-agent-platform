@@ -1,12 +1,12 @@
+import { logger } from '@/lib/utils/logger'
+
 /**
  * Environment Variables Validation
  * Validates and provides defaults for all required environment variables
- *
+ * 
  * Обновлено: 2025-01-26
  * Удалены неиспользуемые переменные, добавлены актуальные
  */
-
-import { logger } from '@/lib/utils'
 
 interface EnvSchema {
   [key: string]: {
@@ -325,13 +325,11 @@ export function logEnvironmentStatus(): void {
     const requiredVars = Object.keys(envSchema).filter(key => envSchema[key].required)
     const optionalVars = Object.keys(envSchema).filter(key => !envSchema[key].required)
 
-    logger.info('logEnvironmentStatus: Environment validation passed', {
-      requiredCount: requiredVars.length,
-      optionalConfigured: optionalVars.filter(key => validated[key]).length,
-      optionalTotal: optionalVars.length
-    })
+    logger.info('✅ Environment validation passed')
+    logger.info(`📋 Required variables: ${requiredVars.length}/${requiredVars.length} configured`)
+    logger.info(`📋 Optional variables: ${optionalVars.filter(key => validated[key]).length}/${optionalVars.length} configured`)
   } catch (error) {
-    logger.error('logEnvironmentStatus: Environment validation failed', error as Error)
+    logger.error('❌ Environment validation failed:', error instanceof Error ? error.message : String(error))
     throw error
   }
 }

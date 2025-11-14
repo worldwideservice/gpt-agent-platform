@@ -1,6 +1,6 @@
 import { Queue, type Job, type JobsOptions } from 'bullmq'
 import Redis from 'ioredis'
-import { logger } from '@/lib/utils'
+import { logger } from '@/lib/utils/logger'
 
 // Lazy initialization for Redis connection (to avoid connection during build)
 let connection: Redis | null = null
@@ -37,7 +37,7 @@ function getJobQueue(): Queue<JobPayload, unknown, string> {
         },
       })
     } catch (error) {
-      logger.warn('Redis not available, queue operations will fail', { error: error instanceof Error ? error.message : String(error) })
+      logger.warn('Redis not available, queue operations will fail:', error)
       throw error
     }
   }

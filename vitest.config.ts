@@ -60,10 +60,10 @@ export default defineConfig({
         '**/stories/**',
       ],
       thresholds: {
-        lines: 70,
-        statements: 70,
-        functions: 65,
-        branches: 50,
+        lines: 80, // Target: 80% (increased from 70%)
+        statements: 75, // Target: 75% (increased from 70%)
+        functions: 75, // Target: 75% (increased from 65%)
+        branches: 65, // Target: 65% (increased from 50%)
       },
     },
     reporters: isCI

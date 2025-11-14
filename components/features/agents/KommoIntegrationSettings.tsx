@@ -14,6 +14,7 @@ import {
   Switch,
   useToast,
 } from '@/components/ui'
+import { useCrmSync } from '@/lib/hooks'
 
 interface Agent {
   id: string
@@ -29,37 +30,9 @@ interface KommoIntegrationSettingsProps {
 export function KommoIntegrationSettings({ agent, tenantId }: KommoIntegrationSettingsProps) {
   const router = useRouter()
   const { toast } = useToast()
+  const { syncCrm, isSyncing } = useCrmSync({ agentId: agent.id })
   const [isActive, setIsActive] = useState(agent.kommoActive ?? true)
-  const [isSyncing, setIsSyncing] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const handleSyncCRM = async () => {
-    setIsSyncing(true)
-    try {
-      const response = await fetch(`/api/agents/${agent.id}/sync-crm`, {
-        method: 'POST',
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to sync CRM')
-      }
-
-      toast({
-        title: 'Успешно',
-        description: 'Синхронизация с CRM выполнена успешно',
-      })
-
-      router.refresh()
-    } catch (error) {
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось синхронизировать с CRM',
-        variant: 'destructive',
-      })
-    } finally {
-      setIsSyncing(false)
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -106,7 +79,7 @@ export function KommoIntegrationSettings({ agent, tenantId }: KommoIntegrationSe
               type="button"
               variant="outline"
               size="sm"
-              onClick={handleSyncCRM}
+              onClick={syncCrm}
               disabled={isSyncing}
             >
               <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />

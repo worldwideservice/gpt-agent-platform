@@ -3,9 +3,9 @@
  */
 
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { logger } from '@/lib/utils'
 
 import type { AgentAssetRow } from '@/types/supabase'
+import { logger } from '@/lib/utils/logger'
 
 export interface AgentAsset {
  id: string
@@ -57,7 +57,7 @@ export const getAgentAssets = async (
  .order('created_at', { ascending: false })
 
  if (error) {
- logger.error('getAgentAssets: Failed to fetch agent assets', error as Error, { organizationId, agentId })
+ logger.error('Failed to fetch agent assets', error)
  throw new Error('Не удалось загрузить файлы агента')
  }
 
@@ -78,7 +78,7 @@ export const getAgentAssetsForOrganization = async (
  .limit(limit)
 
  if (error) {
- logger.error('getAgentAssetsForOrganization: Failed to fetch agent assets for organization', error as Error, { organizationId })
+ logger.error('Failed to fetch agent assets for organization', error)
  throw new Error('Не удалось загрузить историю обработок')
  }
 
@@ -101,7 +101,7 @@ export const getAgentAssetById = async (
  .maybeSingle()
 
  if (error) {
- logger.error('getAgentAssetById: Failed to fetch agent asset', error as Error, { organizationId, agentId, assetId })
+ logger.error('Failed to fetch agent asset', error)
  throw new Error('Не удалось загрузить файл')
  }
 
@@ -141,7 +141,7 @@ export const updateAssetStatus = async (
  .eq('id', assetId)
 
  if (updateError) {
- logger.error('updateAssetStatus: Failed to update asset status', updateError as Error, { assetId, status })
+ logger.error('Failed to update asset status', updateError)
  throw new Error('Не удалось обновить статус файла')
  }
 }

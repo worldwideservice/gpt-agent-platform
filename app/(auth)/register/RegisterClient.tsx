@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
@@ -19,6 +19,8 @@ import {
 import { Input } from '@/components/ui'
 import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/components/ui/toast-context'
+import { trackEvent, AnalyticsEvents } from '@/lib/analytics/events'
+import { trackSignup } from '@/lib/analytics/examples'
 
 const formSchema = z.object({
   firstName: z.string().min(1, 'Имя обязательно'),
@@ -50,6 +52,13 @@ export const RegisterClient = () => {
     resolver: zodResolver(formSchema),
   })
 
+  // Track signup page view
+  useEffect(() => {
+    trackEvent(AnalyticsEvents.SIGNUP_STARTED, {
+      timestamp: new Date().toISOString(),
+    })
+  }, [])
+
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     startTransition(async () => {
       setError(null)
@@ -75,6 +84,14 @@ export const RegisterClient = () => {
         }
 
         const responseData = await response.json()
+
+        // Track successful signup
+        trackSignup({
+          id: responseData.user.id,
+          email: responseData.user.email,
+          name: `${data.firstName} ${data.lastName}`,
+          organizationId: responseData.user.organizationId,
+        })
 
         pushToast({
           title: 'Регистрация успешна! 🎉',

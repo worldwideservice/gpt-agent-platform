@@ -1,5 +1,9 @@
 # GPT Agent AI Platform
 
+[![Test Coverage](https://github.com/worldwideservice/gpt-agent-platform/actions/workflows/test-coverage.yml/badge.svg)](https://github.com/worldwideservice/gpt-agent-platform/actions/workflows/test-coverage.yml)
+[![codecov](https://codecov.io/gh/worldwideservice/gpt-agent-platform/branch/main/graph/badge.svg)](https://codecov.io/gh/worldwideservice/gpt-agent-platform)
+![Coverage](https://img.shields.io/badge/coverage-80%25-green)
+
 > Платформа для создания и управления AI агентами с интеграцией CRM (Kommo/amoCRM)
 
 ## 🚀 Быстрый старт
@@ -53,11 +57,22 @@ make dev-down
 - [Kommo CRM интеграция](./docs/KOMMO_CRM_INTEGRATION.md) - OAuth, API, Webhooks
 - [BullMQ Setup](./docs/BULLMQ_SETUP.md) - Очереди задач
 - [WebSocket/SSE Setup](./docs/WEBSOCKET_SSE_SETUP.md) - Real-time обновления
+
+### DevOps & Infrastructure
+
 - [Инфраструктура и мониторинг](./docs/INFRASTRUCTURE_CHECKLIST.md) - Docker, env, monitoring
+- [Project Improvements](./docs/PROJECT_IMPROVEMENTS.md) - Последние улучшения (2025-11-13)
+- [DevOps Improvements](./docs/DEVOPS_IMPROVEMENTS_REPORT.md) - Отчет по улучшениям
 
-### Референсная документация
+### Frontend Development
 
-Все детальные отчеты по страницам находятся в `references-kwid/`:
+- [Frontend Analysis Report](./docs/FRONTEND_ANALYSIS_REPORT.md) - Полный анализ текущего состояния фронтенда (65-70% готовности)
+- [Frontend Action Plan](./docs/FRONTEND_ACTION_PLAN.md) - Детальный план развития UI (8 недель, с примерами кода)
+- [Design System](./docs/design-system.md) - Дизайн-система и токены
+
+### Референсная документация (KWID)
+
+Все детальные отчеты по страницам референс-сервиса находятся в `references-kwid/`:
 
 - [AI Agents Page](./references-kwid/AI_AGENTS_PAGE_DETAILED_REPORT.md)
 - [Dashboard Page](./references-kwid/DASHBOARD_PAGE_DETAILED_REPORT.md)
@@ -66,6 +81,8 @@ make dev-down
 - [Pricing Page](./references-kwid/PRICING_PAGE_DETAILED_REPORT.md)
 - [Header](./references-kwid/HEADER_DETAILED_REPORT.md)
 - [Sidebar](./references-kwid/SIDEBAR_DETAILED_REPORT.md)
+- [Test Chat Page](./references-kwid/TEST_CHAT_PAGE_DETAILED_REPORT.md)
+- [Notifications Modal](./references-kwid/NOTIFICATIONS_MODAL_DETAILED_REPORT.md)
 - И другие...
 
 ## 🛠️ Разработка

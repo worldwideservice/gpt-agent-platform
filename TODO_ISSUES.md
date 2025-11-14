@@ -1,9 +1,14 @@
 # GitHub Issues для TODO комментариев
 
+> **Last Updated:** 2025-11-14
+
+---
+
 ## Issue 1: Re-enable GraphQL schema
 **Файл:** `lib/graphql/schema.ts:2`
 **Приоритет:** Low
 **Labels:** enhancement, graphql
+**Статус:** 🔵 Открыт
 
 **Описание:**
 GraphQL schema закомментирован и требует повторного включения когда GraphQL функциональность понадобится.
@@ -18,12 +23,15 @@ GraphQL schema закомментирован и требует повторно
 - Если да - восстановить GraphQL schema
 - Если нет - удалить файл
 
+**Решение:** Принять решение о необходимости GraphQL в архитектуре
+
 ---
 
 ## Issue 2: Implement PDF export for analytics
 **Файл:** `lib/services/analytics.ts:680`
 **Приоритет:** Medium
 **Labels:** enhancement, analytics, export
+**Статус:** 🔵 Открыт
 
 **Описание:**
 Функция экспорта аналитики поддерживает JSON и CSV, но не реализована генерация PDF отчетов.
@@ -46,12 +54,18 @@ case 'pdf':
 - Правильное форматирование кириллицы
 - Возможность настройки брендинга (логотип, цвета)
 
+**Предлагаемое решение:**
+- Использовать `@react-pdf/renderer` или `jsPDF` + `html2canvas`
+- Создать шаблон PDF отчета
+- Добавить endpoint `/api/analytics/export/pdf`
+
 ---
 
 ## Issue 3: Implement structured logging
 **Файл:** `lib/utils/logger.ts:96`
 **Приоритет:** Medium
 **Labels:** enhancement, logging, observability
+**Статус:** 🔵 Открыт
 
 **Описание:**
 Логгер требует реализации структурированного логирования для улучшения observability.
@@ -72,41 +86,20 @@ case 'pdf':
 - Возможность построения метрик из логов
 - Лучшая отладка и мониторинг
 
----
+**Предлагаемое решение:**
+- Использовать `pino` вместо кастомного logger
+- Интегрировать с `pino-pretty` для dev
+- Добавить transport для Datadog/CloudWatch
 
-## Issue 4: Re-enable Redis for rate limiting
-**Файл:** `lib/rate-limit.ts:84`
-**Приоритет:** High
-**Labels:** bug, infrastructure, redis
-
-**Описание:**
-Redis для rate limiting закомментирован из-за проблем с конфигурацией Upstash. Это критично для production.
-
-**Код:**
-```typescript
-// TODO: Re-enable Redis when Upstash is properly configured
-```
-
-**Задача:**
-- Настроить Upstash Redis правильно
-- Проверить credentials и connection settings
-- Восстановить Redis-based rate limiting
-- Добавить fallback механизм при недоступности Redis
-- Добавить health check для Redis
-
-**Риски без Redis:**
-- Rate limiting работает только в памяти (теряется при рестарте)
-- Не работает в multi-instance окружении
-- Нет распределенного rate limiting
-
-**Приоритет:** CRITICAL для production deployment
+**Примечание:** Частично реализовано в `PROJECT_IMPROVEMENTS.md` - 334 console.log заменены на structured logging
 
 ---
 
-## Issue 5: Refactor common functions to shared package
+## Issue 4: Refactor common functions to shared package
 **Файл:** `services/worker/src/tasks/process-asset.ts:14`
 **Приоритет:** Medium
 **Labels:** refactoring, technical-debt, worker
+**Статус:** 🔵 Открыт
 
 **Описание:**
 Общие функции между worker и основным приложением дублируются. Требуется вынести в shared package.
@@ -128,19 +121,48 @@ Redis для rate limiting закомментирован из-за пробле
 - Упрощенное обслуживание
 - Меньше дублирования кода
 
+**Предлагаемое решение:**
+- Создать `packages/shared/` в монорепо
+- Или использовать `lib/shared/` с правильными exports
+- Настроить TypeScript paths для удобных импортов
+
 ---
 
 ## Summary
 
-**Всего TODO:** 5
-**Critical:** 1 (Redis rate limiting)
+**Всего TODO:** 4
+**Critical:** 0
 **High:** 0
 **Medium:** 3 (PDF export, structured logging, shared package)
 **Low:** 1 (GraphQL)
 
+**Статус:**
+- 🔵 Открыты: 4
+- 🟢 Закрыты: 1 (Redis rate limiting - исправлен в PROJECT_IMPROVEMENTS.md)
+
 **Рекомендуемый порядок выполнения:**
-1. Issue 4 (Redis) - CRITICAL для production
-2. Issue 3 (Structured logging) - улучшает observability
-3. Issue 2 (PDF export) - добавляет функциональность
-4. Issue 5 (Shared package) - улучшает архитектуру
-5. Issue 1 (GraphQL) - по необходимости
+1. Issue 3 (Structured logging) - улучшает observability (частично сделан)
+2. Issue 2 (PDF export) - добавляет функциональность для клиентов
+3. Issue 4 (Shared package) - улучшает архитектуру, уменьшает tech debt
+4. Issue 1 (GraphQL) - по необходимости (низкий приоритет)
+
+---
+
+## Resolved Issues
+
+### ✅ Issue: Re-enable Redis for rate limiting
+**Статус:** ✅ Resolved (2025-11-13)
+**Файл:** `lib/rate-limit.ts`
+
+**Решение:**
+Redis rate limiting восстановлен с graceful fallback на in-memory store. См. `docs/PROJECT_IMPROVEMENTS.md` для деталей.
+
+**Commit:** См. PROJECT_IMPROVEMENTS.md, Section 2.1
+
+---
+
+**Changelog:**
+- 2025-11-14: Updated - Removed resolved Redis issue, updated summary
+- 2025-01-26: Initial version with 5 issues
+
+**Version:** 2.0

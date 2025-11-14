@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { backendFetch } from '@/lib/backend/client'
 import { getOrganizationById } from '@/lib/repositories/organizations'
+import { trackIntegrationConnected } from '@/lib/analytics/examples'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -58,6 +59,18 @@ export async function GET(request: NextRequest) {
 
  if (backendResult.success && backendResult.connection?.org_id) {
  const organization = await getOrganizationById(backendResult.connection.org_id)
+
+ // Track integration connected for analytics
+ try {
+ trackIntegrationConnected({
+ integrationType: 'kommo',
+ organizationId: backendResult.connection.org_id,
+ userId: backendResult.connection.org_id, // Using org_id as fallback
+ })
+ } catch (analyticsError) {
+ console.error('Failed to track integration connected', analyticsError)
+ }
+
  if (organization?.slug) {
  const origin = new URL(request.url).origin
  const redirectUrl = new URL(`/manage/${organization.slug}/integrations`, origin)

@@ -4,7 +4,7 @@
  */
 
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { logger } from '@/lib/utils'
+import { logger } from '@/lib/utils/logger'
 
 export interface ScriptContext {
   // Данные клиента/лида
@@ -123,7 +123,7 @@ export const getRelevantScripts = async (
     const { data: scripts, error } = await query
 
     if (error) {
-      logger.error('Failed to fetch scripts', error instanceof Error ? error : new Error(String(error)), { orgId, agentId })
+      logger.error('Failed to fetch scripts', error)
       return []
     }
 
@@ -140,7 +140,7 @@ export const getRelevantScripts = async (
       processedContent: processScript(script.content, context),
     }))
   } catch (error) {
-    logger.error('Error getting relevant scripts', error instanceof Error ? error : new Error(String(error)), { orgId, agentId, leadStage: context.leadStage })
+    logger.error('Error getting relevant scripts', error)
     return []
   }
 }

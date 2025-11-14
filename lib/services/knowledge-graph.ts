@@ -4,7 +4,7 @@
 
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { generateChatResponse } from './llm'
-import { logger } from '@/lib/utils'
+import { logger } from '@/lib/utils/logger'
 
 interface Entity {
  type: string
@@ -108,7 +108,7 @@ export const extractKnowledgeFromText = async (
  relationships: parsed.relationships ?? [],
  }
  } catch (error) {
- logger.error('extractKnowledgeFromText: Failed to extract knowledge from text', error as Error, { organizationId })
+ logger.error('Failed to extract knowledge from text', error)
  return { entities: [], relationships: [] }
  }
 }
@@ -196,7 +196,7 @@ export const saveEntities = async (
  .single()
 
  if (error) {
- logger.error('saveEntities: Failed to save entity', error as Error, { organizationId, entityName: entity.name })
+ logger.error('Failed to save entity', error)
  continue
  }
 
@@ -258,7 +258,7 @@ export const saveRelationships = async (
  )
 
  if (error) {
- logger.error('saveRelationships: Failed to save relationships', error as Error, { organizationId })
+ logger.error('Failed to save relationships', error)
  }
 }
 

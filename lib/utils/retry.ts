@@ -1,3 +1,5 @@
+import { logger } from '@/lib/utils/logger'
+
 /**
  * Retry utility with exponential backoff
  * 
@@ -55,7 +57,7 @@ function sleep(ms: number): Promise<void> {
  *     maxAttempts: 3,
  *     initialDelay: 1000,
  *     onRetry: (error, attempt, delay) => {
- *       console.log(`Retry ${attempt} after ${delay}ms`)
+ *       logger.info(`Retry ${attempt} after ${delay}ms`)
  *     }
  *   }
  * )

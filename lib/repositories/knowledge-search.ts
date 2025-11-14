@@ -4,7 +4,7 @@
 
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { generateEmbeddings } from '@/lib/services/embeddings'
-import { logger } from '@/lib/utils'
+import { logger } from '@/lib/utils/logger'
 
 interface KnowledgeChunk {
  id: string
@@ -66,7 +66,7 @@ export const searchKnowledgeBase = async (
  }
  }
  } catch (error) {
- logger.error('Vector search failed, falling back to text search', error instanceof Error ? error : new Error(String(error)), { organizationId, query })
+ logger.error('Vector search failed, falling back to text search', error)
  }
 
  // Fallback: текстовый поиск по статьям
@@ -86,7 +86,7 @@ export const searchKnowledgeBase = async (
  .limit(limit)
 
  if (textSearchError) {
- logger.error('Fallback text search failed', textSearchError instanceof Error ? textSearchError : new Error(String(textSearchError)), { organizationId, query })
+ logger.error('Fallback text search failed', textSearchError)
  return []
  }
 

@@ -1,7 +1,7 @@
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { logger } from '@/lib/utils'
 
 import type { Json, OrganizationSettingsRow } from '@/types/supabase'
+import { logger } from '@/lib/utils/logger'
 
 export type AiProvider =
   | 'openrouter'
@@ -136,7 +136,7 @@ export const getOrganizationAiSettings = async (
     .maybeSingle()
 
   if (error) {
-    logger.error('Failed to load organization settings', error instanceof Error ? error : new Error(String(error)), { organizationId })
+    logger.error('Failed to load organization settings', error)
     return null
   }
 

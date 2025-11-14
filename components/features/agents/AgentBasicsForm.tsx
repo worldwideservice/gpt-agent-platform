@@ -25,7 +25,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  MultiSelect,
 } from '@/components/ui'
+import type { MultiSelectOption } from '@/components/ui'
+import { useCrmSync } from '@/lib/hooks'
 
 interface Agent {
   id: string
@@ -56,6 +59,30 @@ interface Channel {
   id: string
   name: string
 }
+
+// Mock CRM channels - will be populated from CRM sync
+const CHANNEL_OPTIONS: MultiSelectOption[] = [
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'telegram', label: 'Telegram' },
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'facebook', label: 'Facebook Messenger' },
+  { value: 'email', label: 'Email' },
+  { value: 'viber', label: 'Viber' },
+  { value: 'vk', label: 'VK' },
+  { value: 'webchat', label: 'Webchat' },
+]
+
+// Mock knowledge base categories - will be populated from KB API
+const CATEGORY_OPTIONS: MultiSelectOption[] = [
+  { value: 'product-info', label: 'Информация о продуктах' },
+  { value: 'pricing', label: 'Цены и тарифы' },
+  { value: 'shipping', label: 'Доставка' },
+  { value: 'returns', label: 'Возврат и обмен' },
+  { value: 'faq', label: 'Часто задаваемые вопросы' },
+  { value: 'company', label: 'О компании' },
+  { value: 'support', label: 'Техническая поддержка' },
+  { value: 'legal', label: 'Юридическая информация' },
+]
 
 // Zod validation schema
 const agentBasicsSchema = z.object({
@@ -92,6 +119,8 @@ type AgentBasicsFormData = z.infer<typeof agentBasicsSchema>
 export function AgentBasicsForm({ agent, tenantId }: AgentBasicsFormProps) {
   const router = useRouter()
   const { toast } = useToast()
+  const { syncCrm, isSyncing } = useCrmSync({ agentId: agent.id })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // React Hook Form setup
   const form = useForm<AgentBasicsFormData>({
@@ -119,31 +148,6 @@ export function AgentBasicsForm({ agent, tenantId }: AgentBasicsFormProps) {
   const [expandedPipelines, setExpandedPipelines] = useState<Set<string>>(new Set())
 
   const pipelines = form.watch('pipelines')
-
-  const handleSyncCRM = async () => {
-    try {
-      const response = await fetch(`/api/agents/${agent.id}/sync-crm`, {
-        method: 'POST',
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to sync CRM')
-      }
-
-      toast({
-        title: 'Успешно',
-        description: 'Синхронизация с CRM выполнена успешно',
-      })
-
-      router.refresh()
-    } catch (error) {
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось синхронизировать с CRM',
-        variant: 'destructive',
-      })
-    }
-  }
 
   const togglePipeline = (pipelineId: string) => {
     setExpandedPipelines((prev) => {
@@ -320,9 +324,10 @@ export function AgentBasicsForm({ agent, tenantId }: AgentBasicsFormProps) {
               type="button"
               variant="outline"
               size="sm"
-              onClick={handleSyncCRM}
+              onClick={syncCrm}
+              disabled={isSyncing}
             >
-              <RefreshCw className="mr-2 h-4 w-4" />
+              <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
               Синхронизировать настройки CRM
             </Button>
           </div>
@@ -508,6 +513,7 @@ export function AgentBasicsForm({ agent, tenantId }: AgentBasicsFormProps) {
                 Открыть базу знаний →
               </Link>
             </div>
+<<<<<<< HEAD
           </CardContent>
         </Card>
 
@@ -527,5 +533,132 @@ export function AgentBasicsForm({ agent, tenantId }: AgentBasicsFormProps) {
         </div>
       </form>
     </Form>
+=======
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={syncCrm}
+              disabled={isSyncing}
+            >
+              <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+              Синхронизировать настройки CRM
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="all-channels">Все каналы</Label>
+            <Switch
+              id="all-channels"
+              checked={allChannels}
+              onCheckedChange={setAllChannels}
+            />
+          </div>
+          {!allChannels && (
+            <div className="space-y-2">
+              <Label htmlFor="channels-select">
+                Выбрать каналы <span className="text-rose-500">*</span>
+              </Label>
+              <MultiSelect
+                options={CHANNEL_OPTIONS}
+                selected={selectedChannels}
+                onChange={setSelectedChannels}
+                placeholder="Выберите каналы для агента..."
+              />
+              <p className="text-xs text-gray-500">
+                Агент будет отвечать только в выбранных каналах. Используйте синхронизацию CRM для загрузки актуального списка.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* База знаний */}
+      <Card>
+        <CardHeader>
+          <CardTitle>База знаний</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="all-categories">Разрешить доступ ко всем категориям</Label>
+            <Switch
+              id="all-categories"
+              checked={allCategories}
+              onCheckedChange={setAllCategories}
+            />
+          </div>
+          {!allCategories && (
+            <div className="space-y-2">
+              <Label htmlFor="categories-select">
+                Выбрать категории <span className="text-rose-500">*</span>
+              </Label>
+              <MultiSelect
+                options={CATEGORY_OPTIONS}
+                selected={selectedCategories}
+                onChange={setSelectedCategories}
+                placeholder="Выберите категории базы знаний..."
+              />
+              <p className="text-xs text-gray-500">
+                Агент будет получать доступ к знаниям только из этих категорий
+              </p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <Label htmlFor="create-task">Создать задачу, если ответ не найден</Label>
+              <p className="text-xs text-gray-500">
+                Автоматически создавать задачу в сделке CRM, если в базе знаний не найдена релевантная информация
+              </p>
+            </div>
+            <Switch
+              id="create-task"
+              checked={createTaskIfNoAnswer}
+              onCheckedChange={setCreateTaskIfNoAnswer}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="no-answer-message">Сообщение при отсутствии ответа</Label>
+            <Textarea
+              id="no-answer-message"
+              value={noAnswerMessage}
+              onChange={(e) => setNoAnswerMessage(e.target.value)}
+              placeholder="У меня недостаточно информации, чтобы ответить на этот вопрос. Я уточню детали и вернусь к вам."
+              rows={3}
+            />
+            <p className="text-xs text-gray-500">
+              Это сообщение будет показано, когда агент не сможет найти релевантную информацию в базе знаний.
+            </p>
+          </div>
+
+          <div>
+            <Link
+              href={`/manage/${tenantId}/knowledge-items`}
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              Открыть базу знаний →
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Кнопки действий */}
+      <div className="flex items-center gap-3">
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Сохранение...' : 'Сохранить'}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleCancel}
+          disabled={isSubmitting}
+        >
+          Отмена
+        </Button>
+      </div>
+    </form>
+>>>>>>> 92ee12a (feat(agents): add shared hooks and complete channel/category selectors)
   )
 }

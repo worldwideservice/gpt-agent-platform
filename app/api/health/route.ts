@@ -76,6 +76,18 @@ health.redis_error = redisError instanceof Error ? redisError.message : 'Unknown
    health.rateLimit_error = rateLimitError instanceof Error ? rateLimitError.message : 'Unknown error'
  }
 
+ // Check job queue health
+ try {
+   const { getQueueStats } = await import('@/lib/queue')
+   const queueStats = await getQueueStats()
+
+   health.queue = 'ok'
+   health.queue_stats = queueStats
+ } catch (queueError) {
+   health.queue = 'error'
+   health.queue_error = queueError instanceof Error ? queueError.message : 'Unknown error'
+ }
+
  // Check external API (OpenRouter)
  try {
  const response = await fetch('https://openrouter.ai/api/v1/models', {
@@ -95,7 +107,7 @@ health.redis_error = redisError instanceof Error ? redisError.message : 'Unknown
  }
 
  // Determine overall health status
- const services = ['database', 'redis', 'rateLimit', 'openrouter']
+ const services = ['database', 'redis', 'rateLimit', 'openrouter', 'queue']
  const hasErrors = services.some(service => health[service] === 'error')
  const hasDegraded = services.some(service => health[service] === 'degraded')
 

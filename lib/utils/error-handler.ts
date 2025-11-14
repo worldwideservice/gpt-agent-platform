@@ -4,9 +4,9 @@
  */
 
 import * as Sentry from '@sentry/nextjs'
-import { logger } from '@/lib/utils'
 
 import { recordApiError } from '@/lib/monitoring/metrics'
+import { logger } from '@/lib/utils/logger'
 
 export interface ApiError {
   success: false
@@ -144,12 +144,9 @@ export function createErrorResponse(
     })
   }
 
-  // Логируем для разработки
+  // Логируем в консоль для разработки
   if (process.env.NODE_ENV === 'development') {
-    logger.error(`[error-handler] ${errorType}`, error instanceof Error ? error : new Error(String(error)), {
-      code: context?.code,
-      details: context?.details,
-    })
+    logger.error(`[error-handler] ${errorType}:`, error)
   }
 
   if (context?.route && context?.method && status >= 500) {
@@ -208,9 +205,7 @@ export async function withGracefulDegradation<T>(
   } catch (error) {
     logger.warn(
       errorMessage || 'Graceful degradation: operation failed, using fallback',
-      {
-        error: error instanceof Error ? error.message : String(error),
-      }
+      error
     )
     return fallback
   }

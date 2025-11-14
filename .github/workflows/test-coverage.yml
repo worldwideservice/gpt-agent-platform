@@ -1,0 +1,206 @@
+name: Test Coverage
+
+on:
+  pull_request:
+    branches: [main, master, develop]
+  push:
+    branches: [main, master, develop]
+
+jobs:
+  test-coverage:
+    name: Run Tests and Check Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # For coverage comparison
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          # Skip optional dependencies for faster install
+          NO_OPTIONAL: true
+
+      - name: Run unit tests with coverage
+        run: VITEST_COVERAGE=true npm run vitest
+        env:
+          CI: true
+          NODE_ENV: test
+
+      - name: Check coverage thresholds
+        run: |
+          echo "Checking coverage thresholds..."
+          node -e "
+            const fs = require('fs');
+            const summary = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf-8'));
+            const total = summary.total;
+
+            const thresholds = {
+              lines: 70,
+              statements: 70,
+              functions: 65,
+              branches: 50
+            };
+
+            let failed = false;
+
+            Object.keys(thresholds).forEach(metric => {
+              const actual = total[metric].pct;
+              const expected = thresholds[metric];
+              const status = actual >= expected ? '✅' : '❌';
+
+              console.log(\`\${status} \${metric}: \${actual}% (threshold: \${expected}%)\`);
+
+              if (actual < expected) {
+                failed = true;
+              }
+            });
+
+            if (failed) {
+              console.error('\\n❌ Coverage thresholds not met!');
+              process.exit(1);
+            }
+
+            console.log('\\n✅ All coverage thresholds met!');
+          "
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: ./coverage/coverage-final.json
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+      - name: Generate coverage comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf-8'));
+            const total = summary.total;
+
+            const formatMetric = (metric) => {
+              const pct = metric.pct;
+              const emoji = pct >= 80 ? '🟢' : pct >= 70 ? '🟡' : '🔴';
+              return `\${emoji} \${pct}%`;
+            };
+
+            const comment = `## 📊 Test Coverage Report
+
+            | Metric | Coverage | Covered | Total |
+            |--------|----------|---------|-------|
+            | Lines | ${formatMetric(total.lines)} | ${total.lines.covered} | ${total.lines.total} |
+            | Statements | ${formatMetric(total.statements)} | ${total.statements.covered} | ${total.statements.total} |
+            | Functions | ${formatMetric(total.functions)} | ${total.functions.covered} | ${total.functions.total} |
+            | Branches | ${formatMetric(total.branches)} | ${total.branches.covered} | ${total.branches.total} |
+
+            ### 🎯 Thresholds
+            - Lines: ≥70% ✅
+            - Statements: ≥70% ✅
+            - Functions: ≥65% ✅
+            - Branches: ≥50% ✅
+
+            [View full report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Upload coverage report as artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 30
+
+  coverage-diff:
+    name: Coverage Diff vs Base Branch
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: VITEST_COVERAGE=true npm run vitest
+        env:
+          CI: true
+
+      - name: Save PR coverage
+        run: cp coverage/coverage-summary.json pr-coverage.json
+
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+
+      - name: Install dependencies (base)
+        run: npm ci
+
+      - name: Run tests with coverage (base)
+        run: VITEST_COVERAGE=true npm run vitest
+        env:
+          CI: true
+
+      - name: Compare coverage
+        run: |
+          node -e "
+            const fs = require('fs');
+            const prCoverage = JSON.parse(fs.readFileSync('pr-coverage.json', 'utf-8'));
+            const baseCoverage = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf-8'));
+
+            const metrics = ['lines', 'statements', 'functions', 'branches'];
+
+            console.log('## Coverage Diff\\n');
+            console.log('| Metric | Base | PR | Change |');
+            console.log('|--------|------|----|----|');
+
+            let decreased = false;
+
+            metrics.forEach(metric => {
+              const base = baseCoverage.total[metric].pct;
+              const pr = prCoverage.total[metric].pct;
+              const diff = (pr - base).toFixed(2);
+              const emoji = diff > 0 ? '📈' : diff < 0 ? '📉' : '➡️';
+              const sign = diff > 0 ? '+' : '';
+
+              console.log(\`| \${metric} | \${base}% | \${pr}% | \${emoji} \${sign}\${diff}% |\`);
+
+              if (diff < -1) { // More than 1% decrease
+                decreased = true;
+              }
+            });
+
+            if (decreased) {
+              console.log('\\n⚠️ Warning: Coverage decreased by more than 1%');
+              process.exit(1);
+            }
+          "

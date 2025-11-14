@@ -1,5 +1,5 @@
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { logger } from '@/lib/utils'
+import { logger } from '@/lib/utils/logger'
 
 export interface AgentPipelineSetting {
  id: string
@@ -67,7 +67,7 @@ export const isAgentConfiguredForStage = async (
  // Если нет выбранных этапов и all_stages = false - агент не настроен
  return false
  } catch (error) {
- logger.error('isAgentConfiguredForStage: Failed to check agent pipeline settings', error as Error, { agentId, organizationId, pipelineId })
+ logger.error('Failed to check agent pipeline settings', error)
  return false
  }
 }
@@ -88,7 +88,7 @@ export const getAgentPipelineSettings = async (
  .eq('org_id', organizationId)
 
  if (error) {
- logger.error('getAgentPipelineSettings: Failed to fetch agent pipeline settings', error as Error, { agentId, organizationId })
+ logger.error('Failed to fetch agent pipeline settings', error)
  return []
  }
 
@@ -139,7 +139,9 @@ export const getAgentsForPipelineStage = async (
 
  return agentIds
  } catch (error) {
- logger.error('getAgentsForPipelineStage: Failed to get agents for pipeline stage', error as Error, { organizationId, pipelineId, stageId })
+ if (process.env.NODE_ENV === 'development') {
+ logger.error('Failed to get agents for pipeline stage', error)
+ }
  return []
  }
 }

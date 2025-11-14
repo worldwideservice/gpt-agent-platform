@@ -18,7 +18,7 @@ function getRedisClient(): Redis | null {
 
   const redisUrl = process.env.REDIS_URL
   if (!redisUrl) {
-    logger.warn('[cache] REDIS_URL not configured, caching disabled')
+    logger.warn('REDIS_URL not configured, caching disabled')
     return null
   }
 
@@ -31,13 +31,13 @@ function getRedisClient(): Redis | null {
     })
 
     redisClient.on('error', (error) => {
-      logger.error('[cache] Redis connection error', { error: error.message })
+      logger.error('Redis connection error', error, { message: error.message })
       redisClient = null
     })
 
     return redisClient
   } catch (error) {
-    logger.error('[cache] Failed to initialize Redis', { error })
+    logger.error('Failed to initialize Redis', error)
     return null
   }
 }
@@ -70,7 +70,7 @@ export async function getCache<T>(key: string): Promise<T | null> {
 
     return JSON.parse(value) as T
   } catch (error) {
-    logger.error('[cache] Failed to get key', { key, error })
+    logger.error('Failed to get cache key', error, { key })
     return null
   }
 }
@@ -88,7 +88,7 @@ export async function setCache<T>(key: string, value: T, ttl: number = DEFAULT_T
     await client.setex(key, ttl, JSON.stringify(value))
     return true
   } catch (error) {
-    logger.error('[cache] Failed to set key', { key, ttl, error })
+    logger.error('Failed to set cache key', error, { key, ttl })
     return false
   }
 }
@@ -106,7 +106,7 @@ export async function deleteCache(key: string): Promise<boolean> {
     await client.del(key)
     return true
   } catch (error) {
-    logger.error('[cache] Failed to delete key', { key, error })
+    logger.error('Failed to delete cache key', error, { key })
     return false
   }
 }
@@ -191,7 +191,7 @@ export async function invalidateOrgCache(orgId: string): Promise<void> {
       await client.del(...keys, ...crmKeys)
     }
   } catch (error) {
-    logger.error('[cache] Failed to invalidate org cache', { orgId, error })
+    logger.error('Failed to invalidate org cache', error, { orgId })
   }
 }
 

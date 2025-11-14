@@ -4,7 +4,7 @@
 
 import { AuthProvider } from "@refinedev/core";
 import { auth } from "@/auth";
-import { logger } from "@/lib/utils";
+import { logger } from '@/lib/utils/logger'
 
 /**
  * Проверяет авторизацию пользователя
@@ -43,7 +43,7 @@ export const authProvider: AuthProvider = {
   },
 
   onError: async (error) => {
-    logger.error("[AuthProvider] Error", error instanceof Error ? error : new Error(String(error)), { status: error?.status });
+    logger.error("[AuthProvider] Error:", error);
 
     if (error?.status === 401) {
       return {
@@ -71,7 +71,7 @@ export const authProvider: AuthProvider = {
         avatar: session.user.image || undefined,
       };
     } catch (error) {
-      logger.error("[AuthProvider] Error getting identity", error instanceof Error ? error : new Error(String(error)));
+      logger.error("[AuthProvider] Error getting identity:", error);
       return null;
     }
   },

@@ -5,6 +5,7 @@ import { auth } from '@/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { getAgentById } from '@/lib/repositories/agents'
+import { trackEvent, AnalyticsEvents } from '@/lib/analytics/events'
 
 /**
  * POST /api/agents/[id]/assets - Загрузка файла для агента
@@ -124,6 +125,24 @@ export const POST = async (request: NextRequest, { params }: { params: Promise<{
  // Логируем ошибку, но не прерываем загрузку файла
  console.error('Failed to queue asset processing job', queueError)
  // Можно отправить уведомление пользователю или обработать позже
+ }
+
+ // Track asset upload for analytics
+ try {
+ trackEvent(AnalyticsEvents.KNOWLEDGE_ARTICLE_CREATED, {
+ articleId: assetData.id,
+ title: file.name,
+ type: 'file',
+ fileSize: file.size,
+ mimeType: file.type,
+ agentId: agentId,
+ organizationId: session.user.orgId,
+ userId: session.user.id,
+ timestamp: new Date().toISOString(),
+ })
+ } catch (analyticsError) {
+ // Don't break the upload if analytics fails
+ console.error('Failed to track asset upload', analyticsError)
  }
 
  return NextResponse.json({

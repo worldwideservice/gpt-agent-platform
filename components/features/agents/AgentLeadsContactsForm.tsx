@@ -25,6 +25,7 @@ import {
   FormMessage,
 } from '@/components/ui'
 import type { MultiSelectOption } from '@/components/ui'
+import { useCrmSync } from '@/lib/hooks'
 
 interface Agent {
   id: string
@@ -85,7 +86,8 @@ interface FieldUpdateRule {
 export function AgentLeadsContactsForm({ agent, tenantId }: AgentLeadsContactsFormProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const [isSyncing, setIsSyncing] = useState(false)
+  const { syncCrm, isSyncing } = useCrmSync({ agentId: agent.id })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // UI state (not part of form)
   const [leadDataExpanded, setLeadDataExpanded] = useState(true)
@@ -128,35 +130,8 @@ export function AgentLeadsContactsForm({ agent, tenantId }: AgentLeadsContactsFo
     name: 'contactUpdateRules',
   })
 
-  const handleSyncCRM = async () => {
-    setIsSyncing(true)
-    try {
-      const response = await fetch(`/api/agents/${agent.id}/sync-crm`, {
-        method: 'POST',
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to sync CRM')
-      }
-
-      toast({
-        title: 'Успешно',
-        description: 'Синхронизация с CRM выполнена успешно',
-      })
-
-      router.refresh()
-    } catch (error) {
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось синхронизировать с CRM',
-        variant: 'destructive',
-      })
-    } finally {
-      setIsSyncing(false)
-    }
-  }
-
   const onSubmit = async (data: LeadsContactsFormData) => {
+    setIsSubmitting(true)
     try {
       const response = await fetch(`/api/agents/${agent.id}/leads-contacts`, {
         method: 'PATCH',
@@ -204,7 +179,7 @@ export function AgentLeadsContactsForm({ agent, tenantId }: AgentLeadsContactsFo
               type="button"
               variant="outline"
               size="sm"
-              onClick={handleSyncCRM}
+              onClick={syncCrm}
               disabled={isSyncing}
             >
               <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
