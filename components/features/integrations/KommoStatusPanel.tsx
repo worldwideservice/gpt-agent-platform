@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Separator } from '@/components/ui'
+import { EmptyState } from '@/components/ui/empty-state'
 
 type KommoSyncJobStatus = {
   status?: string | null
@@ -207,7 +208,15 @@ export function KommoStatusPanel({ notice }: KommoStatusPanelProps) {
             </div>
           </>
         ) : (
-          <p className="text-xs text-gray-500">Нет данных по статусу.</p>
+          <EmptyState
+            type="no-data"
+            title="Нет данных по статусу"
+            description="Статус Kommo не загружен"
+            action={{
+              label: 'Обновить',
+              onClick: loadStatus,
+            }}
+          />
         )}
       </CardContent>
     </Card>

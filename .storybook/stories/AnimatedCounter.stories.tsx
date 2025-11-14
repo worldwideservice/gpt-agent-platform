@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { AnimatedCounter } from '@/components/ui/animated-counter'
+import { AnimatedCounter } from '@/components/landing/animated-counter'
 
 const meta = {
   title: 'UI/AnimatedCounter',

@@ -1,7 +1,7 @@
 import React from 'react'
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { AchievementBadge } from '@/components/ui/achievement-badge'
+import { AchievementBadge } from '@/components/landing/achievement-badge'
 
 describe('AchievementBadge Component', () => {
   it('should render achievement badge', () => {

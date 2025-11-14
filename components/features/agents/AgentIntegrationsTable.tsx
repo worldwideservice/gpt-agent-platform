@@ -11,6 +11,7 @@ import {
   CardTitle,
   Input,
 } from '@/components/ui'
+import { EmptyState } from '@/components/ui/empty-state'
 
 interface Agent {
   id: string
@@ -118,7 +119,16 @@ export function AgentIntegrationsTable({ agent, tenantId }: AgentIntegrationsTab
         )}
 
         {filteredIntegrations.length === 0 && (
-          <p className="text-sm text-gray-500">Интеграции не найдены</p>
+          <EmptyState
+            type="no-results"
+            title="Интеграции не найдены"
+            description="Попробуйте изменить параметры поиска"
+            action={{
+              label: 'Очистить поиск',
+              onClick: () => setSearch(''),
+              variant: 'secondary',
+            }}
+          />
         )}
       </CardContent>
     </Card>
