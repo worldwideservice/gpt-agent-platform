@@ -4,6 +4,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronDown, ChevronRight, RefreshCw } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import {
   Button,
   Card,
@@ -15,6 +18,13 @@ import {
   Switch,
   Textarea,
   useToast,
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from '@/components/ui'
 
 interface Agent {
@@ -47,36 +57,68 @@ interface Channel {
   name: string
 }
 
+// Zod validation schema
+const agentBasicsSchema = z.object({
+  name: z
+    .string()
+    .min(1, 'Название обязательно')
+    .max(100, 'Название не должно превышать 100 символов'),
+  isActive: z.boolean().default(false),
+  instructions: z
+    .string()
+    .min(1, 'Инструкции обязательны')
+    .max(5000, 'Инструкции не должны превышать 5000 символов'),
+  requiresApproval: z.boolean().default(false),
+  pipelines: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      isActive: z.boolean(),
+    })
+  ),
+  allChannels: z.boolean().default(true),
+  selectedChannels: z.array(z.string()).default([]),
+  allCategories: z.boolean().default(true),
+  selectedCategories: z.array(z.string()).default([]),
+  createTaskIfNoAnswer: z.boolean().default(false),
+  noAnswerMessage: z
+    .string()
+    .max(500, 'Сообщение не должно превышать 500 символов')
+    .optional(),
+})
+
+type AgentBasicsFormData = z.infer<typeof agentBasicsSchema>
+
 export function AgentBasicsForm({ agent, tenantId }: AgentBasicsFormProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Form state
-  const [name, setName] = useState(agent.name)
-  const [isActive, setIsActive] = useState(agent.isActive)
-  const [instructions, setInstructions] = useState(agent.instructions || '')
-  const [requiresApproval, setRequiresApproval] = useState(agent.requiresApproval || false)
+  // React Hook Form setup
+  const form = useForm<AgentBasicsFormData>({
+    resolver: zodResolver(agentBasicsSchema),
+    defaultValues: {
+      name: agent.name,
+      isActive: agent.isActive,
+      instructions: agent.instructions || '',
+      requiresApproval: agent.requiresApproval || false,
+      pipelines: [
+        { id: '1', name: 'GENERATION LEAD', isActive: true },
+        { id: '2', name: 'WORK VISA IN POLAND', isActive: false },
+        { id: '3', name: 'SEASONAL VISA IN POLAND', isActive: false },
+      ],
+      allChannels: true,
+      selectedChannels: [],
+      allCategories: true,
+      selectedCategories: [],
+      createTaskIfNoAnswer: false,
+      noAnswerMessage:
+        'У меня недостаточно информации, чтобы ответить на этот вопрос. Я уточню детали и вернусь к вам.',
+    },
+  })
 
-  // Funnels state
-  const [pipelines, setPipelines] = useState<Pipeline[]>([
-    { id: '1', name: 'GENERATION LEAD', isActive: true },
-    { id: '2', name: 'WORK VISA IN POLAND', isActive: false },
-    { id: '3', name: 'SEASONAL VISA IN POLAND', isActive: false },
-  ])
   const [expandedPipelines, setExpandedPipelines] = useState<Set<string>>(new Set())
 
-  // Channels state
-  const [allChannels, setAllChannels] = useState(true)
-  const [selectedChannels, setSelectedChannels] = useState<string[]>([])
-
-  // Knowledge base state
-  const [allCategories, setAllCategories] = useState(true)
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  const [createTaskIfNoAnswer, setCreateTaskIfNoAnswer] = useState(false)
-  const [noAnswerMessage, setNoAnswerMessage] = useState(
-    'У меня недостаточно информации, чтобы ответить на этот вопрос. Я уточню детали и вернусь к вам.'
-  )
+  const pipelines = form.watch('pipelines')
 
   const handleSyncCRM = async () => {
     try {
@@ -116,33 +158,30 @@ export function AgentBasicsForm({ agent, tenantId }: AgentBasicsFormProps) {
   }
 
   const togglePipelineActive = (pipelineId: string) => {
-    setPipelines((prev) =>
-      prev.map((p) =>
-        p.id === pipelineId ? { ...p, isActive: !p.isActive } : p
-      )
+    const currentPipelines = form.getValues('pipelines')
+    const updatedPipelines = currentPipelines.map((p) =>
+      p.id === pipelineId ? { ...p, isActive: !p.isActive } : p
     )
+    form.setValue('pipelines', updatedPipelines)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-
+  const onSubmit = async (data: AgentBasicsFormData) => {
     try {
       const response = await fetch(`/api/agents/${agent.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name,
-          isActive,
-          instructions,
-          requiresApproval,
-          pipelines: pipelines.filter((p) => p.isActive).map((p) => p.id),
-          allChannels,
-          channels: allChannels ? [] : selectedChannels,
-          allCategories,
-          categories: allCategories ? [] : selectedCategories,
-          createTaskIfNoAnswer,
-          noAnswerMessage,
+          name: data.name,
+          isActive: data.isActive,
+          instructions: data.instructions,
+          requiresApproval: data.requiresApproval,
+          pipelines: data.pipelines.filter((p) => p.isActive).map((p) => p.id),
+          allChannels: data.allChannels,
+          channels: data.allChannels ? [] : data.selectedChannels,
+          allCategories: data.allCategories,
+          categories: data.allCategories ? [] : data.selectedCategories,
+          createTaskIfNoAnswer: data.createTaskIfNoAnswer,
+          noAnswerMessage: data.noAnswerMessage,
         }),
       })
 
@@ -162,8 +201,6 @@ export function AgentBasicsForm({ agent, tenantId }: AgentBasicsFormProps) {
         description: 'Не удалось обновить агента',
         variant: 'destructive',
       })
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -172,78 +209,102 @@ export function AgentBasicsForm({ agent, tenantId }: AgentBasicsFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Профиль агента */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Профиль агента</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Название */}
-          <div className="space-y-2">
-            <Label htmlFor="agent-name">
-              Название <span className="text-rose-500">*</span>
-            </Label>
-            <Input
-              id="agent-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Введите название агента"
-              required
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Профиль агента */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Профиль агента</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Название */}
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Название <span className="text-rose-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input placeholder="Введите название агента" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          {/* Активно */}
-          <div className="flex items-center justify-between">
-            <Label htmlFor="agent-active">Активно</Label>
-            <Switch
-              id="agent-active"
-              checked={isActive}
-              onCheckedChange={setIsActive}
+            {/* Активно */}
+            <FormField
+              control={form.control}
+              name="isActive"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between">
+                  <FormLabel>Активно</FormLabel>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
             />
-          </div>
 
-          {/* Инструкции */}
-          <div className="space-y-2">
-            <Label htmlFor="agent-instructions">
-              Инструкции для агента <span className="text-rose-500">*</span>
-            </Label>
-            <Textarea
-              id="agent-instructions"
-              value={instructions}
-              onChange={(e) => setInstructions(e.target.value)}
-              placeholder="Введите инструкции для агента"
-              rows={5}
-              required
+            {/* Инструкции */}
+            <FormField
+              control={form.control}
+              name="instructions"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Инструкции для агента <span className="text-rose-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Введите инструкции для агента"
+                      rows={5}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Начальные инструкции по тону, стилю и ответам вашего агента. Вы также можете добавить общие сведения о компании, чтобы помочь агенту отвечать более точно.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            <p className="text-xs text-gray-500">
-              Начальные инструкции по тону, стилю и ответам вашего агента. Вы также можете добавить общие сведения о компании, чтобы помочь агенту отвечать более точно.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Взаимодействие */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Взаимодействие</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <Label htmlFor="requires-approval">Проверять перед отправкой</Label>
-              <p className="text-xs text-gray-500">
-                Сообщения не будут отправляться автоматически. Они появятся в поле ввода сообщения для вашего просмотра и ручной отправки.
-              </p>
-            </div>
-            <Switch
-              id="requires-approval"
-              checked={requiresApproval}
-              onCheckedChange={setRequiresApproval}
+        {/* Взаимодействие */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Взаимодействие</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <FormField
+              control={form.control}
+              name="requiresApproval"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <FormLabel>Проверять перед отправкой</FormLabel>
+                    <FormDescription>
+                      Сообщения не будут отправляться автоматически. Они появятся в поле ввода сообщения для вашего просмотра и ручной отправки.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
             />
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
       {/* Настройки воронок */}
       <Card>
@@ -305,137 +366,166 @@ export function AgentBasicsForm({ agent, tenantId }: AgentBasicsFormProps) {
         </CardContent>
       </Card>
 
-      {/* Каналы */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+        {/* Каналы */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Каналы</CardTitle>
+                <p className="mt-1 text-sm text-gray-500">
+                  Выберите каналы, в которых агент может отвечать
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleSyncCRM}
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Синхронизировать настройки CRM
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <FormField
+              control={form.control}
+              name="allChannels"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between">
+                  <FormLabel>Все каналы</FormLabel>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            {!form.watch('allChannels') && (
+              <div className="space-y-2">
+                <Label htmlFor="channels-select">
+                  Выбрать каналы <span className="text-rose-500">*</span>
+                </Label>
+                <Input
+                  id="channels-select"
+                  placeholder="Выбрать вариант"
+                  readOnly
+                />
+                <p className="text-xs text-gray-500">
+                  Множественный выбор каналов будет реализован в Phase 12
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* База знаний */}
+        <Card>
+          <CardHeader>
+            <CardTitle>База знаний</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <FormField
+              control={form.control}
+              name="allCategories"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between">
+                  <FormLabel>Разрешить доступ ко всем категориям</FormLabel>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            {!form.watch('allCategories') && (
+              <div className="space-y-2">
+                <Label htmlFor="categories-select">
+                  Выбрать категории <span className="text-rose-500">*</span>
+                </Label>
+                <Input
+                  id="categories-select"
+                  placeholder="Выбрать вариант"
+                  readOnly
+                />
+                <p className="text-xs text-gray-500">
+                  Агент будет получать доступ к знаниям только из этих категорий
+                </p>
+              </div>
+            )}
+
+            <FormField
+              control={form.control}
+              name="createTaskIfNoAnswer"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <FormLabel>Создать задачу, если ответ не найден</FormLabel>
+                    <FormDescription>
+                      Автоматически создавать задачу в сделке CRM, если в базе знаний не найдена релевантная информация
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="noAnswerMessage"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Сообщение при отсутствии ответа</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="У меня недостаточно информации, чтобы ответить на этот вопрос. Я уточню детали и вернусь к вам."
+                      rows={3}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Это сообщение будет показано, когда агент не сможет найти релевантную информацию в базе знаний.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div>
-              <CardTitle>Каналы</CardTitle>
-              <p className="mt-1 text-sm text-gray-500">
-                Выберите каналы, в которых агент может отвечать
-              </p>
+              <Link
+                href={`/manage/${tenantId}/knowledge-items`}
+                className="text-sm font-medium text-primary hover:underline"
+              >
+                Открыть базу знаний →
+              </Link>
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleSyncCRM}
-            >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Синхронизировать настройки CRM
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="all-channels">Все каналы</Label>
-            <Switch
-              id="all-channels"
-              checked={allChannels}
-              onCheckedChange={setAllChannels}
-            />
-          </div>
-          {!allChannels && (
-            <div className="space-y-2">
-              <Label htmlFor="channels-select">
-                Выбрать каналы <span className="text-rose-500">*</span>
-              </Label>
-              <Input
-                id="channels-select"
-                placeholder="Выбрать вариант"
-                readOnly
-              />
-              <p className="text-xs text-gray-500">
-                Множественный выбор каналов будет реализован в Phase 12
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* База знаний */}
-      <Card>
-        <CardHeader>
-          <CardTitle>База знаний</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="all-categories">Разрешить доступ ко всем категориям</Label>
-            <Switch
-              id="all-categories"
-              checked={allCategories}
-              onCheckedChange={setAllCategories}
-            />
-          </div>
-          {!allCategories && (
-            <div className="space-y-2">
-              <Label htmlFor="categories-select">
-                Выбрать категории <span className="text-rose-500">*</span>
-              </Label>
-              <Input
-                id="categories-select"
-                placeholder="Выбрать вариант"
-                readOnly
-              />
-              <p className="text-xs text-gray-500">
-                Агент будет получать доступ к знаниям только из этих категорий
-              </p>
-            </div>
-          )}
-
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <Label htmlFor="create-task">Создать задачу, если ответ не найден</Label>
-              <p className="text-xs text-gray-500">
-                Автоматически создавать задачу в сделке CRM, если в базе знаний не найдена релевантная информация
-              </p>
-            </div>
-            <Switch
-              id="create-task"
-              checked={createTaskIfNoAnswer}
-              onCheckedChange={setCreateTaskIfNoAnswer}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="no-answer-message">Сообщение при отсутствии ответа</Label>
-            <Textarea
-              id="no-answer-message"
-              value={noAnswerMessage}
-              onChange={(e) => setNoAnswerMessage(e.target.value)}
-              placeholder="У меня недостаточно информации, чтобы ответить на этот вопрос. Я уточню детали и вернусь к вам."
-              rows={3}
-            />
-            <p className="text-xs text-gray-500">
-              Это сообщение будет показано, когда агент не сможет найти релевантную информацию в базе знаний.
-            </p>
-          </div>
-
-          <div>
-            <Link
-              href={`/manage/${tenantId}/knowledge-items`}
-              className="text-sm font-medium text-primary hover:underline"
-            >
-              Открыть базу знаний →
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Кнопки действий */}
-      <div className="flex items-center gap-3">
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Сохранение...' : 'Сохранить'}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleCancel}
-          disabled={isSubmitting}
-        >
-          Отмена
-        </Button>
-      </div>
-    </form>
+        {/* Кнопки действий */}
+        <div className="flex items-center gap-3">
+          <Button type="submit" disabled={form.formState.isSubmitting}>
+            {form.formState.isSubmitting ? 'Сохранение...' : 'Сохранить'}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            disabled={form.formState.isSubmitting}
+          >
+            Отмена
+          </Button>
+        </div>
+      </form>
+    </Form>
   )
 }
