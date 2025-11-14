@@ -4,6 +4,7 @@ import { ManageSidebar } from '@/components/layout/ManageSidebar'
 import { ManageHeader } from '@/components/layout/ManageHeader'
 import { TenantProvider } from '@/components/providers/TenantProvider'
 import { ProductAnalyticsProvider } from '@/components/providers/ProductAnalyticsProvider'
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { auth } from '@/auth'
 import { getOrganizationById } from '@/lib/repositories/organizations'
 
@@ -29,15 +30,15 @@ export default async function ManageTenantLayout({ children, params }: ManageTen
   return (
     <TenantProvider value={tenantContextValue}>
       <ProductAnalyticsProvider context="app">
-        <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-50">
-          <div className="flex min-h-screen">
+        <SidebarProvider defaultOpen={true}>
+          <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-50">
             <ManageSidebar />
-            <div className="flex flex-1 flex-col">
+            <SidebarInset>
               <ManageHeader />
               <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-8">{children}</main>
-            </div>
+            </SidebarInset>
           </div>
-        </div>
+        </SidebarProvider>
       </ProductAnalyticsProvider>
     </TenantProvider>
   )
