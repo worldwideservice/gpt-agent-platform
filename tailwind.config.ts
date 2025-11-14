@@ -11,6 +11,12 @@ import {
   shadowTokens,
   fontSizeTokens,
   fontWeightTokens,
+  lineHeightTokens,
+  durationTokens,
+  easingTokens,
+  zIndexTokens,
+  breakpointTokens,
+  sizeTokens,
 } from './design-tokens'
 
 const config: Config = {
@@ -22,6 +28,7 @@ const config: Config = {
  './lib/**/*.{js,ts,jsx,tsx,mdx}',
  ],
   theme: {
+    screens: breakpointTokens,
     extend: {
       colors: {
         ...basePalette,
@@ -35,6 +42,12 @@ const config: Config = {
       fontFamily: fontTokens,
       fontSize: fontSizeTokens,
       fontWeight: fontWeightTokens,
+      lineHeight: lineHeightTokens,
+      transitionDuration: durationTokens,
+      transitionTimingFunction: easingTokens,
+      zIndex: zIndexTokens,
+      width: sizeTokens,
+      height: sizeTokens,
       keyframes: {
         'accordion-down': {
           from: {
@@ -60,11 +73,49 @@ const config: Config = {
             backgroundPosition: '350% 50%, 350% 50%',
           },
         },
+        fadeIn: {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+        slideIn: {
+          from: {
+            opacity: '0',
+            transform: 'translateY(-8px)',
+          },
+          to: {
+            opacity: '1',
+            transform: 'translateY(0)',
+          },
+        },
+        scaleIn: {
+          from: {
+            opacity: '0',
+            transform: 'scale(0.95)',
+          },
+          to: {
+            opacity: '1',
+            transform: 'scale(1)',
+          },
+        },
+        slideInRight: {
+          from: {
+            opacity: '0',
+            transform: 'translateX(100%)',
+          },
+          to: {
+            opacity: '1',
+            transform: 'translateX(0)',
+          },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         aurora: 'aurora 60s linear infinite',
+        'fade-in': 'fadeIn 200ms ease-out',
+        'slide-in': 'slideIn 200ms ease-out',
+        'scale-in': 'scaleIn 200ms ease-out',
+        'slide-in-right': 'slideInRight 300ms ease-out',
       },
     },
   },
