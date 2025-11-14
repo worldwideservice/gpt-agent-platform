@@ -1,6 +1,7 @@
 'use client'
 
 import { TestChatPanel } from '@/components/features/chat/TestChatPanel'
+import { PageBreadcrumbs } from '@/components/layout/PageBreadcrumbs'
 
 interface TestChatPageProps {
   params: {
@@ -11,6 +12,8 @@ interface TestChatPageProps {
 export default function TestChatPage({ params }: TestChatPageProps) {
   return (
     <div className="space-y-6">
+      <PageBreadcrumbs />
+
       <header>
         <p className="text-sm uppercase text-primary">Тестирование</p>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Тестовый чат</h1>

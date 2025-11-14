@@ -9,6 +9,7 @@ import { WebhookActivityCard } from '@/components/features/manage/WebhookActivit
 import { DashboardMetricsClient } from '@/components/features/dashboard/DashboardMetricsClient'
 import { DashboardChartsClient } from '@/components/features/dashboard/DashboardChartsClient'
 import { loadManageDashboardData } from '@/lib/repositories/manage-data'
+import { PageBreadcrumbs } from '@/components/layout/PageBreadcrumbs'
 
 interface DashboardPageProps {
   params: {
@@ -23,6 +24,8 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
 
   return (
     <div className="space-y-8">
+      <PageBreadcrumbs />
+
       <header className="flex flex-col gap-2">
         <p className="text-sm uppercase text-primary">{t('header.eyebrow')}</p>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">{t('header.title')}</h1>

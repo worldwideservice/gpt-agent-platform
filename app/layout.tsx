@@ -6,6 +6,7 @@ import { ProductAnalyticsProvider } from '@/components/providers/ProductAnalytic
 import { QueryClientProvider } from '@/components/providers/QueryClientProvider'
 import { ToastProvider } from '@/components/ui/toast-context'
 import { ThemeProvider } from '@/lib/providers/theme-provider'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 import './globals.css'
 
@@ -120,7 +121,9 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
           <QueryClientProvider>
             <SessionProviderWrapper>
               <ProductAnalyticsProvider context="public">
-                <ToastProvider>{children}</ToastProvider>
+                <ToastProvider>
+                  <ErrorBoundary>{children}</ErrorBoundary>
+                </ToastProvider>
               </ProductAnalyticsProvider>
             </SessionProviderWrapper>
           </QueryClientProvider>
