@@ -12,14 +12,50 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useDeleteIntegration } from '@/lib/hooks'
 
+/**
+ * Props for the DeleteIntegrationDialog component
+ */
 interface DeleteIntegrationDialogProps {
+  /** Whether the dialog is currently open */
   isOpen: boolean
+  /** Callback to close the dialog */
   onClose: () => void
+  /** ID of the integration to delete */
   integrationId: string
+  /** Display name of the integration (shown in confirmation message) */
   integrationName: string
+  /** ID of the agent this integration belongs to */
   agentId: string
 }
 
+/**
+ * Confirmation dialog for deleting an integration
+ *
+ * Displays a warning message and requires user confirmation before deleting
+ * the integration. Uses a destructive action style (red button) to indicate
+ * the irreversible nature of the action.
+ *
+ * Features:
+ * - Clear warning about irreversible action
+ * - Disabled buttons during deletion (prevents double-clicks)
+ * - Automatic dialog close on successful deletion
+ * - Toast notification via useDeleteIntegration hook
+ *
+ * @component
+ * @example
+ * ```tsx
+ * const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+ * const [toDelete, setToDelete] = useState(null)
+ *
+ * <DeleteIntegrationDialog
+ *   isOpen={isDeleteOpen}
+ *   onClose={() => setIsDeleteOpen(false)}
+ *   integrationId={toDelete.id}
+ *   integrationName={toDelete.name}
+ *   agentId={agent.id}
+ * />
+ * ```
+ */
 export function DeleteIntegrationDialog({
   isOpen,
   onClose,

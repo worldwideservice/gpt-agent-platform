@@ -5,14 +5,41 @@ import { useSearchParams } from 'next/navigation'
 import { useToast } from '@/components/ui'
 import { AgentIntegrationsTable } from './AgentIntegrationsTable'
 
+/**
+ * Props for the AgentIntegrationsTableWrapper component
+ */
 interface AgentIntegrationsTableWrapperProps {
+  /** Agent object with id and name */
   agent: {
     id: string
     name: string
   }
+  /** Tenant/organization ID */
   tenantId: string
 }
 
+/**
+ * Client component wrapper for AgentIntegrationsTable
+ *
+ * Handles OAuth callback success notifications by reading query parameters
+ * from the URL after a successful OAuth redirect. Shows a success toast and
+ * cleans up the URL to prevent notification on page refresh.
+ *
+ * This component is necessary because:
+ * - AgentIntegrationsPage is a server component (can't use hooks)
+ * - We need client-side hooks (useSearchParams, useToast) for notifications
+ * - We want to clean up URL parameters after showing the notification
+ *
+ * @component
+ * @example
+ * ```tsx
+ * // In server component (AgentIntegrationsPage.tsx)
+ * export async function AgentIntegrationsPage({ tenantId, agentId }) {
+ *   const agent = await getAgentById(agentId)
+ *   return <AgentIntegrationsTableWrapper agent={agent} tenantId={tenantId} />
+ * }
+ * ```
+ */
 export function AgentIntegrationsTableWrapper({
   agent,
   tenantId,

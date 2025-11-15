@@ -15,14 +15,50 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useInstallIntegration } from '@/lib/hooks'
 
+/**
+ * Props for the InstallIntegrationModal component
+ */
 interface InstallIntegrationModalProps {
+  /** Whether the modal is currently open */
   isOpen: boolean
+  /** Callback to close the modal */
   onClose: () => void
+  /** ID of the integration to install (e.g., 'kommo', 'telegram') */
   integrationId: string
+  /** Display name of the integration */
   integrationName: string
+  /** ID of the agent to install the integration for */
   agentId: string
 }
 
+/**
+ * Modal dialog for installing integrations with OAuth or manual setup
+ *
+ * Provides two installation methods:
+ * 1. OAuth (recommended): Secure OAuth 2.0 flow with automatic credential exchange
+ * 2. Manual: Direct input of Client ID and Client Secret
+ *
+ * Features:
+ * - Kommo subdomain input for OAuth flow
+ * - Validation and error handling
+ * - Loading states during OAuth redirect
+ * - Automatic redirect to integration provider for authorization
+ *
+ * @component
+ * @example
+ * ```tsx
+ * const [isOpen, setIsOpen] = useState(false)
+ * const [selectedIntegration, setSelectedIntegration] = useState(null)
+ *
+ * <InstallIntegrationModal
+ *   isOpen={isOpen}
+ *   onClose={() => setIsOpen(false)}
+ *   integrationId={selectedIntegration.id}
+ *   integrationName={selectedIntegration.name}
+ *   agentId={agent.id}
+ * />
+ * ```
+ */
 export function InstallIntegrationModal({
   isOpen,
   onClose,
@@ -38,6 +74,9 @@ export function InstallIntegrationModal({
 
   const { mutate: installIntegration, isPending } = useInstallIntegration(agentId)
 
+  /**
+   * Handles manual installation with Client ID and Client Secret
+   */
   const handleInstall = () => {
     installIntegration(integrationId, {
       onSuccess: () => {
@@ -48,6 +87,17 @@ export function InstallIntegrationModal({
     })
   }
 
+  /**
+   * Initiates OAuth 2.0 authorization flow
+   *
+   * Steps:
+   * 1. Validates baseDomain input
+   * 2. Calls OAuth start endpoint to generate authorization URL
+   * 3. Stores agentId and tenantId in cookies
+   * 4. Redirects user to integration provider's authorization page
+   * 5. On success, provider redirects back to callback URL
+   * 6. Callback creates integration record and redirects to integrations page
+   */
   const handleOAuthInstall = async () => {
     if (!baseDomain.trim()) {
       setOauthError('Введите поддомен Kommo')
