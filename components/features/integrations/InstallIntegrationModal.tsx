@@ -32,6 +32,9 @@ export function InstallIntegrationModal({
 }: InstallIntegrationModalProps) {
   const [clientId, setClientId] = useState('')
   const [clientSecret, setClientSecret] = useState('')
+  const [baseDomain, setBaseDomain] = useState('')
+  const [isOAuthLoading, setIsOAuthLoading] = useState(false)
+  const [oauthError, setOauthError] = useState<string | null>(null)
 
   const { mutate: installIntegration, isPending } = useInstallIntegration(agentId)
 
@@ -45,10 +48,43 @@ export function InstallIntegrationModal({
     })
   }
 
-  const handleOAuthInstall = () => {
-    // TODO: Redirect to OAuth URL
-    console.log('OAuth install for', integrationId)
-    // window.location.href = `/api/integrations/${integrationId}/oauth/authorize?agent_id=${agentId}`
+  const handleOAuthInstall = async () => {
+    if (!baseDomain.trim()) {
+      setOauthError('Введите поддомен Kommo')
+      return
+    }
+
+    setIsOAuthLoading(true)
+    setOauthError(null)
+
+    try {
+      // Get current tenant ID from URL
+      const pathParts = window.location.pathname.split('/')
+      const tenantId = pathParts[2] // /manage/[tenantId]/...
+
+      const response = await fetch(`/api/agents/${agentId}/integrations/kommo/oauth/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          baseDomain: baseDomain.trim(),
+          tenantId,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success && data.authUrl) {
+        // Redirect to Kommo OAuth
+        window.location.href = data.authUrl
+      } else {
+        setOauthError(data.error || 'Не удалось запустить OAuth авторизацию')
+        setIsOAuthLoading(false)
+      }
+    } catch (error) {
+      console.error('OAuth start error:', error)
+      setOauthError('Произошла ошибка при запуске OAuth авторизации')
+      setIsOAuthLoading(false)
+    }
   }
 
   return (
@@ -68,18 +104,45 @@ export function InstallIntegrationModal({
           </TabsList>
 
           <TabsContent value="oauth" className="space-y-4">
-            <div className="space-y-2">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Безопасный способ подключения через OAuth 2.0. Вы будете перенаправлены на страницу {integrationName} для авторизации.
-              </p>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Безопасный способ подключения через OAuth 2.0. Вы будете перенаправлены на страницу{' '}
+                  {integrationName} для авторизации.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="baseDomain">Поддомен Kommo</Label>
+                <Input
+                  id="baseDomain"
+                  placeholder="example (без .kommo.com)"
+                  value={baseDomain}
+                  onChange={(e) => {
+                    setBaseDomain(e.target.value)
+                    setOauthError(null)
+                  }}
+                  disabled={isOAuthLoading}
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Введите поддомен вашего аккаунта Kommo (например, если ваш адрес example.kommo.com,
+                  введите &quot;example&quot;)
+                </p>
+              </div>
+
+              {oauthError && (
+                <div className="rounded-md bg-red-50 p-3 dark:bg-red-900/20">
+                  <p className="text-sm text-red-800 dark:text-red-400">{oauthError}</p>
+                </div>
+              )}
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={onClose} disabled={isPending}>
+              <Button variant="outline" onClick={onClose} disabled={isOAuthLoading}>
                 Отмена
               </Button>
-              <Button onClick={handleOAuthInstall} disabled={isPending}>
-                Подключить через OAuth
+              <Button onClick={handleOAuthInstall} disabled={isOAuthLoading || !baseDomain.trim()}>
+                {isOAuthLoading ? 'Перенаправление...' : 'Подключить через OAuth'}
               </Button>
             </DialogFooter>
           </TabsContent>

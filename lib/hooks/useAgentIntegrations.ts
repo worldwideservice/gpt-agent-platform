@@ -177,7 +177,7 @@ export function useDeleteIntegration(agentId: string) {
         description: 'Интеграция удалена',
       })
     },
-    onError: (error: Error) {
+    onError: (error: Error) => {
       toast({
         title: 'Ошибка',
         description: error.message || 'Не удалось удалить интеграцию',
