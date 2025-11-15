@@ -7,13 +7,11 @@ import {
   BreadcrumbLink,
   BreadcrumbPage,
   BreadcrumbSeparator,
-  Tabs,
-  TabsList,
-  TabsTrigger,
 } from '@/components/ui'
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import { AgentDeleteButton } from '@/components/features/agents/AgentDeleteButton'
+import { AgentEditTabs } from '@/components/features/agents/AgentEditTabs'
 
 interface AgentEditLayoutProps {
   children: React.ReactNode
@@ -70,19 +68,7 @@ export default async function AgentEditLayout({ children, params }: AgentEditLay
       </header>
 
       {/* Tabs Navigation */}
-      <div className="border-b border-gray-200 dark:border-gray-800">
-        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-          {tabs.map((tab) => (
-            <Link
-              key={tab.id}
-              href={tab.href}
-              className="whitespace-nowrap border-b-2 border-transparent px-1 py-4 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-300"
-            >
-              {tab.label}
-            </Link>
-          ))}
-        </nav>
-      </div>
+      <AgentEditTabs tabs={tabs} />
 
       {/* Tab Content */}
       <div>{children}</div>
