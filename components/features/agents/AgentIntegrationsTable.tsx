@@ -57,11 +57,12 @@ export function AgentIntegrationsTable({ agent, tenantId }: AgentIntegrationsTab
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Поиск"
           disabled={isLoading}
+          data-testid="integrations-search"
         />
 
         {/* Состояние загрузки */}
         {isLoading && (
-          <div className="flex items-center justify-center py-8">
+          <div className="flex items-center justify-center py-8" data-testid="loader">
             <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
           </div>
         )}
@@ -77,13 +78,14 @@ export function AgentIntegrationsTable({ agent, tenantId }: AgentIntegrationsTab
               onClick: () => window.location.reload(),
               variant: 'secondary',
             }}
+            data-testid="error-state"
           />
         )}
 
         {/* Таблица интеграций */}
         {!isLoading && !error && filteredIntegrations.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
+            <table className="min-w-full text-sm" data-testid="integrations-table">
               <thead className="text-left text-xs uppercase text-gray-500">
                 <tr>
                   <th className="p-2 font-medium">Интеграция</th>
@@ -97,7 +99,7 @@ export function AgentIntegrationsTable({ agent, tenantId }: AgentIntegrationsTab
                   const settingsUrl = integration.settingsUrl.replace('[tenantId]', tenantId)
 
                   return (
-                    <tr key={integration.id}>
+                    <tr key={integration.id} data-testid={`integration-row-${integration.id}`}>
                       <td className="p-2 font-medium text-gray-900 dark:text-gray-50">
                         {integration.installed ? (
                           <Link href={settingsUrl} className="hover:underline">
@@ -109,21 +111,21 @@ export function AgentIntegrationsTable({ agent, tenantId }: AgentIntegrationsTab
                       </td>
                       <td className="p-2">
                         {integration.installed ? (
-                          <Check className="h-5 w-5 text-green-500" />
+                          <Check className="h-5 w-5 text-green-500" data-testid="installed-check" />
                         ) : (
-                          <X className="h-5 w-5 text-gray-400" />
+                          <X className="h-5 w-5 text-gray-400" data-testid="not-installed-x" />
                         )}
                       </td>
                       <td className="p-2">
                         {integration.active ? (
-                          <Check className="h-5 w-5 text-green-500" />
+                          <Check className="h-5 w-5 text-green-500" data-testid="active-check" />
                         ) : (
-                          <X className="h-5 w-5 text-gray-400" />
+                          <X className="h-5 w-5 text-gray-400" data-testid="not-active-x" />
                         )}
                       </td>
                       <td className="p-2">
                         {integration.installed ? (
-                          <Button asChild variant="ghost" size="sm">
+                          <Button asChild variant="ghost" size="sm" data-testid="settings-button">
                             <Link href={settingsUrl}>
                               <Settings className="mr-2 h-4 w-4" />
                               Настройки
@@ -134,6 +136,7 @@ export function AgentIntegrationsTable({ agent, tenantId }: AgentIntegrationsTab
                             variant="outline"
                             size="sm"
                             onClick={() => handleInstallClick(integration.id, integration.name)}
+                            data-testid="install-button"
                           >
                             Установить
                           </Button>
@@ -158,6 +161,7 @@ export function AgentIntegrationsTable({ agent, tenantId }: AgentIntegrationsTab
               onClick: () => setSearch(''),
               variant: 'secondary',
             }}
+            data-testid="empty-state"
           />
         )}
       </CardContent>
