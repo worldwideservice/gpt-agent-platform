@@ -145,4 +145,5 @@ sentry-page-content.html
 !public/**/*.png
 
 # MCP Configuration (contains secret tokens)
-.claude/mcp_config.json
+.claude/
+.mcp.json
