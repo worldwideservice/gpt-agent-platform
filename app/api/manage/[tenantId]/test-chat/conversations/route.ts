@@ -5,6 +5,7 @@ import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { logger } from '@/lib/utils/logger'
 import { validateRequest } from '@/lib/validation/validate'
 import { createTestConversationSchema } from '@/lib/validation/schemas/test-chat'
+import { rateLimitAPI } from '@/lib/middleware/rate-limit-api'
 
 /**
  * GET /api/manage/[tenantId]/test-chat/conversations
@@ -25,6 +26,10 @@ export async function GET(
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // Rate limiting
+    const rateLimitResponse = await rateLimitAPI(request, session.user.id)
+    if (rateLimitResponse) return rateLimitResponse
 
     const userId = session.user.id
     const { tenantId } = params
