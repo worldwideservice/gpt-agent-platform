@@ -148,6 +148,10 @@ export function AgentsTable({
     onStatusChange?.(statusFilter)
   }, [statusFilter, onStatusChange])
 
+  /**
+   * Задача 4.1: Advanced Filters для агентов
+   * Обновлена функция fetchAgents для поддержки фильтров по модели и дате
+   */
   const fetchAgents = useCallback(
     async (params?: { searchQuery?: string; status?: StatusFilter }) => {
       setLoading(true)
@@ -155,11 +159,28 @@ export function AgentsTable({
 
       try {
         const query = new URLSearchParams()
+
+        // Базовые фильтры
         if (params?.searchQuery) {
           query.set('search', params.searchQuery)
         }
         if (params?.status && params.status !== 'all') {
           query.set('status', params.status)
+        }
+
+        // Задача 4.1: Добавляем новые фильтры из URL
+        const model = searchParams.get('model')
+        const dateFrom = searchParams.get('dateFrom')
+        const dateTo = searchParams.get('dateTo')
+
+        if (model) {
+          query.set('model', model)
+        }
+        if (dateFrom) {
+          query.set('dateFrom', dateFrom)
+        }
+        if (dateTo) {
+          query.set('dateTo', dateTo)
         }
 
         const response = await fetch(`/api/agents${query.toString() ? `?${query.toString()}` : ''}`, {
@@ -176,7 +197,7 @@ export function AgentsTable({
         setLoading(false)
       }
     },
-    [],
+    [searchParams],
   )
 
   useEffect(() => {
@@ -187,6 +208,10 @@ export function AgentsTable({
     }
   }, [initialAgents, initialError, fetchAgents])
 
+  /**
+   * Задача 4.1: Advanced Filters для агентов
+   * Добавлены новые фильтры в dependency array
+   */
   useEffect(() => {
     if (!filtersReadyRef.current) {
       filtersReadyRef.current = true
@@ -198,7 +223,7 @@ export function AgentsTable({
     }, 400)
 
     return () => clearTimeout(handle)
-  }, [search, statusFilter, fetchAgents])
+  }, [search, statusFilter, fetchAgents, searchParams])
 
   // Handle sorting column click
   const handleSort = (column: SortColumn) => {

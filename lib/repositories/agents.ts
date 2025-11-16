@@ -17,12 +17,19 @@ const isDemoEnvironment = () =>
   matchesDemoFlag(process.env.E2E_ONBOARDING_FAKE) ||
   matchesDemoFlag(process.env.PLAYWRIGHT_DEMO_MODE)
 
-interface AgentListParams {
+/**
+ * Задача 4.1: Advanced Filters для агентов
+ * Добавлены фильтры по модели и дате создания
+ */
+export interface AgentListParams {
   organizationId: string
   search?: string
   status?: Agent['status']
   page?: number
   limit?: number
+  model?: string
+  dateFrom?: Date
+  dateTo?: Date
 }
 
 interface AgentListResult {
@@ -163,6 +170,19 @@ export const getAgents = async (params: AgentListParams): Promise<AgentListResul
 
  if (params.search) {
  query = query.ilike('name', `%${params.search}%`)
+ }
+
+ // Задача 4.1: Advanced Filters
+ if (params.model) {
+ query = query.eq('default_model', params.model)
+ }
+
+ if (params.dateFrom) {
+ query = query.gte('created_at', params.dateFrom.toISOString())
+ }
+
+ if (params.dateTo) {
+ query = query.lte('created_at', params.dateTo.toISOString())
  }
 
  const { data, count, error } = await query.range(from, to)

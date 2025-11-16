@@ -3,6 +3,7 @@
 import { useState } from 'react'
 
 import { AgentsStatusFilters } from '@/components/features/manage/AgentsStatusFilters'
+import { AgentsTableFilters } from '@/components/features/agents/AgentsTableFilters'
 import { AgentsTable } from '@/components/features/agents/AgentsTable'
 import type { AgentListItem } from '@/components/features/agents/AgentsTable'
 import type { WorkspaceSummary } from '@/lib/repositories/manage-summary'
@@ -16,6 +17,10 @@ interface AgentsDashboardSectionProps {
   summary: WorkspaceSummary
 }
 
+/**
+ * Задача 4.1: Advanced Filters для агентов
+ * Добавлен компонент AgentsTableFilters для расширенной фильтрации
+ */
 export function AgentsDashboardSection({
   tenantId,
   initialAgents,
@@ -27,6 +32,8 @@ export function AgentsDashboardSection({
   return (
     <div className="space-y-4">
       <AgentsStatusFilters summary={summary} activeFilter={statusFilter} onFilterChange={setStatusFilter} />
+      {/* Задача 4.1: Расширенные фильтры */}
+      <AgentsTableFilters />
       <AgentsTable
         tenantId={tenantId}
         initialAgents={initialAgents}
