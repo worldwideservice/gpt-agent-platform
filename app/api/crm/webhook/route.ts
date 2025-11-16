@@ -4,11 +4,12 @@ import { KommoAPI } from '@/lib/crm/kommo'
 import { saveWebhookEvent, processWebhookEvent, extractWebhookMetadata } from '@/lib/services/webhook-processor'
 import { getCrmConnectionData } from '@/lib/repositories/crm-connection'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { rateLimitWebhook } from '@/lib/middleware/rate-limit-api'
 
 /**
  * Webhook endpoint для получения событий от Kommo CRM
  * Настройка в Kommo: Настройки -> Интеграции -> Webhooks
- * 
+ *
  * Полностью обрабатывает все типы событий: leads, contacts, tasks, messages, calls
  * Автоматически запускает Rule Engine при соответствующих событиях
  * Сохраняет историю всех событий с поддержкой retry
@@ -16,6 +17,10 @@ import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
 export async function POST(request: NextRequest) {
  try {
+ // Apply webhook rate limiting (identify by source if possible)
+ const rateLimitResponse = await rateLimitWebhook(request, 'kommo')
+ if (rateLimitResponse) return rateLimitResponse
+
  const body = await request.json()
 
  // Проверка подписи webhook (если настроена)
