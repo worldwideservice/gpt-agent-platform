@@ -5,9 +5,13 @@ import { auth } from '@/auth'
 import { createErrorResponse } from '@/lib/utils/error-handler'
 import { listAgents, createAgent as createAgentService } from '@/lib/services/agents'
 
+/**
+ * Задача 4.1: Advanced Filters для агентов
+ * Добавлены фильтры по модели и дате создания
+ */
 const querySchema = z.object({
  search: z.string().optional(),
- status: z.enum(['active', 'inactive', 'draft']).optional(),
+ status: z.enum(['active', 'inactive', 'draft', 'all']).optional(),
  page: z
  .string()
  .regex(/^\d+$/)
@@ -18,6 +22,9 @@ const querySchema = z.object({
  .regex(/^\d+$/)
  .transform((value) => Number.parseInt(value, 10))
  .optional(),
+ model: z.string().optional(),
+ dateFrom: z.string().optional(), // Будет преобразовано в Date
+ dateTo: z.string().optional(), // Будет преобразовано в Date
 })
 
 /**
@@ -225,11 +232,18 @@ export const GET = async (request: NextRequest) => {
  }
 
  try {
+    // Обработка дат для фильтрации (Задача 4.1)
+    const dateFrom = parsedParams.data.dateFrom ? new Date(parsedParams.data.dateFrom) : undefined
+    const dateTo = parsedParams.data.dateTo ? new Date(parsedParams.data.dateTo) : undefined
+
     const result = await listAgents(session.user.orgId, {
       page: parsedParams.data.page,
       limit: parsedParams.data.limit,
       search: parsedParams.data.search,
-      status: parsedParams.data.status,
+      status: parsedParams.data.status === 'all' ? undefined : parsedParams.data.status,
+      model: parsedParams.data.model,
+      dateFrom,
+      dateTo,
     })
 
  return NextResponse.json({

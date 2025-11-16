@@ -12,12 +12,19 @@ import {
 import type { Agent } from '@/types'
 import { logger } from '@/lib/utils/logger'
 
+/**
+ * Задача 4.1: Advanced Filters для агентов
+ * Добавлены фильтры по модели и дате создания
+ */
 const listAgentsSchema = z
   .object({
     search: z.string().max(200).optional(),
     status: z.enum(['active', 'inactive', 'draft']).optional(),
     page: z.number().int().min(1).optional(),
     limit: z.number().int().min(1).max(100).optional(),
+    model: z.string().max(200).optional(),
+    dateFrom: z.date().optional(),
+    dateTo: z.date().optional(),
   })
   .optional()
 
@@ -72,6 +79,9 @@ export const listAgents = async (
       status: parsed?.status,
       page: parsed?.page,
       limit: parsed?.limit,
+      model: parsed?.model,
+      dateFrom: parsed?.dateFrom,
+      dateTo: parsed?.dateTo,
     })
   } catch (error) {
     logger.error('AgentsService.listAgents failed', { error, organizationId })

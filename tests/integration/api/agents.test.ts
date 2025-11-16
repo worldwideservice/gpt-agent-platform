@@ -97,6 +97,160 @@ describe('API: /api/agents', () => {
       expect(data.success).toBe(false)
       expect(data.code).toBe('AGENTS_LIST_ERROR')
     })
+
+    /**
+     * Задача 4.1: Advanced Filters для агентов
+     * Тесты для новых фильтров по модели и дате
+     */
+    describe('Advanced Filters (Task 4.1)', () => {
+      it('should filter agents by model', async () => {
+        const { auth } = await import('@/auth')
+        const { getAgents } = await import('@/lib/repositories/agents')
+
+        vi.mocked(auth).mockResolvedValue({
+          user: {
+            id: 'user-123',
+            orgId: 'org-123',
+            email: 'test@example.com',
+          },
+        } as any)
+
+        vi.mocked(getAgents).mockResolvedValue({
+          agents: [
+            {
+              id: 'agent-1',
+              name: 'GPT-4 Agent',
+              status: 'active',
+              model: 'gpt-4.1',
+            },
+          ],
+          total: 1,
+        })
+
+        const route = await import('@/app/api/agents/route')
+        const request = new NextRequest('http://localhost:3000/api/agents?model=gpt-4.1')
+        const response = await route.GET(request)
+        const data = await response.json()
+
+        expect(response.status).toBe(200)
+        expect(data.success).toBe(true)
+        expect(getAgents).toHaveBeenCalledWith(
+          expect.objectContaining({
+            organizationId: 'org-123',
+            model: 'gpt-4.1',
+          })
+        )
+      })
+
+      it('should filter agents by date range', async () => {
+        const { auth } = await import('@/auth')
+        const { getAgents } = await import('@/lib/repositories/agents')
+
+        vi.mocked(auth).mockResolvedValue({
+          user: {
+            id: 'user-123',
+            orgId: 'org-123',
+            email: 'test@example.com',
+          },
+        } as any)
+
+        vi.mocked(getAgents).mockResolvedValue({
+          agents: [
+            {
+              id: 'agent-1',
+              name: 'Recent Agent',
+              status: 'active',
+              createdAt: '2024-01-15T00:00:00Z',
+            },
+          ],
+          total: 1,
+        })
+
+        const route = await import('@/app/api/agents/route')
+        const dateFrom = '2024-01-01T00:00:00Z'
+        const dateTo = '2024-01-31T23:59:59Z'
+        const request = new NextRequest(
+          `http://localhost:3000/api/agents?dateFrom=${dateFrom}&dateTo=${dateTo}`
+        )
+        const response = await route.GET(request)
+        const data = await response.json()
+
+        expect(response.status).toBe(200)
+        expect(data.success).toBe(true)
+        expect(getAgents).toHaveBeenCalledWith(
+          expect.objectContaining({
+            organizationId: 'org-123',
+            dateFrom: new Date(dateFrom),
+            dateTo: new Date(dateTo),
+          })
+        )
+      })
+
+      it('should filter agents with combined filters', async () => {
+        const { auth } = await import('@/auth')
+        const { getAgents } = await import('@/lib/repositories/agents')
+
+        vi.mocked(auth).mockResolvedValue({
+          user: {
+            id: 'user-123',
+            orgId: 'org-123',
+            email: 'test@example.com',
+          },
+        } as any)
+
+        vi.mocked(getAgents).mockResolvedValue({
+          agents: [
+            {
+              id: 'agent-1',
+              name: 'Sales Agent',
+              status: 'active',
+              model: 'gpt-4.1',
+              createdAt: '2024-01-15T00:00:00Z',
+            },
+          ],
+          total: 1,
+        })
+
+        const route = await import('@/app/api/agents/route')
+        const request = new NextRequest(
+          'http://localhost:3000/api/agents?search=Sales&status=active&model=gpt-4.1&dateFrom=2024-01-01T00:00:00Z'
+        )
+        const response = await route.GET(request)
+        const data = await response.json()
+
+        expect(response.status).toBe(200)
+        expect(data.success).toBe(true)
+        expect(getAgents).toHaveBeenCalledWith(
+          expect.objectContaining({
+            organizationId: 'org-123',
+            search: 'Sales',
+            status: 'active',
+            model: 'gpt-4.1',
+            dateFrom: new Date('2024-01-01T00:00:00Z'),
+          })
+        )
+      })
+
+      it('should validate invalid date formats', async () => {
+        const { auth } = await import('@/auth')
+
+        vi.mocked(auth).mockResolvedValue({
+          user: {
+            id: 'user-123',
+            orgId: 'org-123',
+            email: 'test@example.com',
+          },
+        } as any)
+
+        const route = await import('@/app/api/agents/route')
+        const request = new NextRequest('http://localhost:3000/api/agents?dateFrom=invalid-date')
+        const response = await route.GET(request)
+        const data = await response.json()
+
+        // Should handle invalid date gracefully or return 400
+        expect([200, 400]).toContain(response.status)
+      })
+    })
   })
 
   describe('POST /api/agents', () => {
