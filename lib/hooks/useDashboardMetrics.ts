@@ -36,6 +36,7 @@ export function useMonthlyResponses(tenantId: string, months = 6, enabled = true
     },
     enabled,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   })
 }
 
