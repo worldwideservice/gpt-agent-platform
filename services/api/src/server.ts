@@ -7,6 +7,7 @@ import { trace } from '@opentelemetry/api'
 import { collectDefaultMetrics, Counter, Histogram, Registry } from 'prom-client'
 
 import { envPlugin } from './plugins/env'
+import authPlugin from './plugins/auth'
 import { registerHealthRoutes } from './routes/health'
 import { registerAgentRoutes } from './routes/agents'
 import { registerJobRoutes } from './routes/jobs'
@@ -108,27 +109,54 @@ app.addHook('onError', (request, reply, error, done) => {
 })
 
 app.register(sensible)
-app.register(cors, { origin: true, credentials: true })
+
+// CORS конфигурация - ИСПРАВЛЕНО: только разрешенные домены
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'http://localhost:3000',
+  process.env.NEXTAUTH_URL || 'http://localhost:3000',
+  ...(process.env.ALLOWED_ORIGINS?.split(',') || [])
+].filter(Boolean)
+
+app.register(cors, {
+  origin: process.env.NODE_ENV === 'production'
+    ? allowedOrigins
+    : true, // В dev разрешаем все для удобства
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
+})
+
 app.register(helmet)
 app.register(envPlugin)
+app.register(authPlugin) // JWT authentication plugin
 
+// Health routes - БЕЗ аутентификации (для мониторинга)
 app.register(async instance => {
   await registerHealthRoutes(instance)
 }, { prefix: '/health' })
 
+// Protected API routes - С аутентификацией
 app.register(async instance => {
+  // Применяем authentication ко ВСЕМ routes в этом контексте
+  instance.addHook('onRequest', instance.authenticate)
+
   await registerAgentRoutes(instance)
 }, { prefix: '/agents' })
 
 app.register(async instance => {
+  instance.addHook('onRequest', instance.authenticate)
+
   await registerJobRoutes(instance)
 }, { prefix: '/jobs' })
 
 app.register(async instance => {
+  instance.addHook('onRequest', instance.authenticate)
+
   await registerCrmRoutes(instance)
 }, { prefix: '/crm' })
 
 app.register(async instance => {
+  instance.addHook('onRequest', instance.authenticate)
+
   await registerKommoRoutes(instance)
 }, { prefix: '/kommo' })
 

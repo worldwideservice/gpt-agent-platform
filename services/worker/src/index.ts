@@ -220,3 +220,78 @@ logger.info('Worker started successfully', {
   concurrency: env.JOB_CONCURRENCY,
   event: 'worker.ready',
 })
+
+// ✅ CRITICAL FIX: Graceful shutdown для избежания потери jobs
+let isShuttingDown = false
+
+async function gracefulShutdown(signal: string) {
+  if (isShuttingDown) {
+    logger.warn('Shutdown already in progress, ignoring signal', { signal })
+    return
+  }
+
+  isShuttingDown = true
+  logger.info(`Received ${signal}, starting graceful shutdown...`, {
+    signal,
+    event: 'worker.shutdown.start',
+  })
+
+  try {
+    // Даем время для завершения текущих jobs
+    logger.info('Closing worker (waiting for active jobs to complete)...', {
+      event: 'worker.shutdown.closing',
+    })
+
+    // Закрываем worker (не принимаем новые jobs, ждем завершения текущих)
+    await worker.close()
+
+    logger.info('Worker closed successfully', {
+      event: 'worker.shutdown.closed',
+    })
+
+    // Закрываем Redis соединение
+    logger.info('Closing Redis connection...', {
+      event: 'worker.shutdown.redis.closing',
+    })
+
+    await connection.quit()
+
+    logger.info('Redis connection closed', {
+      event: 'worker.shutdown.redis.closed',
+    })
+
+    logger.info('Graceful shutdown completed', {
+      event: 'worker.shutdown.complete',
+    })
+
+    process.exit(0)
+  } catch (error) {
+    logger.error('Error during graceful shutdown', error, {
+      event: 'worker.shutdown.error',
+    })
+
+    // Принудительно завершаем процесс
+    process.exit(1)
+  }
+}
+
+// Обрабатываем сигналы завершения
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
+process.on('SIGINT', () => gracefulShutdown('SIGINT'))
+
+// Обрабатываем необработанные ошибки
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught exception', error, {
+    event: 'process.uncaughtException',
+  })
+  // Не завершаем процесс немедленно, позволяем graceful shutdown
+  gracefulShutdown('uncaughtException')
+})
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled rejection', reason as Error, {
+    event: 'process.unhandledRejection',
+    promise: String(promise),
+  })
+  // Не завершаем процесс немедленно
+})
