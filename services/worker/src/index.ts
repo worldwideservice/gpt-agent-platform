@@ -1,13 +1,14 @@
-import { Worker } from 'bullmq'
+import { Worker, Queue } from 'bullmq'
 import Redis from 'ioredis'
 
 import { getTaskHandlers } from './tasks'
 import { env } from './lib/env'
-import { startHealthServer, setRedisConnection } from './health'
+import { startHealthServer, setRedisConnection, setDLQ } from './health'
 import { metrics } from './metrics'
 import { initSentry, trackJob } from './lib/sentry'
 import { logger } from './lib/logger'
 import { setRedisClient as setSharedRedisClient } from '@/lib/cache'
+import { DeadLetterQueue } from './lib/dead-letter-queue'
 
 logger.info('Starting Worker service', {
   nodeVersion: process.version,
@@ -126,6 +127,15 @@ connection.on('reconnecting', () => {
 
 const handlers = getTaskHandlers()
 
+// ✅ CRITICAL FIX: Initialize Dead Letter Queue for failed jobs
+const dlq = new DeadLetterQueue(connection, `${env.JOB_QUEUE_NAME}:dlq`)
+
+// Share DLQ with health check
+setDLQ(dlq)
+
+// Create main queue instance for DLQ retry functionality
+const mainQueue = new Queue(env.JOB_QUEUE_NAME, { connection })
+
 const worker = new Worker(
   env.JOB_QUEUE_NAME,
   async (job) => {
@@ -174,6 +184,11 @@ const worker = new Worker(
     // Настройки для stalled jobs
     lockDuration: 30000, // 30 секунд на обработку job
     lockRenewTime: 15000, // Обновлять блокировку каждые 15 секунд
+    settings: {
+      // Максимум 3 попытки перед отправкой в DLQ
+      maxStalledCount: 1,
+      stalledInterval: 30000,
+    },
   },
 )
 
@@ -190,9 +205,27 @@ worker.on('completed', (job) => {
   metrics.jobCompleted(job.id || '', job.name)
 })
 
-worker.on('failed', (job, error) => {
+worker.on('failed', async (job, error) => {
   // Логирование уже выполнено в handler
   metrics.jobFailed(job?.id || '', job?.name || 'unknown', error)
+
+  // ✅ CRITICAL FIX: Move to DLQ after max retries
+  if (job) {
+    const attemptsMade = job.attemptsMade
+    const maxAttempts = job.opts.attempts || 3
+
+    if (attemptsMade >= maxAttempts) {
+      logger.warn('Job exceeded max retries, moving to DLQ', {
+        jobId: job.id,
+        jobName: job.name,
+        attemptsMade,
+        maxAttempts,
+        event: 'job.max_retries_exceeded',
+      })
+
+      await dlq.moveToDeadLetter(job, error, attemptsMade)
+    }
+  }
 })
 
 worker.on('stalled', (jobId) => {
@@ -247,6 +280,18 @@ async function gracefulShutdown(signal: string) {
 
     logger.info('Worker closed successfully', {
       event: 'worker.shutdown.closed',
+    })
+
+    // Закрываем DLQ
+    logger.info('Closing Dead Letter Queue...', {
+      event: 'worker.shutdown.dlq.closing',
+    })
+
+    await dlq.close()
+    await mainQueue.close()
+
+    logger.info('DLQ closed successfully', {
+      event: 'worker.shutdown.dlq.closed',
     })
 
     // Закрываем Redis соединение
