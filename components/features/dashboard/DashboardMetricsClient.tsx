@@ -14,7 +14,7 @@ type MetricConfig = {
   helper?: string
   value: number | null | undefined
   change?: number | null
-  icon: React.ReactNode
+  icon?: React.ReactNode
 }
 
 export function DashboardMetricsClient({ tenantId }: DashboardMetricsClientProps) {
@@ -38,29 +38,29 @@ export function DashboardMetricsClient({ tenantId }: DashboardMetricsClientProps
   const metrics: MetricConfig[] = [
     {
       key: 'monthlyResponses',
-      label: 'Ответы за месяц',
-      helper: 'Всего',
+      label: 'Ответы ИИ за этот месяц',
+      helper: 'к прошлому месяцу',
       value: stats.monthlyResponses,
       change: stats.monthlyChange,
     },
     {
       key: 'weeklyResponses',
-      label: 'Ответы за неделю',
+      label: 'Ответы ИИ за последние 7 дней',
       helper: 'Последние 7 дней',
       value: stats.weeklyResponses,
+      icon: <Calendar className="h-5 w-5 text-gray-400" />,
     },
     {
       key: 'todayResponses',
-      label: 'Ответы сегодня',
-      helper: 'За сегодня',
+      label: 'Ответы ИИ сегодня',
       value: stats.todayResponses,
-      change: stats.todayChange,
     },
     {
       key: 'activeAgents',
-      label: 'Активные агенты',
-      helper: 'Всего',
+      label: 'Агенты',
+      helper: 'Всего агентов',
       value: stats.totalAgents,
+      icon: <Bot className="h-5 w-5 text-gray-400" />,
     },
   ]
 
@@ -91,6 +91,7 @@ function StatsGrid({ metrics }: { metrics: MetricConfig[] }) {
           value={metric.value}
           change={metric.change}
           helper={metric.helper}
+          icon={metric.icon}
         />
       ))}
     </div>
@@ -102,26 +103,38 @@ function StatCard({
   value,
   change,
   helper,
+  icon,
 }: {
   label: string
   value: number | null | undefined
   change?: number | null
   helper?: string
+  icon?: React.ReactNode
 }) {
+  const isPositive = typeof change === 'number' && change > 0
+  const isNegative = typeof change === 'number' && change < 0
+
   return (
-    <Card>
+    <Card className="transition-shadow hover:shadow-md">
       <CardHeader className="pb-2">
-        <CardDescription>{label}</CardDescription>
-        <CardTitle className="text-3xl">{formatNumber(value)}</CardTitle>
+        <CardDescription className="flex items-center justify-between">
+          <span>{label}</span>
+          {icon && <span>{icon}</span>}
+        </CardDescription>
+        <CardTitle className="text-3xl font-bold">{formatNumber(value)}</CardTitle>
       </CardHeader>
       {(helper || typeof change === 'number') && (
-        <CardContent className="pt-0 text-xs text-gray-500">
+        <CardContent className="flex items-center gap-2 pt-0 text-xs">
           {typeof change === 'number' ? (
-            <span className={`font-semibold ${change >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
-              {formatChange(change)}
-            </span>
+            <div className={`flex items-center gap-1 font-semibold ${
+              isPositive ? 'text-emerald-600' : isNegative ? 'text-rose-500' : 'text-gray-500'
+            }`}>
+              {isPositive && <ArrowUp className="h-4 w-4" />}
+              {isNegative && <ArrowDown className="h-4 w-4" />}
+              <span>{formatChange(change)}</span>
+            </div>
           ) : null}
-          {helper ? <span className={typeof change === 'number' ? 'ml-2' : ''}>{helper}</span> : null}
+          {helper && <span className="text-gray-500">{helper}</span>}
         </CardContent>
       )}
     </Card>
