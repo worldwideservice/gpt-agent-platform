@@ -94,7 +94,21 @@ make dev-down
 
 - [Frontend Analysis Report](./docs/FRONTEND_ANALYSIS_REPORT.md) - Полный анализ текущего состояния фронтенда (65-70% готовности)
 - [Frontend Action Plan](./docs/FRONTEND_ACTION_PLAN.md) - Детальный план развития UI (8 недель, с примерами кода)
+- [Frontend Documentation Audit](./docs/FRONTEND_DOCUMENTATION_AUDIT.md) - Аудит документации и реальной готовности (95%)
 - [Design System](./docs/design-system.md) - Дизайн-система и токены
+
+### Claude Code & MCP Integration
+
+- [Web Version Setup](./.claude/WEB_VERSION_SETUP.md) - **Настройка для веб-версии Claude Code** (claude.ai)
+- [MCP Setup](./.claude/MCP_SETUP.md) - Общая документация по MCP серверам
+- [MCP Final Configuration](./.claude/MCP_FINAL_CONFIG.md) - Финальная конфигурация 7 серверов
+- [GitHub MCP Setup](./.claude/GITHUB_MCP_SETUP.md) - Настройка GitHub интеграции
+
+**Быстрый старт для веб-версии:**
+1. Откройте [claude.ai](https://claude.ai) → вкладка "Code"
+2. Подключите этот репозиторий
+3. MCP серверы загрузятся автоматически из `.mcp.json`
+4. Настройте токены в Settings → Integrations
 
 ### Референсная документация (KWID)
 
