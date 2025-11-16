@@ -23,6 +23,10 @@ dist/
 .env*.bak
 .env*.backup
 
+# ✅ SECURITY FIX: НЕ коммитить Vercel env файлы (содержат secrets!)
+.env.vercel
+.vercel/.env.*
+
 # IDE
 .vscode/
 .idea/
