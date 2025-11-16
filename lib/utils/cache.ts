@@ -186,12 +186,73 @@ export async function invalidateOrgCache(orgId: string): Promise<void> {
   try {
     const keys = await client.keys(`cache:agent:${orgId}:*`)
     const crmKeys = await client.keys(`cache:crm:${orgId}:*`)
-    
-    if (keys.length > 0 || crmKeys.length > 0) {
-      await client.del(...keys, ...crmKeys)
+    const dashboardKeys = await client.keys(`cache:dashboard:${orgId}:*`)
+    const agentsListKeys = await client.keys(`cache:agents-list:${orgId}:*`)
+
+    const allKeys = [...keys, ...crmKeys, ...dashboardKeys, ...agentsListKeys]
+    if (allKeys.length > 0) {
+      await client.del(...allKeys)
     }
   } catch (error) {
     logger.error('Failed to invalidate org cache', error, { orgId })
+  }
+}
+
+/**
+ * Задача 4.4: Кэширование dashboard stats
+ * TTL: 60 секунд (данные обновляются редко)
+ */
+export async function getCachedDashboardStats(orgId: string): Promise<any | null> {
+  return getCache(generateCacheKey('dashboard', orgId, 'stats'))
+}
+
+export async function setCachedDashboardStats(orgId: string, stats: any): Promise<void> {
+  // Короткий TTL для dashboard stats (60 секунд)
+  await setCache(generateCacheKey('dashboard', orgId, 'stats'), stats, 60)
+}
+
+/**
+ * Задача 4.4: Кэширование списка агентов
+ * TTL: 120 секунд для списков
+ */
+export async function getCachedAgentsList(orgId: string, filterKey: string): Promise<any | null> {
+  return getCache(generateCacheKey('agents-list', orgId, filterKey))
+}
+
+export async function setCachedAgentsList(orgId: string, filterKey: string, agents: any): Promise<void> {
+  // TTL 120 секунд для списков агентов
+  await setCache(generateCacheKey('agents-list', orgId, filterKey), agents, 120)
+}
+
+/**
+ * Задача 4.4: Кэширование activity metrics
+ * TTL: 180 секунд
+ */
+export async function getCachedActivityMetrics(orgId: string, type: string): Promise<any | null> {
+  return getCache(generateCacheKey('activity', orgId, type))
+}
+
+export async function setCachedActivityMetrics(orgId: string, type: string, data: any): Promise<void> {
+  // TTL 180 секунд для metrics
+  await setCache(generateCacheKey('activity', orgId, type), data, 180)
+}
+
+/**
+ * Инвалидация кэша списков агентов
+ */
+export async function invalidateAgentsListCache(orgId: string): Promise<void> {
+  const client = getRedisClient()
+  if (!client) {
+    return
+  }
+
+  try {
+    const keys = await client.keys(`cache:agents-list:${orgId}:*`)
+    if (keys.length > 0) {
+      await client.del(...keys)
+    }
+  } catch (error) {
+    logger.error('Failed to invalidate agents list cache', error, { orgId })
   }
 }
 

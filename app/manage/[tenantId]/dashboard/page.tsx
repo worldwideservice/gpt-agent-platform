@@ -1,15 +1,40 @@
 import { Suspense } from 'react'
+import dynamic from 'next/dynamic'
 import { getTranslations } from 'next-intl/server'
 
 import { auth } from '@/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
-import { WorkspaceSummaryIntegrationInsights } from '@/components/features/manage/WorkspaceSummaryIntegrationInsights'
-import { WorkspaceSummaryKnowledgeInsights } from '@/components/features/manage/WorkspaceSummaryKnowledgeInsights'
-import { WebhookActivityCard } from '@/components/features/manage/WebhookActivityCard'
-import { DashboardMetricsClient } from '@/components/features/dashboard/DashboardMetricsClient'
-import { DashboardChartsClient } from '@/components/features/dashboard/DashboardChartsClient'
 import { loadManageDashboardData } from '@/lib/repositories/manage-data'
 import { PageBreadcrumbs } from '@/components/layout/PageBreadcrumbs'
+
+/**
+ * Задача 4.4: Lazy loading для тяжелых компонентов
+ * Используем dynamic import для уменьшения initial bundle size
+ */
+const WorkspaceSummaryIntegrationInsights = dynamic(
+  () => import('@/components/features/manage/WorkspaceSummaryIntegrationInsights').then(mod => ({ default: mod.WorkspaceSummaryIntegrationInsights })),
+  { ssr: true, loading: () => <div className="h-48 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" /> }
+)
+
+const WorkspaceSummaryKnowledgeInsights = dynamic(
+  () => import('@/components/features/manage/WorkspaceSummaryKnowledgeInsights').then(mod => ({ default: mod.WorkspaceSummaryKnowledgeInsights })),
+  { ssr: true, loading: () => <div className="h-48 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" /> }
+)
+
+const WebhookActivityCard = dynamic(
+  () => import('@/components/features/manage/WebhookActivityCard').then(mod => ({ default: mod.WebhookActivityCard })),
+  { ssr: true, loading: () => <div className="h-48 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" /> }
+)
+
+const DashboardMetricsClient = dynamic(
+  () => import('@/components/features/dashboard/DashboardMetricsClient').then(mod => ({ default: mod.DashboardMetricsClient })),
+  { ssr: false, loading: () => <div className="h-32 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" /> }
+)
+
+const DashboardChartsClient = dynamic(
+  () => import('@/components/features/dashboard/DashboardChartsClient').then(mod => ({ default: mod.DashboardChartsClient })),
+  { ssr: false, loading: () => <div className="h-96 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" /> }
+)
 
 interface DashboardPageProps {
   params: {

@@ -117,6 +117,74 @@ describe('Cache Utils', () => {
   // Основная функциональность покрыта тестами выше
   // Для полного покрытия рекомендуется использовать интеграционные тесты
 
+  /**
+   * Задача 4.4: Тесты для новых кэш-функций
+   */
+  describe('Task 4.4: Dashboard Stats Caching', () => {
+    it('getCachedDashboardStats should return null when Redis is not available', async () => {
+      const { getCachedDashboardStats } = await import('@/lib/utils/cache')
+      const result = await getCachedDashboardStats('org-123')
+      expect(result).toBeNull()
+    })
+
+    it('setCachedDashboardStats should not throw when Redis is not available', async () => {
+      const { setCachedDashboardStats } = await import('@/lib/utils/cache')
+      const mockStats = {
+        monthlyResponses: 100,
+        monthlyChange: 10,
+        weeklyResponses: 50,
+        todayResponses: 10,
+        todayChange: 5,
+        totalAgents: 3,
+      }
+
+      await expect(setCachedDashboardStats('org-123', mockStats)).resolves.not.toThrow()
+    })
+  })
+
+  describe('Task 4.4: Agents List Caching', () => {
+    it('getCachedAgentsList should return null when Redis is not available', async () => {
+      const { getCachedAgentsList } = await import('@/lib/utils/cache')
+      const result = await getCachedAgentsList('org-123', 'active-page-1')
+      expect(result).toBeNull()
+    })
+
+    it('setCachedAgentsList should not throw when Redis is not available', async () => {
+      const { setCachedAgentsList } = await import('@/lib/utils/cache')
+      const mockAgents = {
+        agents: [{ id: 'agent-1', name: 'Test Agent' }],
+        total: 1,
+      }
+
+      await expect(setCachedAgentsList('org-123', 'active-page-1', mockAgents)).resolves.not.toThrow()
+    })
+  })
+
+  describe('Task 4.4: Activity Metrics Caching', () => {
+    it('getCachedActivityMetrics should return null when Redis is not available', async () => {
+      const { getCachedActivityMetrics } = await import('@/lib/utils/cache')
+      const result = await getCachedActivityMetrics('org-123', 'weekly')
+      expect(result).toBeNull()
+    })
+
+    it('setCachedActivityMetrics should not throw when Redis is not available', async () => {
+      const { setCachedActivityMetrics } = await import('@/lib/utils/cache')
+      const mockMetrics = [
+        { date: '2024-01-01', messagesCount: 100 },
+        { date: '2024-01-02', messagesCount: 150 },
+      ]
+
+      await expect(setCachedActivityMetrics('org-123', 'weekly', mockMetrics)).resolves.not.toThrow()
+    })
+  })
+
+  describe('Task 4.4: Agents List Cache Invalidation', () => {
+    it('invalidateAgentsListCache should not throw when Redis is not available', async () => {
+      const { invalidateAgentsListCache } = await import('@/lib/utils/cache')
+      await expect(invalidateAgentsListCache('org-123')).resolves.not.toThrow()
+    })
+  })
+
   describe('getCachedAgent', () => {
     it('should return null when Redis is not available', async () => {
       const agentId = 'agent-123'
