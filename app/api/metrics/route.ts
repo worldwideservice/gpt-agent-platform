@@ -54,20 +54,20 @@ export const httpErrorsTotal = new Counter({
   registers: [register],
 })
 
+import { requireAdmin } from '@/lib/auth/admin'
+
 /**
  * GET /api/metrics
  * Возвращает метрики в формате Prometheus
+ *
+ * Задача 5.1: Security Audit - Усилена проверка доступа
  */
 export async function GET(request: NextRequest) {
-  try {
-    // Проверка аутентификации для метрик (опционально)
-    const authHeader = request.headers.get('authorization')
-    const metricsToken = process.env.METRICS_AUTH_TOKEN
+  // Требуем admin доступ для метрик (они могут содержать чувствительную информацию)
+  const adminCheck = await requireAdmin(request)
+  if (adminCheck) return adminCheck
 
-    // Если в env настроен токен - требуем его
-    if (metricsToken && authHeader !== `Bearer ${metricsToken}`) {
-      return new NextResponse('Unauthorized', { status: 401 })
-    }
+  try {
 
     // Собираем метрики
     const metrics = await register.metrics()

@@ -2,29 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Queue } from 'bullmq'
 import Redis from 'ioredis'
 import { DeadLetterQueue } from '@/services/worker/src/lib/dead-letter-queue'
+import { requireAdmin } from '@/lib/auth/admin'
 
 /**
  * Dead Letter Queue Management API
+ *
+ * Задача 5.1: Security Audit - Усилена проверка admin доступа
  *
  * Endpoints:
  * - GET /api/admin/dlq - Get DLQ statistics and jobs
  * - POST /api/admin/dlq/retry - Retry job from DLQ
  * - DELETE /api/admin/dlq/cleanup - Clean up old DLQ jobs
  */
-
-// ✅ SECURITY: Требуем admin authentication
-function isAdmin(request: NextRequest): boolean {
-  // TODO: Реализовать проверку admin роли через JWT или session
-  const authHeader = request.headers.get('authorization')
-  const adminToken = process.env.ADMIN_API_TOKEN
-
-  if (!adminToken) {
-    console.warn('ADMIN_API_TOKEN not configured - DLQ API is open!')
-    return process.env.NODE_ENV === 'development'
-  }
-
-  return authHeader === `Bearer ${adminToken}`
-}
 
 // Lazy initialization Redis connection
 let redis: Redis | null = null
@@ -67,13 +56,10 @@ function getDLQ(): DeadLetterQueue {
  * Get DLQ statistics and jobs
  */
 export async function GET(request: NextRequest) {
+  const adminCheck = await requireAdmin(request)
+  if (adminCheck) return adminCheck
+
   try {
-    if (!isAdmin(request)) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Admin access required' },
-        { status: 401 }
-      )
-    }
 
     const { searchParams } = new URL(request.url)
     const status = (searchParams.get('status') as 'waiting' | 'completed' | 'failed' | 'all') || 'all'
@@ -121,13 +107,10 @@ export async function GET(request: NextRequest) {
  * Retry job from DLQ
  */
 export async function POST(request: NextRequest) {
+  const adminCheck = await requireAdmin(request)
+  if (adminCheck) return adminCheck
+
   try {
-    if (!isAdmin(request)) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Admin access required' },
-        { status: 401 }
-      )
-    }
 
     const body = await request.json()
     const { dlqJobId } = body
@@ -179,13 +162,10 @@ export async function POST(request: NextRequest) {
  * Clean up old DLQ jobs
  */
 export async function DELETE(request: NextRequest) {
+  const adminCheck = await requireAdmin(request)
+  if (adminCheck) return adminCheck
+
   try {
-    if (!isAdmin(request)) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Admin access required' },
-        { status: 401 }
-      )
-    }
 
     const { searchParams } = new URL(request.url)
     const olderThanDays = parseInt(searchParams.get('olderThanDays') || '30', 10)

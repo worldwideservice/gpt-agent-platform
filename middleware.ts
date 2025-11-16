@@ -9,15 +9,29 @@ import {
   publicApiRateLimiter,
   getRateLimitIdentifier,
 } from '@/lib/rate-limit'
+import { csrfProtection } from '@/lib/security/csrf'
 
 /**
  * Middleware для защиты путей и проверки tenant access control
+ *
+ * Задача 5.1: Security Audit
+ * - Добавлена CSRF защита для всех API endpoints
+ * - Расширен rate limiting на все API endpoints
+ * - Улучшены security headers
  */
 export default auth(async (req) => {
   const { pathname } = req.nextUrl
   const session = req.auth
   const userId = session?.user?.id || null
   const identifier = getRateLimitIdentifier(req, userId)
+
+  // 0. CSRF PROTECTION: Защита от CSRF атак (опционально, через env)
+  if (pathname.startsWith('/api/') && process.env.ENABLE_CSRF_PROTECTION === '1') {
+    const csrfResponse = csrfProtection(req)
+    if (csrfResponse) {
+      return csrfResponse
+    }
+  }
 
   // 1. RATE LIMITING: Проверка лимитов для auth endpoints
   if (
@@ -104,10 +118,40 @@ export default auth(async (req) => {
     return NextResponse.next()
   }
 
-  // 3. Пропускаем статические файлы и другие API роуты
+  // 3. RATE LIMITING: Применяем ко всем остальным API endpoints
+  if (pathname.startsWith('/api/')) {
+    // Пропускаем публичные endpoints без rate limit
+    const publicEndpoints = [
+      '/api/health',
+      '/api/metrics',
+      '/api/crm/webhook',
+    ]
+
+    if (!publicEndpoints.some(endpoint => pathname.startsWith(endpoint))) {
+      const limiter = userId ? apiRateLimiter : publicApiRateLimiter
+      if (limiter) {
+        const { success, remaining, reset } = await limiter.limit(identifier)
+
+        if (!success) {
+          return NextResponse.json(
+            { error: 'Too many requests.' },
+            {
+              status: 429,
+              headers: {
+                'X-RateLimit-Limit': (userId ? 100 : 20).toString(),
+                'X-RateLimit-Remaining': remaining.toString(),
+                'X-RateLimit-Reset': reset.toString(),
+              },
+            },
+          )
+        }
+      }
+    }
+  }
+
+  // 4. Пропускаем статические файлы
   if (
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/api') ||
     pathname.startsWith('/static') ||
     pathname.startsWith('/favicon.ico') ||
     pathname.includes('.')
@@ -115,12 +159,12 @@ export default auth(async (req) => {
     return NextResponse.next()
   }
 
-  // 4. Разрешаем /manage/[tenantId] - это страница приложения
+  // 5. Разрешаем /manage/[tenantId] - это страница приложения
   if (pathname.startsWith('/manage/')) {
     return NextResponse.next()
   }
 
-  // 5. Редиректы для публичных страниц
+  // 6. Редиректы для публичных страниц
   const publicPaths = [
     '/login',
     '/register',
@@ -134,7 +178,7 @@ export default auth(async (req) => {
     return NextResponse.next()
   }
 
-  // 6. Для остальных защищенных путей - пропускаем дальше
+  // 7. Для остальных защищенных путей - пропускаем дальше
   return NextResponse.next()
 })
 
