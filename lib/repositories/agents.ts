@@ -1,5 +1,16 @@
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
-import { getCachedAgent, setCachedAgent, invalidateAgentCache } from '@/lib/utils/cache'
+import {
+  getCachedAgent,
+  setCachedAgent,
+  invalidateAgentCache,
+  getCachedDashboardStats,
+  setCachedDashboardStats,
+  getCachedAgentsList,
+  setCachedAgentsList,
+  getCachedActivityMetrics,
+  setCachedActivityMetrics,
+  invalidateAgentsListCache,
+} from '@/lib/utils/cache'
 import { logger } from '@/lib/utils/logger'
 
 import type { Agent, AgentSettings } from '@/types'
@@ -200,6 +211,9 @@ export const getAgents = async (params: AgentListParams): Promise<AgentListResul
  }
 }
 
+/**
+ * Задача 4.4: Добавлено кэширование dashboard stats (TTL 60 секунд)
+ */
 export const getDashboardStats = async (
   organizationId: string,
 ): Promise<import('@/types').DashboardStats> => {
@@ -214,21 +228,37 @@ export const getDashboardStats = async (
     }
   }
 
+  // Проверяем кэш
+  const cached = await getCachedDashboardStats(organizationId)
+  if (cached) {
+    return cached
+  }
+
   const supabase = getSupabaseServiceRoleClient()
 
   const stats = await loadDashboardStatsFromView(supabase, organizationId)
 
   if (stats) {
- return stats
+    await setCachedDashboardStats(organizationId, stats).catch(() => {
+      // Игнорируем ошибки кэширования
+    })
+    return stats
  }
 
  const fallbackStats = await loadDashboardStatsFromFunction(supabase, organizationId)
 
  if (fallbackStats) {
- return fallbackStats
+    await setCachedDashboardStats(organizationId, fallbackStats).catch(() => {
+      // Игнорируем ошибки кэширования
+    })
+    return fallbackStats
  }
 
- return await buildDashboardStatsFromAgents(supabase, organizationId)
+ const builtStats = await buildDashboardStatsFromAgents(supabase, organizationId)
+ await setCachedDashboardStats(organizationId, builtStats).catch(() => {
+   // Игнорируем ошибки кэширования
+ })
+ return builtStats
 }
 
 export const getWeeklyActivitySummary = async (
