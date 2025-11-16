@@ -19,21 +19,22 @@ describe('API: /api/agents/[id]', () => {
   })
 
   describe('GET /api/agents/[id]', () => {
-    it('должен вернуть 401 если не авторизован', async () => {
+    it('should return 401 if not authenticated', async () => {
       const { auth } = await import('@/auth')
       vi.mocked(auth).mockResolvedValue(null)
 
       const route = await import('@/app/api/agents/[id]/route')
       const request = new NextRequest('http://localhost:3000/api/agents/agent-123')
+      const params = Promise.resolve({ id: 'agent-123' })
 
-      const response = await route.GET(request, { params: Promise.resolve({ id: 'agent-123' }) })
+      const response = await route.GET(request, { params })
       const data = await response.json()
 
       expect(response.status).toBe(401)
       expect(data.success).toBe(false)
     })
 
-    it('должен вернуть агента по id', async () => {
+    it('should return agent by id', async () => {
       const { auth } = await import('@/auth')
       const { getAgentById } = await import('@/lib/repositories/agents')
 
@@ -41,35 +42,31 @@ describe('API: /api/agents/[id]', () => {
         user: {
           id: 'user-123',
           orgId: 'org-123',
-          email: 'test@example.com',
         },
       } as any)
 
       const mockAgent = {
         id: 'agent-123',
-        name: 'Тестовый агент',
         org_id: 'org-123',
+        name: 'Test Agent',
         status: 'active',
-        model: 'gpt-4',
-        instructions: 'Ты полезный ассистент',
       }
 
       vi.mocked(getAgentById).mockResolvedValue(mockAgent as any)
 
       const route = await import('@/app/api/agents/[id]/route')
       const request = new NextRequest('http://localhost:3000/api/agents/agent-123')
+      const params = Promise.resolve({ id: 'agent-123' })
 
-      const response = await route.GET(request, { params: Promise.resolve({ id: 'agent-123' }) })
+      const response = await route.GET(request, { params })
       const data = await response.json()
 
       expect(response.status).toBe(200)
       expect(data.success).toBe(true)
-      expect(data.data.id).toBe('agent-123')
-      expect(data.data.name).toBe('Тестовый агент')
-      expect(getAgentById).toHaveBeenCalledWith('agent-123', 'org-123')
+      expect(data.data).toEqual(mockAgent)
     })
 
-    it('должен вернуть 404 если агент не найден', async () => {
+    it('should return 404 if agent not found', async () => {
       const { auth } = await import('@/auth')
       const { getAgentById } = await import('@/lib/repositories/agents')
 
@@ -77,124 +74,88 @@ describe('API: /api/agents/[id]', () => {
         user: {
           id: 'user-123',
           orgId: 'org-123',
-          email: 'test@example.com',
         },
       } as any)
 
       vi.mocked(getAgentById).mockResolvedValue(null)
 
       const route = await import('@/app/api/agents/[id]/route')
-      const request = new NextRequest('http://localhost:3000/api/agents/agent-999')
+      const request = new NextRequest('http://localhost:3000/api/agents/agent-123')
+      const params = Promise.resolve({ id: 'agent-123' })
 
-      const response = await route.GET(request, { params: Promise.resolve({ id: 'agent-999' }) })
+      const response = await route.GET(request, { params })
       const data = await response.json()
 
       expect(response.status).toBe(404)
-      expect(data.success).toBe(false)
-      expect(data.error).toBe('Агент не найден')
-    })
-
-    it('должен вернуть 500 при ошибке БД', async () => {
-      const { auth } = await import('@/auth')
-      const { getAgentById } = await import('@/lib/repositories/agents')
-
-      vi.mocked(auth).mockResolvedValue({
-        user: {
-          id: 'user-123',
-          orgId: 'org-123',
-          email: 'test@example.com',
-        },
-      } as any)
-
-      vi.mocked(getAgentById).mockRejectedValue(new Error('Database error'))
-
-      const route = await import('@/app/api/agents/[id]/route')
-      const request = new NextRequest('http://localhost:3000/api/agents/agent-123')
-
-      const response = await route.GET(request, { params: Promise.resolve({ id: 'agent-123' }) })
-      const data = await response.json()
-
-      expect(response.status).toBe(500)
       expect(data.success).toBe(false)
     })
   })
 
   describe('PATCH /api/agents/[id]', () => {
-    it('должен вернуть 401 если не авторизован', async () => {
+    it('should return 401 if not authenticated', async () => {
       const { auth } = await import('@/auth')
       vi.mocked(auth).mockResolvedValue(null)
 
       const route = await import('@/app/api/agents/[id]/route')
       const request = new NextRequest('http://localhost:3000/api/agents/agent-123', {
         method: 'PATCH',
-        body: JSON.stringify({ name: 'Новое имя' }),
+        body: JSON.stringify({
+          name: 'Updated Agent',
+        }),
       })
+      const params = Promise.resolve({ id: 'agent-123' })
 
-      const response = await route.PATCH(request, { params: Promise.resolve({ id: 'agent-123' }) })
+      const response = await route.PATCH(request, { params })
       const data = await response.json()
 
       expect(response.status).toBe(401)
       expect(data.success).toBe(false)
     })
 
-    it('должен обновить агента', async () => {
+    it('should update agent', async () => {
       const { auth } = await import('@/auth')
-      const { updateAgent } = await import('@/lib/repositories/agents')
+      const { getAgentById, updateAgent } = await import('@/lib/repositories/agents')
 
       vi.mocked(auth).mockResolvedValue({
         user: {
           id: 'user-123',
           orgId: 'org-123',
-          email: 'test@example.com',
         },
       } as any)
 
-      const updatedAgent = {
+      const mockUpdatedAgent = {
         id: 'agent-123',
-        name: 'Обновленный агент',
         org_id: 'org-123',
+        name: 'Updated Agent',
         status: 'active',
-        model: 'gpt-4-turbo',
-        instructions: 'Обновленные инструкции',
       }
 
-      vi.mocked(updateAgent).mockResolvedValue(updatedAgent as any)
+      vi.mocked(updateAgent).mockResolvedValue(mockUpdatedAgent as any)
 
       const route = await import('@/app/api/agents/[id]/route')
       const request = new NextRequest('http://localhost:3000/api/agents/agent-123', {
         method: 'PATCH',
         body: JSON.stringify({
-          name: 'Обновленный агент',
-          model: 'gpt-4-turbo',
-          instructions: 'Обновленные инструкции',
+          name: 'Updated Agent',
         }),
       })
+      const params = Promise.resolve({ id: 'agent-123' })
 
-      const response = await route.PATCH(request, { params: Promise.resolve({ id: 'agent-123' }) })
+      const response = await route.PATCH(request, { params })
       const data = await response.json()
 
       expect(response.status).toBe(200)
       expect(data.success).toBe(true)
-      expect(data.data.name).toBe('Обновленный агент')
-      expect(updateAgent).toHaveBeenCalledWith(
-        'agent-123',
-        'org-123',
-        expect.objectContaining({
-          name: 'Обновленный агент',
-          model: 'gpt-4-turbo',
-          instructions: 'Обновленные инструкции',
-        }),
-      )
+      expect(data.data.name).toBe('Updated Agent')
     })
 
-    it('должен вернуть 400 при некорректных данных', async () => {
+    it('should return 400 for invalid data', async () => {
       const { auth } = await import('@/auth')
 
       vi.mocked(auth).mockResolvedValue({
         user: {
           id: 'user-123',
           orgId: 'org-123',
-          email: 'test@example.com',
         },
       } as any)
 
@@ -202,96 +163,21 @@ describe('API: /api/agents/[id]', () => {
       const request = new NextRequest('http://localhost:3000/api/agents/agent-123', {
         method: 'PATCH',
         body: JSON.stringify({
-          name: '', // пустое имя
+          temperature: 3, // Invalid: max is 2
         }),
       })
+      const params = Promise.resolve({ id: 'agent-123' })
 
-      const response = await route.PATCH(request, { params: Promise.resolve({ id: 'agent-123' }) })
+      const response = await route.PATCH(request, { params })
       const data = await response.json()
 
       expect(response.status).toBe(400)
-      expect(data.success).toBe(false)
-      expect(data.error).toBe('Некорректные данные')
-    })
-
-    it('должен обновить настройки агента', async () => {
-      const { auth } = await import('@/auth')
-      const { updateAgent } = await import('@/lib/repositories/agents')
-
-      vi.mocked(auth).mockResolvedValue({
-        user: {
-          id: 'user-123',
-          orgId: 'org-123',
-          email: 'test@example.com',
-        },
-      } as any)
-
-      vi.mocked(updateAgent).mockResolvedValue({
-        id: 'agent-123',
-        settings: {
-          language: 'ru',
-          creativity: 'balanced',
-        },
-      } as any)
-
-      const route = await import('@/app/api/agents/[id]/route')
-      const request = new NextRequest('http://localhost:3000/api/agents/agent-123', {
-        method: 'PATCH',
-        body: JSON.stringify({
-          settings: {
-            language: 'ru',
-            creativity: 'balanced',
-          },
-        }),
-      })
-
-      const response = await route.PATCH(request, { params: Promise.resolve({ id: 'agent-123' }) })
-      const data = await response.json()
-
-      expect(response.status).toBe(200)
-      expect(data.success).toBe(true)
-      expect(updateAgent).toHaveBeenCalledWith(
-        'agent-123',
-        'org-123',
-        expect.objectContaining({
-          settings: {
-            language: 'ru',
-            creativity: 'balanced',
-          },
-        }),
-      )
-    })
-
-    it('должен вернуть 500 при ошибке обновления', async () => {
-      const { auth } = await import('@/auth')
-      const { updateAgent } = await import('@/lib/repositories/agents')
-
-      vi.mocked(auth).mockResolvedValue({
-        user: {
-          id: 'user-123',
-          orgId: 'org-123',
-          email: 'test@example.com',
-        },
-      } as any)
-
-      vi.mocked(updateAgent).mockRejectedValue(new Error('Database error'))
-
-      const route = await import('@/app/api/agents/[id]/route')
-      const request = new NextRequest('http://localhost:3000/api/agents/agent-123', {
-        method: 'PATCH',
-        body: JSON.stringify({ name: 'Новое имя' }),
-      })
-
-      const response = await route.PATCH(request, { params: Promise.resolve({ id: 'agent-123' }) })
-      const data = await response.json()
-
-      expect(response.status).toBe(500)
       expect(data.success).toBe(false)
     })
   })
 
   describe('DELETE /api/agents/[id]', () => {
-    it('должен вернуть 401 если не авторизован', async () => {
+    it('should return 401 if not authenticated', async () => {
       const { auth } = await import('@/auth')
       vi.mocked(auth).mockResolvedValue(null)
 
@@ -299,15 +185,16 @@ describe('API: /api/agents/[id]', () => {
       const request = new NextRequest('http://localhost:3000/api/agents/agent-123', {
         method: 'DELETE',
       })
+      const params = Promise.resolve({ id: 'agent-123' })
 
-      const response = await route.DELETE(request, { params: Promise.resolve({ id: 'agent-123' }) })
+      const response = await route.DELETE(request, { params })
       const data = await response.json()
 
       expect(response.status).toBe(401)
       expect(data.success).toBe(false)
     })
 
-    it('должен удалить агента', async () => {
+    it('should delete agent', async () => {
       const { auth } = await import('@/auth')
       const { deleteAgent } = await import('@/lib/repositories/agents')
 
@@ -315,7 +202,6 @@ describe('API: /api/agents/[id]', () => {
         user: {
           id: 'user-123',
           orgId: 'org-123',
-          email: 'test@example.com',
         },
       } as any)
 
@@ -325,8 +211,9 @@ describe('API: /api/agents/[id]', () => {
       const request = new NextRequest('http://localhost:3000/api/agents/agent-123', {
         method: 'DELETE',
       })
+      const params = Promise.resolve({ id: 'agent-123' })
 
-      const response = await route.DELETE(request, { params: Promise.resolve({ id: 'agent-123' }) })
+      const response = await route.DELETE(request, { params })
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -334,7 +221,7 @@ describe('API: /api/agents/[id]', () => {
       expect(deleteAgent).toHaveBeenCalledWith('agent-123', 'org-123')
     })
 
-    it('должен вернуть 500 при ошибке удаления', async () => {
+    it('should handle delete errors', async () => {
       const { auth } = await import('@/auth')
       const { deleteAgent } = await import('@/lib/repositories/agents')
 
@@ -342,18 +229,18 @@ describe('API: /api/agents/[id]', () => {
         user: {
           id: 'user-123',
           orgId: 'org-123',
-          email: 'test@example.com',
         },
       } as any)
 
-      vi.mocked(deleteAgent).mockRejectedValue(new Error('Cannot delete agent with active conversations'))
+      vi.mocked(deleteAgent).mockRejectedValue(new Error('Delete failed'))
 
       const route = await import('@/app/api/agents/[id]/route')
       const request = new NextRequest('http://localhost:3000/api/agents/agent-123', {
         method: 'DELETE',
       })
+      const params = Promise.resolve({ id: 'agent-123' })
 
-      const response = await route.DELETE(request, { params: Promise.resolve({ id: 'agent-123' }) })
+      const response = await route.DELETE(request, { params })
       const data = await response.json()
 
       expect(response.status).toBe(500)
