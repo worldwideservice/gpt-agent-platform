@@ -1,5 +1,6 @@
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
+import type { NextRequest } from 'next/server'
 import { UserRepository } from '@/lib/repositories/users'
 import { logger } from '@/lib/utils/logger'
 
@@ -279,3 +280,52 @@ export async function checkRateLimit(
 
   return null // Allow request
 }
+/**
+ * Получает идентификатор для rate limiting в middleware.
+ * Приоритет: ID пользователя (если есть сессия) > IP-адрес (если нет).
+ */
+export function getRateLimitIdentifier(
+  req: NextRequest,
+  userId?: string | null,
+): string {
+  return userId || req.ip || '127.0.0.1'
+}
+
+/**
+ * Строгий лимитер для эндпоинтов аутентификации (логин, регистрация, сброс пароля).
+ * 10 запросов в минуту с одного IP.
+ */
+export const authRateLimiter = redisClient
+  ? new Ratelimit({
+      redis: redisClient,
+      limiter: Ratelimit.slidingWindow(10, '1 m'),
+      prefix: 'ratelimit:auth',
+      analytics: true,
+    })
+  : null
+
+/**
+ * Общий лимитер для аутентифицированных пользователей API.
+ * 100 запросов в 10 секунд на одного пользователя.
+ */
+export const apiRateLimiter = redisClient
+  ? new Ratelimit({
+      redis: redisClient,
+      limiter: Ratelimit.slidingWindow(100, '10 s'),
+      prefix: 'ratelimit:api:user',
+      analytics: true,
+    })
+  : null
+
+/**
+ * Общий лимитер для неаутентифицированных запросов к API.
+ * 20 запросов в 10 секунд на один IP.
+ */
+export const publicApiRateLimiter = redisClient
+  ? new Ratelimit({
+      redis: redisClient,
+      limiter: Ratelimit.slidingWindow(20, '10 s'),
+      prefix: 'ratelimit:api:ip',
+      analytics: true,
+    })
+  : null

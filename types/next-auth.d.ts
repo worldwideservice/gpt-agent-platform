@@ -8,6 +8,7 @@ declare module 'next-auth' {
  user: DefaultSession['user'] & {
  id: string
  orgId?: string
+ organizationSlug?: string
  }
  }
 
@@ -16,12 +17,14 @@ declare module 'next-auth' {
  email: string
  name?: string | null
  orgId: string
+ organizationSlug?: string
  }
 }
 
 declare module 'next-auth/jwt' {
   interface JWT {
     orgId?: string
+    organizationSlug?: string
     rememberMe?: boolean
   }
 }

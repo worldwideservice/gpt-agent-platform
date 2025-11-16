@@ -1,28 +1,63 @@
-'use client'
+import { Suspense } from 'react'
+import { redirect } from 'next/navigation'
 
-import { TestChatPanel } from '@/components/features/chat/TestChatPanel'
-import { PageBreadcrumbs } from '@/components/layout/PageBreadcrumbs'
+import { auth } from '@/auth'
 
-interface TestChatPageProps {
-  params: {
-    tenantId: string
+import { TestChatClient } from '@/components/features/test-chat/TestChatClient'
+
+/**
+ * Test Chat Page
+ *
+ * Позволяет тестировать AI агентов в реальном времени
+ *
+ * Security:
+ * - Требует аутентификации
+ * - Доступ проверяется через middleware
+ * - RLS policies на уровне БД
+ */
+export default async function TestChatPage({
+  params,
+}: {
+  params: { tenantId: string }
+}) {
+  const session = await auth()
+
+  if (!session?.user) {
+    redirect('/auth/signin')
   }
+
+  return (
+    <div className="flex h-[calc(100vh-4rem)] flex-col">
+      <Suspense fallback={<TestChatSkeleton />}>
+        <TestChatClient tenantId={params.tenantId} />
+      </Suspense>
+    </div>
+  )
 }
 
-export default function TestChatPage({ params }: TestChatPageProps) {
+function TestChatSkeleton() {
   return (
-    <div className="space-y-6">
-      <PageBreadcrumbs />
-
-      <header>
-        <p className="text-sm uppercase text-primary">Тестирование</p>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Тестовый чат</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Проверьте поведение агентов до запуска в продакшене (workspace&nbsp;
-          <span className="font-mono">{params.tenantId}</span>).
-        </p>
-      </header>
-      <TestChatPanel />
+    <div className="flex h-full">
+      <div className="w-80 border-r border-gray-200 bg-gray-50 p-4">
+        <div className="mb-4 h-10 animate-pulse rounded-lg bg-gray-200" />
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-16 animate-pulse rounded-lg bg-gray-200" />
+          ))}
+        </div>
+      </div>
+      <div className="flex flex-1 flex-col">
+        <div className="border-b border-gray-200 p-4">
+          <div className="h-6 w-48 animate-pulse rounded bg-gray-200" />
+        </div>
+        <div className="flex-1 p-4">
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-20 animate-pulse rounded-lg bg-gray-100" />
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

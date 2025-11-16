@@ -2,6 +2,7 @@
 
 import { useDashboardStats } from '@/lib/hooks/useDashboardMetrics'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
+import { TrendingUp, Calendar, MessageCircle, Bot, ArrowUp, ArrowDown } from 'lucide-react'
 
 interface DashboardMetricsClientProps {
   tenantId: string
@@ -13,6 +14,7 @@ type MetricConfig = {
   helper?: string
   value: number | null | undefined
   change?: number | null
+  icon: React.ReactNode
 }
 
 export function DashboardMetricsClient({ tenantId }: DashboardMetricsClientProps) {

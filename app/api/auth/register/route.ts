@@ -4,6 +4,8 @@ import { UserRepository } from '@/lib/repositories/users'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { loadSupabaseServerEnv } from '@/lib/env/supabase'
 import { logger } from '@/lib/utils/logger'
+import { registerSchema } from '@/lib/validation/schemas/auth'
+import { validateRequest } from '@/lib/validation/validate'
 
 
 // Force dynamic rendering (uses headers from auth())
@@ -16,31 +18,14 @@ export async function POST(request: NextRequest) {
  // Validate environment variables
  loadSupabaseServerEnv()
 
- const { email, password, firstName, lastName, organizationName } = await request.json()
-
- // Validation
- if (!email || !password || !firstName || !lastName) {
- return NextResponse.json(
- { error: 'Все поля обязательны для заполнения' },
- { status: 400 }
- )
+ // 1. Валидация входных данных с помощью Zod
+ const { data, error } = await validateRequest(request, registerSchema)
+ if (error) {
+ return error // Возвращаем ошибку 400, если валидация не пройдена
  }
 
- if (password.length < 6) {
- return NextResponse.json(
- { error: 'Пароль должен содержать минимум 6 символов' },
- { status: 400 }
- )
- }
-
- // Email validation
- const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
- if (!emailRegex.test(email)) {
- return NextResponse.json(
- { error: 'Некорректный email адрес' },
- { status: 400 }
- )
- }
+ // data теперь типизирована и безопасна
+ const { email, password, firstName, lastName, organizationName } = data
 
  // Check if user already exists
  const existingUser = await UserRepository.findUserByEmail(email)

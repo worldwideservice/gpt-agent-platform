@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import { compare } from 'bcryptjs'
@@ -11,6 +12,7 @@ interface AuthenticatedUser {
  email: string
  name: string
  orgId: string
+ organizationSlug: string
 }
 
 export const {
@@ -118,6 +120,7 @@ export const {
  }
 
  let defaultOrgId = user.default_org_id ?? undefined
+                let defaultOrgSlug: string | undefined
 
  if (!defaultOrgId) {
  try {
@@ -131,7 +134,9 @@ export const {
 
  if (memberships.length > 0) {
  const membershipOrgId = memberships[0].id
+                  const membershipOrgSlug = memberships[0].slug
  defaultOrgId = membershipOrgId
+                  defaultOrgSlug = membershipOrgSlug
  try {
  await Promise.race([
  setDefaultOrganizationForUser(user.id, membershipOrgId),
@@ -155,6 +160,7 @@ export const {
  ])
 
  defaultOrgId = organization.id
+                  defaultOrgSlug = organization.slug
  }
  } catch (error) {
  console.error('NextAuth: Organization setup error:', error)
@@ -167,11 +173,28 @@ export const {
  return null
  }
 
+                // Fetch organization slug if not yet available
+                if (!defaultOrgSlug) {
+                  try {
+                    const memberships = await getOrganizationsForUser(user.id)
+                    const membership = memberships.find((m) => m.id === defaultOrgId)
+                    defaultOrgSlug = membership?.slug
+                  } catch (error) {
+                    console.warn('NextAuth: Failed to get organization slug:', error)
+                  }
+                }
+
+                if (!defaultOrgSlug) {
+                  console.error('NextAuth: Unable to determine organization slug for user')
+                  return null
+                }
+
  const authenticatedUser: AuthenticatedUser = {
  id: user.id,
  email: user.email,
  name: user.full_name ?? user.email,
  orgId: defaultOrgId,
+                  organizationSlug: defaultOrgSlug,
  }
 
  console.log('NextAuth: Authentication successful for user:', user.id)
@@ -209,6 +232,7 @@ export const {
  if (user) {
  const authenticated = user as AuthenticatedUser
  token.orgId = authenticated.orgId
+        token.organizationSlug = authenticated.organizationSlug
  token.name = authenticated.name
  token.email = authenticated.email
  }
@@ -223,6 +247,9 @@ export const {
  if (typeof token.orgId === 'string') {
  session.user.orgId = token.orgId
  }
+        if (typeof token.organizationSlug === 'string') {
+          session.user.organizationSlug = token.organizationSlug
+        }
  }
 
  return session
