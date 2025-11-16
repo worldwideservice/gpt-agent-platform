@@ -335,5 +335,195 @@ describe('API: /api/agents', () => {
       expect(data.error).toBe('Некорректные данные')
     })
   })
+
+  /**
+   * Задача 4.2: Bulk Actions для агентов
+   * Тесты для массовых операций
+   */
+  describe('PATCH /api/agents/bulk (Task 4.2)', () => {
+    beforeEach(() => {
+      vi.clearAllMocks()
+    })
+
+    it('should return 401 if not authenticated', async () => {
+      const { auth } = await import('@/auth')
+      vi.mocked(auth).mockResolvedValue(null)
+
+      const request = new NextRequest('http://localhost:3000/api/agents/bulk', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          agentIds: ['agent-1', 'agent-2'],
+          action: 'activate',
+        }),
+      })
+
+      const route = await import('@/app/api/agents/bulk/route')
+      const response = await route.PATCH(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(401)
+      expect(data.success).toBe(false)
+      expect(data.error).toBe('Не авторизовано')
+    })
+
+    it('should return 400 for invalid request body', async () => {
+      const { auth } = await import('@/auth')
+      vi.mocked(auth).mockResolvedValue({
+        user: {
+          id: 'user-123',
+          orgId: 'org-123',
+        },
+      } as any)
+
+      const request = new NextRequest('http://localhost:3000/api/agents/bulk', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          // Missing required fields
+        }),
+      })
+
+      const route = await import('@/app/api/agents/bulk/route')
+      const response = await route.PATCH(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data.success).toBe(false)
+      expect(data.error).toBe('Некорректные данные')
+    })
+
+    it('should return 400 for empty agentIds array', async () => {
+      const { auth } = await import('@/auth')
+      vi.mocked(auth).mockResolvedValue({
+        user: {
+          id: 'user-123',
+          orgId: 'org-123',
+        },
+      } as any)
+
+      const request = new NextRequest('http://localhost:3000/api/agents/bulk', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          agentIds: [],
+          action: 'activate',
+        }),
+      })
+
+      const route = await import('@/app/api/agents/bulk/route')
+      const response = await route.PATCH(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data.success).toBe(false)
+    })
+
+    it('should activate multiple agents successfully', async () => {
+      const { auth } = await import('@/auth')
+
+      vi.mocked(auth).mockResolvedValue({
+        user: {
+          id: 'user-123',
+          orgId: 'org-123',
+        },
+      } as any)
+
+      const request = new NextRequest('http://localhost:3000/api/agents/bulk', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          agentIds: ['550e8400-e29b-41d4-a716-446655440000', '550e8400-e29b-41d4-a716-446655440001'],
+          action: 'activate',
+        }),
+      })
+
+      const route = await import('@/app/api/agents/bulk/route')
+      const response = await route.PATCH(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data.success).toBe(true)
+      expect(data.updated).toBeDefined()
+      expect(typeof data.updated).toBe('number')
+      expect(data.timestamp).toBeDefined()
+    })
+
+    it('should deactivate multiple agents successfully', async () => {
+      const { auth } = await import('@/auth')
+
+      vi.mocked(auth).mockResolvedValue({
+        user: {
+          id: 'user-123',
+          orgId: 'org-123',
+        },
+      } as any)
+
+      const request = new NextRequest('http://localhost:3000/api/agents/bulk', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          agentIds: ['550e8400-e29b-41d4-a716-446655440000', '550e8400-e29b-41d4-a716-446655440001'],
+          action: 'deactivate',
+        }),
+      })
+
+      const route = await import('@/app/api/agents/bulk/route')
+      const response = await route.PATCH(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data.success).toBe(true)
+      expect(data.updated).toBeDefined()
+      expect(typeof data.updated).toBe('number')
+      expect(data.timestamp).toBeDefined()
+    })
+
+    it('should return 400 for delete action', async () => {
+      const { auth } = await import('@/auth')
+      vi.mocked(auth).mockResolvedValue({
+        user: {
+          id: 'user-123',
+          orgId: 'org-123',
+        },
+      } as any)
+
+      const request = new NextRequest('http://localhost:3000/api/agents/bulk', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          agentIds: ['550e8400-e29b-41d4-a716-446655440000'],
+          action: 'delete',
+        }),
+      })
+
+      const route = await import('@/app/api/agents/bulk/route')
+      const response = await route.PATCH(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data.success).toBe(false)
+      expect(data.error).toContain('удаления')
+    })
+
+    it('should validate UUID format for agentIds', async () => {
+      const { auth } = await import('@/auth')
+      vi.mocked(auth).mockResolvedValue({
+        user: {
+          id: 'user-123',
+          orgId: 'org-123',
+        },
+      } as any)
+
+      const request = new NextRequest('http://localhost:3000/api/agents/bulk', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          agentIds: ['invalid-id', 'also-invalid'],
+          action: 'activate',
+        }),
+      })
+
+      const route = await import('@/app/api/agents/bulk/route')
+      const response = await route.PATCH(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data.success).toBe(false)
+    })
+  })
 })
 

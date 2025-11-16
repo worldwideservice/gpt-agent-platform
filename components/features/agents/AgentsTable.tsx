@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Edit, Columns3, ArrowUp, ArrowDown, ChevronsUpDown } from 'lucide-react'
+import { Edit, Columns3, ArrowUp, ArrowDown, ChevronsUpDown, CheckCircle, XCircle } from 'lucide-react'
 
 import {
   Button,
@@ -417,6 +417,98 @@ export function AgentsTable({
     }
   }
 
+  /**
+   * Задача 4.2: Bulk Actions для агентов
+   * Функция для массовой активации агентов
+   */
+  const handleBulkActivate = async () => {
+    if (selectedIds.length === 0) return
+
+    try {
+      const response = await fetch('/api/agents/bulk', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentIds: selectedIds,
+          action: 'activate',
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Не удалось активировать агентов')
+      }
+
+      // Optimistically update state
+      setAgents((prev) =>
+        prev.map((agent) =>
+          selectedIds.includes(agent.id) ? { ...agent, isActive: true, status: 'active' } : agent
+        )
+      )
+      setSelectedIds([])
+
+      toast({
+        title: 'Агенты активированы',
+        description: `Успешно активировано агентов: ${data.updated}`,
+        variant: 'success',
+      })
+    } catch (error) {
+      console.error('Error activating agents:', error)
+      toast({
+        title: 'Ошибка активации',
+        description: error instanceof Error ? error.message : 'Не удалось активировать выбранные агенты',
+        variant: 'error',
+      })
+    }
+  }
+
+  /**
+   * Задача 4.2: Bulk Actions для агентов
+   * Функция для массовой деактивации агентов
+   */
+  const handleBulkDeactivate = async () => {
+    if (selectedIds.length === 0) return
+
+    try {
+      const response = await fetch('/api/agents/bulk', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentIds: selectedIds,
+          action: 'deactivate',
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Не удалось деактивировать агентов')
+      }
+
+      // Optimistically update state
+      setAgents((prev) =>
+        prev.map((agent) =>
+          selectedIds.includes(agent.id) ? { ...agent, isActive: false, status: 'inactive' } : agent
+        )
+      )
+      setSelectedIds([])
+
+      toast({
+        title: 'Агенты деактивированы',
+        description: `Успешно деактивировано агентов: ${data.updated}`,
+        variant: 'success',
+      })
+    } catch (error) {
+      console.error('Error deactivating agents:', error)
+      toast({
+        title: 'Ошибка деактивации',
+        description: error instanceof Error ? error.message : 'Не удалось деактивировать выбранные агенты',
+        variant: 'error',
+      })
+    }
+  }
+
   // Check if all paginated agents are selected
   const allPaginatedSelected = paginatedAgents.length > 0 &&
     paginatedAgents.every((agent) => selectedIds.includes(agent.id))
@@ -807,6 +899,18 @@ export function AgentsTable({
         onSelectAll={handleSelectAll}
         onDeselectAll={handleDeselectAll}
         onDelete={handleBulkDelete}
+        additionalActions={[
+          {
+            label: 'Активировать выбранных',
+            onClick: handleBulkActivate,
+            icon: <CheckCircle className="h-4 w-4" />,
+          },
+          {
+            label: 'Деактивировать выбранных',
+            onClick: handleBulkDeactivate,
+            icon: <XCircle className="h-4 w-4" />,
+          },
+        ]}
       />
     </Card>
   )

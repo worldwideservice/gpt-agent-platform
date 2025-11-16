@@ -193,6 +193,32 @@ export const getAgentOrThrow = async (
   return agent
 }
 
+/**
+ * Задача 4.2: Bulk Actions для агентов
+ * Функция для обновления статуса активности агента (для bulk операций)
+ */
+export const updateAgentStatus = async (
+  organizationId: string,
+  agentId: string,
+  data: { isActive: boolean },
+): Promise<Agent> => {
+  assertOrganizationId(organizationId)
+
+  if (!agentId) {
+    throw new Error('Требуется идентификатор агента')
+  }
+
+  try {
+    // Используем существующую функцию updateAgent, но передаем только isActive
+    return await updateAgentRepository(agentId, organizationId, {
+      status: data.isActive ? 'active' : 'inactive',
+    })
+  } catch (error) {
+    logger.error('AgentsService.updateAgentStatus failed', { error, organizationId, agentId })
+    throw new Error('Не удалось обновить статус агента')
+  }
+}
+
 export const AgentsService = {
   listAgents,
   createAgent,
@@ -200,6 +226,7 @@ export const AgentsService = {
   deleteAgent,
   getAgent,
   getAgentOrThrow,
+  updateAgentStatus,
 }
 
 export type AgentsService = typeof AgentsService
