@@ -407,7 +407,7 @@ export const processAsset = async (payload: ProcessAssetJob): Promise<void> => {
 
  try {
  // Обновляем статус на "обработка"
- await updateAssetStatus(assetId, 'processing')
+ await updateAssetStatus(assetId, { status: 'processing' })
 
  // Получаем информацию о файле
  const { data: asset, error: fetchError } = await supabase
@@ -507,7 +507,7 @@ export const processAsset = async (payload: ProcessAssetJob): Promise<void> => {
  }
 
  // Обновляем статус на "завершено"
- await updateAssetStatus(assetId, 'completed', null, chunksWithEmbeddings.length)
+ await updateAssetStatus(assetId, { status: 'completed', chunksCount: chunksWithEmbeddings.length })
 
  console.log(`[worker] Asset ${assetId} processed successfully: ${chunksWithEmbeddings.length} chunks created`)
  } catch (error) {
@@ -515,7 +515,7 @@ export const processAsset = async (payload: ProcessAssetJob): Promise<void> => {
 
  const errorMessage = error instanceof Error ? error.message : 'Unknown error'
 
- await updateAssetStatus(assetId, 'failed', errorMessage)
+ await updateAssetStatus(assetId, { status: 'failed', error: errorMessage })
 
  throw error
  }

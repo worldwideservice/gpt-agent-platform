@@ -2,13 +2,19 @@ import { createServer, IncomingMessage, ServerResponse } from 'http'
 import type { Redis } from 'ioredis'
 import { metrics } from './metrics'
 import { logger } from './lib/logger'
+import type { DeadLetterQueue } from './lib/dead-letter-queue'
 
 const PORT = process.env.PORT || 3001
 
 let redisConnection: Redis | null = null
+let dlqInstance: DeadLetterQueue | null = null
 
 export function setRedisConnection(connection: Redis) {
   redisConnection = connection
+}
+
+export function setDLQ(dlq: DeadLetterQueue) {
+  dlqInstance = dlq
 }
 
 /**
@@ -39,6 +45,18 @@ async function handleHealthCheck(res: ServerResponse) {
   const redisStatus = await checkRedisConnection()
   const m = metrics.getMetrics()
 
+  // Get DLQ stats if available
+  let dlqStats = null
+  if (dlqInstance) {
+    try {
+      dlqStats = await dlqInstance.getStats()
+    } catch (error) {
+      logger.error('Failed to get DLQ stats for health check', error, {
+        event: 'health.dlq.error',
+      })
+    }
+  }
+
   const health = {
     status: redisStatus.connected ? 'ok' : 'degraded',
     service: 'worker',
@@ -52,6 +70,10 @@ async function handleHealthCheck(res: ServerResponse) {
       concurrency: m.worker.concurrency,
       queueName: m.worker.queueName,
       jobsProcessing: m.jobs.processing,
+    },
+    deadLetterQueue: dlqStats || {
+      available: false,
+      message: 'DLQ not initialized',
     },
   }
 

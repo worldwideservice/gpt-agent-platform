@@ -25,12 +25,23 @@ services:
     image: redis:7-alpine
     container_name: gpt-agent-redis
     ports:
-      - "6379:6379"
+      # ✅ SECURITY FIX: Bind только на localhost
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis-data:/data
-    command: redis-server --appendonly yes
+    environment:
+      # ✅ SECURITY FIX: Добавляем requirepass для authentication
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-change-me-in-production}
+    # ✅ SECURITY FIX: Включаем requirepass и appendonly
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:-change-me-in-production}
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      # ✅ SECURITY FIX: Health check с паролем
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-change-me-in-production}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -64,6 +75,9 @@ volumes:
   redis-data:
 
 networks:
+  gpt-agent-network:
+    driver: bridge
+
   default:
     name: gpt-agent-network
 

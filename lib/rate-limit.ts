@@ -80,12 +80,46 @@ class MemoryStore {
 
 // Initialize rate limiter
 let ratelimit: Ratelimit | null = null
+let redisClient: Redis | null = null
 
-// TEMPORARILY DISABLE REDIS - USE MEMORY STORE ONLY
-// TODO: Re-enable Redis when Upstash is properly configured
-logger.info('Rate limiting: Using memory store (Redis disabled for stability)')
+// ✅ CRITICAL FIX: Включаем Redis rate limiting для production
+try {
+  const upstashUrl = process.env.UPSTASH_REDIS_REST_URL
+  const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN
 
-// Fallback to memory store
+  if (upstashUrl && upstashToken) {
+    redisClient = new Redis({
+      url: upstashUrl,
+      token: upstashToken,
+    })
+
+    ratelimit = new Ratelimit({
+      redis: redisClient,
+      limiter: Ratelimit.slidingWindow(100, '1 m'),
+      analytics: true,
+      prefix: '@upstash/ratelimit',
+    })
+
+    logger.info('Rate limiting: Using Upstash Redis (production-ready)')
+  } else {
+    // В production ТРЕБУЕМ Redis
+    if (process.env.NODE_ENV === 'production') {
+      logger.error('CRITICAL: Redis credentials missing in production! Rate limiting will NOT work properly.')
+      throw new Error('UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN required in production')
+    }
+
+    logger.warn('Rate limiting: Using memory store (development only - NOT for production)')
+  }
+} catch (error) {
+  logger.error('Failed to initialize Redis rate limiter:', error)
+
+  // В production НЕ допускаем fallback на memory
+  if (process.env.NODE_ENV === 'production') {
+    throw error
+  }
+}
+
+// Fallback to memory store (только для development)
 const memoryStore = new MemoryStore()
 
 export const rateLimit = async (

@@ -135,7 +135,7 @@ export function AgentForm({ agent, tenantId }: AgentFormProps) {
             hasKnowledge: false, // Knowledge base is added separately
           })
         } catch (analyticsError) {
-          console.warn('[AgentForm] Analytics tracking failed:', analyticsError)
+          // Silent fail for analytics
         }
       }
 

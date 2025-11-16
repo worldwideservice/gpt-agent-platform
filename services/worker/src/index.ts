@@ -1,13 +1,14 @@
-import { Worker } from 'bullmq'
+import { Worker, Queue } from 'bullmq'
 import Redis from 'ioredis'
 
 import { getTaskHandlers } from './tasks'
 import { env } from './lib/env'
-import { startHealthServer, setRedisConnection } from './health'
+import { startHealthServer, setRedisConnection, setDLQ } from './health'
 import { metrics } from './metrics'
 import { initSentry, trackJob } from './lib/sentry'
 import { logger } from './lib/logger'
 import { setRedisClient as setSharedRedisClient } from '@/lib/cache'
+import { DeadLetterQueue } from './lib/dead-letter-queue'
 
 logger.info('Starting Worker service', {
   nodeVersion: process.version,
@@ -126,6 +127,15 @@ connection.on('reconnecting', () => {
 
 const handlers = getTaskHandlers()
 
+// ✅ CRITICAL FIX: Initialize Dead Letter Queue for failed jobs
+const dlq = new DeadLetterQueue(connection, `${env.JOB_QUEUE_NAME}:dlq`)
+
+// Share DLQ with health check
+setDLQ(dlq)
+
+// Create main queue instance for DLQ retry functionality
+const mainQueue = new Queue(env.JOB_QUEUE_NAME, { connection })
+
 const worker = new Worker(
   env.JOB_QUEUE_NAME,
   async (job) => {
@@ -174,6 +184,11 @@ const worker = new Worker(
     // Настройки для stalled jobs
     lockDuration: 30000, // 30 секунд на обработку job
     lockRenewTime: 15000, // Обновлять блокировку каждые 15 секунд
+    settings: {
+      // Максимум 3 попытки перед отправкой в DLQ
+      maxStalledCount: 1,
+      stalledInterval: 30000,
+    },
   },
 )
 
@@ -190,9 +205,27 @@ worker.on('completed', (job) => {
   metrics.jobCompleted(job.id || '', job.name)
 })
 
-worker.on('failed', (job, error) => {
+worker.on('failed', async (job, error) => {
   // Логирование уже выполнено в handler
   metrics.jobFailed(job?.id || '', job?.name || 'unknown', error)
+
+  // ✅ CRITICAL FIX: Move to DLQ after max retries
+  if (job) {
+    const attemptsMade = job.attemptsMade
+    const maxAttempts = job.opts.attempts || 3
+
+    if (attemptsMade >= maxAttempts) {
+      logger.warn('Job exceeded max retries, moving to DLQ', {
+        jobId: job.id,
+        jobName: job.name,
+        attemptsMade,
+        maxAttempts,
+        event: 'job.max_retries_exceeded',
+      })
+
+      await dlq.moveToDeadLetter(job, error, attemptsMade)
+    }
+  }
 })
 
 worker.on('stalled', (jobId) => {
@@ -219,4 +252,91 @@ logger.info('Worker started successfully', {
   queueName: env.JOB_QUEUE_NAME,
   concurrency: env.JOB_CONCURRENCY,
   event: 'worker.ready',
+})
+
+// ✅ CRITICAL FIX: Graceful shutdown для избежания потери jobs
+let isShuttingDown = false
+
+async function gracefulShutdown(signal: string) {
+  if (isShuttingDown) {
+    logger.warn('Shutdown already in progress, ignoring signal', { signal })
+    return
+  }
+
+  isShuttingDown = true
+  logger.info(`Received ${signal}, starting graceful shutdown...`, {
+    signal,
+    event: 'worker.shutdown.start',
+  })
+
+  try {
+    // Даем время для завершения текущих jobs
+    logger.info('Closing worker (waiting for active jobs to complete)...', {
+      event: 'worker.shutdown.closing',
+    })
+
+    // Закрываем worker (не принимаем новые jobs, ждем завершения текущих)
+    await worker.close()
+
+    logger.info('Worker closed successfully', {
+      event: 'worker.shutdown.closed',
+    })
+
+    // Закрываем DLQ
+    logger.info('Closing Dead Letter Queue...', {
+      event: 'worker.shutdown.dlq.closing',
+    })
+
+    await dlq.close()
+    await mainQueue.close()
+
+    logger.info('DLQ closed successfully', {
+      event: 'worker.shutdown.dlq.closed',
+    })
+
+    // Закрываем Redis соединение
+    logger.info('Closing Redis connection...', {
+      event: 'worker.shutdown.redis.closing',
+    })
+
+    await connection.quit()
+
+    logger.info('Redis connection closed', {
+      event: 'worker.shutdown.redis.closed',
+    })
+
+    logger.info('Graceful shutdown completed', {
+      event: 'worker.shutdown.complete',
+    })
+
+    process.exit(0)
+  } catch (error) {
+    logger.error('Error during graceful shutdown', error, {
+      event: 'worker.shutdown.error',
+    })
+
+    // Принудительно завершаем процесс
+    process.exit(1)
+  }
+}
+
+// Обрабатываем сигналы завершения
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
+process.on('SIGINT', () => gracefulShutdown('SIGINT'))
+
+// Обрабатываем необработанные ошибки
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught exception', error, {
+    event: 'process.uncaughtException',
+  })
+  // Не завершаем процесс немедленно, позволяем graceful shutdown
+  gracefulShutdown('uncaughtException')
+})
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled rejection', reason as Error, {
+    event: 'process.unhandledRejection',
+    promise: String(promise),
+  })
+  // Не завершаем процесс немедленно
 })

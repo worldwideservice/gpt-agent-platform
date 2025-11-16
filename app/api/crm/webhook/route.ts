@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
  const body = await request.json()
 
  // Проверка подписи webhook (если настроена)
- const signatureValid = verifyWebhookSignature(request)
+ const signatureValid = await verifyWebhookSignature(request, body)
  if (!signatureValid) {
  return NextResponse.json(
  { success: false, error: 'Invalid webhook signature' },
@@ -110,12 +110,12 @@ async function determineOrgIdFromWebhook(
  }
  }
 
- // Fallback: пробуем из headers или query параметров
- const orgIdHeader = request.headers.get('X-Org-Id')
- if (orgIdHeader) {
- return orgIdHeader
- }
+ // ❌ SECURITY FIX: НЕ используем X-Org-Id из headers!
+ // Это IDOR уязвимость - клиент контролирует header
+ // orgId должен определяться только из базы данных через base_domain
 
+ // Если не смогли определить orgId из base_domain - возвращаем null
+ console.warn('Could not determine orgId from base_domain:', baseDomainRaw)
  return null
  } catch (error) {
  console.error('Error determining orgId from webhook:', error)
@@ -124,19 +124,39 @@ async function determineOrgIdFromWebhook(
 }
 
 // Проверка подписи webhook (если настроена в Kommo)
-function verifyWebhookSignature(request: NextRequest): boolean {
+async function verifyWebhookSignature(request: NextRequest, body: unknown): Promise<boolean> {
  const signature = request.headers.get('X-Kommo-Signature')
  const secret = process.env.KOMMO_WEBHOOK_SECRET
 
+ // В production ОБЯЗАТЕЛЬНО требуем подпись
+ if (process.env.NODE_ENV === 'production' && (!signature || !secret)) {
+ console.error('Webhook signature or secret missing in production')
+ return false
+ }
+
+ // В development разрешаем без подписи
  if (!signature || !secret) {
- // Если подпись не настроена, разрешаем
  return true
  }
 
- // Здесь должна быть логика проверки подписи
- // В зависимости от настроек Kommo
- // Пример: HMAC SHA256 проверка
+ try {
+ // Проверяем HMAC SHA256 подпись
+ const crypto = await import('crypto')
+ const payloadString = typeof body === 'string' ? body : JSON.stringify(body)
 
- return true
+ const expectedSignature = crypto
+ .createHmac('sha256', secret)
+ .update(payloadString)
+ .digest('hex')
+
+ // Используем timingSafeEqual для защиты от timing attacks
+ return crypto.timingSafeEqual(
+ Buffer.from(signature),
+ Buffer.from(expectedSignature)
+ )
+ } catch (error) {
+ console.error('Error verifying webhook signature:', error)
+ return false
+ }
 }
 

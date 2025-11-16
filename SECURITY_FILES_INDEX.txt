@@ -1,0 +1,114 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    ФАЙЛЫ С УЯЗВИМОСТЯМИ                                   ║
+║                        Sorted by Priority                                 ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+🔴 КРИТИЧЕСКИЕ ФАЙЛЫ (5 проблем)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. /home/user/gpt-agent-platform/app/api/crm/webhook/route.ts
+   ├─ Строка 127-141: ❌ verifyWebhookSignature() broken
+   ├─ Строка 113-117: ❌ X-Org-Id header spoofing
+   ├─ Строка 74:      ❌ Information disclosure in errors
+   └─ Статус: КРИТИЧНО - FIX IMMEDIATELY
+
+2. /home/user/gpt-agent-platform/lib/rate-limit.ts
+   ├─ Строка 84-86: ❌ Rate limiting disabled (Redis off)
+   └─ Статус: КРИТИЧНО - ENABLE REDIS
+
+3. /home/user/gpt-agent-platform/auth.ts
+   ├─ Строка 46-98: ❌ Sensitive data logging (email, IDs, passwords)
+   └─ Статус: КРИТИЧНО - REMOVE console.log() CALLS
+
+4. /home/user/gpt-agent-platform/app/api/agents/[agentId]/integrations/kommo/oauth/start/route.ts
+   ├─ Строка 43-57: ❌ CSRF state not validated
+   └─ Статус: КРИТИЧНО - ADD STATE VALIDATION
+
+5. /home/user/gpt-agent-platform/app/api/integrations/kommo/oauth/callback/route.ts
+   ├─ Строки 33-38: ❌ State parameter parsed but not validated
+   └─ Статус: КРИТИЧНО - VALIDATE STATE
+
+🟠 ВЫСОКИЕ ПРИОРИТЕТЫ (8 проблем)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+6. /home/user/gpt-agent-platform/package.json
+   ├─ js-yaml < 4.1.1: ❌ Prototype pollution vulnerability
+   ├─ swagger-ui-react: ❌ Depends on vulnerable js-yaml
+   └─ Решение: npm audit fix
+
+7. /home/user/gpt-agent-platform/next.config.js
+   ├─ Missing: ❌ Content-Security-Policy header
+   └─ Статус: ADD CSP HEADER
+
+8. /home/user/gpt-agent-platform/app/layout.tsx
+   ├─ Строка 117: ❌ dangerouslySetInnerHTML usage
+   └─ Статус: REVIEW & OPTIMIZE
+
+9. /home/user/gpt-agent-platform/app/api/auth/register/route.ts
+   ├─ Строка 29: ❌ Weak password validation (6 chars min)
+   ├─ Строка 37: ❌ Weak email regex
+   └─ Требуется: IMPROVE VALIDATION
+
+10. /home/user/gpt-agent-platform/lib/env/validation.ts
+    ├─ Строка 63-67: ❌ JWT_SECRET optional (must be required)
+    └─ Требуется: MAKE REQUIRED
+
+11. /home/user/gpt-agent-platform/app/api/auth/set-remember-me/route.ts
+    ├─ Строка 7: ⚠️  Cookie secure flag conditional
+    └─ Требуется: ALWAYS SECURE ON PROD
+
+12. /home/user/gpt-agent-platform/app/api/auth/reset-password/request/route.ts
+    ├─ Missing: ❌ Rate limiting on password reset
+    └─ Требуется: ADD RATE LIMITING
+
+13. /home/user/gpt-agent-platform/app/api/auth/reset-password/confirm/route.ts
+    ├─ Missing: ❌ Explicit token timeout validation
+    └─ Требуется: VERIFY TIMEOUT
+
+🟡 СРЕДНИЕ ПРИОРИТЕТЫ (11 проблем)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+14. /home/user/gpt-agent-platform/app/api/agents/[id]/assets/route.ts
+    ├─ Missing: ❌ Rate limiting on file upload
+    ├─ Missing: ❌ File name sanitization
+    └─ Требуется: ADD CONTROLS
+
+15. /home/user/gpt-agent-platform/middleware.ts
+    ├─ Missing: ❌ Authentication checks on protected routes
+    └─ Требуется: ADD AUTH VERIFICATION
+
+16. /home/user/gpt-agent-platform/lib/backend/client.ts
+    ├─ Строка 29: ⚠️  Potential SSRF (need URL validation)
+    └─ Требуется: VALIDATE URLS
+
+17. Все файлы с process.env обращениями (249 мест!)
+    ├─ Missing: ❌ Centralized env.ts with typed access
+    └─ Требуется: CREATE TYPED ENV MODULE
+
+18-28. Другие файлы с средними и низкими проблемами
+    ├─ Auth endpoints без rate limiting
+    ├─ Слабая валидация input
+    ├─ Отсутствие audit logging
+    └─ И др.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 ФАЙЛЫ ДЛЯ БЫСТРОГО ДОСТУПА (в порядке приоритета):
+
+КРИТИЧЕСКИЕ (3 файла - исправить за день):
+  1. /app/api/crm/webhook/route.ts
+  2. /lib/rate-limit.ts  
+  3. /auth.ts
+
+ВЫСОКИЕ (5 файлов - исправить на этой неделе):
+  4. /app/api/auth/register/route.ts
+  5. /lib/env/validation.ts
+  6. /next.config.js
+  7. /package.json
+  8. /app/api/auth/set-remember-me/route.ts
+
+СРЕДНИЕ (10+ файлов - исправить на следующей неделе):
+  9. /middleware.ts
+  10. /app/api/agents/[id]/assets/route.ts
+  ... и др.
+
