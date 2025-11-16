@@ -54,15 +54,11 @@ export const LoginClient = () => {
         .then((res) => res.json())
         .then((redirectData) => {
           if (redirectData.success && redirectData.tenantId) {
-            console.log('[LoginClient] User already authenticated, redirecting...', {
-              tenantId: redirectData.tenantId,
-            })
-            // Используем window.location.href для гарантированного редиректа
             window.location.href = `/manage/${redirectData.tenantId}`
           }
         })
         .catch((error) => {
-          console.warn('[LoginClient] Error getting tenant redirect for authenticated user:', error)
+          console.error('[LoginClient] Error getting tenant redirect:', error)
         })
     }
   }, [status, session])
@@ -115,26 +111,17 @@ export const LoginClient = () => {
             }
           }
 
-          // Ждем, чтобы сессия успела обновиться (увеличено до 1000ms)
-          console.log('[LoginClient] Waiting for session to update...')
+          // Ждем, чтобы сессия успела обновиться
           await new Promise(resolve => setTimeout(resolve, 1000))
-          
+
           // Обновляем сессию на клиенте через getSession
-          console.log('[LoginClient] Fetching session...')
           try {
-            const session = await getSession()
-            console.log('[LoginClient] Session fetched:', {
-              hasSession: !!session,
-              hasUser: !!session?.user,
-              hasOrgId: !!session?.user?.orgId,
-              userId: session?.user?.id,
-            })
+            await getSession()
           } catch (sessionError) {
-            console.warn('[LoginClient] Error fetching session:', sessionError)
+            console.error('[LoginClient] Error fetching session:', sessionError)
           }
-          
+
           // Обновляем роутер
-          console.log('[LoginClient] Refreshing router...')
           router.refresh()
           await new Promise(resolve => setTimeout(resolve, 500))
 
@@ -146,66 +133,43 @@ export const LoginClient = () => {
             const maxRetries = 8
             const retryDelay = 2000 // 2 секунды
 
-            console.log(`[LoginClient] Starting tenant-id retrieval with ${maxRetries} retries (${retryDelay}ms delay)`)
-
             for (let attempt = 1; attempt <= maxRetries; attempt++) {
               try {
-                console.log(`[LoginClient] Attempt ${attempt}/${maxRetries}: Fetching tenant-id...`)
                 const redirectResponse = await fetch('/api/auth/get-tenant-redirect', {
                   cache: 'no-store',
                 })
-                
+
                 if (!redirectResponse.ok) {
                   throw new Error(`HTTP ${redirectResponse.status}: Failed to get redirect URL`)
                 }
-                
+
                 redirectData = await redirectResponse.json()
-                console.log(`[LoginClient] Attempt ${attempt} response:`, {
-                  success: redirectData?.success,
-                  hasTenantId: !!redirectData?.tenantId,
-                  error: redirectData?.error,
-                })
 
                 if (redirectData?.success && redirectData?.tenantId) {
                   // Успешно получили tenant-id
-                  console.log(`[LoginClient] Successfully got tenant-id on attempt ${attempt}`)
                   break
                 } else if (attempt < maxRetries) {
-                  // Еще есть попытки, ждем перед следующей
-                  console.warn(`[LoginClient] Attempt ${attempt} failed, retrying in ${retryDelay}ms...`, {
-                    error: redirectData?.error,
-                    response: redirectData,
-                  })
-                  
                   // Обновляем сессию перед следующей попыткой
-                  console.log(`[LoginClient] Refreshing router before attempt ${attempt + 1}...`)
                   router.refresh()
-                  
+
                   // Ждем дольше для обновления сессии
                   await new Promise(resolve => setTimeout(resolve, retryDelay))
-                  
+
                   // Дополнительно обновляем сессию через getSession
                   try {
-                    const updatedSession = await getSession()
-                    console.log(`[LoginClient] Session after refresh (attempt ${attempt + 1}):`, {
-                      hasSession: !!updatedSession,
-                      hasOrgId: !!updatedSession?.user?.orgId,
-                      userId: updatedSession?.user?.id,
-                    })
+                    await getSession()
                   } catch (sessionError) {
-                    console.warn(`[LoginClient] Error fetching session before attempt ${attempt + 1}:`, sessionError)
+                    console.error(`[LoginClient] Session refresh error (attempt ${attempt + 1}):`, sessionError)
                   }
                 }
               } catch (fetchError) {
                 lastError = fetchError instanceof Error ? fetchError : new Error(String(fetchError))
-                console.error(`[LoginClient] Attempt ${attempt} error:`, {
-                  error: lastError.message,
-                  stack: lastError.stack,
-                })
+                if (attempt === maxRetries) {
+                  // Только логируем финальную ошибку
+                  console.error('[LoginClient] All retry attempts failed:', lastError)
+                }
                 if (attempt < maxRetries) {
-                  console.log(`[LoginClient] Retrying in ${retryDelay}ms...`)
                   await new Promise(resolve => setTimeout(resolve, retryDelay))
-                  console.log(`[LoginClient] Refreshing router before retry...`)
                   router.refresh()
                   await new Promise(resolve => setTimeout(resolve, 500))
                 }
@@ -213,10 +177,6 @@ export const LoginClient = () => {
             }
 
             if (redirectData?.success && redirectData.tenantId) {
-              console.log('[LoginClient] Successfully got tenant-id, redirecting...', {
-                tenantId: redirectData.tenantId,
-              })
-
               // Track successful login
               try {
                 const currentSession = await getSession()
@@ -231,7 +191,7 @@ export const LoginClient = () => {
                   })
                 }
               } catch (analyticsError) {
-                console.warn('[LoginClient] Analytics tracking failed:', analyticsError)
+                // Silent fail for analytics
               }
 
               pushToast({
@@ -241,9 +201,7 @@ export const LoginClient = () => {
               })
 
               // Используем window.location.href для гарантированного полного редиректа
-              // Это обновляет всю страницу и гарантирует корректную работу сессии
               const redirectUrl = `/manage/${redirectData.tenantId}`
-              console.log('[LoginClient] Redirecting to:', redirectUrl)
 
               // Небольшая задержка для отображения toast
               await new Promise(resolve => setTimeout(resolve, 300))
