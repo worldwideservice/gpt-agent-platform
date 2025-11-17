@@ -75,45 +75,77 @@ export class OpenRouterClient {
   }
 
   async chat(messages: OpenRouterMessage[], options: ChatOptions = {}): Promise<OpenRouterChatResponse> {
-    const response = await fetch(`${this.baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: this.buildHeaders(),
-      body: JSON.stringify({
-        model: options.model ?? this.defaultModel,
-        messages,
-        temperature: options.temperature ?? 0.7,
-        max_tokens: options.maxTokens ?? 2048,
-        top_p: options.topP ?? 1,
-        metadata: options.metadata,
-      }),
-    })
+    // ✅ PRODUCTION FIX: Add timeout to prevent hanging requests
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 seconds
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
+    try {
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: this.buildHeaders(),
+        body: JSON.stringify({
+          model: options.model ?? this.defaultModel,
+          messages,
+          temperature: options.temperature ?? 0.7,
+          max_tokens: options.maxTokens ?? 2048,
+          top_p: options.topP ?? 1,
+          metadata: options.metadata,
+        }),
+        signal: controller.signal,
+      })
+
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
+      }
+
+      return (await response.json()) as OpenRouterChatResponse
+    } catch (error) {
+      clearTimeout(timeoutId)
+
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('OpenRouter API request timed out after 30 seconds')
+      }
+      throw error
     }
-
-    return (await response.json()) as OpenRouterChatResponse
   }
 
   async embeddings(input: string | string[], options?: { model?: string }): Promise<OpenRouterEmbeddingResponse> {
     const payloadInput = Array.isArray(input) ? input : [input]
 
-    const response = await fetch(`${this.baseUrl}/embeddings`, {
-      method: 'POST',
-      headers: this.buildHeaders(),
-      body: JSON.stringify({
-        model: options?.model ?? this.embeddingModel,
-        input: payloadInput,
-      }),
-    })
+    // ✅ PRODUCTION FIX: Add timeout to prevent hanging requests
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 seconds
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
+    try {
+      const response = await fetch(`${this.baseUrl}/embeddings`, {
+        method: 'POST',
+        headers: this.buildHeaders(),
+        body: JSON.stringify({
+          model: options?.model ?? this.embeddingModel,
+          input: payloadInput,
+        }),
+        signal: controller.signal,
+      })
+
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`)
+      }
+
+      return (await response.json()) as OpenRouterEmbeddingResponse
+    } catch (error) {
+      clearTimeout(timeoutId)
+
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('OpenRouter API request timed out after 30 seconds')
+      }
+      throw error
     }
-
-    return (await response.json()) as OpenRouterEmbeddingResponse
   }
 
   private buildHeaders(): Record<string, string> {

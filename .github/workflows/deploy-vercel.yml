@@ -49,8 +49,10 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       
+      # ✅ SECURITY FIX: Use secret instead of hardcoded URL
       - name: Health check
         run: |
           sleep 10
-          curl -f https://gpt-agent-kwid-1i1j7zlgl-world-wide-services-62780b79.vercel.app/api/health || echo "⚠️ Health check failed (non-blocking)"
+          HEALTH_URL="${{ secrets.DEPLOYMENT_URL }}/api/health"
+          curl -f "$HEALTH_URL" || echo "⚠️ Health check failed (non-blocking)"
         continue-on-error: true
