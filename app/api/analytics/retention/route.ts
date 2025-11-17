@@ -1,0 +1,41 @@
+/**
+ * Retention Analytics API
+ * GET /api/analytics/retention - Get user retention data
+ */
+
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { calculateRetention } from '@/lib/analytics/advanced'
+import { logger } from '@/lib/logger'
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const orgId = session.user.orgId || session.user.id
+
+    const { searchParams } = new URL(request.url)
+    const cohortDate = searchParams.get('cohort_date')
+
+    if (!cohortDate) {
+      return NextResponse.json(
+        { error: 'cohort_date is required' },
+        { status: 400 }
+      )
+    }
+
+    const retention = await calculateRetention(orgId, cohortDate)
+
+    return NextResponse.json({ retention })
+  } catch (error) {
+    logger.error('Failed to calculate retention', { error })
+    return NextResponse.json(
+      { error: 'Failed to calculate retention' },
+      { status: 500 }
+    )
+  }
+}

@@ -4,11 +4,13 @@ import { KommoAPI } from '@/lib/crm/kommo'
 import { saveWebhookEvent, processWebhookEvent, extractWebhookMetadata } from '@/lib/services/webhook-processor'
 import { getCrmConnectionData } from '@/lib/repositories/crm-connection'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { rateLimitWebhook } from '@/lib/middleware/rate-limit-api'
+import { logger } from '@/lib/utils/logger'
 
 /**
  * Webhook endpoint для получения событий от Kommo CRM
  * Настройка в Kommo: Настройки -> Интеграции -> Webhooks
- * 
+ *
  * Полностью обрабатывает все типы событий: leads, contacts, tasks, messages, calls
  * Автоматически запускает Rule Engine при соответствующих событиях
  * Сохраняет историю всех событий с поддержкой retry
@@ -16,6 +18,10 @@ import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
 export async function POST(request: NextRequest) {
  try {
+ // Apply webhook rate limiting (identify by source if possible)
+ const rateLimitResponse = await rateLimitWebhook(request, 'kommo')
+ if (rateLimitResponse) return rateLimitResponse
+
  const body = await request.json()
 
  // Проверка подписи webhook (если настроена)
@@ -31,14 +37,14 @@ export async function POST(request: NextRequest) {
  const event = KommoAPI.parseWebhook(body)
 
  if (process.env.NODE_ENV === 'development') {
- console.log('Kommo Webhook Event:', event.type, event.data)
+ logger.debug('Kommo Webhook Event', { eventType: event.type, data: event.data })
  }
 
  // Определяем orgId из webhook payload или headers
  const orgId = await determineOrgIdFromWebhook(body, request)
 
  if (!orgId) {
- console.warn('Could not determine orgId from webhook, skipping processing')
+ logger.warn('Could not determine orgId from webhook, skipping processing')
  return NextResponse.json({ success: true, message: 'Event received but orgId not found' })
  }
 
@@ -57,7 +63,7 @@ export async function POST(request: NextRequest) {
  // Обрабатываем событие асинхронно (не блокируем ответ)
  // Можно использовать очередь для гарантированной обработки
  processWebhookEvent(eventId).catch(error => {
- console.error(`Failed to process webhook event ${eventId}:`, error)
+ logger.error(`Failed to process webhook event ${eventId}`, error, { eventId })
  })
 
  // Возвращаем успешный ответ сразу (webhook должен ответить быстро)
@@ -67,11 +73,11 @@ export async function POST(request: NextRequest) {
  message: 'Webhook received and queued for processing'
  })
  } catch (error) {
- console.error('Webhook Error:', error)
+ logger.error('Webhook processing error', error)
  return NextResponse.json(
- { 
- success: false, 
- error: error instanceof Error ? error.message : 'Unknown error' 
+ {
+ success: false,
+ error: error instanceof Error ? error.message : 'Unknown error'
  },
  { status: 500 }
  )
@@ -115,10 +121,10 @@ async function determineOrgIdFromWebhook(
  // orgId должен определяться только из базы данных через base_domain
 
  // Если не смогли определить orgId из base_domain - возвращаем null
- console.warn('Could not determine orgId from base_domain:', baseDomainRaw)
+ logger.warn('Could not determine orgId from base_domain', { baseDomain: baseDomainRaw })
  return null
  } catch (error) {
- console.error('Error determining orgId from webhook:', error)
+ logger.error('Error determining orgId from webhook', error)
  return null
  }
 }
@@ -130,7 +136,7 @@ async function verifyWebhookSignature(request: NextRequest, body: unknown): Prom
 
  // В production ОБЯЗАТЕЛЬНО требуем подпись
  if (process.env.NODE_ENV === 'production' && (!signature || !secret)) {
- console.error('Webhook signature or secret missing in production')
+ logger.error('Webhook signature or secret missing in production')
  return false
  }
 
@@ -155,7 +161,7 @@ async function verifyWebhookSignature(request: NextRequest, body: unknown): Prom
  Buffer.from(expectedSignature)
  )
  } catch (error) {
- console.error('Error verifying webhook signature:', error)
+ logger.error('Error verifying webhook signature', error)
  return false
  }
 }

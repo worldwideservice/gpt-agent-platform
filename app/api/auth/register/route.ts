@@ -6,6 +6,7 @@ import { loadSupabaseServerEnv } from '@/lib/env/supabase'
 import { logger } from '@/lib/utils/logger'
 import { registerSchema } from '@/lib/validation/schemas/auth'
 import { validateRequest } from '@/lib/validation/validate'
+import { rateLimitAuth } from '@/lib/middleware/rate-limit-api'
 
 
 // Force dynamic rendering (uses headers from auth())
@@ -15,6 +16,10 @@ export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
  try {
+ // Apply strict rate limiting for auth endpoints
+ const rateLimitResponse = await rateLimitAuth(request)
+ if (rateLimitResponse) return rateLimitResponse
+
  // Validate environment variables
  loadSupabaseServerEnv()
 

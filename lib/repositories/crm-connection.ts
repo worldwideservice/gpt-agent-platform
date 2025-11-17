@@ -1,6 +1,7 @@
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { KommoAPI, type KommoConfig } from '@/lib/crm/kommo'
 import { logger } from '@/lib/utils/logger'
+import { safeDecrypt, encrypt } from '@/lib/crypto/encryption'
 
 const DEMO_FLAG_VALUES = new Set(['1', 'true'])
 const matchesDemo = (value?: string) => (value ? DEMO_FLAG_VALUES.has(value.toLowerCase()) : false)
@@ -89,15 +90,17 @@ export const getCrmConnectionData = async (
           org_id: connection.org_id,
           provider: connection.provider,
           base_domain: connection.base_domain,
-          access_token: connection.access_token,
-          refresh_token: connection.refresh_token,
+          // Decrypt tokens when reading from database
+          access_token: safeDecrypt(connection.access_token) || '',
+          refresh_token: safeDecrypt(connection.refresh_token),
           expires_at: connection.expires_at,
         }
       : null,
     credentials: credentials
       ? {
           client_id: credentials.client_id,
-          client_secret: credentials.client_secret,
+          // Decrypt client_secret when reading from database
+          client_secret: safeDecrypt(credentials.client_secret) || '',
           redirect_uri: credentials.redirect_uri,
         }
       : null,
@@ -133,4 +136,98 @@ export const createKommoApiForOrg = async (
  logger.error('Failed to create KommoAPI for org', error)
  return null
  }
+}
+
+/**
+ * Update CRM connection tokens (encrypts automatically)
+ */
+export const updateCrmConnectionTokens = async (
+  connectionId: string,
+  accessToken: string,
+  refreshToken: string | null,
+  expiresAt: string | null
+): Promise<void> => {
+  const supabase = getSupabaseServiceRoleClient()
+
+  const { error } = await supabase
+    .from('crm_connections')
+    .update({
+      access_token: encrypt(accessToken),
+      refresh_token: refreshToken ? encrypt(refreshToken) : null,
+      expires_at: expiresAt,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', connectionId)
+
+  if (error) {
+    logger.error('Failed to update CRM connection tokens', error, { connectionId })
+    throw new Error('Failed to update tokens')
+  }
+
+  logger.info('CRM connection tokens updated', { connectionId })
+}
+
+/**
+ * Save new CRM connection with encrypted tokens
+ */
+export const saveCrmConnection = async (params: {
+  orgId: string
+  provider: string
+  baseDomain: string
+  accessToken: string
+  refreshToken: string | null
+  expiresAt: string | null
+}): Promise<string> => {
+  const supabase = getSupabaseServiceRoleClient()
+
+  const { data, error } = await supabase
+    .from('crm_connections')
+    .insert({
+      org_id: params.orgId,
+      provider: params.provider,
+      base_domain: params.baseDomain,
+      access_token: encrypt(params.accessToken),
+      refresh_token: params.refreshToken ? encrypt(params.refreshToken) : null,
+      expires_at: params.expiresAt,
+    })
+    .select('id')
+    .single()
+
+  if (error || !data) {
+    logger.error('Failed to save CRM connection', error)
+    throw new Error('Failed to save CRM connection')
+  }
+
+  logger.info('CRM connection saved', { connectionId: data.id, provider: params.provider })
+  return data.id
+}
+
+/**
+ * Save CRM credentials with encrypted client_secret
+ */
+export const saveCrmCredentials = async (params: {
+  orgId: string
+  provider: string
+  clientId: string
+  clientSecret: string
+  redirectUri: string | null
+}): Promise<void> => {
+  const supabase = getSupabaseServiceRoleClient()
+
+  const { error } = await supabase
+    .from('crm_credentials')
+    .insert({
+      org_id: params.orgId,
+      provider: params.provider,
+      client_id: params.clientId,
+      client_secret: encrypt(params.clientSecret),
+      redirect_uri: params.redirectUri,
+    })
+
+  if (error) {
+    logger.error('Failed to save CRM credentials', error)
+    throw new Error('Failed to save CRM credentials')
+  }
+
+  logger.info('CRM credentials saved', { provider: params.provider })
 }
