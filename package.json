@@ -56,6 +56,7 @@
     "check:worker": "node scripts/check-worker.js",
     "check:all": "bash scripts/check-all-errors.sh",
     "audit:security": "npm audit --audit-level=high",
+    "security:audit": "tsx scripts/security-audit.ts",
     "predeploy": "npm run check:all",
     "setup:env": "bash scripts/auto-setup-env.sh",
     "docker:redis": "docker-compose up -d redis",
