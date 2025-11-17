@@ -1,6 +1,19 @@
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { getQueueStats, getJobsByStatus } from '@/lib/queue'
 import { logger } from '@/lib/utils/logger'
+
+// ✅ SECURITY FIX: Add runtime validation with Zod schemas
+const GetJobsQuerySchema = z.object({
+  status: z.enum(['active', 'waiting', 'completed', 'failed']).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(10),
+  offset: z.coerce.number().int().min(0).optional().default(0),
+})
+
+const CreateJobSchema = z.object({
+  jobName: z.string().min(1, 'Job name is required'),
+  payload: z.record(z.unknown()).optional().default({}),
+})
 
 /**
  * GET /api/admin/jobs
@@ -9,8 +22,29 @@ import { logger } from '@/lib/utils/logger'
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const status = searchParams.get('status') as 'active' | 'waiting' | 'completed' | 'failed' | null
-    const limit = parseInt(searchParams.get('limit') || '10', 10)
+
+    // ✅ SECURITY FIX: Validate query parameters with Zod
+    const queryValidation = GetJobsQuerySchema.safeParse({
+      status: searchParams.get('status'),
+      limit: searchParams.get('limit'),
+      offset: searchParams.get('offset'),
+    })
+
+    if (!queryValidation.success) {
+      logger.warn('Invalid query parameters for GET /api/admin/jobs', {
+        errors: queryValidation.error.issues,
+      })
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid query parameters',
+          details: queryValidation.error.issues.map(issue => issue.message),
+        },
+        { status: 400 }
+      )
+    }
+
+    const { status, limit, offset } = queryValidation.data
 
     // Get queue statistics
     const stats = await getQueueStats()
@@ -60,17 +94,25 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { jobName, payload } = body
 
-    if (!jobName) {
+    // ✅ SECURITY FIX: Validate request body with Zod
+    const bodyValidation = CreateJobSchema.safeParse(body)
+
+    if (!bodyValidation.success) {
+      logger.warn('Invalid request body for POST /api/admin/jobs', {
+        errors: bodyValidation.error.issues,
+      })
       return NextResponse.json(
         {
           success: false,
-          error: 'Job name is required',
+          error: 'Invalid request body',
+          details: bodyValidation.error.issues.map(issue => issue.message),
         },
         { status: 400 }
       )
     }
+
+    const { jobName, payload } = bodyValidation.data
 
     const { addJobToQueue } = await import('@/lib/queue')
     const job = await addJobToQueue(jobName, payload || {})

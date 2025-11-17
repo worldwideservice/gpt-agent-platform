@@ -267,11 +267,26 @@ export const POST = async (request: NextRequest) => {
     let conversation
 
     if (conversationId) {
+      // ✅ SECURITY FIX: IDOR protection - verify conversation belongs to user's organization
       conversation = await getConversationById(conversationId, organizationId)
       if (!conversation) {
         return NextResponse.json(
           { success: false, error: 'Диалог не найден' },
           { status: 404 },
+        )
+      }
+
+      // ✅ CRITICAL: Verify conversation belongs to current user's organization
+      if (conversation.organizationId !== organizationId) {
+        logger.warn('IDOR attempt detected: User tried to access conversation from different organization', {
+          userId,
+          userOrgId: organizationId,
+          conversationId,
+          conversationOrgId: conversation.organizationId,
+        })
+        return NextResponse.json(
+          { success: false, error: 'Доступ запрещен' },
+          { status: 403 },
         )
       }
     } else {

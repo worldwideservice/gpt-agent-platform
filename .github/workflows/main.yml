@@ -222,6 +222,10 @@ jobs:
     timeout-minutes: 15
     needs: [quality, build]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    # ✅ SECURITY FIX: Add deployment approval gate for production
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.deployment_url }}
     steps:
       - uses: actions/checkout@v4
       
@@ -279,7 +283,9 @@ jobs:
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
             echo "Attempt $((RETRY_COUNT + 1)) of $MAX_RETRIES"
 
-            if curl -f -s --max-time 10 https://gpt-agent-kwid-1i1j7zlgl-world-wide-services-62780b79.vercel.app/api/health; then
+            # ✅ SECURITY FIX: Use secret instead of hardcoded URL
+            HEALTH_URL="${{ secrets.DEPLOYMENT_URL }}/api/health"
+            if curl -f -s --max-time 10 "$HEALTH_URL"; then
               echo "✅ Health check passed!"
               exit 0
             fi
