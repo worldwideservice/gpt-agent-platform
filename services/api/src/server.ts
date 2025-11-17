@@ -178,4 +178,45 @@ async function start() {
   }
 }
 
+// ✅ PRODUCTION FIX: Graceful shutdown для корректного завершения
+async function shutdown(signal: string) {
+  app.log.info(`Received ${signal}, shutting down gracefully...`)
+
+  try {
+    // Закрываем Fastify сервер
+    await app.close()
+    app.log.info('Fastify server closed successfully')
+
+    // Закрываем Sentry соединения
+    if (process.env.SENTRY_DSN) {
+      await Sentry.close(2000)
+    }
+
+    process.exit(0)
+  } catch (error) {
+    app.log.error({ err: error }, 'Error during graceful shutdown')
+    process.exit(1)
+  }
+}
+
+// Обработчики сигналов для graceful shutdown
+process.on('SIGTERM', () => shutdown('SIGTERM'))
+process.on('SIGINT', () => shutdown('SIGINT'))
+
+// Обработка uncaught exceptions
+process.on('uncaughtException', (error) => {
+  app.log.fatal({ err: error }, 'Uncaught exception')
+  if (process.env.SENTRY_DSN) {
+    Sentry.captureException(error)
+  }
+  shutdown('uncaughtException')
+})
+
+process.on('unhandledRejection', (reason, promise) => {
+  app.log.fatal({ reason, promise }, 'Unhandled promise rejection')
+  if (process.env.SENTRY_DSN) {
+    Sentry.captureException(reason)
+  }
+})
+
 start()

@@ -24,9 +24,19 @@ declare module 'fastify' {
  * Auth plugin с JWT support
  */
 const authPlugin: FastifyPluginAsync = async (fastify) => {
+  // JWT Secret validation - КРИТИЧНО для production
+  const jwtSecret = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET
+
+  if (!jwtSecret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('CRITICAL: JWT_SECRET or NEXTAUTH_SECRET must be set in production')
+    }
+    fastify.log.warn('Using default JWT secret for development - DO NOT USE IN PRODUCTION')
+  }
+
   // Регистрируем JWT plugin
   await fastify.register(jwt, {
-    secret: process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET || 'fallback-secret-for-dev',
+    secret: jwtSecret || 'dev-only-secret-change-in-production',
     sign: {
       expiresIn: '7d',
     },
