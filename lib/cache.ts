@@ -14,10 +14,14 @@ export const getRedisClient = (): Redis | null => {
 
   try {
     const redisUrl = process.env.REDIS_URL
+
+    // CRITICAL: In production, if no Redis URL configured, don't try to connect
     if (!redisUrl || redisUrl.includes('your-redis-host')) {
-      logger.warn(
-        'REDIS_URL not configured or using placeholder, caching disabled',
-      )
+      if (process.env.NODE_ENV === 'production') {
+        logger.warn('Redis not configured for caching in production, caching disabled')
+      } else {
+        logger.warn('REDIS_URL not configured or using placeholder, caching disabled')
+      }
       return null
     }
 

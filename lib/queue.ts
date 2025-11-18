@@ -12,11 +12,15 @@ let jobQueue: Queue<JobPayload, unknown, string> | null = null
 
 function getRedisConnection(): Redis {
   if (!connection) {
-    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379'
-    // Skip connection if using placeholder URL (for build time)
-    if (redisUrl.includes('your-redis-host')) {
-      throw new Error('Redis URL not configured')
+    const redisUrl = process.env.REDIS_URL
+
+    // CRITICAL: Don't use localhost as fallback in production
+    if (!redisUrl || redisUrl.includes('your-redis-host')) {
+      const message = 'Redis URL not configured - queue operations unavailable'
+      logger.error(message)
+      throw new Error(message)
     }
+
     connection = new Redis(redisUrl, {
       maxRetriesPerRequest: null,
       lazyConnect: true, // Don't connect immediately
