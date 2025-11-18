@@ -2,7 +2,7 @@ import * as React from 'react'
 import { AlertCircle, Database, FileQuestion, Search, ShieldAlert } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
-import { Button } from './button'
+import { Button } from './Button'
 
 /**
  * Типы пустых состояний согласно KWID

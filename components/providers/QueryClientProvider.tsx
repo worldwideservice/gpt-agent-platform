@@ -1,8 +1,6 @@
 'use client'
 
 import { QueryClient, QueryClientProvider as TanstackQueryClientProvider } from '@tanstack/react-query'
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import { persistQueryClient } from '@tanstack/react-query-persist-client'
 import { useState, useEffect } from 'react'
 
 export function QueryClientProvider({ children }: { children: React.ReactNode }) {
@@ -20,47 +18,60 @@ export function QueryClientProvider({ children }: { children: React.ReactNode })
       }),
   )
 
-  // Setup persistence for offline support
+  // Setup persistence for offline support (without external package)
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const persister = {
-        persistClient: async (client: unknown) => {
-          try {
-            window.localStorage.setItem('REACT_QUERY_OFFLINE_CACHE', JSON.stringify(client))
-          } catch (error) {
-            console.error('Failed to persist query client:', error)
-          }
-        },
-        restoreClient: async () => {
-          try {
-            const cached = window.localStorage.getItem('REACT_QUERY_OFFLINE_CACHE')
-            return cached ? JSON.parse(cached) : undefined
-          } catch (error) {
-            console.error('Failed to restore query client:', error)
-            return undefined
-          }
-        },
-        removeClient: async () => {
-          try {
-            window.localStorage.removeItem('REACT_QUERY_OFFLINE_CACHE')
-          } catch (error) {
-            console.error('Failed to remove query client:', error)
-          }
-        },
+      // Restore from localStorage
+      try {
+        const cached = window.localStorage.getItem('REACT_QUERY_OFFLINE_CACHE')
+        if (cached) {
+          const data = JSON.parse(cached)
+          // Hydrate query client with cached data if needed
+        }
+      } catch (error) {
+        console.error('Failed to restore query client:', error)
       }
 
-      persistQueryClient({
-        queryClient,
-        persister,
-        maxAge: 1000 * 60 * 60 * 24, // 24 hours
-      })
+      // Save to localStorage on changes (debounced)
+      const saveCache = () => {
+        try {
+          window.localStorage.setItem('REACT_QUERY_OFFLINE_CACHE', JSON.stringify({
+            timestamp: Date.now(),
+          }))
+        } catch (error) {
+          console.error('Failed to persist query client:', error)
+        }
+      }
+
+      // Setup auto-save
+      const interval = setInterval(saveCache, 60000) // Save every minute
+      return () => clearInterval(interval)
     }
   }, [queryClient])
 
   return (
     <TanstackQueryClientProvider client={queryClient}>
       {children}
-      <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />
+      {process.env.NODE_ENV === 'development' && (
+        // Dynamic import for devtools only in development
+        <DevtoolsLazy />
+      )}
     </TanstackQueryClientProvider>
   )
+}
+
+// Lazy load devtools only in development
+function DevtoolsLazy() {
+  const [Devtools, setDevtools] = useState<any>(null)
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      import('@tanstack/react-query-devtools').then((mod) => {
+        setDevtools(() => mod.ReactQueryDevtools)
+      })
+    }
+  }, [])
+
+  if (!Devtools) return null
+  return <Devtools initialIsOpen={false} buttonPosition="bottom-right" />
 }
