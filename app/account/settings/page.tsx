@@ -5,7 +5,7 @@ import { ProfileSection } from '@/components/features/account-settings/ProfileSe
 import { SecuritySection } from '@/components/features/account-settings/SecuritySection'
 import { GeneralSettingsSection } from '@/components/features/account-settings/GeneralSettingsSection'
 import { ApiKeysSection } from '@/components/features/account-settings/ApiKeysSection'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 
 /**
  * Страница настроек аккаунта пользователя
