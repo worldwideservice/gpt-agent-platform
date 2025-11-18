@@ -3,6 +3,10 @@
  * GET /api/analytics/retention - Get user retention data
  */
 
+// Force Node.js runtime (required for database and crypto operations)
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { calculateRetention } from '@/lib/analytics/advanced'

@@ -3,6 +3,10 @@
  * POST /api/analytics/agents/compare - Compare multiple agents
  */
 
+// Force Node.js runtime (required for database and crypto operations)
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { getAgentComparison } from '@/lib/analytics/advanced'
