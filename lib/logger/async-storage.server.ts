@@ -1,8 +1,10 @@
 /**
  * AsyncLocalStorage for automatic request ID tracking
  * Allows logging with request context without passing it explicitly
- * Note: Works only in Node.js environment (server-side)
  */
+
+import { AsyncLocalStorage } from 'async_hooks'
+import { randomUUID } from 'crypto'
 
 export interface RequestContext {
   requestId: string
@@ -15,29 +17,13 @@ export interface RequestContext {
   startTime?: number
 }
 
-// Check if we're in server environment
-const isServer = typeof window === 'undefined'
-
-let asyncLocalStorage: any = null
-let randomUUID: any = null
-
-// Initialize only on server
-if (isServer) {
-  try {
-    const asyncHooks = require('async_hooks')
-    const crypto = require('crypto')
-    asyncLocalStorage = new asyncHooks.AsyncLocalStorage<RequestContext>()
-    randomUUID = crypto.randomUUID
-  } catch (error) {
-    // Silently fail in environments without async_hooks
-  }
-}
+// Create AsyncLocalStorage instance
+const asyncLocalStorage = new AsyncLocalStorage<RequestContext>()
 
 /**
  * Get current request context from AsyncLocalStorage
  */
 export function getRequestContext(): RequestContext | undefined {
-  if (!isServer || !asyncLocalStorage) return undefined
   return asyncLocalStorage.getStore()
 }
 
@@ -46,22 +32,13 @@ export function getRequestContext(): RequestContext | undefined {
  */
 export function getRequestId(): string {
   const context = getRequestContext()
-  if (context?.requestId) return context.requestId
-
-  // Generate UUID (server) or timestamp-based ID (client)
-  if (isServer && randomUUID) {
-    return randomUUID()
-  }
-  return `client-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  return context?.requestId || randomUUID()
 }
 
 /**
  * Run callback with request context
  */
 export function runWithContext<T>(context: RequestContext, callback: () => T): T {
-  if (!isServer || !asyncLocalStorage) {
-    return callback()
-  }
   return asyncLocalStorage.run(context, callback)
 }
 
@@ -69,12 +46,12 @@ export function runWithContext<T>(context: RequestContext, callback: () => T): T
  * Create request context from Request object
  */
 export function createRequestContext(request: Request): RequestContext {
-  const url = new URL(request.url)
-
   const requestId =
     request.headers.get('x-request-id') ||
     request.headers.get('x-correlation-id') ||
-    getRequestId()
+    randomUUID()
+
+  const url = new URL(request.url)
 
   return {
     requestId,
@@ -92,8 +69,6 @@ export function createRequestContext(request: Request): RequestContext {
  * Update current request context with additional data
  */
 export function updateRequestContext(updates: Partial<RequestContext>): void {
-  if (!isServer || !asyncLocalStorage) return
-
   const current = getRequestContext()
   if (current) {
     Object.assign(current, updates)

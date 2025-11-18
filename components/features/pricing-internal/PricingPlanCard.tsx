@@ -1,7 +1,7 @@
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Check } from 'lucide-react'
 import type { PricingPlan } from '@/components/pricing/pricingData'

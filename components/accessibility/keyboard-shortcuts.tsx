@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Keyboard } from 'lucide-react'
 import { cn } from '@/lib/utils'
 

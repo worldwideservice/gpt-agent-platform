@@ -7,7 +7,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
 import { logger } from '@/lib/logger'

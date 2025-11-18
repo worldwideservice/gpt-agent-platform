@@ -93,7 +93,6 @@ export const createRequestLogger = (requestId: string) => {
 
 // Performance utilities
 import { lazy } from 'react'
-import { logger } from '@/lib/utils/logger'
 
 /**
  * Creates a lazy-loaded component with error boundary

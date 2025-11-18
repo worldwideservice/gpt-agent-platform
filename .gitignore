@@ -147,3 +147,9 @@ sentry-page-content.html
 # MCP Configuration (contains secret tokens)
 .claude/
 .mcp.json
+.env.production.real
+FINAL_DEPLOYMENT_INSTRUCTIONS.md
+DEPLOYMENT_STATUS_REPORT.md  
+DEPLOYMENT_SUMMARY.md
+PRODUCTION_DEPLOYMENT_PLAN.md
+READY_TO_DEPLOY.md

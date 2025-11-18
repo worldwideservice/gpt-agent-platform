@@ -24,8 +24,28 @@ export interface LogContext {
 const isProduction = process.env.NODE_ENV === 'production'
 const environment = process.env.VERCEL_ENV || process.env.NODE_ENV || 'development'
 
-// Create base pino logger with configuration
-const baseLogger: PinoLogger = pino(getPinoOptions())
+// Lazy initialization to avoid build-time errors
+let baseLogger: PinoLogger | null = null
+
+function getBaseLogger(): PinoLogger {
+  if (!baseLogger) {
+    try {
+      baseLogger = pino(getPinoOptions())
+    } catch (error) {
+      // Fallback to simple console logger if pino fails during build
+      baseLogger = {
+        info: (...args: any[]) => console.log('[INFO]', ...args),
+        warn: (...args: any[]) => console.warn('[WARN]', ...args),
+        error: (...args: any[]) => console.error('[ERROR]', ...args),
+        debug: (...args: any[]) => console.log('[DEBUG]', ...args),
+        trace: (...args: any[]) => console.log('[TRACE]', ...args),
+        fatal: (...args: any[]) => console.error('[FATAL]', ...args),
+        child: () => getBaseLogger(),
+      } as any
+    }
+  }
+  return baseLogger
+}
 
 /**
  * Enhanced Logger class with AsyncLocalStorage support
@@ -206,7 +226,7 @@ class EnhancedLogger {
    * Create child logger with additional context
    */
   child(bindings: LogContext): EnhancedLogger {
-    const childLogger = this.logger.child(bindings)
+    const childLogger = this.logger?.child?.(bindings) || this.logger
     return new EnhancedLogger(childLogger)
   }
 
@@ -251,8 +271,8 @@ class EnhancedLogger {
   }
 }
 
-// Export singleton instance
-export const logger = new EnhancedLogger(baseLogger)
+// Export singleton instance with lazy initialization
+export const logger = new EnhancedLogger(getBaseLogger())
 
 // Export types and utilities
 export * from './async-storage'

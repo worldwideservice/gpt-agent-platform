@@ -3,13 +3,25 @@
  * Time-series data, aggregations, and reporting
  */
 
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { logger } from '@/lib/logger'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Lazy initialization to avoid build-time errors
+let supabaseClient: SupabaseClient | null = null
+
+function getSupabaseClient(): SupabaseClient {
+  if (!supabaseClient) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!url || !key) {
+      throw new Error('Missing Supabase credentials')
+    }
+
+    supabaseClient = createClient(url, key)
+  }
+  return supabaseClient
+}
 
 export interface DashboardSummary {
   metric_name: string
@@ -45,7 +57,7 @@ export async function getDashboardSummary(
   endDate?: string
 ): Promise<DashboardSummary[]> {
   try {
-    const { data, error } = await supabase.rpc('get_dashboard_summary', {
+    const { data, error } = await getSupabaseClient().rpc('get_dashboard_summary', {
       p_org_id: orgId,
       p_start_date: startDate || undefined,
       p_end_date: endDate || undefined,
@@ -71,7 +83,7 @@ export async function getTimeSeriesData(
   granularity: 'hour' | 'day' | 'week' | 'month' = 'day'
 ): Promise<TimeSeriesData[]> {
   try {
-    const { data, error } = await supabase.rpc('get_time_series_data', {
+    const { data, error } = await getSupabaseClient().rpc('get_time_series_data', {
       p_org_id: orgId,
       p_metric: metric,
       p_start_date: startDate || undefined,
@@ -99,7 +111,7 @@ export async function getTopAgents(
   endDate?: string
 ): Promise<TopAgent[]> {
   try {
-    const { data, error } = await supabase.rpc('get_top_agents', {
+    const { data, error } = await getSupabaseClient().rpc('get_top_agents', {
       p_org_id: orgId,
       p_metric: metric,
       p_limit: limit,
@@ -124,7 +136,7 @@ export async function calculateRetention(
   cohortDate: string
 ): Promise<RetentionData[]> {
   try {
-    const { data, error } = await supabase.rpc('calculate_retention', {
+    const { data, error } = await getSupabaseClient().rpc('calculate_retention', {
       p_org_id: orgId,
       p_cohort_date: cohortDate,
     })
@@ -150,7 +162,7 @@ export async function trackActivity(
   agentId?: string
 ): Promise<void> {
   try {
-    const { error } = await supabase.from('user_activity').insert({
+    const { error } = await getSupabaseClient().from('user_activity').insert({
       org_id: orgId,
       user_id: userId,
       session_id: sessionId,

@@ -7,7 +7,7 @@ import { AgentsDashboardSection } from '@/components/features/manage/AgentsDashb
 import { WorkspaceSummaryIntegrationInsights } from '@/components/features/manage/WorkspaceSummaryIntegrationInsights'
 import { WorkspaceSummaryKnowledgeInsights } from '@/components/features/manage/WorkspaceSummaryKnowledgeInsights'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
 import { loadManageAgentsData } from '@/lib/repositories/manage-data'
 import type { AgentListItem } from '@/components/features/agents/AgentsTable'

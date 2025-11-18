@@ -12,14 +12,14 @@ const bodySchema = z.object({
 
 interface RouteParams {
   params: Promise<{
-    agentId: string
+    id: string
   }>
 }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const resolvedParams = await params
-    const { agentId } = resolvedParams
+    const { id: agentId } = resolvedParams
     const body = bodySchema.parse(await request.json())
     const session = await auth()
 
