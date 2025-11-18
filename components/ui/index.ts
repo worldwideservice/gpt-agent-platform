@@ -7,7 +7,7 @@ export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
 export { Input } from './Input'
 export { Textarea } from './Textarea'
 export { Badge } from './Badge'
-export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel, SelectSeparator } from './Select'
+export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './Select'
 export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption } from './Table'
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs'
 

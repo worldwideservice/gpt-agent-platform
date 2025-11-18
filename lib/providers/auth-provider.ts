@@ -6,6 +6,9 @@ import { AuthProvider } from "@refinedev/core";
 import { auth } from "@/auth";
 import { logger } from '@/lib/utils/logger'
 
+// Re-export authOptions and getServerSession for backward compatibility
+export { authOptions, getServerSession } from '@/lib/auth'
+
 /**
  * Проверяет авторизацию пользователя
  */

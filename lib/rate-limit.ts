@@ -329,3 +329,30 @@ export const publicApiRateLimiter = redisClient
       analytics: true,
     })
   : null
+
+/**
+ * Check rate limit health
+ */
+export async function checkRateLimitHealth() {
+  try {
+    if (!redisClient) {
+      return {
+        healthy: false,
+        error: 'Redis client not initialized',
+      }
+    }
+
+    // Simple ping to check Redis connection
+    await redisClient.ping()
+    
+    return {
+      healthy: true,
+      status: 'ok',
+    }
+  } catch (error) {
+    return {
+      healthy: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }
+  }
+}
