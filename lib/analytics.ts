@@ -111,5 +111,8 @@ class Analytics {
 // Create singleton instance
 export const analytics = new Analytics()
 
+// Export convenience function for compatibility
+export const trackEvent = (event: AnalyticsEvent) => analytics.track(event)
+
 // Export types
 export type { AnalyticsEvent }
