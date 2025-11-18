@@ -1,3 +1,6 @@
+// Force dynamic rendering to avoid prerender errors
+export const dynamic = 'force-dynamic'
+
 import type { Metadata } from 'next'
 import { PricingPublic } from '@/components/pricing/PricingPublic'
 import { PublicHeader } from '@/components/layout/PublicHeader'

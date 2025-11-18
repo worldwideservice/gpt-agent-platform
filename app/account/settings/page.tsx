@@ -1,3 +1,6 @@
+// Force dynamic rendering to avoid prerender errors
+export const dynamic = 'force-dynamic'
+
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import { PageBreadcrumbs } from '@/components/layout/PageBreadcrumbs'
