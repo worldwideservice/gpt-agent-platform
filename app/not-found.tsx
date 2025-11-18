@@ -5,6 +5,9 @@
 
 'use client'
 
+// Force dynamic rendering to avoid prerender errors
+export const dynamic = 'force-dynamic'
+
 import Link from 'next/link'
 import { Button } from '@/components/ui'
 import { Card, CardContent } from '@/components/ui/Card'

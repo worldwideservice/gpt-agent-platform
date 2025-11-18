@@ -38,12 +38,13 @@ export function getRedisClient(): RedisClient | null {
     return upstashClient
   }
 
-  // Fallback to local Redis (development)
+  // Fallback to local Redis (development only)
   const redisUrl = process.env.REDIS_URL
-  const redisHost = process.env.REDIS_HOST || 'localhost'
+  const redisHost = process.env.REDIS_HOST
   const redisPort = parseInt(process.env.REDIS_PORT || '6379', 10)
   const redisPassword = process.env.REDIS_PASSWORD
 
+  // Only use local Redis if explicitly configured
   if (redisUrl || redisHost) {
     if (!ioredisClient) {
       try {
