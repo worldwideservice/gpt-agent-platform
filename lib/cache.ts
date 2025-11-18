@@ -12,19 +12,20 @@ export const setRedisClient = (client: Redis | null) => {
 export const getRedisClient = (): Redis | null => {
   if (redisClient) return redisClient
 
-  try {
-    const redisUrl = process.env.REDIS_URL
+  const redisUrl = process.env.REDIS_URL
 
-    // CRITICAL: In production, if no Redis URL configured, don't try to connect
-    if (!redisUrl || redisUrl.includes('your-redis-host')) {
-      if (process.env.NODE_ENV === 'production') {
-        logger.warn('Redis not configured for caching in production, caching disabled')
-      } else {
-        logger.warn('REDIS_URL not configured or using placeholder, caching disabled')
-      }
-      return null
+  // CRITICAL: In production, if no Redis URL configured, don't try to connect
+  // Don't even attempt to create a Redis client without a valid URL
+  if (!redisUrl || redisUrl.includes('your-redis-host')) {
+    if (process.env.NODE_ENV === 'production') {
+      logger.warn('Redis not configured for caching in production, caching disabled')
+    } else {
+      logger.warn('REDIS_URL not configured or using placeholder, caching disabled')
     }
+    return null
+  }
 
+  try {
     redisClient = new Redis(redisUrl)
 
     redisClient.on('error', (err) => {
@@ -91,6 +92,7 @@ export class Cache {
   }
 
   async get<T>(key: string): Promise<T | null> {
+    // Skip if client not initialized (no REDIS_URL configured)
     if (!this.client) return null
 
     try {
@@ -205,6 +207,7 @@ export class Cache {
 }
 
 // Global cache instance
+// NOTE: Cache will be disabled if REDIS_URL is not configured
 export const cache = new Cache()
 
 // Higher-level caching utilities
