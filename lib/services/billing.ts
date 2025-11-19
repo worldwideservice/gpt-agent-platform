@@ -1,510 +1,682 @@
 /**
- * Сервис биллинга и подписок
- * Интеграция с Stripe для управления платежами и подписками
+ * Сервіс біллінгу та підписок
+ * Інтеграція з Lemon Squeezy для управління платежами та підписками
  */
 
-import Stripe from 'stripe'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { logger } from '@/lib/utils/logger'
 
-let stripe: Stripe | null = null
+// Lemon Squeezy API configuration
+const LEMON_SQUEEZY_API_URL = 'https://api.lemonsqueezy.com/v1'
+const LEMON_SQUEEZY_API_KEY = process.env.LEMON_SQUEEZY_API_KEY
+const LEMON_SQUEEZY_STORE_ID = process.env.LEMON_SQUEEZY_STORE_ID
+const LEMON_SQUEEZY_WEBHOOK_SECRET = process.env.LEMON_SQUEEZY_WEBHOOK_SECRET
 
-const getStripe = (): Stripe => {
- if (!stripe) {
- const secretKey = process.env.STRIPE_SECRET_KEY
- if (!secretKey) {
- throw new Error('STRIPE_SECRET_KEY is not configured')
- }
- stripe = new Stripe(secretKey, {
- apiVersion: '2025-10-29.clover',
- })
- }
- return stripe
+// Типи статусів підписки
+export type SubscriptionStatus = 'active' | 'past_due' | 'canceled' | 'expired' | 'unpaid' | 'on_trial'
+
+export interface LicenseCheckResult {
+  isValid: boolean
+  status: SubscriptionStatus
+  daysLeft?: number
+  planName?: string
+  trialEndsAt?: string
 }
 
 export interface BillingPlan {
- id: string
- name: string
- description?: string
- stripe_price_id: string
- price_cents: number
- currency: string
- interval: 'month' | 'year'
- features: Record<string, any>
- limits: {
- agents: number
- tokens_per_month: number
- messages_per_month: number
- storage_gb: number
- }
- is_active: boolean
+  id: string
+  name: string
+  description?: string
+  variant_id: string // Lemon Squeezy variant ID
+  price_cents: number
+  currency: string
+  interval: 'month' | 'year'
+  features: Record<string, any>
+  limits: {
+    agents: number
+    tokens_per_month: number
+    messages_per_month: number
+    storage_gb: number
+  }
+  is_active: boolean
 }
 
 export interface Subscription {
- id: string
- org_id: string
- stripe_subscription_id: string
- stripe_customer_id: string
- plan_id: string
- status: 'active' | 'canceled' | 'past_due' | 'incomplete'
- current_period_start: string
- current_period_end: string
- cancel_at_period_end: boolean
- usage_limits: Record<string, number>
- metadata: Record<string, any>
- created_at: string
- updated_at: string
+  id: string
+  org_id: string
+  lemon_squeezy_subscription_id: string
+  lemon_squeezy_customer_id: string
+  plan_id: string
+  variant_id: string
+  status: SubscriptionStatus
+  current_period_start: string
+  current_period_end: string
+  trial_ends_at?: string
+  renews_at?: string
+  ends_at?: string
+  cancel_at_period_end: boolean
+  usage_limits: Record<string, number>
+  metadata: Record<string, any>
+  created_at: string
+  updated_at: string
 }
 
 export interface UsageRecord {
- id: string
- org_id: string
- subscription_id?: string
- resource_type: 'tokens' | 'messages' | 'storage' | 'agents'
- amount: number
- cost_cents?: number
- description?: string
- recorded_at: string
- metadata: Record<string, any>
+  id: string
+  org_id: string
+  subscription_id?: string
+  resource_type: 'tokens' | 'messages' | 'storage' | 'agents'
+  amount: number
+  cost_cents?: number
+  description?: string
+  recorded_at: string
+  metadata: Record<string, any>
 }
 
 /**
- * Создает клиента Stripe для организации
+ * Helper функція для запитів до Lemon Squeezy API
  */
-export const createStripeCustomer = async (
- orgId: string,
- email: string,
- name?: string,
+const lemonSqueezyRequest = async (
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<any> => {
+  if (!LEMON_SQUEEZY_API_KEY) {
+    throw new Error('LEMON_SQUEEZY_API_KEY is not configured')
+  }
+
+  const response = await fetch(`${LEMON_SQUEEZY_API_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      'Accept': 'application/vnd.api+json',
+      'Content-Type': 'application/vnd.api+json',
+      'Authorization': `Bearer ${LEMON_SQUEEZY_API_KEY}`,
+      ...options.headers,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.text()
+    logger.error('Lemon Squeezy API error', { error, endpoint })
+    throw new Error(`Lemon Squeezy API error: ${error}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * Перевірка статусу ліцензії для організації
+ * Використовується в Middleware та на UI для блокування функцій
+ */
+export const checkLicense = async (tenantId: string): Promise<LicenseCheckResult> => {
+  try {
+    const subscription = await getOrganizationSubscription(tenantId)
+
+    if (!subscription) {
+      return {
+        isValid: false,
+        status: 'expired',
+        daysLeft: 0,
+      }
+    }
+
+    const now = new Date()
+    const periodEnd = new Date(subscription.current_period_end)
+    const daysLeft = Math.ceil((periodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+
+    const isValid = ['active', 'on_trial'].includes(subscription.status) && daysLeft > 0
+
+    return {
+      isValid,
+      status: subscription.status,
+      daysLeft: daysLeft > 0 ? daysLeft : 0,
+      planName: subscription.plan_id,
+      trialEndsAt: subscription.trial_ends_at,
+    }
+  } catch (error) {
+    logger.error('Error checking license', error, { tenantId })
+    return {
+      isValid: false,
+      status: 'expired',
+      daysLeft: 0,
+    }
+  }
+}
+
+/**
+ * Створення checkout сесії в Lemon Squeezy
+ */
+export const createCheckoutSession = async (
+  tenantId: string,
+  variantId: string,
+  successUrl: string,
+  cancelUrl: string
 ): Promise<string | null> => {
- try {
- const customer = await getStripe().customers.create({
- email,
- name,
- metadata: {
- org_id: orgId,
- },
- })
+  try {
+    if (!LEMON_SQUEEZY_STORE_ID) {
+      throw new Error('LEMON_SQUEEZY_STORE_ID is not configured')
+    }
 
- // Сохраняем customer_id в базе данных
- const supabase = getSupabaseServiceRoleClient()
- await supabase
- .from('organizations')
- .update({ stripe_customer_id: customer.id })
- .eq('id', orgId)
+    const supabase = getSupabaseServiceRoleClient()
 
- return customer.id
- } catch (error) {
- logger.error('Error creating Stripe customer', error, { orgId, email })
- return null
- }
+    // Отримуємо інформацію про організацію
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('name, email')
+      .eq('id', tenantId)
+      .single()
+
+    if (!org) {
+      throw new Error('Organization not found')
+    }
+
+    // Створюємо checkout
+    const response = await lemonSqueezyRequest('/checkouts', {
+      method: 'POST',
+      body: JSON.stringify({
+        data: {
+          type: 'checkouts',
+          attributes: {
+            checkout_data: {
+              custom: {
+                org_id: tenantId,
+              },
+            },
+            checkout_options: {
+              embed: false,
+              media: true,
+              logo: true,
+            },
+            expires_at: null,
+            preview: false,
+            test_mode: process.env.NODE_ENV === 'development',
+          },
+          relationships: {
+            store: {
+              data: {
+                type: 'stores',
+                id: LEMON_SQUEEZY_STORE_ID,
+              },
+            },
+            variant: {
+              data: {
+                type: 'variants',
+                id: variantId,
+              },
+            },
+          },
+        },
+      }),
+    })
+
+    return response.data.attributes.url || null
+  } catch (error) {
+    logger.error('Error creating checkout session', error, { tenantId, variantId })
+    return null
+  }
 }
 
 /**
- * Создает сессию подписки для клиента
+ * Обробка webhook від Lemon Squeezy
  */
-export const createSubscriptionSession = async (
- orgId: string,
- planId: string,
- successUrl: string,
- cancelUrl: string,
-): Promise<string | null> => {
- try {
- const supabase = getSupabaseServiceRoleClient()
-
- // Получаем информацию об организации
- const { data: org } = await supabase
- .from('organizations')
- .select('stripe_customer_id, name')
- .eq('id', orgId)
- .single()
-
- if (!org) {
- throw new Error('Organization not found')
- }
-
- // Получаем план
- const { data: plan } = await supabase
- .from('billing_plans')
- .select('*')
- .eq('id', planId)
- .eq('is_active', true)
- .single()
-
- if (!plan) {
- throw new Error('Plan not found')
- }
-
- let customerId = org.stripe_customer_id
-
- // Создаем клиента если его нет
- if (!customerId) {
- customerId = await createStripeCustomer(orgId, '', org.name || 'Organization')
- if (!customerId) {
- throw new Error('Failed to create Stripe customer')
- }
- }
-
- // Создаем сессию подписки
- const session = await getStripe().checkout.sessions.create({
- customer: customerId,
- payment_method_types: ['card'],
- line_items: [
- {
- price: plan.stripe_price_id,
- quantity: 1,
- },
- ],
- mode: 'subscription',
- success_url: successUrl,
- cancel_url: cancelUrl,
- metadata: {
- org_id: orgId,
- plan_id: planId,
- },
- })
-
- return session.url || null
- } catch (error) {
- logger.error('Error creating subscription session', error, { orgId, planId })
- return null
- }
-}
-
-/**
- * Обрабатывает webhook от Stripe
- */
-export const handleStripeWebhook = async (
- event: Stripe.Event,
+export const handleLemonSqueezyWebhook = async (
+  payload: any,
+  signature: string
 ): Promise<boolean> => {
- try {
- switch (event.type) {
- case 'checkout.session.completed':
- return await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session)
+  try {
+    // Verify webhook signature
+    if (!verifyWebhookSignature(payload, signature)) {
+      logger.error('Invalid webhook signature')
+      return false
+    }
 
- case 'invoice.payment_succeeded':
- return await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice)
+    const eventName = payload.meta.event_name
 
- case 'invoice.payment_failed':
- return await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice)
+    switch (eventName) {
+      case 'subscription_created':
+        return await handleSubscriptionCreated(payload.data)
 
- case 'customer.subscription.updated':
- return await handleSubscriptionUpdated(event.data.object as Stripe.Subscription)
+      case 'subscription_updated':
+        return await handleSubscriptionUpdated(payload.data)
 
- case 'customer.subscription.deleted':
- return await handleSubscriptionDeleted(event.data.object as Stripe.Subscription)
+      case 'subscription_cancelled':
+      case 'subscription_expired':
+        return await handleSubscriptionCancelled(payload.data)
 
- default:
- logger.info('Unhandled webhook event', { eventType: event.type })
- return true
- }
- } catch (error) {
- logger.error('Error handling Stripe webhook', error, { eventType: event.type })
- return false
- }
+      case 'subscription_resumed':
+        return await handleSubscriptionResumed(payload.data)
+
+      case 'subscription_payment_success':
+        return await handlePaymentSuccess(payload.data)
+
+      case 'subscription_payment_failed':
+        return await handlePaymentFailed(payload.data)
+
+      default:
+        logger.info('Unhandled webhook event', { eventName })
+        return true
+    }
+  } catch (error) {
+    logger.error('Error handling Lemon Squeezy webhook', error)
+    return false
+  }
 }
 
 /**
- * Обрабатывает завершение checkout сессии
+ * Verify webhook signature
  */
-const handleCheckoutCompleted = async (session: Stripe.Checkout.Session): Promise<boolean> => {
- const supabase = getSupabaseServiceRoleClient()
- const orgId = session.metadata?.org_id
- const planId = session.metadata?.plan_id
+const verifyWebhookSignature = (payload: any, signature: string): boolean => {
+  if (!LEMON_SQUEEZY_WEBHOOK_SECRET) {
+    logger.warn('LEMON_SQUEEZY_WEBHOOK_SECRET is not configured, skipping signature verification')
+    return true // В розробці можна пропустити
+  }
 
- if (!orgId || !planId) {
- logger.error('Missing org_id or plan_id in session metadata', undefined, { orgId, planId })
- return false
- }
+  // TODO: Implement signature verification using HMAC
+  // const hmac = crypto.createHmac('sha256', LEMON_SQUEEZY_WEBHOOK_SECRET)
+  // const digest = hmac.update(JSON.stringify(payload)).digest('hex')
+  // return digest === signature
 
- try {
- // Получаем подписку из Stripe
- const subscription = await getStripe().subscriptions.retrieve(session.subscription as string)
-
- // Создаем запись о подписке в базе данных
- const { error } = await supabase
- .from('subscriptions')
- .insert({
- org_id: orgId,
- stripe_subscription_id: subscription.id,
- stripe_customer_id: subscription.customer as string,
- plan_id: planId,
- status: subscription.status,
- current_period_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
- current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
- cancel_at_period_end: subscription.cancel_at_period_end,
- })
-
- if (error) {
- logger.error('Error saving subscription', error, { orgId, planId })
- return false
- }
-
- return true
- } catch (error) {
- logger.error('Error handling checkout completed', error, { orgId, planId })
- return false
- }
+  return true
 }
 
 /**
- * Обрабатывает успешную оплату счета
+ * Обробка створення підписки
  */
-const handleInvoicePaymentSucceeded = async (invoice: Stripe.Invoice): Promise<boolean> => {
- // Логика обработки успешной оплаты
- logger.info('Invoice payment succeeded', { invoiceId: invoice.id })
- return true
+const handleSubscriptionCreated = async (subscriptionData: any): Promise<boolean> => {
+  const supabase = getSupabaseServiceRoleClient()
+  const attributes = subscriptionData.attributes
+  const customData = attributes.custom_data || {}
+  const orgId = customData.org_id
+
+  if (!orgId) {
+    logger.error('Missing org_id in subscription webhook', { subscriptionData })
+    return false
+  }
+
+  try {
+    const { error } = await supabase.from('subscriptions').insert({
+      org_id: orgId,
+      lemon_squeezy_subscription_id: subscriptionData.id,
+      lemon_squeezy_customer_id: attributes.customer_id?.toString(),
+      variant_id: attributes.variant_id?.toString(),
+      status: mapLemonSqueezyStatus(attributes.status),
+      current_period_start: attributes.created_at,
+      current_period_end: attributes.renews_at || attributes.ends_at,
+      trial_ends_at: attributes.trial_ends_at,
+      renews_at: attributes.renews_at,
+      ends_at: attributes.ends_at,
+      cancel_at_period_end: attributes.cancelled,
+      metadata: {
+        card_brand: attributes.card_brand,
+        card_last_four: attributes.card_last_four,
+      },
+    })
+
+    if (error) {
+      logger.error('Error saving subscription', error, { orgId })
+      return false
+    }
+
+    return true
+  } catch (error) {
+    logger.error('Error handling subscription created', error, { orgId })
+    return false
+  }
 }
 
 /**
- * Обрабатывает неудачную оплату счета
+ * Обробка оновлення підписки
  */
-const handleInvoicePaymentFailed = async (invoice: Stripe.Invoice): Promise<boolean> => {
- // Логика обработки неудачной оплаты
- logger.warn('Invoice payment failed', { invoiceId: invoice.id })
- return true
+const handleSubscriptionUpdated = async (subscriptionData: any): Promise<boolean> => {
+  const supabase = getSupabaseServiceRoleClient()
+  const attributes = subscriptionData.attributes
+
+  try {
+    const { error } = await supabase
+      .from('subscriptions')
+      .update({
+        status: mapLemonSqueezyStatus(attributes.status),
+        current_period_start: attributes.created_at,
+        current_period_end: attributes.renews_at || attributes.ends_at,
+        trial_ends_at: attributes.trial_ends_at,
+        renews_at: attributes.renews_at,
+        ends_at: attributes.ends_at,
+        cancel_at_period_end: attributes.cancelled,
+        updated_at: new Date().toISOString(),
+        metadata: {
+          card_brand: attributes.card_brand,
+          card_last_four: attributes.card_last_four,
+        },
+      })
+      .eq('lemon_squeezy_subscription_id', subscriptionData.id)
+
+    return !error
+  } catch (error) {
+    logger.error('Error updating subscription', error, { subscriptionId: subscriptionData.id })
+    return false
+  }
 }
 
 /**
- * Обрабатывает обновление подписки
+ * Обробка скасування підписки
  */
-const handleSubscriptionUpdated = async (subscription: Stripe.Subscription): Promise<boolean> => {
- const supabase = getSupabaseServiceRoleClient()
+const handleSubscriptionCancelled = async (subscriptionData: any): Promise<boolean> => {
+  const supabase = getSupabaseServiceRoleClient()
 
- try {
- const { error } = await supabase
- .from('subscriptions')
- .update({
- status: subscription.status,
- current_period_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
- current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
- cancel_at_period_end: subscription.cancel_at_period_end,
- updated_at: new Date().toISOString(),
- })
- .eq('stripe_subscription_id', subscription.id)
+  try {
+    const { error } = await supabase
+      .from('subscriptions')
+      .update({
+        status: 'canceled',
+        cancel_at_period_end: true,
+        ends_at: subscriptionData.attributes.ends_at,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('lemon_squeezy_subscription_id', subscriptionData.id)
 
- return !error
- } catch (error) {
- logger.error('Error updating subscription', error, { subscriptionId: subscription.id })
- return false
- }
+    return !error
+  } catch (error) {
+    logger.error('Error cancelling subscription', error, { subscriptionId: subscriptionData.id })
+    return false
+  }
 }
 
 /**
- * Обрабатывает удаление подписки
+ * Обробка відновлення підписки
  */
-const handleSubscriptionDeleted = async (subscription: Stripe.Subscription): Promise<boolean> => {
- const supabase = getSupabaseServiceRoleClient()
+const handleSubscriptionResumed = async (subscriptionData: any): Promise<boolean> => {
+  const supabase = getSupabaseServiceRoleClient()
 
- try {
- const { error } = await supabase
- .from('subscriptions')
- .update({
- status: 'canceled',
- cancel_at_period_end: true,
- updated_at: new Date().toISOString(),
- })
- .eq('stripe_subscription_id', subscription.id)
+  try {
+    const { error } = await supabase
+      .from('subscriptions')
+      .update({
+        status: 'active',
+        cancel_at_period_end: false,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('lemon_squeezy_subscription_id', subscriptionData.id)
 
- return !error
- } catch (error) {
- logger.error('Error deleting subscription', error, { subscriptionId: subscription.id })
- return false
- }
+    return !error
+  } catch (error) {
+    logger.error('Error resuming subscription', error, { subscriptionId: subscriptionData.id })
+    return false
+  }
 }
 
 /**
- * Получает текущую подписку организации
+ * Обробка успішної оплати
+ */
+const handlePaymentSuccess = async (subscriptionData: any): Promise<boolean> => {
+  logger.info('Payment succeeded', { subscriptionId: subscriptionData.id })
+  return true
+}
+
+/**
+ * Обробка неуспішної оплати
+ */
+const handlePaymentFailed = async (subscriptionData: any): Promise<boolean> => {
+  const supabase = getSupabaseServiceRoleClient()
+
+  try {
+    const { error } = await supabase
+      .from('subscriptions')
+      .update({
+        status: 'past_due',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('lemon_squeezy_subscription_id', subscriptionData.id)
+
+    return !error
+  } catch (error) {
+    logger.error('Error handling payment failed', error, { subscriptionId: subscriptionData.id })
+    return false
+  }
+}
+
+/**
+ * Map Lemon Squeezy status to our status
+ */
+const mapLemonSqueezyStatus = (status: string): SubscriptionStatus => {
+  const statusMap: Record<string, SubscriptionStatus> = {
+    'on_trial': 'on_trial',
+    'active': 'active',
+    'paused': 'past_due',
+    'past_due': 'past_due',
+    'unpaid': 'unpaid',
+    'cancelled': 'canceled',
+    'expired': 'expired',
+  }
+
+  return statusMap[status] || 'expired'
+}
+
+/**
+ * Отримання поточної підписки організації
  */
 export const getOrganizationSubscription = async (
- orgId: string,
+  orgId: string
 ): Promise<Subscription | null> => {
- const supabase = getSupabaseServiceRoleClient()
+  const supabase = getSupabaseServiceRoleClient()
 
- const { data, error } = await supabase
- .from('subscriptions')
- .select('*')
- .eq('org_id', orgId)
- .eq('status', 'active')
- .order('created_at', { ascending: false })
- .limit(1)
- .single()
+  const { data, error } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('org_id', orgId)
+    .in('status', ['active', 'on_trial', 'past_due'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
 
- if (error || !data) {
- return null
- }
+  if (error || !data) {
+    return null
+  }
 
- return data
+  return data
 }
 
 /**
- * Получает доступные планы подписки
+ * Отримання доступних планів підписки
  */
 export const getBillingPlans = async (): Promise<BillingPlan[]> => {
- const supabase = getSupabaseServiceRoleClient()
+  const supabase = getSupabaseServiceRoleClient()
 
- const { data, error } = await supabase
- .from('billing_plans')
- .select('*')
- .eq('is_active', true)
- .order('price_cents', { ascending: true })
+  const { data, error } = await supabase
+    .from('billing_plans')
+    .select('*')
+    .eq('is_active', true)
+    .order('price_cents', { ascending: true })
 
- if (error) {
- logger.error('Error getting billing plans', error)
- return []
- }
+  if (error) {
+    logger.error('Error getting billing plans', error)
+    return []
+  }
 
- return data ?? []
+  return data ?? []
 }
 
 /**
- * Записывает использование ресурса
+ * Запис використання ресурсу
  */
 export const recordUsage = async (
- orgId: string,
- resourceType: UsageRecord['resource_type'],
- amount: number,
- description?: string,
- metadata: Record<string, any> = {},
+  orgId: string,
+  resourceType: UsageRecord['resource_type'],
+  amount: number,
+  description?: string,
+  metadata: Record<string, any> = {}
 ): Promise<boolean> => {
- const supabase = getSupabaseServiceRoleClient()
+  const supabase = getSupabaseServiceRoleClient()
 
- try {
- // Получаем текущую подписку
- const subscription = await getOrganizationSubscription(orgId)
+  try {
+    const subscription = await getOrganizationSubscription(orgId)
 
- const { error } = await supabase
- .from('usage_records')
- .insert({
- org_id: orgId,
- subscription_id: subscription?.id,
- resource_type: resourceType,
- amount,
- description,
- metadata,
- })
+    const { error } = await supabase.from('usage_records').insert({
+      org_id: orgId,
+      subscription_id: subscription?.id,
+      resource_type: resourceType,
+      amount,
+      description,
+      metadata,
+    })
 
- if (error) {
- logger.error('Error recording usage', error, { orgId, resourceType, amount })
- return false
- }
+    if (error) {
+      logger.error('Error recording usage', error, { orgId, resourceType, amount })
+      return false
+    }
 
- // Проверяем лимиты
- await checkUsageLimits(orgId, resourceType)
+    // Перевіряємо ліміти
+    await checkUsageLimits(orgId, resourceType)
 
- return true
- } catch (error) {
- logger.error('Error recording usage', error, { orgId, resourceType, amount })
- return false
- }
+    return true
+  } catch (error) {
+    logger.error('Error recording usage', error, { orgId, resourceType, amount })
+    return false
+  }
 }
 
 /**
- * Получает использование ресурсов за период
+ * Отримання статистики використання за період
  */
 export const getUsageStats = async (
- orgId: string,
- startDate: Date,
- endDate: Date,
+  orgId: string,
+  startDate: Date,
+  endDate: Date
 ): Promise<Record<string, number>> => {
- const supabase = getSupabaseServiceRoleClient()
+  const supabase = getSupabaseServiceRoleClient()
 
- const { data, error } = await supabase
- .from('usage_records')
- .select('resource_type, amount')
- .eq('org_id', orgId)
- .gte('recorded_at', startDate.toISOString())
- .lte('recorded_at', endDate.toISOString())
+  const { data, error } = await supabase
+    .from('usage_records')
+    .select('resource_type, amount')
+    .eq('org_id', orgId)
+    .gte('recorded_at', startDate.toISOString())
+    .lte('recorded_at', endDate.toISOString())
 
- if (error) {
- logger.error('Error getting usage stats', error, { orgId })
- return {}
- }
+  if (error) {
+    logger.error('Error getting usage stats', error, { orgId })
+    return {}
+  }
 
- const stats: Record<string, number> = {}
- for (const record of data ?? []) {
- stats[record.resource_type] = (stats[record.resource_type] || 0) + record.amount
- }
+  const stats: Record<string, number> = {}
+  for (const record of data ?? []) {
+    stats[record.resource_type] = (stats[record.resource_type] || 0) + record.amount
+  }
 
- return stats
+  return stats
 }
 
 /**
- * Проверяет лимиты использования
+ * Перевірка лімітів використання
  */
 const checkUsageLimits = async (
- orgId: string,
- resourceType: UsageRecord['resource_type'],
+  orgId: string,
+  resourceType: UsageRecord['resource_type']
 ): Promise<void> => {
- const subscription = await getOrganizationSubscription(orgId)
- if (!subscription) return
+  const subscription = await getOrganizationSubscription(orgId)
+  if (!subscription) return
 
- const currentUsage = await getUsageStats(
- orgId,
- new Date(subscription.current_period_start),
- new Date(subscription.current_period_end),
- )
+  const currentUsage = await getUsageStats(
+    orgId,
+    new Date(subscription.current_period_start),
+    new Date(subscription.current_period_end)
+  )
 
- const limit = subscription.usage_limits[resourceType]
- const current = currentUsage[resourceType] || 0
+  const limit = subscription.usage_limits[resourceType]
+  const current = currentUsage[resourceType] || 0
 
- if (limit && current >= limit * 0.9) { // 90% от лимита
- // Отправляем предупреждение (можно реализовать позже)
- logger.warn('Usage limit warning', { resourceType, current, limit, orgId })
- }
+  if (limit && current >= limit * 0.9) {
+    logger.warn('Usage limit warning', { resourceType, current, limit, orgId })
+  }
 
- if (limit && current >= limit) {
- // Превышен лимит - можно заблокировать или отправить уведомление
- logger.error('Usage limit exceeded', { resourceType, current, limit, orgId })
- }
+  if (limit && current >= limit) {
+    logger.error('Usage limit exceeded', { resourceType, current, limit, orgId })
+  }
 }
 
 /**
- * Отменяет подписку
+ * Скасування підписки через Lemon Squeezy API
  */
 export const cancelSubscription = async (
- orgId: string,
- cancelAtPeriodEnd = true,
+  orgId: string,
+  cancelAtPeriodEnd = true
 ): Promise<boolean> => {
- const subscription = await getOrganizationSubscription(orgId)
- if (!subscription) {
- return false
- }
+  const subscription = await getOrganizationSubscription(orgId)
+  if (!subscription) {
+    return false
+  }
 
- try {
- if (cancelAtPeriodEnd) {
- await getStripe().subscriptions.update(subscription.stripe_subscription_id, {
- cancel_at_period_end: true,
- })
- } else {
- await getStripe().subscriptions.cancel(subscription.stripe_subscription_id)
- }
+  try {
+    await lemonSqueezyRequest(
+      `/subscriptions/${subscription.lemon_squeezy_subscription_id}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({
+          data: {
+            type: 'subscriptions',
+            id: subscription.lemon_squeezy_subscription_id,
+            attributes: {
+              cancelled: cancelAtPeriodEnd,
+            },
+          },
+        }),
+      }
+    )
 
- return true
- } catch (error) {
- logger.error('Error canceling subscription', error, { orgId, cancelAtPeriodEnd })
- return false
- }
+    return true
+  } catch (error) {
+    logger.error('Error canceling subscription', error, { orgId, cancelAtPeriodEnd })
+    return false
+  }
 }
 
 /**
- * Возобновляет подписку
+ * Відновлення підписки
  */
 export const resumeSubscription = async (orgId: string): Promise<boolean> => {
- const subscription = await getOrganizationSubscription(orgId)
- if (!subscription) {
- return false
- }
+  const subscription = await getOrganizationSubscription(orgId)
+  if (!subscription) {
+    return false
+  }
 
- try {
- await getStripe().subscriptions.update(subscription.stripe_subscription_id, {
- cancel_at_period_end: false,
- })
+  try {
+    await lemonSqueezyRequest(
+      `/subscriptions/${subscription.lemon_squeezy_subscription_id}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({
+          data: {
+            type: 'subscriptions',
+            id: subscription.lemon_squeezy_subscription_id,
+            attributes: {
+              cancelled: false,
+            },
+          },
+        }),
+      }
+    )
 
- return true
- } catch (error) {
- logger.error('Error resuming subscription', error, { orgId })
- return false
- }
+    return true
+  } catch (error) {
+    logger.error('Error resuming subscription', error, { orgId })
+    return false
+  }
 }
 
+/**
+ * Отримання посилання на customer portal
+ */
+export const getCustomerPortalUrl = async (orgId: string): Promise<string | null> => {
+  const subscription = await getOrganizationSubscription(orgId)
+  if (!subscription) {
+    return null
+  }
 
+  try {
+    const response = await lemonSqueezyRequest(
+      `/subscriptions/${subscription.lemon_squeezy_subscription_id}`
+    )
+
+    return response.data.attributes.urls.customer_portal || null
+  } catch (error) {
+    logger.error('Error getting customer portal URL', error, { orgId })
+    return null
+  }
+}
