@@ -45,23 +45,6 @@ export const LoginClient = () => {
     resolver: zodResolver(formSchema),
   })
 
-  // Редирект если пользователь уже авторизован (например, через rememberMe или прямую ссылку)
-  useEffect(() => {
-    if (status === 'authenticated' && session?.user?.id) {
-      // Если пользователь уже авторизован, сразу редиректим в приложение
-      fetch('/api/auth/get-tenant-redirect', { cache: 'no-store' })
-        .then((res) => res.json())
-        .then((redirectData) => {
-          if (redirectData.success && redirectData.tenantId) {
-            window.location.href = `/manage/${redirectData.tenantId}`
-          }
-        })
-        .catch((error) => {
-          console.error('[LoginClient] Error getting tenant redirect:', error)
-        })
-    }
-  }, [status, session])
-
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('registered') === 'true') {
