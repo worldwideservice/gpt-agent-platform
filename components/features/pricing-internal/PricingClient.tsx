@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { initializePaddle, Paddle } from '@paddle/paddle-js'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { useToast } from '@/hooks/use-toast'
 import { Loader2, Check } from 'lucide-react'
 
