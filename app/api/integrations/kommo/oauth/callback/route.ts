@@ -61,16 +61,6 @@ export async function GET(request: NextRequest) {
     if (backendResult.success && backendResult.connection?.org_id) {
       const organization = await getOrganizationById(backendResult.connection.org_id)
 
-      // Track integration connected for analytics
-      try {
-          integrationType: 'kommo',
-          organizationId: backendResult.connection.org_id,
-          userId: backendResult.connection.org_id, // Using org_id as fallback
-        })
-      } catch (analyticsError) {
-        console.error('Failed to track integration connected', analyticsError)
-      }
-
       // Check if this is an agent-specific OAuth flow
       const cookieStore = await cookies()
       const agentId = cookieStore.get('kommo_oauth_agent_id')?.value

@@ -30,18 +30,6 @@ export const POST = async (request: NextRequest) => {
     })
     const durationSeconds = (Date.now() - startTime) / 1000
 
-    // Track CRM sync for analytics
-    try {
-        integrationType: 'kommo',
-        syncType: 'contacts',
-        itemsCount: 0, // Will be updated by backend
-        organizationId: session.user.orgId,
-        durationSeconds,
-      })
-    } catch (analyticsError) {
-      console.error('Failed to track CRM sync', analyticsError)
-    }
-
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Kommo sync contacts error', error)

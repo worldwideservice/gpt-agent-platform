@@ -150,3 +150,7 @@ export {
   FormField,
 } from './form'
 
+
+// Tree Selector компонент
+export { TreeSelector } from './tree-selector'
+export type { TreeNode, TreeSelectorProps } from './tree-selector'

@@ -5,7 +5,6 @@ import { AgentAssets } from '@/components/features/agents/AgentAssets'
 import { AgentForm } from '@/components/features/agents/AgentForm'
 import { AgentRules } from '@/components/features/agents/AgentRules'
 import { AgentExecutionLog } from '@/components/features/agents/AgentExecutionLog'
-import { AgentSequences } from '@/components/features/agents/AgentSequences'
 import { auth } from '@/auth'
 import { getAgentById } from '@/lib/repositories/agents'
 import { getAgentAssets } from '@/lib/repositories/agent-assets'
@@ -49,7 +48,6 @@ export default async function AgentDetailPage({ params }: AgentDetailPageProps) 
 
       <AgentForm tenantId={tenantId} agent={agent} />
       <AgentAssets tenantId={tenantId} agentId={agent.id} initialAssets={assets} />
-      <AgentSequences agentId={agent.id} />
       <AgentRules agentId={agent.id} />
       <AgentExecutionLog agentId={agent.id} />
     </div>

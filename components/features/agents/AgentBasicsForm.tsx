@@ -26,8 +26,9 @@ import {
   FormLabel,
   FormMessage,
   MultiSelect,
+  TreeSelector,
 } from '@/components/ui'
-import type { MultiSelectOption } from '@/components/ui'
+import type { MultiSelectOption, TreeNode } from '@/components/ui'
 import { useCrmSync } from '@/lib/hooks'
 
 interface Agent {
@@ -72,16 +73,40 @@ const CHANNEL_OPTIONS: MultiSelectOption[] = [
   { value: 'webchat', label: 'Webchat' },
 ]
 
-// Mock knowledge base categories - will be populated from KB API
-const CATEGORY_OPTIONS: MultiSelectOption[] = [
-  { value: 'product-info', label: 'Информация о продуктах' },
-  { value: 'pricing', label: 'Цены и тарифы' },
-  { value: 'shipping', label: 'Доставка' },
-  { value: 'returns', label: 'Возврат и обмен' },
-  { value: 'faq', label: 'Часто задаваемые вопросы' },
-  { value: 'company', label: 'О компании' },
-  { value: 'support', label: 'Техническая поддержка' },
-  { value: 'legal', label: 'Юридическая информация' },
+// Mock knowledge base categories tree - will be populated from KB API
+const CATEGORY_TREE: TreeNode[] = [
+  {
+    value: 'products',
+    label: 'Продукты и услуги',
+    children: [
+      { value: 'product-info', label: 'Информация о продуктах' },
+      { value: 'pricing', label: 'Цены и тарифы' },
+    ],
+  },
+  {
+    value: 'delivery-returns',
+    label: 'Доставка и возврат',
+    children: [
+      { value: 'shipping', label: 'Доставка' },
+      { value: 'returns', label: 'Возврат и обмен' },
+    ],
+  },
+  {
+    value: 'support',
+    label: 'Поддержка',
+    children: [
+      { value: 'faq', label: 'Часто задаваемые вопросы' },
+      { value: 'tech-support', label: 'Техническая поддержка' },
+    ],
+  },
+  {
+    value: 'company',
+    label: 'О компании',
+    children: [
+      { value: 'about', label: 'О компании' },
+      { value: 'legal', label: 'Юридическая информация' },
+    ],
+  },
 ]
 
 // Zod validation schema
@@ -385,9 +410,10 @@ export function AgentBasicsForm({ agent, tenantId }: AgentBasicsFormProps) {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={handleSyncCRM}
+                onClick={syncCrm}
+                disabled={isSyncing}
               >
-                <RefreshCw className="mr-2 h-4 w-4" />
+                <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
                 Синхронизировать настройки CRM
               </Button>
             </div>
@@ -409,19 +435,29 @@ export function AgentBasicsForm({ agent, tenantId }: AgentBasicsFormProps) {
               )}
             />
             {!form.watch('allChannels') && (
-              <div className="space-y-2">
-                <Label htmlFor="channels-select">
-                  Выбрать каналы <span className="text-rose-500">*</span>
-                </Label>
-                <Input
-                  id="channels-select"
-                  placeholder="Выбрать вариант"
-                  readOnly
-                />
-                <p className="text-xs text-gray-500">
-                  Множественный выбор каналов будет реализован в Phase 12
-                </p>
-              </div>
+              <FormField
+                control={form.control}
+                name="selectedChannels"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Выбрать каналы <span className="text-rose-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <MultiSelect
+                        options={CHANNEL_OPTIONS}
+                        selected={field.value}
+                        onChange={field.onChange}
+                        placeholder="Выбрать каналы"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Выберите каналы, в которых агент может отвечать на сообщения
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
           </CardContent>
         </Card>
@@ -448,19 +484,30 @@ export function AgentBasicsForm({ agent, tenantId }: AgentBasicsFormProps) {
               )}
             />
             {!form.watch('allCategories') && (
-              <div className="space-y-2">
-                <Label htmlFor="categories-select">
-                  Выбрать категории <span className="text-rose-500">*</span>
-                </Label>
-                <Input
-                  id="categories-select"
-                  placeholder="Выбрать вариант"
-                  readOnly
-                />
-                <p className="text-xs text-gray-500">
-                  Агент будет получать доступ к знаниям только из этих категорий
-                </p>
-              </div>
+              <FormField
+                control={form.control}
+                name="selectedCategories"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Выбрать категории <span className="text-rose-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <TreeSelector
+                        tree={CATEGORY_TREE}
+                        selected={field.value}
+                        onChange={field.onChange}
+                        placeholder="Выбрать категории из базы знаний"
+                        searchPlaceholder="Поиск категорий..."
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Агент будет получать доступ к знаниям только из выбранных категорий
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
 
             <FormField
