@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Suspense } from 'react'
 
 import { ManageSidebar } from '@/components/layout/ManageSidebar'
 import { ManageHeader } from '@/components/layout/ManageHeader'
@@ -29,17 +30,19 @@ export default async function ManageTenantLayout({ children, params }: ManageTen
 
   return (
     <TenantProvider value={tenantContextValue}>
-      <ProductAnalyticsProvider context="app">
-        <SidebarProvider defaultOpen={true}>
-          <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-50">
-            <ManageSidebar />
-            <SidebarInset>
-              <ManageHeader />
-              <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-8">{children}</main>
-            </SidebarInset>
-          </div>
-        </SidebarProvider>
-      </ProductAnalyticsProvider>
+      <Suspense fallback={null}>
+        <ProductAnalyticsProvider context="app">
+          <SidebarProvider defaultOpen={true}>
+            <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-50">
+              <ManageSidebar />
+              <SidebarInset>
+                <ManageHeader />
+                <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-8">{children}</main>
+              </SidebarInset>
+            </div>
+          </SidebarProvider>
+        </ProductAnalyticsProvider>
+      </Suspense>
     </TenantProvider>
   )
 }

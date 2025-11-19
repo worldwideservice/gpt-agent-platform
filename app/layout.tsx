@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
+import { Suspense } from 'react'
 import { Analytics } from '@vercel/analytics/next'
 import { SessionProviderWrapper } from '@/components/providers/SessionProviderWrapper'
 import { ProductAnalyticsProvider } from '@/components/providers/ProductAnalyticsProvider'
@@ -120,11 +121,13 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
         <ThemeProvider defaultTheme="system" storageKey="gpt-agent-theme">
           <QueryClientProvider>
             <SessionProviderWrapper>
-              <ProductAnalyticsProvider context="public">
-                <ToastProvider>
-                  <ErrorBoundary>{children}</ErrorBoundary>
-                </ToastProvider>
-              </ProductAnalyticsProvider>
+              <Suspense fallback={null}>
+                <ProductAnalyticsProvider context="public">
+                  <ToastProvider>
+                    <ErrorBoundary>{children}</ErrorBoundary>
+                  </ToastProvider>
+                </ProductAnalyticsProvider>
+              </Suspense>
             </SessionProviderWrapper>
           </QueryClientProvider>
         </ThemeProvider>
