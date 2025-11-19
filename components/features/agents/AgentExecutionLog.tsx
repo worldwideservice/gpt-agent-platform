@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
+import { ListSkeleton } from '@/components/ui/loading-skeletons'
 
 type RuleLogItem = {
   id: string
@@ -47,7 +48,7 @@ export function AgentExecutionLog({ agentId }: AgentExecutionLogProps) {
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
         {loading ? (
-          <p className="text-gray-500">Загрузка…</p>
+          <ListSkeleton items={5} />
         ) : (
           <section>
             <p className="text-xs font-medium uppercase text-gray-500">Rule Engine</p>

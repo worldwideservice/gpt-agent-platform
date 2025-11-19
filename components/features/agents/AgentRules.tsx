@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Input, Label, Textarea } from '@/components/ui'
+import { ListSkeleton } from '@/components/ui/loading-skeletons'
 
 type Condition = { field: string; operator: 'equals' | 'contains' | 'greater_than' | 'less_than' | 'changed_to' | 'not_empty'; value?: string }
 type Action = {
@@ -326,7 +327,7 @@ export function AgentRules({ agentId }: AgentRulesProps) {
       <CardContent className="space-y-4 text-sm">
         {error && <p className="text-rose-500">{error}</p>}
         {loading ? (
-          <p className="text-gray-500">Загрузка правил…</p>
+          <ListSkeleton items={3} />
         ) : rules.length === 0 ? (
           <p className="text-gray-500">Правила ещё не созданы.</p>
         ) : (

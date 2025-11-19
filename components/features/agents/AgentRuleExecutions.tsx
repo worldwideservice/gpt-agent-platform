@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
+import { ListSkeleton } from '@/components/ui/loading-skeletons'
 
 type RuleExecution = {
   id: string
@@ -52,7 +53,7 @@ export function AgentRuleExecutions({ agentId }: AgentRuleExecutionsProps) {
       <CardContent className="space-y-2 text-sm">
         {error && <p className="text-rose-500">{error}</p>}
         {loading ? (
-          <p className="text-gray-500">Загрузка…</p>
+          <ListSkeleton items={5} />
         ) : items.length === 0 ? (
           <p className="text-gray-500">История пустая.</p>
         ) : (

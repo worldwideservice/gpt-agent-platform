@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 
 import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Input, Label, Textarea } from '@/components/ui'
 import { EmptyState } from '@/components/ui/empty-state'
+import { ListSkeleton } from '@/components/ui/loading-skeletons'
 
 type Sequence = {
   id: string
@@ -202,7 +203,7 @@ export function AgentSequences({ agentId }: AgentSequencesProps) {
       <CardContent className="space-y-4 text-sm">
         {error && <p className="text-rose-500">{error}</p>}
         {loading ? (
-          <p className="text-gray-500">Загрузка последовательностей…</p>
+          <ListSkeleton items={3} />
         ) : sequences.length === 0 ? (
           <EmptyState
             type="no-data"
