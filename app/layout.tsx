@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { Suspense } from 'react'
 import { Analytics } from '@vercel/analytics/next'
+import { NextIntlClientProvider } from 'next-intl'
 import { SessionProviderWrapper } from '@/components/providers/SessionProviderWrapper'
 import { ProductAnalyticsProvider } from '@/components/providers/ProductAnalyticsProvider'
 import { QueryClientProvider } from '@/components/providers/QueryClientProvider'
@@ -9,6 +10,7 @@ import { ToastProvider } from '@/components/ui/toast-context'
 import { ThemeProvider } from '@/lib/providers/theme-provider'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
+import ruMessages from '@/messages/ru.json'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] })
@@ -78,13 +80,9 @@ interface RootLayoutProps {
 }
 
 const RootLayout = async ({ children, params }: RootLayoutProps) => {
- // Since we don't use [locale] segment, always use default locale 'ru'
- const locale = 'ru'
- 
- // Temporarily disable next-intl to isolate the issue
- // Will re-enable once the base layout works
- // Используем unknown вместо any согласно Context7 best practices
- const messages: Record<string, unknown> = {}
+  // Since we don't use [locale] segment, always use default locale 'ru'
+  const locale = 'ru'
+  
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
@@ -118,19 +116,21 @@ const RootLayout = async ({ children, params }: RootLayoutProps) => {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       </head>
       <body className={inter.className}>
-        <ThemeProvider defaultTheme="system" storageKey="gpt-agent-theme">
-          <QueryClientProvider>
-            <SessionProviderWrapper>
-              <Suspense fallback={null}>
-                <ProductAnalyticsProvider context="public">
-                  <ToastProvider>
-                    <ErrorBoundary>{children}</ErrorBoundary>
-                  </ToastProvider>
-                </ProductAnalyticsProvider>
-              </Suspense>
-            </SessionProviderWrapper>
-          </QueryClientProvider>
-        </ThemeProvider>
+        <NextIntlClientProvider locale={locale} messages={ruMessages}>
+          <ThemeProvider defaultTheme="system" storageKey="gpt-agent-theme">
+            <QueryClientProvider>
+              <SessionProviderWrapper>
+                <Suspense fallback={null}>
+                  <ProductAnalyticsProvider context="public">
+                    <ToastProvider>
+                      <ErrorBoundary>{children}</ErrorBoundary>
+                    </ToastProvider>
+                  </ProductAnalyticsProvider>
+                </Suspense>
+              </SessionProviderWrapper>
+            </QueryClientProvider>
+          </ThemeProvider>
+        </NextIntlClientProvider>
         <Analytics />
       </body>
     </html>
