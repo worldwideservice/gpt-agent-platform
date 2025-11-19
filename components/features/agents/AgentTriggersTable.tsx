@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui'
+import { EmptyState } from '@/components/ui/empty-state'
 
 interface Agent {
   id: string
@@ -430,10 +431,17 @@ export function AgentTriggersTable({ agent, tenantId }: AgentTriggersTableProps)
             </table>
           </div>
         ) : (
-          <div className="text-center py-12">
-            <h4 className="text-lg font-medium">Не найдено Триггеры</h4>
-            <p className="text-sm text-gray-500">Создать Триггер для старта.</p>
-          </div>
+          <EmptyState
+            type="no-data"
+            title="Не найдено Триггеры"
+            description="Создать Триггер для старта."
+            action={{
+              label: 'Создать',
+              onClick: () => {
+                // Триггер создается через Dialog в заголовке
+              },
+            }}
+          />
         )}
       </CardContent>
     </Card>

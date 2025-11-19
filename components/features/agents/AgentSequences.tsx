@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 
 import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Input, Label, Textarea } from '@/components/ui'
+import { EmptyState } from '@/components/ui/empty-state'
 
 type Sequence = {
   id: string
@@ -203,7 +204,11 @@ export function AgentSequences({ agentId }: AgentSequencesProps) {
         {loading ? (
           <p className="text-gray-500">Загрузка последовательностей…</p>
         ) : sequences.length === 0 ? (
-          <p className="text-gray-500">Последовательности ещё не созданы.</p>
+          <EmptyState
+            type="no-data"
+            title="Не найдено Цепочки"
+            description="Создайте первую автоматическую цепочку для начала работы."
+          />
         ) : (
           <ul className="space-y-2">
             {sequences.map((sequence) => (
