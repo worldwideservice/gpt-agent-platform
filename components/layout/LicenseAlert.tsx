@@ -1,43 +1,49 @@
-'use client'
+"use client"
 
-import Link from 'next/link'
-import { AlertTriangle } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { useEffect, useState } from "react"
+import Link from "next/link"
+import { cn } from "@/lib/utils"
+import { AlertCircle } from "lucide-react"
 
-interface LicenseAlertProps {
-  expiryDate: Date
-  tenantId: string
+interface SubscriptionStatus {
+  isValid: boolean
+  status: string
+  daysLeft: number
+  expiryDate: string | null
+  planName: string
 }
 
-export function LicenseAlert({ expiryDate, tenantId }: LicenseAlertProps) {
-  const formattedDate = expiryDate.toLocaleDateString('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
+export function LicenseAlert({ tenantId }: { tenantId: string }) {
+  const [status, setStatus] = useState<SubscriptionStatus | null>(null)
 
-  const isExpired = expiryDate < new Date()
-  const daysUntilExpiry = Math.ceil((expiryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-  const isExpiringSoon = daysUntilExpiry <= 7 && daysUntilExpiry > 0
+  useEffect(() => {
+    fetch(`/api/manage/${tenantId}/subscription/status`)
+      .then(res => res.json())
+      .then(setStatus)
+      .catch(console.error)
+  }, [tenantId])
 
-  // Don't show if license is valid and not expiring soon
-  if (!isExpired && !isExpiringSoon) {
-    return null
-  }
+  if (!status) return null
+
+  // Форматируем дату как "30.10.2025"
+  const dateStr = status.expiryDate
+    ? new Date(status.expiryDate).toLocaleDateString('ru-RU')
+    : "Free Plan"
+
+  const isDanger = !status.isValid || status.daysLeft < 3
 
   return (
     <Link
       href={`/manage/${tenantId}/pricing`}
       className={cn(
-        'flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
-        isExpired
-          ? 'bg-rose-500 text-white hover:bg-rose-600'
-          : 'bg-orange-500 text-white hover:bg-orange-600'
+        "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+        isDanger
+          ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          : "bg-muted text-muted-foreground hover:bg-muted/80"
       )}
-      aria-label={isExpired ? 'Лицензия истекла' : 'Лицензия скоро истечёт'}
     >
-      <AlertTriangle className="h-4 w-4" aria-hidden="true" />
-      <span>{formattedDate}</span>
+      {isDanger && <AlertCircle className="h-4 w-4" />}
+      <span>{dateStr}</span>
     </Link>
   )
 }
