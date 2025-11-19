@@ -6,7 +6,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { getMonthlyResponsesSeries } from '@/lib/repositories/agents'
 
-export async function GET(request: NextRequest, { params }: { params: { tenantId: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ tenantId: string }> }) {
+  const { tenantId } = await params
+
   try {
     const session = await auth()
     const organizationId = session?.user?.orgId

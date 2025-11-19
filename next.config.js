@@ -33,8 +33,6 @@ const nextConfig = {
   experimental: {
     // Включаем App Router оптимизации
     optimizePackageImports: ['lucide-react'],
-    // Включаем SWC оптимизации
-    swcPlugins: [],
     // Исключаем Node.js модули из Edge Runtime
     serverComponentsExternalPackages: ['bcryptjs', '@supabase/supabase-js', 'pino', 'pino-pretty', 'pdf-parse'],
   },
@@ -109,69 +107,6 @@ const nextConfig = {
       }
     }
 
-    // Создаём pages-manifest.json для Pages Router СИНХРОННО при загрузке конфигурации
-    // ВАЖНО: создаём ВСЕГДА, если файла нет, чтобы Next.js мог его прочитать на этапе "Collecting page data"
-    if (!dev && isServer) {
-      try {
-        const fs = require('fs')
-        const path = require('path')
-        const pagesDir = path.join(process.cwd(), 'pages')
-        const apiDir = path.join(pagesDir, 'api')
-        const pagesManifestPath = path.join(process.cwd(), '.next', 'server', 'pages-manifest.json')
-        
-        // Создаём манифест, если есть pages/api и файл ещё не существует
-        if (fs.existsSync(apiDir) && !fs.existsSync(pagesManifestPath)) {
-          const pagesManifest = {}
-          
-          const findRoutes = (dir, basePath = []) => {
-            if (!fs.existsSync(dir)) return
-            
-            const entries = fs.readdirSync(dir, { withFileTypes: true })
-            
-            for (const entry of entries) {
-              const fullPath = path.join(dir, entry.name)
-              const newBasePath = [...basePath, entry.name]
-              
-              if (entry.isDirectory()) {
-                findRoutes(fullPath, newBasePath)
-              } else if (entry.isFile()) {
-                if (/\.(ts|tsx|js|jsx)$/.test(entry.name)) {
-                  const routeParts = newBasePath.slice(0, -1)
-                  const fileName = newBasePath[newBasePath.length - 1]
-                  
-                  let route = '/api'
-                  if (routeParts.length > 0) {
-                    route += '/' + routeParts.join('/')
-                  }
-                  
-                  const baseFileName = fileName.replace(/\.(ts|tsx|js|jsx)$/, '')
-                  if (baseFileName !== 'index') {
-                    route += '/' + baseFileName
-                  }
-                  
-                  const filePath = 'pages/api/' + newBasePath.join('/')
-                  pagesManifest[route] = filePath
-                }
-              }
-            }
-          }
-          
-          findRoutes(apiDir, '')
-          
-          // Создаём директорию .next/server если её нет
-          const serverDir = path.join(process.cwd(), '.next', 'server')
-          fs.mkdirSync(serverDir, { recursive: true })
-          
-          // Создаём файл (даже если routes пустой - Next.js всё равно ожидает файл)
-          fs.writeFileSync(pagesManifestPath, JSON.stringify(pagesManifest, null, 2))
-          console.log('webpack: created pages-manifest.json with', Object.keys(pagesManifest).length, 'routes')
-        }
-      } catch (error) {
-        // Игнорируем ошибки в webpack конфигурации, чтобы не сломать сборку
-        console.warn('webpack: failed to create pages-manifest.json:', error.message)
-      }
-    }
-    
     // Добавляем оптимизации для продакшена
     if (!dev && !isServer) {
       config.optimization.splitChunks.cacheGroups = {
@@ -198,7 +133,7 @@ const nextConfig = {
         ...config.optimization,
         minimize: true,
       }
-      
+
       // Add Terser plugin configuration to remove console.log
       if (config.optimization.minimizer) {
         config.optimization.minimizer.forEach((minimizer) => {

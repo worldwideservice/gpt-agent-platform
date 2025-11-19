@@ -21,6 +21,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { tenantId: string; notificationId: string } }
 ) {
+  const { tenantId } = await params
+
   try {
     // 1. Проверка аутентификации
     const session = await auth()

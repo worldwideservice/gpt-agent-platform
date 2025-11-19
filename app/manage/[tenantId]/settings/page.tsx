@@ -2,12 +2,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label
 import { PageBreadcrumbs } from '@/components/layout/PageBreadcrumbs'
 
 interface SettingsPageProps {
-  params: {
+  params: Promise<{
     tenantId: string
-  }
+  }>
 }
 
-export default function SettingsPage({ params }: SettingsPageProps) {
+export default async function SettingsPage({ params }: SettingsPageProps) {
+  const { tenantId } = await params
+
   return (
     <div className="space-y-6">
       <PageBreadcrumbs />
@@ -16,7 +18,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
         <p className="text-sm uppercase text-primary">Настройки</p>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Workspace настройки</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Управляйте базовыми параметрами workspace <span className="font-mono">{params.tenantId}</span>.
+          Управляйте базовыми параметрами workspace <span className="font-mono">{tenantId}</span>.
         </p>
       </header>
 

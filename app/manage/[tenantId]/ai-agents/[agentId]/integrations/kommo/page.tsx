@@ -14,31 +14,32 @@ import {
 } from '@/components/ui'
 
 interface KommoIntegrationPageProps {
-  params: {
+  params: Promise<{
     tenantId: string
     agentId: string
-  }
+  }>
 }
 
 export default async function KommoIntegrationPage({ params }: KommoIntegrationPageProps) {
+  const { tenantId, agentId } = await params
   const session = await auth()
 
   if (!session?.user?.orgId) {
     notFound()
   }
 
-  const agent = await getAgentById(params.agentId, session.user.orgId)
+  const agent = await getAgentById(agentId, session.user.orgId)
   if (!agent) {
     notFound()
   }
 
   const tabs = [
-    { id: 'edit', label: 'Основные', href: `/manage/${params.tenantId}/ai-agents/${params.agentId}/edit` },
-    { id: 'leads-contacts', label: 'Сделки и контакты', href: `/manage/${params.tenantId}/ai-agents/${params.agentId}/leads-contacts` },
-    { id: 'triggers', label: 'Триггеры', href: `/manage/${params.tenantId}/ai-agents/${params.agentId}/triggers` },
-    { id: 'sequences', label: 'Цепочки', href: `/manage/${params.tenantId}/ai-agents/${params.agentId}/sequences` },
-    { id: 'available-integrations', label: 'Интеграции', href: `/manage/${params.tenantId}/ai-agents/${params.agentId}/available-integrations` },
-    { id: 'advanced-settings', label: 'Дополнительно', href: `/manage/${params.tenantId}/ai-agents/${params.agentId}/advanced-settings` },
+    { id: 'edit', label: 'Основные', href: `/manage/${tenantId}/ai-agents/${agentId}/edit` },
+    { id: 'leads-contacts', label: 'Сделки и контакты', href: `/manage/${tenantId}/ai-agents/${agentId}/leads-contacts` },
+    { id: 'triggers', label: 'Триггеры', href: `/manage/${tenantId}/ai-agents/${agentId}/triggers` },
+    { id: 'sequences', label: 'Цепочки', href: `/manage/${tenantId}/ai-agents/${agentId}/sequences` },
+    { id: 'available-integrations', label: 'Интеграции', href: `/manage/${tenantId}/ai-agents/${agentId}/available-integrations` },
+    { id: 'advanced-settings', label: 'Дополнительно', href: `/manage/${tenantId}/ai-agents/${agentId}/advanced-settings` },
   ]
 
   return (
@@ -48,19 +49,19 @@ export default async function KommoIntegrationPage({ params }: KommoIntegrationP
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href={`/manage/${params.tenantId}/ai-agents`}>Агенты ИИ</Link>
+              <Link href={`/manage/${tenantId}/ai-agents`}>Агенты ИИ</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href={`/manage/${params.tenantId}/ai-agents/${params.agentId}/edit`}>{agent.name}</Link>
+              <Link href={`/manage/${tenantId}/ai-agents/${agentId}/edit`}>{agent.name}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href={`/manage/${params.tenantId}/ai-agents/${params.agentId}/available-integrations`}>Интеграции</Link>
+              <Link href={`/manage/${tenantId}/ai-agents/${agentId}/available-integrations`}>Интеграции</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -79,7 +80,7 @@ export default async function KommoIntegrationPage({ params }: KommoIntegrationP
       <AgentEditTabs tabs={tabs} />
 
       {/* Content */}
-      <KommoIntegrationSettings agent={agent} tenantId={params.tenantId} />
+      <KommoIntegrationSettings agent={agent} tenantId={tenantId} />
     </div>
   )
 }

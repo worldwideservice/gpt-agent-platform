@@ -21,6 +21,8 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { tenantId: string; conversationId: string } }
 ) {
+  const { tenantId } = await params
+
   try {
     // 1. Проверка аутентификации
     const session = await auth()

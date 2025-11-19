@@ -11,17 +11,19 @@ import { loadManageIntegrationsData } from '@/lib/repositories/manage-data'
 import { PageBreadcrumbs } from '@/components/layout/PageBreadcrumbs'
 
 interface IntegrationsPageProps {
-  params: {
+  params: Promise<{
     tenantId: string
-  }
-  searchParams?: {
+  }>
+  searchParams?: Promise<{
     status?: string
     provider?: string
     error?: string
-  }
+  }>
 }
 
 export default async function IntegrationsPage({ params, searchParams }: IntegrationsPageProps) {
+  const { tenantId } = await params
+  const resolvedSearchParams = await searchParams
   const t = await getTranslations('manage.integrations.page')
   const session = await auth()
   const organizationId = session?.user?.orgId ?? null
@@ -40,10 +42,10 @@ export default async function IntegrationsPage({ params, searchParams }: Integra
     }
   }
 
-  if (searchParams?.status === 'success' && searchParams.provider === 'kommo') {
+  if (resolvedSearchParams?.status === 'success' && resolvedSearchParams.provider === 'kommo') {
     notice = t('notices.kommoSuccess')
-  } else if (searchParams?.error && searchParams.provider === 'kommo') {
-    notice = t('notices.kommoError', { message: searchParams.error })
+  } else if (resolvedSearchParams?.error && resolvedSearchParams.provider === 'kommo') {
+    notice = t('notices.kommoError', { message: resolvedSearchParams.error })
   }
 
   items = [

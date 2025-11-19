@@ -22,8 +22,10 @@ import { rateLimitAPI } from '@/lib/middleware/rate-limit-api'
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  { params }: { params: Promise<{ tenantId: string }> }
 ) {
+  const { tenantId } = await params
+
   try {
     // 1. Проверка аутентификации
     const session = await auth()
@@ -121,7 +123,7 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  { params }: { params: Promise<{ tenantId: string }> }
 ) {
   try {
     // 1. Проверка аутентификации

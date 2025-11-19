@@ -15,12 +15,13 @@ import type { KnowledgeBaseArticle, KnowledgeBaseCategory, KnowledgeBaseStatsSum
 import type { WorkspaceSummary } from '@/lib/repositories/manage-summary'
 
 interface KnowledgeBasePageProps {
-  params: {
+  params: Promise<{
     tenantId: string
-  }
+  }>
 }
 
 export default async function KnowledgeBasePage({ params }: KnowledgeBasePageProps) {
+  const { tenantId } = await params
   const t = await getTranslations('manage.knowledge.page')
   const session = await auth()
   const organizationId = session?.user?.orgId ?? null
@@ -58,7 +59,7 @@ export default async function KnowledgeBasePage({ params }: KnowledgeBasePagePro
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {t.rich('header.subtitle', {
             tenant: (chunk) => <span className="font-mono">{chunk}</span>,
-            id: params.tenantId,
+            id: tenantId,
           })}
         </p>
       </header>
@@ -67,7 +68,7 @@ export default async function KnowledgeBasePage({ params }: KnowledgeBasePagePro
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{notice}</div>
       )}
 
-      <KnowledgeBaseOverview tenantId={params.tenantId} stats={stats} />
+      <KnowledgeBaseOverview tenantId={tenantId} stats={stats} />
 
       {summary && (
         <div className="space-y-6">

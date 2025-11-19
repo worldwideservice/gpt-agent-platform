@@ -8,8 +8,10 @@ import { getDashboardStats } from '@/lib/repositories/agents'
 import { rateLimitAPI } from '@/lib/middleware/rate-limit-api'
 import { logger } from '@/lib/utils/logger'
 
-export async function GET(request: NextRequest, { params }: { params: { tenantId: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ tenantId: string }> }) {
   try {
+    const { tenantId } = await params
+
     // Apply rate limiting
     const session = await auth()
     const rateLimitResponse = await rateLimitAPI(request, session?.user?.id)
@@ -25,7 +27,7 @@ export async function GET(request: NextRequest, { params }: { params: { tenantId
 
     return NextResponse.json(stats)
   } catch (error) {
-    logger.error('Failed to fetch dashboard stats', error, { tenantId: params.tenantId })
+    logger.error('Failed to fetch dashboard stats', error, { tenantId: 'unknown' })
     return NextResponse.json({ error: 'Failed to fetch dashboard stats' }, { status: 500 })
   }
 }

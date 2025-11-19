@@ -12,6 +12,8 @@ import { getErrorMessage } from '@/lib/utils'
  * Получает текущую подписку и статистику использования для организации
  */
 export async function GET() {
+  const { tenantId } = await params
+
   try {
     const session = await auth()
     if (!session?.user?.id) {

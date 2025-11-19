@@ -13,6 +13,8 @@ import { changePlanSchema } from '@/lib/validation/schemas/subscription'
  * Смена тарифного плана пользователем
  */
 export async function POST(req: Request) {
+  const { tenantId } = await params
+
   try {
     const session = await auth()
     if (!session?.user?.id) {

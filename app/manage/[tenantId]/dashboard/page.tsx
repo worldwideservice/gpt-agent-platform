@@ -37,12 +37,13 @@ const DashboardChartsClient = dynamic(
 )
 
 interface DashboardPageProps {
-  params: {
+  params: Promise<{
     tenantId: string
-  }
+  }>
 }
 
 export default async function DashboardPage({ params }: DashboardPageProps) {
+  const { tenantId } = await params
   const t = await getTranslations('manage.dashboard')
   const session = await auth()
   const organizationId = session?.user?.orgId ?? null
@@ -57,13 +58,13 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {t.rich('header.tenant', {
             tenant: (chunk) => <span className="font-mono text-xs">{chunk}</span>,
-            id: params.tenantId,
+            id: tenantId,
           })}
         </p>
       </header>
 
-      <DashboardMetricsClient tenantId={params.tenantId} />
-      <DashboardChartsClient tenantId={params.tenantId} />
+      <DashboardMetricsClient tenantId={tenantId} />
+      <DashboardChartsClient tenantId={tenantId} />
 
       <Suspense fallback={<div className="h-64 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" />}>
         <DashboardSummary organizationId={organizationId} />

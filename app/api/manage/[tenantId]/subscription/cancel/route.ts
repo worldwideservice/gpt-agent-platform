@@ -13,6 +13,8 @@ import { cancelSubscriptionSchema } from '@/lib/validation/schemas/subscription'
  * Отмена подписки (требует подтверждения confirm: true)
  */
 export async function POST(req: Request) {
+  const { tenantId } = await params
+
   try {
     const session = await auth()
     if (!session?.user?.id) {

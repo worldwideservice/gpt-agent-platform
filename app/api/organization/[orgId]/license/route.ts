@@ -10,16 +10,34 @@ import { logger } from '@/lib/utils/logger'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { orgId: string } }
+  { params }: { params: Promise<{ orgId: string }> }
 ) {
   try {
+    const { orgId: tenantId } = await params
     const session = await getServerSession(authOptions)
 
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const subscription = await getSubscription(params.orgId)
+    // tenantId is now just the slug
+    const slug = tenantId
+
+    // Find organization by slug
+    const { getSupabaseServiceRoleClient } = await import('@/lib/supabase/admin')
+    const supabase = getSupabaseServiceRoleClient()
+    const { data: org, error: orgError } = await supabase
+      .from('organizations')
+      .select('id')
+      .eq('slug', slug)
+      .maybeSingle()
+
+    if (orgError || !org) {
+      logger.warn('[license] Organization not found', { slug, error: orgError })
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+    }
+
+    const subscription = await getSubscription(org.id)
 
     if (!subscription) {
       return NextResponse.json({

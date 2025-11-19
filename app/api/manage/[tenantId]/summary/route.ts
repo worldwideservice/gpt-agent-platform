@@ -14,7 +14,7 @@ const isDemoEnvironment = () =>
   matchesDemoFlag(process.env.E2E_ONBOARDING_FAKE) ||
   matchesDemoFlag(process.env.PLAYWRIGHT_DEMO_MODE)
 
-export const GET = async (_request: NextRequest, { params }: { params: { tenantId: string } }) => {
+export const GET = async (_request: NextRequest, { params }: { params: Promise<{ tenantId: string }> }) => {
   const session = await auth()
 
   if (isDemoEnvironment()) {

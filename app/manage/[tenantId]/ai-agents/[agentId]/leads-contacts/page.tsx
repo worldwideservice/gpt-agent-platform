@@ -1,12 +1,13 @@
 import { AgentLeadsContactsTab } from '@/components/features/agents/AgentLeadsContactsTab'
 
 interface AgentLeadsContactsPageProps {
-  params: {
+  params: Promise<{
     tenantId: string
     agentId: string
-  }
+  }>
 }
 
 export default async function AgentLeadsContactsPage({ params }: AgentLeadsContactsPageProps) {
-  return <AgentLeadsContactsTab tenantId={params.tenantId} agentId={params.agentId} />
+  const { tenantId, agentId } = await params
+  return <AgentLeadsContactsTab tenantId={tenantId} agentId={agentId} />
 }

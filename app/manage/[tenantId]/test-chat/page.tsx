@@ -18,8 +18,9 @@ import { TestChatClient } from '@/components/features/test-chat/TestChatClient'
 export default async function TestChatPage({
   params,
 }: {
-  params: { tenantId: string }
+  params: Promise<{ tenantId: string }>
 }) {
+  const { tenantId } = await params
   const session = await auth()
 
   if (!session?.user) {
@@ -29,7 +30,7 @@ export default async function TestChatPage({
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
       <Suspense fallback={<TestChatSkeleton />}>
-        <TestChatClient tenantId={params.tenantId} />
+        <TestChatClient tenantId={tenantId} />
       </Suspense>
     </div>
   )

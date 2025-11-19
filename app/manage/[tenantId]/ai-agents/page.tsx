@@ -15,9 +15,9 @@ import type { WorkspaceSummary } from '@/lib/repositories/manage-summary'
 import type { Agent } from '@/types'
 
 interface AiAgentsPageProps {
-  params: {
+  params: Promise<{
     tenantId: string
-  }
+  }>
 }
 
 const EMPTY_SUMMARY: WorkspaceSummary = {
@@ -42,6 +42,7 @@ const EMPTY_SUMMARY: WorkspaceSummary = {
 }
 
 export default async function AiAgentsPage({ params }: AiAgentsPageProps) {
+  const { tenantId } = await params
   const t = await getTranslations('manage.agents.page')
   const session = await auth()
   const organizationId = session?.user?.orgId ?? null
@@ -68,11 +69,11 @@ export default async function AiAgentsPage({ params }: AiAgentsPageProps) {
         title={t('header.title')}
         description={t.rich('header.subtitle', {
           tenant: (chunk) => <span className="font-mono">{chunk}</span>,
-          id: params.tenantId,
+          id: tenantId,
         }) as any}
         actions={
           <Button asChild>
-            <Link href={`/manage/${params.tenantId}/ai-agents/create`}>
+            <Link href={`/manage/${tenantId}/ai-agents/create`}>
               Создать агента
             </Link>
           </Button>

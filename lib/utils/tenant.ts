@@ -1,44 +1,34 @@
 /**
  * Утилиты для работы с tenant-id
- * Формат: {id}-{slug} (например: 1000373-worldwideservices)
+ * Формат: {slug} (например: makysm-holovatyi)
+ * 
+ * ПРИМЕЧАНИЕ: В KWID использовался формат {id}-{slug} (1000373-worldwideservices),
+ * но текущая БД использует UUID для organizations.id, поэтому мы упростили до slug-only
  */
 
 /**
  * Генерирует tenant-id из organization данных
- * Формат: {numericId}-{slug}
+ * Теперь просто возвращает slug
  */
-export function generateTenantId(organizationId: string, slug: string): string {
- // Конвертируем UUID в числовой ID (первые 7 символов hex конвертируем в число)
- const numericPart = organizationId
- .replace(/-/g, '')
- .substring(0, 7)
- .split('')
- .reduce((acc, char) => acc + parseInt(char, 16), 0)
- .toString()
- 
- // Объединяем с slug
- return `${numericPart}-${slug}`
+export function generateTenantId(_organizationId: string, slug: string): string {
+    return slug
 }
 
 /**
  * Парсит tenant-id и возвращает organization slug
  */
 export function parseTenantId(tenantId: string): { slug: string } | null {
- const parts = tenantId.split('-')
- if (parts.length < 2) {
- return null
- }
- 
- // Все после первого дефиса - это slug
- const slug = parts.slice(1).join('-')
- 
- return { slug }
+    if (!tenantId || tenantId.trim().length === 0) {
+        return null
+    }
+
+    // tenantId = slug
+    return { slug: tenantId }
 }
 
 /**
  * Получает tenant-id из organization
  */
 export function getTenantIdFromOrganization(organization: { id: string; slug: string }): string {
- return generateTenantId(organization.id, organization.slug)
+    return organization.slug
 }
-
