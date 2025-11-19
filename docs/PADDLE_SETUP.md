@@ -98,8 +98,8 @@ Paddle - це платіжна платформа типу Merchant of Record, �
 
 ```bash
 # Paddle Billing Configuration
-PADDLE_API_KEY=pdl_live_apikey_01kaeep48yxa0v0qj32bj52f5m_QXHn8TMnnc0q6HhjeKvrY1_AbX
-PADDLE_WEBHOOK_SECRET=pdwhsec_your_webhook_secret_here
+PADDLE_API_KEY=pdl_live_apikey_YOUR_API_KEY_HERE
+PADDLE_WEBHOOK_SECRET=pdwhsec_YOUR_WEBHOOK_SECRET_HERE
 PADDLE_ENVIRONMENT=production
 
 # Price IDs для різних планів
