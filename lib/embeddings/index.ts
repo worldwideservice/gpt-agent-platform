@@ -7,10 +7,22 @@ import OpenAI from 'openai'
 import { logger } from '@/lib/logger'
 import type { EmbeddingOptions } from '@/lib/types/knowledge-base'
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Lazy initialization to avoid build-time errors
+let openaiClient: OpenAI | null = null
+
+function getOpenAIClient(): OpenAI {
+  if (!openaiClient) {
+    const apiKey = process.env.OPENAI_API_KEY
+
+    if (!apiKey) {
+      throw new Error('OPENAI_API_KEY is not configured')
+    }
+
+    openaiClient = new OpenAI({ apiKey })
+  }
+
+  return openaiClient
+}
 
 const DEFAULT_EMBEDDING_MODEL = 'text-embedding-3-small'
 const DEFAULT_DIMENSIONS = 1536
@@ -32,6 +44,7 @@ export async function generateEmbedding(
       dimensions,
     })
 
+    const openai = getOpenAIClient()
     const response = await openai.embeddings.create({
       model,
       input: text,
@@ -73,6 +86,7 @@ export async function generateEmbeddings(
     })
 
     const embeddings: number[][] = []
+    const openai = getOpenAIClient()
 
     // Process in batches
     for (let i = 0; i < texts.length; i += BATCH_SIZE) {
