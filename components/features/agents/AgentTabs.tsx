@@ -30,6 +30,11 @@ export function AgentTabs({ tenantId, agentId }: AgentTabsProps) {
             isActive: (path: string) => path.startsWith(`${baseUrl}/triggers`),
         },
         {
+            label: 'Цепочки',
+            href: `${baseUrl}/sequences`,
+            isActive: (path: string) => path.startsWith(`${baseUrl}/sequences`),
+        },
+        {
             label: 'Интеграции',
             href: `${baseUrl}/available-integrations`,
             isActive: (path: string) => path.startsWith(`${baseUrl}/available-integrations`),
