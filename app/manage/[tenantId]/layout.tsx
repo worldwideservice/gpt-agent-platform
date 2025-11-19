@@ -11,13 +11,13 @@ import { getOrganizationById } from '@/lib/repositories/organizations'
 
 interface ManageTenantLayoutProps {
   children: ReactNode
-  params: {
+  params: Promise<{
     tenantId: string
-  }
+  }>
 }
 
 export default async function ManageTenantLayout({ children, params }: ManageTenantLayoutProps) {
-  const { tenantId } = params
+  const { tenantId } = await params
   const session = await auth()
   const organization = session?.user?.orgId
     ? await getOrganizationById(session.user.orgId)
