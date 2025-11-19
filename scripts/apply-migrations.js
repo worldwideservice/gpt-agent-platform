@@ -8,6 +8,11 @@
 const { createClient } = require('@supabase/supabase-js')
 const fs = require('fs')
 const path = require('path')
+const dotenv = require('dotenv')
+
+// Load environment variables
+dotenv.config({ path: path.resolve(__dirname, '../../.env.local') })
+dotenv.config()
 
 // Получаем переменные окружения
 const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -39,6 +44,11 @@ const migrations = [
     file: 'supabase/migrations/add_activity_logs.sql',
     description: 'Создание таблицы activity_logs',
   },
+  {
+    name: 'rename_stripe_to_paddle',
+    file: 'supabase/migrations/rename_stripe_to_paddle.sql',
+    description: 'Переименование колонок Stripe в Paddle',
+  },
 ]
 
 async function applyMigration(migration) {
@@ -63,14 +73,14 @@ async function applyMigration(migration) {
       // Если функция exec_sql не существует, используем прямой запрос
       // Supabase не поддерживает прямой SQL через REST API для безопасности
       // Поэтому нужно использовать Supabase Dashboard или CLI
-      
+
       console.error(`❌ Не удалось применить миграцию через API`)
       console.error(`   Ошибка: ${error.message}`)
       console.error(`\n💡 Используйте один из способов:`)
       console.error(`   1. Supabase Dashboard → SQL Editor`)
       console.error(`   2. Supabase CLI: supabase db push`)
       console.error(`   3. psql: psql [connection-string] -f ${migration.file}`)
-      
+
       return false
     }
 

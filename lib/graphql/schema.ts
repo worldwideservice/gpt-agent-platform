@@ -23,7 +23,7 @@ export const typeDefs = `
  currentPeriodStart: DateTime!
  currentPeriodEnd: DateTime!
  cancelAtPeriodEnd: Boolean!
- stripeSubscriptionId: String
+ paddleSubscriptionId: String
  }
 
  enum UserTier {

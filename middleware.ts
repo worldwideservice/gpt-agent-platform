@@ -11,38 +11,9 @@ import {
 } from '@/lib/rate-limit'
 import { csrfProtection } from '@/lib/security/csrf'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+import { checkSubscriptionStatus } from '@/lib/auth/check-subscription'
 
-/**
- * Edge-compatible проверка лицензии для middleware
- * Проверяет валидность подписки без использования тяжелых функций
- */
-async function checkLicenseInMiddleware(tenantId: string): Promise<boolean> {
-  try {
-    const supabase = getSupabaseServiceRoleClient()
 
-    // Получаем активную подписку организации
-    const { data: subscription } = await supabase
-      .from('subscriptions')
-      .select('status, current_period_end')
-      .eq('org_id', tenantId)
-      .in('status', ['active', 'on_trial'])
-      .single()
-
-    if (!subscription) {
-      return false
-    }
-
-    // Проверяем что подписка не истекла
-    const now = new Date()
-    const periodEnd = new Date(subscription.current_period_end)
-
-    return periodEnd > now
-  } catch (error) {
-    // В случае ошибки считаем лицензию невалидной
-    console.error('[MIDDLEWARE] License check error:', error)
-    return false
-  }
-}
 
 /**
  * Middleware для защиты путей и проверки tenant access control
@@ -155,7 +126,7 @@ export default auth(async (req) => {
 
     if (isMutation && !isBillingEndpoint) {
       // Проверяем валидность подписки
-      const isLicenseValid = await checkLicenseInMiddleware(tenantId)
+      const isLicenseValid = await checkSubscriptionStatus(tenantId)
 
       if (!isLicenseValid) {
         return NextResponse.json(

@@ -1,329 +1,63 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useParams } from 'next/navigation'
-import { useSession } from 'next-auth/react'
-import { initializePaddle, type Paddle } from '@paddle/paddle-js'
-import { CurrentPlanCard } from './CurrentPlanCard'
-import { PeriodToggle } from './PeriodToggle'
-import { PricingPlanCard } from './PricingPlanCard'
-import { FAQAccordion } from './FAQAccordion'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { CheckCircle, AlertCircle } from 'lucide-react'
-import { PRICING_PLANS } from '@/components/pricing/pricingData'
+import { useEffect, useState } from 'react'
+import { initializePaddle, Paddle } from '@paddle/paddle-js'
+import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
+import { Loader2, Check } from 'lucide-react'
 
-type Interval = 'month' | 'year'
-
-// Paddle configuration
-const PADDLE_CLIENT_TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN
-const PADDLE_ENVIRONMENT = (process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT || 'sandbox') as 'sandbox' | 'production'
-
-// Paddle Price IDs mapping - TODO: Replace with real Price IDs from Paddle Dashboard
-const PADDLE_PRICE_IDS: Record<string, { month: string; year: string }> = {
-  starter: {
-    month: 'pri_starter_monthly',
-    year: 'pri_starter_yearly',
-  },
-  scale: {
-    month: 'pri_scale_monthly',
-    year: 'pri_scale_yearly',
-  },
-  enterprise: {
-    month: 'pri_enterprise_monthly',
-    year: 'pri_enterprise_yearly',
-  },
+interface PricingClientProps {
+  tenantId: string
+  userEmail: string
 }
 
-/**
- * Главный клиентский компонент для внутренней страницы тарифов
- * Объединяет все компоненты согласно KWID + Paddle Checkout
- */
-export function PricingClient() {
-  const params = useParams()
-  const tenantId = params?.tenantId as string
-  const { data: session } = useSession()
-  const queryClient = useQueryClient()
+export function PricingClient({ tenantId, userEmail }: PricingClientProps) {
+  const [paddle, setPaddle] = useState<Paddle | undefined>(undefined)
   const { toast } = useToast()
-  const [interval, setInterval] = useState<Interval>('month')
-  const [paddle, setPaddle] = useState<Paddle | null>(null)
-  const [isPaddleLoading, setIsPaddleLoading] = useState(true)
 
-  const queryKey = ['currentSubscription', tenantId]
-
-  // Инициализация Paddle при монтировании компонента
+  // 1. Инициализация Paddle при загрузке страницы
   useEffect(() => {
-    if (PADDLE_CLIENT_TOKEN) {
-      setIsPaddleLoading(true)
-      initializePaddle({
-        token: PADDLE_CLIENT_TOKEN,
-        environment: PADDLE_ENVIRONMENT,
-        eventCallback: (data) => {
-          // Обработка событий Paddle
-          if (data.name === 'checkout.completed') {
-            toast({
-              title: 'Оплата успешна!',
-              description: 'Ваша подписка активирована.',
-            })
-            // Обновляем данные подписки после успешной оплаты
-            queryClient.invalidateQueries({ queryKey })
-          }
-
-          if (data.name === 'checkout.closed') {
-            console.log('[Paddle] Checkout closed by user')
-          }
-
-          if (data.name === 'checkout.error') {
-            toast({
-              title: 'Ошибка оплаты',
-              description: 'Не удалось завершить оплату. Попробуйте еще раз.',
-              variant: 'destructive',
-            })
-          }
-        },
-      })
-        .then((paddleInstance) => {
-          if (paddleInstance) {
-            setPaddle(paddleInstance)
-            console.log('[Paddle] Initialized successfully')
-          }
-        })
-        .catch((error) => {
-          console.error('[Paddle] Initialization failed:', error)
-          toast({
-            title: 'Ошибка инициализации платежей',
-            description: 'Не удалось загрузить платежную систему. Попробуйте обновить страницу.',
-            variant: 'destructive',
-          })
-        })
-        .finally(() => {
-          setIsPaddleLoading(false)
-        })
-    } else {
-      setIsPaddleLoading(false)
-      console.warn('[Paddle] Client token is not configured')
-    }
-  }, [queryClient, toast])
-
-  // Получение текущей подписки
-  const { data, isLoading, error } = useQuery({
-    queryKey,
-    queryFn: async () => {
-      if (!tenantId) throw new Error('Tenant ID is not available')
-      const res = await fetch(`/api/manage/${tenantId}/subscription/current`)
-      if (!res.ok) throw new Error('Failed to fetch subscription')
-      return res.json()
-    },
-    enabled: !!tenantId,
-  })
-
-  // Мутация для смены плана
-  const { mutate: changePlan, isPending: isChangingPlan } = useMutation({
-    mutationFn: async ({ newPlanId, interval }: { newPlanId: string; interval: Interval }) => {
-      const res = await fetch(`/api/manage/${tenantId}/subscription/change-plan`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newPlanId, interval }),
-      })
-      if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.error || 'Failed to change plan')
+    initializePaddle({
+      environment: process.env.NEXT_PUBLIC_PADDLE_ENV === 'production' ? 'production' : 'sandbox',
+      token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!, // Client-side token
+      eventCallback: (event) => {
+        if (event.name === 'checkout.completed') {
+          toast({ title: "Оплата прошла успешно!", description: "Обновите страницу через минуту." })
+          setTimeout(() => window.location.reload(), 2000)
+        }
       }
-      return res.json()
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey })
-      toast({
-        title: 'План обновлен',
-        description: 'Ваш тарифный план успешно изменен.',
-      })
-    },
-    onError: (e: Error) => {
-      toast({
-        title: 'Ошибка',
-        description: e.message,
-        variant: 'destructive',
-      })
-    },
-  })
+    }).then(setPaddle)
+  }, [toast])
 
-  // Мутация для отмены подписки
-  const { mutate: cancelPlan, isPending: isCancellingPlan } = useMutation({
-    mutationFn: async () => {
-      const res = await fetch(`/api/manage/${tenantId}/subscription/cancel`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ confirm: true }),
-      })
-      if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.error || 'Failed to cancel subscription')
-      }
-      return res.json()
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey })
-      toast({
-        title: 'Подписка отменена',
-        description: 'Ваша подписка была успешно отменена.',
-      })
-    },
-    onError: (e: Error) => {
-      toast({
-        title: 'Ошибка',
-        description: e.message,
-        variant: 'destructive',
-      })
-    },
-  })
+  // 2. Функция открытия окна оплаты
+  const openCheckout = (priceId: string) => {
+    if (!paddle) return
 
-  const handleSwitchToYearly = () => {
-    setInterval('year')
-  }
-
-  const handleCancelSubscription = () => {
-    if (confirm('Вы уверены, что хотите отменить подписку?')) {
-      cancelPlan()
-    }
-  }
-
-  /**
-   * Обработчик выбора тарифного плана
-   * Для новых пользователей - открывает Paddle Checkout
-   * Для существующих подписчиков - вызывает API смены плана
-   */
-  const handlePlanSelection = (planId: string, interval: Interval) => {
-    const hasActiveSubscription = data?.subscription?.status === 'active'
-
-    if (!hasActiveSubscription) {
-      // Новая покупка через Paddle Checkout
-      if (!paddle) {
-        toast({
-          title: 'Платежная система загружается',
-          description: isPaddleLoading
-            ? 'Пожалуйста, подождите...'
-            : 'Не удалось загрузить платежную систему. Попробуйте обновить страницу.',
-          variant: isPaddleLoading ? 'default' : 'destructive',
-        })
-        return
-      }
-
-      const priceId = PADDLE_PRICE_IDS[planId]?.[interval]
-
-      if (!priceId) {
-        toast({
-          title: 'Ошибка конфигурации',
-          description: `Price ID не найден для плана: ${planId} (${interval})`,
-          variant: 'destructive',
-        })
-        console.error(`[Paddle] Missing Price ID for plan: ${planId}, interval: ${interval}`)
-        return
-      }
-
-      console.log(`[Paddle] Opening checkout for plan: ${planId}, price: ${priceId}`)
-
-      paddle.Checkout.open({
-        items: [{ priceId, quantity: 1 }],
-        customer: {
-          email: session?.user?.email || '',
-        },
-        customData: {
-          orgId: tenantId,
-          planId: planId,
-          interval: interval,
-        },
-      })
-    } else {
-      // Смена существующего плана через API
-      console.log(`[API] Changing plan to: ${planId} (${interval})`)
-      changePlan({ newPlanId: planId, interval })
-    }
-  }
-
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Ошибка</AlertTitle>
-        <AlertDescription>{(error as Error).message}</AlertDescription>
-      </Alert>
-    )
-  }
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="h-48 w-full animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" />
-        <div className="h-12 w-64 animate-pulse self-center rounded-lg bg-gray-200 dark:bg-gray-800" />
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          <div className="h-96 w-full animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" />
-          <div className="h-96 w-full animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" />
-          <div className="h-96 w-full animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" />
-        </div>
-      </div>
-    )
+    paddle.Checkout.open({
+      items: [{ priceId, quantity: 1 }],
+      customer: { email: userEmail },
+      customData: { orgId: tenantId } // Критически важно для привязки!
+    })
   }
 
   return (
-    <div className="space-y-8">
-      {/* Предупреждение если Paddle не загружен (только для новых пользователей) */}
-      {!paddle && !isPaddleLoading && !data?.subscription?.status && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Платежная система недоступна</AlertTitle>
-          <AlertDescription>
-            Не удалось загрузить платежную систему. Обновите страницу или свяжитесь с поддержкой.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Блок "Ваш текущий план" + Progress bar */}
-      <CurrentPlanCard
-        subscription={data.subscription}
-        usage={data.usage}
-        onCancel={handleCancelSubscription}
-        onSwitchToYearly={handleSwitchToYearly}
-      />
-
-      {/* Переключатель Ежемесячно/Ежегодно */}
-      <div className="flex justify-center">
-        <PeriodToggle interval={interval} onIntervalChange={setInterval} />
-      </div>
-
-      {/* Карточки тарифных планов */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        {PRICING_PLANS.map((plan, index) => (
-          <PricingPlanCard
-            key={plan.id}
-            plan={plan}
-            interval={interval}
-            isCurrent={plan.id === data.subscription?.plan?.id}
-            isPopular={index === 1} // Scale - самый популярный
-            onChangePlan={handlePlanSelection}
-          />
-        ))}
-      </div>
-
-      {/* FAQ секция */}
-      <FAQAccordion />
-
-      {/* Блок "30-дневная гарантия возврата денег" */}
-      <div className="mx-auto max-w-3xl rounded-lg bg-muted p-6 text-center">
-        <div className="flex items-center justify-center gap-2">
-          <CheckCircle className="h-5 w-5 text-green-600" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
-            30-дневная гарантия возврата денег
-          </h3>
-        </div>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-          Попробуйте любой план без риска. Если вас что-то не устроит в течение первых 30 дней,
-          мы вернём деньги.
-        </p>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Наша служба поддержки готова помочь вам сменить план или отменить подписку в любое
-          время.
-        </p>
+    <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mt-8">
+      {/* Карточка тарифа */}
+      <div className="border rounded-xl p-6 shadow-sm hover:shadow-md transition-all bg-card">
+        <h3 className="text-xl font-bold">Pro Plan</h3>
+        <div className="my-4 text-3xl font-bold">$29 <span className="text-sm font-normal text-muted-foreground">/мес</span></div>
+        <ul className="space-y-3 mb-6">
+          <li className="flex gap-2"><Check className="w-5 h-5 text-green-500" /> Неограниченные агенты</li>
+          <li className="flex gap-2"><Check className="w-5 h-5 text-green-500" /> База знаний (PDF, Web)</li>
+          <li className="flex gap-2"><Check className="w-5 h-5 text-green-500" /> Интеграция с CRM</li>
+        </ul>
+        <Button
+          className="w-full"
+          onClick={() => openCheckout("pri_01jk...")} // Вставьте ваш Paddle Price ID
+          disabled={!paddle}
+        >
+          {!paddle ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Выбрать тариф'}
+        </Button>
       </div>
     </div>
   )

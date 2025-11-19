@@ -5,7 +5,7 @@ CREATE TABLE billing_plans (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   description TEXT,
-  stripe_price_id TEXT NOT NULL UNIQUE,
+  paddle_price_id TEXT NOT NULL UNIQUE,
   price_cents INTEGER NOT NULL,
   currency TEXT NOT NULL DEFAULT 'usd',
   interval TEXT NOT NULL CHECK (interval IN ('month', 'year')),
@@ -21,8 +21,8 @@ CREATE TABLE billing_plans (
 CREATE TABLE subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-  stripe_subscription_id TEXT NOT NULL UNIQUE,
-  stripe_customer_id TEXT NOT NULL,
+  paddle_subscription_id TEXT NOT NULL UNIQUE,
+  paddle_customer_id TEXT NOT NULL,
   plan_id UUID NOT NULL REFERENCES billing_plans(id),
   status TEXT NOT NULL CHECK (status IN ('active', 'canceled', 'past_due', 'incomplete', 'trialing')),
   current_period_start TIMESTAMPTZ NOT NULL,
@@ -47,16 +47,16 @@ CREATE TABLE usage_records (
   metadata JSONB DEFAULT '{}'
 );
 
--- Добавляем поле stripe_customer_id в organizations
-ALTER TABLE organizations ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
+-- Добавляем поле paddle_customer_id в organizations
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS paddle_customer_id TEXT;
 
 -- Индексы для производительности
 CREATE INDEX idx_billing_plans_active ON billing_plans(is_active) WHERE is_active = true;
 CREATE INDEX idx_billing_plans_sort ON billing_plans(sort_order);
 
 CREATE INDEX idx_subscriptions_org ON subscriptions(org_id);
-CREATE INDEX idx_subscriptions_stripe ON subscriptions(stripe_subscription_id);
-CREATE INDEX idx_subscriptions_customer ON subscriptions(stripe_customer_id);
+CREATE INDEX idx_subscriptions_stripe ON subscriptions(paddle_subscription_id);
+CREATE INDEX idx_subscriptions_customer ON subscriptions(paddle_customer_id);
 CREATE INDEX idx_subscriptions_status ON subscriptions(status);
 CREATE INDEX idx_subscriptions_period ON subscriptions(current_period_end);
 
@@ -130,8 +130,8 @@ CREATE TRIGGER trigger_update_subscriptions_updated_at
   EXECUTE FUNCTION update_subscriptions_updated_at();
 
 -- Вставляем тестовые планы (для разработки)
-INSERT INTO billing_plans (name, description, stripe_price_id, price_cents, currency, interval, features, limits) VALUES
-('Starter', 'Идеально для небольших команд', 'price_starter_dev', 2900, 'usd', 'month', '{
+INSERT INTO billing_plans (name, description, paddle_price_id, price_cents, currency, interval, features, limits) VALUES
+('Starter', 'Идеально для небольших команд', 'pri_starter_dev', 2900, 'usd', 'month', '{
   "agents": 2,
   "tokens_per_month": 100000,
   "messages_per_month": 1000,
@@ -142,7 +142,7 @@ INSERT INTO billing_plans (name, description, stripe_price_id, price_cents, curr
   "messages_per_month": 1000,
   "storage_gb": 5
 }'),
-('Professional', 'Для растущих компаний', 'price_professional_dev', 7900, 'usd', 'month', '{
+('Professional', 'Для растущих компаний', 'pri_professional_dev', 7900, 'usd', 'month', '{
   "agents": 10,
   "tokens_per_month": 500000,
   "messages_per_month": 5000,
@@ -153,7 +153,7 @@ INSERT INTO billing_plans (name, description, stripe_price_id, price_cents, curr
   "messages_per_month": 5000,
   "storage_gb": 25
 }'),
-('Enterprise', 'Полный контроль и масштабирование', 'price_enterprise_dev', 19900, 'usd', 'month', '{
+('Enterprise', 'Полный контроль и масштабирование', 'pri_enterprise_dev', 19900, 'usd', 'month', '{
   "agents": -1,
   "tokens_per_month": -1,
   "messages_per_month": -1,

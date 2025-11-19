@@ -5,6 +5,7 @@ const path = require('path')
 const { createClient } = require('@supabase/supabase-js')
 
 // Load environment variables
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local') })
 require('dotenv').config()
 
 const supabaseUrl = process.env.SUPABASE_URL
@@ -22,7 +23,7 @@ const MIGRATIONS_DIR = path.join(__dirname, '../../supabase/migrations')
 
 async function bootstrapMigrationSystem() {
   console.log('🔧 Bootstrapping migration system...')
-  
+
   // Check if schema_migrations table exists by trying to query it
   const { error: tableError } = await supabase
     .from('schema_migrations')
