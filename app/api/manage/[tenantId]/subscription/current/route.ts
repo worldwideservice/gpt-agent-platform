@@ -11,7 +11,10 @@ import { getErrorMessage } from '@/lib/utils'
  * GET /api/manage/[tenantId]/subscription/current
  * Получает текущую подписку и статистику использования для организации
  */
-export async function GET() {
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ tenantId: string }> }
+) {
   const { tenantId } = await params
 
   try {

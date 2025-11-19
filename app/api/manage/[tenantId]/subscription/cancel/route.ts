@@ -6,13 +6,16 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { getErrorMessage } from '@/lib/utils'
 import { cancelSubscriptionSchema } from '@/lib/validation/schemas/subscription'
-
+import { cancelSubscription } from '@/lib/services/billing'
 
 /**
  * POST /api/manage/[tenantId]/subscription/cancel
  * Отмена подписки (требует подтверждения confirm: true)
  */
-export async function POST(req: Request) {
+export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ tenantId: string }> }
+) {
   const { tenantId } = await params
 
   try {
@@ -31,32 +34,16 @@ export async function POST(req: Request) {
       )
     }
 
-    // [MOCK] Логика отмены подписки
-    // В реальном проекте здесь будет:
-    // 1. Получение subscription_id из БД
-    // 2. Отмена подписки через payment provider
-    // 3. Обновление статуса в БД на 'cancelled'
+    // Отменяем подписку через Paddle API
+    const { cancelAtPeriodEnd } = validation.data
+    const success = await cancelSubscription(tenantId, cancelAtPeriodEnd)
 
-    // const supabase = createSupabaseAdminClient()
-    // const { data: subscription } = await supabase
-    //   .from('subscriptions')
-    //   .select('stripe_subscription_id')
-    //   .eq('org_id', session.user.orgId)
-    //   .single()
-    //
-    // if (!subscription) {
-    //   return NextResponse.json({ error: 'No active subscription found' }, { status: 404 })
-    // }
-    //
-    // await stripe.subscriptions.cancel(subscription.stripe_subscription_id)
-    //
-    // await supabase
-    //   .from('subscriptions')
-    //   .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-    //   .eq('org_id', session.user.orgId)
-
-    // eslint-disable-next-line no-console
-    console.log(`[MOCK] Subscription cancelled for org ${session.user.orgId}`)
+    if (!success) {
+      return NextResponse.json(
+        { error: 'Failed to cancel subscription' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({
       success: true,
