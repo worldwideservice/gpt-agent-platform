@@ -109,7 +109,7 @@ const CATEGORY_TREE: TreeNode[] = [
   },
 ]
 
-// Zod validation schema
+// Zod validation schema with cross-field validation
 const agentBasicsSchema = z.object({
   name: z
     .string()
@@ -137,7 +137,31 @@ const agentBasicsSchema = z.object({
     .string()
     .max(500, 'Сообщение не должно превышать 500 символов')
     .optional(),
-})
+}).refine(
+  (data) => {
+    // If allChannels is false, selectedChannels must not be empty
+    if (!data.allChannels && data.selectedChannels.length === 0) {
+      return false
+    }
+    return true
+  },
+  {
+    message: 'Выберите хотя бы один канал',
+    path: ['selectedChannels'],
+  }
+).refine(
+  (data) => {
+    // If allCategories is false, selectedCategories must not be empty
+    if (!data.allCategories && data.selectedCategories.length === 0) {
+      return false
+    }
+    return true
+  },
+  {
+    message: 'Выберите хотя бы одну категорию',
+    path: ['selectedCategories'],
+  }
+)
 
 type AgentBasicsFormData = z.infer<typeof agentBasicsSchema>
 
