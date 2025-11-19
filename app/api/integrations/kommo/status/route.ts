@@ -1,3 +1,7 @@
+// Force Node.js runtime (required for database and crypto operations)
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 import { NextResponse } from 'next/server'
 
 import { auth } from '@/auth'
@@ -10,7 +14,6 @@ const isDemoEnvironment = () =>
   matchesDemoFlag(process.env.E2E_ONBOARDING_FAKE) ||
   matchesDemoFlag(process.env.PLAYWRIGHT_DEMO_MODE)
 
-export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {

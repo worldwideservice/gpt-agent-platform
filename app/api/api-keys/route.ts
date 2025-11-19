@@ -1,9 +1,12 @@
+// Force Node.js runtime (required for database and crypto operations)
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { getErrorMessage } from '@/lib/utils'
 import { createApiKeySchema } from '@/lib/validation/schemas/account-settings'
 
-export const dynamic = 'force-dynamic'
 
 /**
  * GET /api/api-keys

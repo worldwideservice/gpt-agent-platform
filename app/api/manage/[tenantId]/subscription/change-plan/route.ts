@@ -1,9 +1,12 @@
+// Force Node.js runtime (required for database and crypto operations)
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { getErrorMessage } from '@/lib/utils'
 import { changePlanSchema } from '@/lib/validation/schemas/subscription'
 
-export const dynamic = 'force-dynamic'
 
 /**
  * POST /api/manage/[tenantId]/subscription/change-plan
