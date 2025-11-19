@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'next/navigation'
+import { useSession } from 'next-auth/react'
+import { initializePaddle, type Paddle } from '@paddle/paddle-js'
 import { CurrentPlanCard } from './CurrentPlanCard'
 import { PeriodToggle } from './PeriodToggle'
 import { PricingPlanCard } from './PricingPlanCard'
@@ -14,18 +16,95 @@ import { useToast } from '@/hooks/use-toast'
 
 type Interval = 'month' | 'year'
 
+// Paddle configuration
+const PADDLE_CLIENT_TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN
+const PADDLE_ENVIRONMENT = (process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT || 'sandbox') as 'sandbox' | 'production'
+
+// Paddle Price IDs mapping - TODO: Replace with real Price IDs from Paddle Dashboard
+const PADDLE_PRICE_IDS: Record<string, { month: string; year: string }> = {
+  starter: {
+    month: 'pri_starter_monthly',
+    year: 'pri_starter_yearly',
+  },
+  scale: {
+    month: 'pri_scale_monthly',
+    year: 'pri_scale_yearly',
+  },
+  enterprise: {
+    month: 'pri_enterprise_monthly',
+    year: 'pri_enterprise_yearly',
+  },
+}
+
 /**
  * Главный клиентский компонент для внутренней страницы тарифов
- * Объединяет все компоненты согласно KWID
+ * Объединяет все компоненты согласно KWID + Paddle Checkout
  */
 export function PricingClient() {
   const params = useParams()
   const tenantId = params?.tenantId as string
+  const { data: session } = useSession()
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const [interval, setInterval] = useState<Interval>('month')
+  const [paddle, setPaddle] = useState<Paddle | null>(null)
+  const [isPaddleLoading, setIsPaddleLoading] = useState(true)
 
   const queryKey = ['currentSubscription', tenantId]
+
+  // Инициализация Paddle при монтировании компонента
+  useEffect(() => {
+    if (PADDLE_CLIENT_TOKEN) {
+      setIsPaddleLoading(true)
+      initializePaddle({
+        token: PADDLE_CLIENT_TOKEN,
+        environment: PADDLE_ENVIRONMENT,
+        eventCallback: (data) => {
+          // Обработка событий Paddle
+          if (data.name === 'checkout.completed') {
+            toast({
+              title: 'Оплата успешна!',
+              description: 'Ваша подписка активирована.',
+            })
+            // Обновляем данные подписки после успешной оплаты
+            queryClient.invalidateQueries({ queryKey })
+          }
+
+          if (data.name === 'checkout.closed') {
+            console.log('[Paddle] Checkout closed by user')
+          }
+
+          if (data.name === 'checkout.error') {
+            toast({
+              title: 'Ошибка оплаты',
+              description: 'Не удалось завершить оплату. Попробуйте еще раз.',
+              variant: 'destructive',
+            })
+          }
+        },
+      })
+        .then((paddleInstance) => {
+          if (paddleInstance) {
+            setPaddle(paddleInstance)
+            console.log('[Paddle] Initialized successfully')
+          }
+        })
+        .catch((error) => {
+          console.error('[Paddle] Initialization failed:', error)
+          toast({
+            title: 'Ошибка инициализации платежей',
+            description: 'Не удалось загрузить платежную систему. Попробуйте обновить страницу.',
+            variant: 'destructive',
+          })
+        })
+        .finally(() => {
+          setIsPaddleLoading(false)
+        })
+    } else {
+      setIsPaddleLoading(false)
+      console.warn('[Paddle] Client token is not configured')
+    }
+  }, [queryClient, toast])
 
   // Получение текущей подписки
   const { data, isLoading, error } = useQuery({
@@ -109,6 +188,59 @@ export function PricingClient() {
     }
   }
 
+  /**
+   * Обработчик выбора тарифного плана
+   * Для новых пользователей - открывает Paddle Checkout
+   * Для существующих подписчиков - вызывает API смены плана
+   */
+  const handlePlanSelection = (planId: string, interval: Interval) => {
+    const hasActiveSubscription = data?.subscription?.status === 'active'
+
+    if (!hasActiveSubscription) {
+      // Новая покупка через Paddle Checkout
+      if (!paddle) {
+        toast({
+          title: 'Платежная система загружается',
+          description: isPaddleLoading
+            ? 'Пожалуйста, подождите...'
+            : 'Не удалось загрузить платежную систему. Попробуйте обновить страницу.',
+          variant: isPaddleLoading ? 'default' : 'destructive',
+        })
+        return
+      }
+
+      const priceId = PADDLE_PRICE_IDS[planId]?.[interval]
+
+      if (!priceId) {
+        toast({
+          title: 'Ошибка конфигурации',
+          description: `Price ID не найден для плана: ${planId} (${interval})`,
+          variant: 'destructive',
+        })
+        console.error(`[Paddle] Missing Price ID for plan: ${planId}, interval: ${interval}`)
+        return
+      }
+
+      console.log(`[Paddle] Opening checkout for plan: ${planId}, price: ${priceId}`)
+
+      paddle.Checkout.open({
+        items: [{ priceId, quantity: 1 }],
+        customer: {
+          email: session?.user?.email || '',
+        },
+        customData: {
+          orgId: tenantId,
+          planId: planId,
+          interval: interval,
+        },
+      })
+    } else {
+      // Смена существующего плана через API
+      console.log(`[API] Changing plan to: ${planId} (${interval})`)
+      changePlan({ newPlanId: planId, interval })
+    }
+  }
+
   if (error) {
     return (
       <Alert variant="destructive">
@@ -135,6 +267,17 @@ export function PricingClient() {
 
   return (
     <div className="space-y-8">
+      {/* Предупреждение если Paddle не загружен (только для новых пользователей) */}
+      {!paddle && !isPaddleLoading && !data?.subscription?.status && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Платежная система недоступна</AlertTitle>
+          <AlertDescription>
+            Не удалось загрузить платежную систему. Обновите страницу или свяжитесь с поддержкой.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Блок "Ваш текущий план" + Progress bar */}
       <CurrentPlanCard
         subscription={data.subscription}
@@ -155,9 +298,9 @@ export function PricingClient() {
             key={plan.id}
             plan={plan}
             interval={interval}
-            isCurrent={plan.id === data.subscription.plan.id}
+            isCurrent={plan.id === data.subscription?.plan?.id}
             isPopular={index === 1} // Scale - самый популярный
-            onChangePlan={(planId, interval) => changePlan({ newPlanId: planId, interval })}
+            onChangePlan={handlePlanSelection}
           />
         ))}
       </div>
