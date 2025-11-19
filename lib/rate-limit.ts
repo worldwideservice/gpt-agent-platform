@@ -103,21 +103,20 @@ try {
 
     logger.info('Rate limiting: Using Upstash Redis (production-ready)')
   } else {
-    // В production ТРЕБУЕМ Redis
+    // ВАЖНО: В production без Redis используем memory store как fallback
+    // Это не идеально для production, но позволяет приложению работать
     if (process.env.NODE_ENV === 'production') {
-      logger.error('CRITICAL: Redis credentials missing in production! Rate limiting will NOT work properly.')
-      throw new Error('UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN required in production')
+      logger.warn('CRITICAL: Redis credentials missing in production! Using memory store fallback (NOT recommended for multi-instance deployments)')
+    } else {
+      logger.warn('Rate limiting: Using memory store (development only - NOT for production)')
     }
-
-    logger.warn('Rate limiting: Using memory store (development only - NOT for production)')
   }
 } catch (error) {
   logger.error('Failed to initialize Redis rate limiter:', error)
 
-  // В production НЕ допускаем fallback на memory
-  if (process.env.NODE_ENV === 'production') {
-    throw error
-  }
+  // ВАЖНО: Даже в production используем graceful degradation
+  // Приложение должно работать, даже если Redis недоступен
+  logger.warn('Rate limiting will use memory store as fallback')
 }
 
 // Fallback to memory store (только для development)
