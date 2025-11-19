@@ -10,6 +10,39 @@ import {
   getRateLimitIdentifier,
 } from '@/lib/rate-limit'
 import { csrfProtection } from '@/lib/security/csrf'
+import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
+
+/**
+ * Edge-compatible проверка лицензии для middleware
+ * Проверяет валидность подписки без использования тяжелых функций
+ */
+async function checkLicenseInMiddleware(tenantId: string): Promise<boolean> {
+  try {
+    const supabase = getSupabaseServiceRoleClient()
+
+    // Получаем активную подписку организации
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('status, current_period_end')
+      .eq('org_id', tenantId)
+      .in('status', ['active', 'on_trial'])
+      .single()
+
+    if (!subscription) {
+      return false
+    }
+
+    // Проверяем что подписка не истекла
+    const now = new Date()
+    const periodEnd = new Date(subscription.current_period_end)
+
+    return periodEnd > now
+  } catch (error) {
+    // В случае ошибки считаем лицензию невалидной
+    console.error('[MIDDLEWARE] License check error:', error)
+    return false
+  }
+}
 
 /**
  * Middleware для защиты путей и проверки tenant access control
@@ -114,32 +147,26 @@ export default auth(async (req) => {
       )
     }
 
-    // 3. LICENSE CHECK: Проверка подписки для критических endpoints
-    // Исключаем endpoints, необходимые для оплаты и просмотра статуса
-    const isExemptEndpoint =
-      pathname.includes('/subscription/') ||
-      pathname.includes('/pricing') ||
-      pathname.includes('/settings') ||
-      pathname.includes('/billing') ||
-      pathname.includes('/notifications') ||
-      pathname.includes('/dashboard/stats') || // Разрешаем просмотр дашборда
-      pathname.includes('/summary') // Разрешаем summary
+    // 3. LICENSE CHECK: Проверка подписки для мутаций (POST/PUT/DELETE/PATCH)
+    const isMutation = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method!)
 
-    // Для критических операций (создание, изменение, удаление данных) добавляем заголовок
-    // для проверки лицензии в API route handlers
-    const isCriticalOperation =
-      req.method !== 'GET' || // Все не-GET запросы считаются критическими
-      pathname.includes('/agents') || // Работа с агентами
-      pathname.includes('/knowledge') || // База знаний
-      pathname.includes('/integrations') || // Интеграции
-      pathname.includes('/test-chat') // Тестовый чат
+    // Исключаем endpoints биллинга (необходимы для оплаты)
+    const isBillingEndpoint = pathname.includes('/subscription/')
 
-    if (!isExemptEndpoint && isCriticalOperation) {
-      // Добавляем заголовок для API routes, чтобы они проверили лицензию
-      const response = NextResponse.next()
-      response.headers.set('x-license-check-required', 'true')
-      response.headers.set('x-tenant-id', tenantId)
-      return response
+    if (isMutation && !isBillingEndpoint) {
+      // Проверяем валидность подписки
+      const isLicenseValid = await checkLicenseInMiddleware(tenantId)
+
+      if (!isLicenseValid) {
+        return NextResponse.json(
+          {
+            error: 'Payment Required',
+            message: 'Your subscription has expired or is not active. Please renew your subscription to continue.',
+            code: 'SUBSCRIPTION_REQUIRED',
+          },
+          { status: 402 }
+        )
+      }
     }
 
     // Доступ разрешен, пропускаем запрос
