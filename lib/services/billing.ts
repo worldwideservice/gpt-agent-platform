@@ -1,19 +1,20 @@
 /**
  * Сервіс біллінгу та підписок
- * Інтеграція з Lemon Squeezy для управління платежами та підписками
+ * Інтеграція з Paddle для управління платежами та підписками
  */
 
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { logger } from '@/lib/utils/logger'
+import crypto from 'crypto'
 
-// Lemon Squeezy API configuration
-const LEMON_SQUEEZY_API_URL = 'https://api.lemonsqueezy.com/v1'
-const LEMON_SQUEEZY_API_KEY = process.env.LEMON_SQUEEZY_API_KEY
-const LEMON_SQUEEZY_STORE_ID = process.env.LEMON_SQUEEZY_STORE_ID
-const LEMON_SQUEEZY_WEBHOOK_SECRET = process.env.LEMON_SQUEEZY_WEBHOOK_SECRET
+// Paddle API configuration
+const PADDLE_API_URL = 'https://api.paddle.com'
+const PADDLE_API_KEY = process.env.PADDLE_API_KEY
+const PADDLE_WEBHOOK_SECRET = process.env.PADDLE_WEBHOOK_SECRET
+const PADDLE_ENVIRONMENT = process.env.PADDLE_ENVIRONMENT || 'production' // 'sandbox' or 'production'
 
 // Типи статусів підписки
-export type SubscriptionStatus = 'active' | 'past_due' | 'canceled' | 'expired' | 'unpaid' | 'on_trial'
+export type SubscriptionStatus = 'active' | 'past_due' | 'canceled' | 'expired' | 'unpaid' | 'on_trial' | 'paused'
 
 export interface LicenseCheckResult {
   isValid: boolean
@@ -27,7 +28,7 @@ export interface BillingPlan {
   id: string
   name: string
   description?: string
-  variant_id: string // Lemon Squeezy variant ID
+  price_id: string // Paddle price ID
   price_cents: number
   currency: string
   interval: 'month' | 'year'
@@ -44,10 +45,10 @@ export interface BillingPlan {
 export interface Subscription {
   id: string
   org_id: string
-  lemon_squeezy_subscription_id: string
-  lemon_squeezy_customer_id: string
+  paddle_subscription_id: string
+  paddle_customer_id: string
   plan_id: string
-  variant_id: string
+  price_id: string
   status: SubscriptionStatus
   current_period_start: string
   current_period_end: string
@@ -74,30 +75,29 @@ export interface UsageRecord {
 }
 
 /**
- * Helper функція для запитів до Lemon Squeezy API
+ * Helper функція для запитів до Paddle API
  */
-const lemonSqueezyRequest = async (
+const paddleRequest = async (
   endpoint: string,
   options: RequestInit = {}
 ): Promise<any> => {
-  if (!LEMON_SQUEEZY_API_KEY) {
-    throw new Error('LEMON_SQUEEZY_API_KEY is not configured')
+  if (!PADDLE_API_KEY) {
+    throw new Error('PADDLE_API_KEY is not configured')
   }
 
-  const response = await fetch(`${LEMON_SQUEEZY_API_URL}${endpoint}`, {
+  const response = await fetch(`${PADDLE_API_URL}${endpoint}`, {
     ...options,
     headers: {
-      'Accept': 'application/vnd.api+json',
-      'Content-Type': 'application/vnd.api+json',
-      'Authorization': `Bearer ${LEMON_SQUEEZY_API_KEY}`,
+      'Authorization': `Bearer ${PADDLE_API_KEY}`,
+      'Content-Type': 'application/json',
       ...options.headers,
     },
   })
 
   if (!response.ok) {
     const error = await response.text()
-    logger.error('Lemon Squeezy API error', { error, endpoint })
-    throw new Error(`Lemon Squeezy API error: ${error}`)
+    logger.error('Paddle API error', { error, endpoint, status: response.status })
+    throw new Error(`Paddle API error: ${error}`)
   }
 
   return response.json()
@@ -143,19 +143,15 @@ export const checkLicense = async (tenantId: string): Promise<LicenseCheckResult
 }
 
 /**
- * Створення checkout сесії в Lemon Squeezy
+ * Створення checkout сесії в Paddle
  */
 export const createCheckoutSession = async (
   tenantId: string,
-  variantId: string,
+  priceId: string,
   successUrl: string,
-  cancelUrl: string
+  cancelUrl?: string
 ): Promise<string | null> => {
   try {
-    if (!LEMON_SQUEEZY_STORE_ID) {
-      throw new Error('LEMON_SQUEEZY_STORE_ID is not configured')
-    }
-
     const supabase = getSupabaseServiceRoleClient()
 
     // Отримуємо інформацію про організацію
@@ -169,113 +165,118 @@ export const createCheckoutSession = async (
       throw new Error('Organization not found')
     }
 
-    // Створюємо checkout
-    const response = await lemonSqueezyRequest('/checkouts', {
+    // Створюємо транзакцію для checkout
+    const response = await paddleRequest('/transactions', {
       method: 'POST',
       body: JSON.stringify({
-        data: {
-          type: 'checkouts',
-          attributes: {
-            checkout_data: {
-              custom: {
-                org_id: tenantId,
-              },
-            },
-            checkout_options: {
-              embed: false,
-              media: true,
-              logo: true,
-            },
-            expires_at: null,
-            preview: false,
-            test_mode: process.env.NODE_ENV === 'development',
+        items: [
+          {
+            price_id: priceId,
+            quantity: 1,
           },
-          relationships: {
-            store: {
-              data: {
-                type: 'stores',
-                id: LEMON_SQUEEZY_STORE_ID,
-              },
-            },
-            variant: {
-              data: {
-                type: 'variants',
-                id: variantId,
-              },
-            },
+        ],
+        customer_email: org.email || undefined,
+        custom_data: {
+          org_id: tenantId,
+        },
+        checkout: {
+          url: successUrl,
+          settings: {
+            success_url: successUrl,
+            ...(cancelUrl && { cancel_url: cancelUrl }),
           },
         },
       }),
     })
 
-    return response.data.attributes.url || null
+    // Paddle повертає checkout URL у відповіді
+    return response.data?.checkout?.url || null
   } catch (error) {
-    logger.error('Error creating checkout session', error, { tenantId, variantId })
+    logger.error('Error creating checkout session', error, { tenantId, priceId })
     return null
   }
 }
 
 /**
- * Обробка webhook від Lemon Squeezy
+ * Обробка webhook від Paddle
  */
-export const handleLemonSqueezyWebhook = async (
+export const handlePaddleWebhook = async (
   payload: any,
   signature: string
 ): Promise<boolean> => {
   try {
     // Verify webhook signature
     if (!verifyWebhookSignature(payload, signature)) {
-      logger.error('Invalid webhook signature')
+      logger.error('Invalid Paddle webhook signature')
       return false
     }
 
-    const eventName = payload.meta.event_name
+    const eventType = payload.event_type
 
-    switch (eventName) {
-      case 'subscription_created':
+    logger.info('Processing Paddle webhook', { eventType, eventId: payload.event_id })
+
+    switch (eventType) {
+      case 'subscription.created':
         return await handleSubscriptionCreated(payload.data)
 
-      case 'subscription_updated':
+      case 'subscription.updated':
         return await handleSubscriptionUpdated(payload.data)
 
-      case 'subscription_cancelled':
-      case 'subscription_expired':
+      case 'subscription.canceled':
+      case 'subscription.expired':
         return await handleSubscriptionCancelled(payload.data)
 
-      case 'subscription_resumed':
+      case 'subscription.resumed':
         return await handleSubscriptionResumed(payload.data)
 
-      case 'subscription_payment_success':
-        return await handlePaymentSuccess(payload.data)
+      case 'subscription.paused':
+        return await handleSubscriptionPaused(payload.data)
 
-      case 'subscription_payment_failed':
+      case 'transaction.completed':
+        return await handleTransactionCompleted(payload.data)
+
+      case 'transaction.payment_failed':
         return await handlePaymentFailed(payload.data)
 
       default:
-        logger.info('Unhandled webhook event', { eventName })
+        logger.info('Unhandled Paddle webhook event', { eventType })
         return true
     }
   } catch (error) {
-    logger.error('Error handling Lemon Squeezy webhook', error)
+    logger.error('Error handling Paddle webhook', error)
     return false
   }
 }
 
 /**
- * Verify webhook signature
+ * Verify Paddle webhook signature
  */
 const verifyWebhookSignature = (payload: any, signature: string): boolean => {
-  if (!LEMON_SQUEEZY_WEBHOOK_SECRET) {
-    logger.warn('LEMON_SQUEEZY_WEBHOOK_SECRET is not configured, skipping signature verification')
+  if (!PADDLE_WEBHOOK_SECRET) {
+    logger.warn('PADDLE_WEBHOOK_SECRET is not configured, skipping signature verification')
     return true // В розробці можна пропустити
   }
 
-  // TODO: Implement signature verification using HMAC
-  // const hmac = crypto.createHmac('sha256', LEMON_SQUEEZY_WEBHOOK_SECRET)
-  // const digest = hmac.update(JSON.stringify(payload)).digest('hex')
-  // return digest === signature
+  try {
+    // Paddle uses TS1 signature format (HMAC SHA256)
+    const hmac = crypto.createHmac('sha256', PADDLE_WEBHOOK_SECRET)
+    const payloadString = JSON.stringify(payload)
+    const computedSignature = hmac.update(payloadString).digest('hex')
 
-  return true
+    // Paddle signature format: "ts=timestamp;h1=signature"
+    const signatureParts = signature.split(';')
+    const h1 = signatureParts.find((part) => part.startsWith('h1='))?.split('=')[1]
+
+    if (!h1) {
+      logger.error('Invalid signature format', { signature })
+      return false
+    }
+
+    return crypto.timingSafeEqual(Buffer.from(h1), Buffer.from(computedSignature))
+  } catch (error) {
+    logger.error('Error verifying webhook signature', error)
+    return false
+  }
 }
 
 /**
@@ -283,42 +284,42 @@ const verifyWebhookSignature = (payload: any, signature: string): boolean => {
  */
 const handleSubscriptionCreated = async (subscriptionData: any): Promise<boolean> => {
   const supabase = getSupabaseServiceRoleClient()
-  const attributes = subscriptionData.attributes
-  const customData = attributes.custom_data || {}
+  const customData = subscriptionData.custom_data || {}
   const orgId = customData.org_id
 
   if (!orgId) {
-    logger.error('Missing org_id in subscription webhook', { subscriptionData })
+    logger.error('Missing org_id in Paddle subscription webhook', { subscriptionData })
     return false
   }
 
   try {
     const { error } = await supabase.from('subscriptions').insert({
       org_id: orgId,
-      lemon_squeezy_subscription_id: subscriptionData.id,
-      lemon_squeezy_customer_id: attributes.customer_id?.toString(),
-      variant_id: attributes.variant_id?.toString(),
-      status: mapLemonSqueezyStatus(attributes.status),
-      current_period_start: attributes.created_at,
-      current_period_end: attributes.renews_at || attributes.ends_at,
-      trial_ends_at: attributes.trial_ends_at,
-      renews_at: attributes.renews_at,
-      ends_at: attributes.ends_at,
-      cancel_at_period_end: attributes.cancelled,
+      paddle_subscription_id: subscriptionData.id,
+      paddle_customer_id: subscriptionData.customer_id,
+      price_id: subscriptionData.items?.[0]?.price?.id,
+      status: mapPaddleStatus(subscriptionData.status),
+      current_period_start: subscriptionData.current_billing_period?.starts_at,
+      current_period_end: subscriptionData.current_billing_period?.ends_at,
+      trial_ends_at: subscriptionData.first_billed_at,
+      renews_at: subscriptionData.next_billed_at,
+      ends_at: subscriptionData.canceled_at || subscriptionData.paused_at,
+      cancel_at_period_end: subscriptionData.scheduled_change !== null,
       metadata: {
-        card_brand: attributes.card_brand,
-        card_last_four: attributes.card_last_four,
+        collection_mode: subscriptionData.collection_mode,
+        billing_cycle: subscriptionData.billing_cycle,
       },
     })
 
     if (error) {
-      logger.error('Error saving subscription', error, { orgId })
+      logger.error('Error saving Paddle subscription', error, { orgId })
       return false
     }
 
+    logger.info('Paddle subscription created', { orgId, subscriptionId: subscriptionData.id })
     return true
   } catch (error) {
-    logger.error('Error handling subscription created', error, { orgId })
+    logger.error('Error handling Paddle subscription created', error, { orgId })
     return false
   }
 }
@@ -328,28 +329,33 @@ const handleSubscriptionCreated = async (subscriptionData: any): Promise<boolean
  */
 const handleSubscriptionUpdated = async (subscriptionData: any): Promise<boolean> => {
   const supabase = getSupabaseServiceRoleClient()
-  const attributes = subscriptionData.attributes
 
   try {
     const { error } = await supabase
       .from('subscriptions')
       .update({
-        status: mapLemonSqueezyStatus(attributes.status),
-        current_period_start: attributes.created_at,
-        current_period_end: attributes.renews_at || attributes.ends_at,
-        trial_ends_at: attributes.trial_ends_at,
-        renews_at: attributes.renews_at,
-        ends_at: attributes.ends_at,
-        cancel_at_period_end: attributes.cancelled,
+        status: mapPaddleStatus(subscriptionData.status),
+        current_period_start: subscriptionData.current_billing_period?.starts_at,
+        current_period_end: subscriptionData.current_billing_period?.ends_at,
+        trial_ends_at: subscriptionData.first_billed_at,
+        renews_at: subscriptionData.next_billed_at,
+        ends_at: subscriptionData.canceled_at || subscriptionData.paused_at,
+        cancel_at_period_end: subscriptionData.scheduled_change !== null,
         updated_at: new Date().toISOString(),
         metadata: {
-          card_brand: attributes.card_brand,
-          card_last_four: attributes.card_last_four,
+          collection_mode: subscriptionData.collection_mode,
+          billing_cycle: subscriptionData.billing_cycle,
         },
       })
-      .eq('lemon_squeezy_subscription_id', subscriptionData.id)
+      .eq('paddle_subscription_id', subscriptionData.id)
 
-    return !error
+    if (error) {
+      logger.error('Error updating Paddle subscription', error)
+      return false
+    }
+
+    logger.info('Paddle subscription updated', { subscriptionId: subscriptionData.id })
+    return true
   } catch (error) {
     logger.error('Error updating subscription', error, { subscriptionId: subscriptionData.id })
     return false
@@ -368,12 +374,18 @@ const handleSubscriptionCancelled = async (subscriptionData: any): Promise<boole
       .update({
         status: 'canceled',
         cancel_at_period_end: true,
-        ends_at: subscriptionData.attributes.ends_at,
+        ends_at: subscriptionData.canceled_at,
         updated_at: new Date().toISOString(),
       })
-      .eq('lemon_squeezy_subscription_id', subscriptionData.id)
+      .eq('paddle_subscription_id', subscriptionData.id)
 
-    return !error
+    if (error) {
+      logger.error('Error cancelling Paddle subscription', error)
+      return false
+    }
+
+    logger.info('Paddle subscription cancelled', { subscriptionId: subscriptionData.id })
+    return true
   } catch (error) {
     logger.error('Error cancelling subscription', error, { subscriptionId: subscriptionData.id })
     return false
@@ -392,11 +404,18 @@ const handleSubscriptionResumed = async (subscriptionData: any): Promise<boolean
       .update({
         status: 'active',
         cancel_at_period_end: false,
+        ends_at: null,
         updated_at: new Date().toISOString(),
       })
-      .eq('lemon_squeezy_subscription_id', subscriptionData.id)
+      .eq('paddle_subscription_id', subscriptionData.id)
 
-    return !error
+    if (error) {
+      logger.error('Error resuming Paddle subscription', error)
+      return false
+    }
+
+    logger.info('Paddle subscription resumed', { subscriptionId: subscriptionData.id })
+    return true
   } catch (error) {
     logger.error('Error resuming subscription', error, { subscriptionId: subscriptionData.id })
     return false
@@ -404,18 +423,80 @@ const handleSubscriptionResumed = async (subscriptionData: any): Promise<boolean
 }
 
 /**
- * Обробка успішної оплати
+ * Обробка паузи підписки
  */
-const handlePaymentSuccess = async (subscriptionData: any): Promise<boolean> => {
-  logger.info('Payment succeeded', { subscriptionId: subscriptionData.id })
-  return true
+const handleSubscriptionPaused = async (subscriptionData: any): Promise<boolean> => {
+  const supabase = getSupabaseServiceRoleClient()
+
+  try {
+    const { error } = await supabase
+      .from('subscriptions')
+      .update({
+        status: 'paused',
+        ends_at: subscriptionData.paused_at,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('paddle_subscription_id', subscriptionData.id)
+
+    if (error) {
+      logger.error('Error pausing Paddle subscription', error)
+      return false
+    }
+
+    logger.info('Paddle subscription paused', { subscriptionId: subscriptionData.id })
+    return true
+  } catch (error) {
+    logger.error('Error pausing subscription', error, { subscriptionId: subscriptionData.id })
+    return false
+  }
+}
+
+/**
+ * Обробка завершеної транзакції (успішної оплати)
+ */
+const handleTransactionCompleted = async (transactionData: any): Promise<boolean> => {
+  const supabase = getSupabaseServiceRoleClient()
+  const subscriptionId = transactionData.subscription_id
+
+  if (!subscriptionId) {
+    logger.info('Transaction completed (one-time payment)', { transactionId: transactionData.id })
+    return true
+  }
+
+  try {
+    // Оновлюємо статус підписки на active після успішної оплати
+    const { error } = await supabase
+      .from('subscriptions')
+      .update({
+        status: 'active',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('paddle_subscription_id', subscriptionId)
+
+    if (error) {
+      logger.error('Error updating subscription after payment', error)
+      return false
+    }
+
+    logger.info('Payment succeeded for subscription', { subscriptionId, transactionId: transactionData.id })
+    return true
+  } catch (error) {
+    logger.error('Error handling transaction completed', error)
+    return false
+  }
 }
 
 /**
  * Обробка неуспішної оплати
  */
-const handlePaymentFailed = async (subscriptionData: any): Promise<boolean> => {
+const handlePaymentFailed = async (transactionData: any): Promise<boolean> => {
   const supabase = getSupabaseServiceRoleClient()
+  const subscriptionId = transactionData.subscription_id
+
+  if (!subscriptionId) {
+    logger.info('One-time payment failed', { transactionId: transactionData.id })
+    return true
+  }
 
   try {
     const { error } = await supabase
@@ -424,26 +505,31 @@ const handlePaymentFailed = async (subscriptionData: any): Promise<boolean> => {
         status: 'past_due',
         updated_at: new Date().toISOString(),
       })
-      .eq('lemon_squeezy_subscription_id', subscriptionData.id)
+      .eq('paddle_subscription_id', subscriptionId)
 
-    return !error
+    if (error) {
+      logger.error('Error marking subscription as past_due', error)
+      return false
+    }
+
+    logger.warn('Payment failed for subscription', { subscriptionId, transactionId: transactionData.id })
+    return true
   } catch (error) {
-    logger.error('Error handling payment failed', error, { subscriptionId: subscriptionData.id })
+    logger.error('Error handling payment failed', error, { subscriptionId: transactionData.id })
     return false
   }
 }
 
 /**
- * Map Lemon Squeezy status to our status
+ * Map Paddle status to our status
  */
-const mapLemonSqueezyStatus = (status: string): SubscriptionStatus => {
+const mapPaddleStatus = (status: string): SubscriptionStatus => {
   const statusMap: Record<string, SubscriptionStatus> = {
-    'on_trial': 'on_trial',
+    'trialing': 'on_trial',
     'active': 'active',
-    'paused': 'past_due',
+    'paused': 'paused',
     'past_due': 'past_due',
-    'unpaid': 'unpaid',
-    'cancelled': 'canceled',
+    'canceled': 'canceled',
     'expired': 'expired',
   }
 
@@ -592,7 +678,7 @@ const checkUsageLimits = async (
 }
 
 /**
- * Скасування підписки через Lemon Squeezy API
+ * Скасування підписки через Paddle API
  */
 export const cancelSubscription = async (
   orgId: string,
@@ -604,22 +690,25 @@ export const cancelSubscription = async (
   }
 
   try {
-    await lemonSqueezyRequest(
-      `/subscriptions/${subscription.lemon_squeezy_subscription_id}`,
-      {
-        method: 'PATCH',
-        body: JSON.stringify({
-          data: {
-            type: 'subscriptions',
-            id: subscription.lemon_squeezy_subscription_id,
-            attributes: {
-              cancelled: cancelAtPeriodEnd,
-            },
-          },
-        }),
-      }
-    )
+    const body: any = {}
 
+    if (cancelAtPeriodEnd) {
+      // Скасувати в кінці періоду
+      body.scheduled_change = {
+        action: 'cancel',
+        effective_at: 'next_billing_period',
+      }
+    } else {
+      // Скасувати негайно
+      body.effective_from = 'immediately'
+    }
+
+    await paddleRequest(`/subscriptions/${subscription.paddle_subscription_id}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+
+    logger.info('Subscription cancellation requested', { orgId, cancelAtPeriodEnd })
     return true
   } catch (error) {
     logger.error('Error canceling subscription', error, { orgId, cancelAtPeriodEnd })
@@ -637,22 +726,14 @@ export const resumeSubscription = async (orgId: string): Promise<boolean> => {
   }
 
   try {
-    await lemonSqueezyRequest(
-      `/subscriptions/${subscription.lemon_squeezy_subscription_id}`,
-      {
-        method: 'PATCH',
-        body: JSON.stringify({
-          data: {
-            type: 'subscriptions',
-            id: subscription.lemon_squeezy_subscription_id,
-            attributes: {
-              cancelled: false,
-            },
-          },
-        }),
-      }
-    )
+    await paddleRequest(`/subscriptions/${subscription.paddle_subscription_id}/resume`, {
+      method: 'POST',
+      body: JSON.stringify({
+        effective_from: 'immediately',
+      }),
+    })
 
+    logger.info('Subscription resumed', { orgId })
     return true
   } catch (error) {
     logger.error('Error resuming subscription', error, { orgId })
@@ -661,7 +742,7 @@ export const resumeSubscription = async (orgId: string): Promise<boolean> => {
 }
 
 /**
- * Отримання посилання на customer portal
+ * Отримання посилання на customer portal (Paddle Billing)
  */
 export const getCustomerPortalUrl = async (orgId: string): Promise<string | null> => {
   const subscription = await getOrganizationSubscription(orgId)
@@ -670,13 +751,48 @@ export const getCustomerPortalUrl = async (orgId: string): Promise<string | null
   }
 
   try {
-    const response = await lemonSqueezyRequest(
-      `/subscriptions/${subscription.lemon_squeezy_subscription_id}`
-    )
+    // Paddle не має окремого customer portal API,
+    // але підписка містить management URLs у відповіді
+    const response = await paddleRequest(`/subscriptions/${subscription.paddle_subscription_id}`)
 
-    return response.data.attributes.urls.customer_portal || null
+    // URL для управління підпискою знаходиться в management_urls
+    return response.data?.management_urls?.update_payment_method || null
   } catch (error) {
     logger.error('Error getting customer portal URL', error, { orgId })
     return null
+  }
+}
+
+/**
+ * Зміна плану підписки
+ */
+export const changeSubscriptionPlan = async (
+  orgId: string,
+  newPriceId: string
+): Promise<boolean> => {
+  const subscription = await getOrganizationSubscription(orgId)
+  if (!subscription) {
+    return false
+  }
+
+  try {
+    await paddleRequest(`/subscriptions/${subscription.paddle_subscription_id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        items: [
+          {
+            price_id: newPriceId,
+            quantity: 1,
+          },
+        ],
+        proration_billing_mode: 'prorated_immediately', // Пропорційно списати/повернути
+      }),
+    })
+
+    logger.info('Subscription plan changed', { orgId, newPriceId })
+    return true
+  } catch (error) {
+    logger.error('Error changing subscription plan', error, { orgId, newPriceId })
+    return false
   }
 }
