@@ -34,6 +34,14 @@ interface NotificationsResponse {
   unreadCount: number
 }
 
+interface SubscriptionStatus {
+  isValid: boolean
+  status: string
+  daysLeft: number
+  expiryDate: string | null
+  planName: string
+}
+
 /**
  * Клиентский компонент панели уведомлений
  * Использует React Query для управления состоянием
@@ -43,6 +51,20 @@ export function NotificationsPanelClient() {
   const queryClient = useQueryClient()
   const [isOpen, setIsOpen] = useState(false)
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
+
+  // Fetch subscription status
+  const { data: subscriptionStatus } = useQuery<SubscriptionStatus>({
+    queryKey: ['subscription-status', tenantId],
+    queryFn: async () => {
+      const response = await fetch(`/api/manage/${tenantId}/subscription/status`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch subscription status')
+      }
+      return response.json()
+    },
+    enabled: !!tenantId && isOpen,
+    refetchInterval: 60000, // Refresh every minute
+  })
 
   // Fetch notifications
   const { data, isLoading, error } = useQuery<NotificationsResponse>({
@@ -260,25 +282,113 @@ export function NotificationsPanelClient() {
                 Повторить
               </Button>
             </div>
-          ) : !data?.notifications || data.notifications.length === 0 ? (
-            <div className="flex h-40 flex-col items-center justify-center p-4 text-center">
-              <Bell className="mb-2 h-8 w-8 text-gray-300" />
-              <p className="text-sm text-gray-500">
-                {filter === 'unread'
-                  ? 'Нет непрочитанных уведомлений'
-                  : 'Нет уведомлений'}
-              </p>
-            </div>
           ) : (
             <div className="divide-y divide-gray-100">
-              {data.notifications.map((notification) => (
-                <NotificationItem
-                  key={notification.id}
-                  notification={notification}
-                  onMarkAsRead={handleMarkAsRead}
-                  onDelete={handleDelete}
-                />
-              ))}
+              {/* License expiration notification (priority) */}
+              {subscriptionStatus && !subscriptionStatus.isValid && (
+                <div className="bg-red-50 border-l-4 border-red-500 p-4">
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0">
+                      <svg
+                        className="h-5 w-5 text-red-400"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <div className="ml-3 flex-1">
+                      <h3 className="text-sm font-semibold text-red-800">
+                        Лицензия истекла: ответы ИИ отключены
+                      </h3>
+                      <p className="mt-1 text-sm text-red-700">
+                        Ответы ИИ отключены, так как срок действия вашей лицензии истек.
+                      </p>
+                      <div className="mt-3">
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="bg-red-600 hover:bg-red-700 text-white"
+                          onClick={() => {
+                            window.location.href = `/manage/${tenantId}/pricing`
+                          }}
+                        >
+                          Продлить лицензию
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* License expiring soon warning (7 days or less) */}
+              {subscriptionStatus &&
+                subscriptionStatus.isValid &&
+                subscriptionStatus.daysLeft <= 7 &&
+                subscriptionStatus.daysLeft > 0 && (
+                  <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        <svg
+                          className="h-5 w-5 text-yellow-400"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                      <div className="ml-3 flex-1">
+                        <h3 className="text-sm font-semibold text-yellow-800">
+                          Лицензия скоро истечет
+                        </h3>
+                        <p className="mt-1 text-sm text-yellow-700">
+                          У вас осталось {subscriptionStatus.daysLeft} {subscriptionStatus.daysLeft === 1 ? 'день' : 'дней'} до истечения подписки.
+                        </p>
+                        <div className="mt-3">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-yellow-400 text-yellow-700 hover:bg-yellow-100"
+                            onClick={() => {
+                              window.location.href = `/manage/${tenantId}/pricing`
+                            }}
+                          >
+                            Продлить сейчас
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+              {/* Regular notifications */}
+              {!data?.notifications || data.notifications.length === 0 ? (
+                <div className="flex h-40 flex-col items-center justify-center p-4 text-center">
+                  <Bell className="mb-2 h-8 w-8 text-gray-300" />
+                  <p className="text-sm text-gray-500">
+                    {filter === 'unread'
+                      ? 'Нет непрочитанных уведомлений'
+                      : 'Нет уведомлений'}
+                  </p>
+                </div>
+              ) : (
+                data.notifications.map((notification) => (
+                  <NotificationItem
+                    key={notification.id}
+                    notification={notification}
+                    onMarkAsRead={handleMarkAsRead}
+                    onDelete={handleDelete}
+                  />
+                ))
+              )}
             </div>
           )}
         </ScrollArea>

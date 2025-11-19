@@ -114,6 +114,34 @@ export default auth(async (req) => {
       )
     }
 
+    // 3. LICENSE CHECK: Проверка подписки для критических endpoints
+    // Исключаем endpoints, необходимые для оплаты и просмотра статуса
+    const isExemptEndpoint =
+      pathname.includes('/subscription/') ||
+      pathname.includes('/pricing') ||
+      pathname.includes('/settings') ||
+      pathname.includes('/billing') ||
+      pathname.includes('/notifications') ||
+      pathname.includes('/dashboard/stats') || // Разрешаем просмотр дашборда
+      pathname.includes('/summary') // Разрешаем summary
+
+    // Для критических операций (создание, изменение, удаление данных) добавляем заголовок
+    // для проверки лицензии в API route handlers
+    const isCriticalOperation =
+      req.method !== 'GET' || // Все не-GET запросы считаются критическими
+      pathname.includes('/agents') || // Работа с агентами
+      pathname.includes('/knowledge') || // База знаний
+      pathname.includes('/integrations') || // Интеграции
+      pathname.includes('/test-chat') // Тестовый чат
+
+    if (!isExemptEndpoint && isCriticalOperation) {
+      // Добавляем заголовок для API routes, чтобы они проверили лицензию
+      const response = NextResponse.next()
+      response.headers.set('x-license-check-required', 'true')
+      response.headers.set('x-tenant-id', tenantId)
+      return response
+    }
+
     // Доступ разрешен, пропускаем запрос
     return NextResponse.next()
   }
