@@ -64,7 +64,11 @@ export function ManageSidebar() {
                             : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-900'
                         )}
                       >
-                        <Link href={href}>
+                        <Link
+                          href={href}
+                          target={item.isExternal ? '_blank' : undefined}
+                          rel={item.isExternal ? 'noopener noreferrer' : undefined}
+                        >
                           <item.icon />
                           <span>{tNavigation(item.labelKey)}</span>
                         </Link>

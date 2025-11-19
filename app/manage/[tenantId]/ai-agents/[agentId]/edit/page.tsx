@@ -1,15 +1,21 @@
-import { AgentBasicsTab } from '@/components/features/agents/AgentBasicsTab'
+import { notFound } from 'next/navigation'
+import { EditAgentGeneralForm } from '@/components/features/agents/EditAgentGeneralForm'
+import { loadAgent } from '@/lib/repositories/agents'
 
-interface AgentEditPageProps {
+interface EditAgentPageProps {
   params: Promise<{
     tenantId: string
     agentId: string
   }>
 }
 
-export default async function AgentEditPage({ params }: AgentEditPageProps) {
+export default async function EditAgentPage({ params }: EditAgentPageProps) {
   const { tenantId, agentId } = await params
-  // The layout already handles authentication and agent loading
-  // This page renders the "Основные" (Basics) tab content
-  return <AgentBasicsTab tenantId={tenantId} agentId={agentId} />
+  const agent = await loadAgent(agentId)
+
+  if (!agent) {
+    notFound()
+  }
+
+  return <EditAgentGeneralForm agent={agent} tenantId={tenantId} />
 }

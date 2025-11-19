@@ -67,19 +67,48 @@
     "navigation": {
       "main": {
         "title": "Главное",
-        "dashboard": { "label": "Дашборд" },
-        "agents": { "label": "Агенты ИИ" }
+        "dashboard": {
+          "label": "Инфопанель"
+        },
+        "agents": {
+          "section": "Агенты ИИ",
+          "label": "Агенты ИИ"
+        },
+        "testChat": {
+          "label": "Тестовый чат"
+        }
       },
       "knowledge": {
-        "title": "Знания и сценарии",
-        "base": { "label": "База знаний" },
-        "testChat": { "label": "Чат и тестирование" }
+        "title": "База знаний",
+        "categories": {
+          "label": "Категории"
+        },
+        "articles": {
+          "label": "Статьи"
+        }
       },
-      "integrations": {
-        "title": "Интеграции и настройки",
-        "items": {
-          "integrations": { "label": "Интеграции" },
-          "settings": { "label": "Настройки" }
+      "support": {
+        "title": "Поддержка",
+        "gettingStarted": {
+          "label": "Начало работы"
+        }
+      },
+      "account": {
+        "title": "Аккаунт",
+        "settings": {
+          "label": "Настройки аккаунта"
+        },
+        "pricing": {
+          "label": "Тарифные планы"
+        }
+      },
+      "whatsNew": {
+        "title": "Что нового",
+        "facebook": {
+          "label": "Смотреть на Facebook"
+        },
+        "instagram": {
+          "label": "Смотреть в Instagram"
         }
       }
     },

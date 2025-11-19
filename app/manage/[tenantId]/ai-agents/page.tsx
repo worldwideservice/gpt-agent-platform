@@ -2,7 +2,6 @@ import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 
 import { auth } from '@/auth'
-import { AgentForm } from '@/components/features/agents/AgentForm'
 import { AgentsDashboardSection } from '@/components/features/manage/AgentsDashboardSection'
 import { WorkspaceSummaryIntegrationInsights } from '@/components/features/manage/WorkspaceSummaryIntegrationInsights'
 import { WorkspaceSummaryKnowledgeInsights } from '@/components/features/manage/WorkspaceSummaryKnowledgeInsights'
@@ -106,16 +105,13 @@ export default async function AiAgentsPage({ params }: AiAgentsPageProps) {
         </Card>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <AgentsDashboardSection
-            tenantId={params.tenantId}
-            initialAgents={initialAgents}
-            initialError={initialError}
-            summary={summary}
-          />
-        </div>
-        <AgentForm tenantId={params.tenantId} />
+      <div className="w-full">
+        <AgentsDashboardSection
+          tenantId={tenantId}
+          initialAgents={initialAgents}
+          initialError={initialError}
+          summary={summary}
+        />
       </div>
     </div>
   )
@@ -125,6 +121,7 @@ function mapAgentsToListItems(agents: Agent[]): AgentListItem[] {
   return agents.map((agent) => ({
     id: agent.id,
     name: agent.name,
+    isActive: agent.status === 'active',
     status: agent.status,
     model: agent.model,
     ownerName: agent.ownerName,

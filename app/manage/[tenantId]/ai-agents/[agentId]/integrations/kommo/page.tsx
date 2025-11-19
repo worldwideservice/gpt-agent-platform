@@ -37,7 +37,6 @@ export default async function KommoIntegrationPage({ params }: KommoIntegrationP
     { id: 'edit', label: 'Основные', href: `/manage/${tenantId}/ai-agents/${agentId}/edit` },
     { id: 'leads-contacts', label: 'Сделки и контакты', href: `/manage/${tenantId}/ai-agents/${agentId}/leads-contacts` },
     { id: 'triggers', label: 'Триггеры', href: `/manage/${tenantId}/ai-agents/${agentId}/triggers` },
-    { id: 'sequences', label: 'Цепочки', href: `/manage/${tenantId}/ai-agents/${agentId}/sequences` },
     { id: 'available-integrations', label: 'Интеграции', href: `/manage/${tenantId}/ai-agents/${agentId}/available-integrations` },
     { id: 'advanced-settings', label: 'Дополнительно', href: `/manage/${tenantId}/ai-agents/${agentId}/advanced-settings` },
   ]

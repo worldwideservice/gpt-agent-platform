@@ -34,7 +34,6 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import type { Agent } from '@/types'
-import { trackAgentCreated } from '@/lib/analytics/examples'
 
 interface AgentFormProps {
   tenantId: string

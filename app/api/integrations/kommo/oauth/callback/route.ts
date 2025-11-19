@@ -4,7 +4,6 @@ import { cookies } from 'next/headers'
 
 import { backendFetch } from '@/lib/backend/client'
 import { getOrganizationById } from '@/lib/repositories/organizations'
-import { trackIntegrationConnected } from '@/lib/analytics/examples'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
@@ -64,7 +63,6 @@ export async function GET(request: NextRequest) {
 
       // Track integration connected for analytics
       try {
-        trackIntegrationConnected({
           integrationType: 'kommo',
           organizationId: backendResult.connection.org_id,
           userId: backendResult.connection.org_id, // Using org_id as fallback

@@ -22,7 +22,6 @@ import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/toast-context'
-import { trackLogin } from '@/lib/analytics/examples'
 
 const formSchema = z.object({
   email: z.string().email('Введите корректный email'),
@@ -177,23 +176,6 @@ export const LoginClient = () => {
             }
 
             if (redirectData?.success && redirectData.tenantId) {
-              // Track successful login
-              try {
-                const currentSession = await getSession()
-                if (currentSession?.user) {
-                  const user = currentSession.user as any
-                  trackLogin({
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    organizationId: user.organizationId || redirectData.tenantId,
-                    plan: user.plan,
-                  })
-                }
-              } catch (analyticsError) {
-                // Silent fail for analytics
-              }
-
               pushToast({
                 title: 'Вход выполнен! ✅',
                 description: `Добро пожаловать, ${data.email}!`,

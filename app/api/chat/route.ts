@@ -8,7 +8,6 @@ import { z } from 'zod'
 import { auth } from '@/auth'
 import { cache, cacheConfig, cacheKeys } from '@/lib/cache'
 import { createErrorResponse } from '@/lib/utils/error-handler'
-import { trackChatStarted, trackMessageSent } from '@/lib/analytics/examples'
 import {
   createConversation,
   getConversationById,
@@ -300,19 +299,6 @@ export const POST = async (request: NextRequest) => {
         userId,
         title: message.slice(0, 50), // Первые 50 символов как заголовок
       })
-
-      // Track chat started for analytics
-      try {
-        trackChatStarted({
-          conversationId: conversation.id,
-          agentId: agentId ?? conversation.agentId ?? '',
-          organizationId,
-          userId,
-          channel: 'web',
-        })
-      } catch (analyticsError) {
-        console.error('Failed to track chat started', analyticsError)
-      }
     }
 
     // Сохраняем сообщение пользователя
@@ -320,20 +306,6 @@ export const POST = async (request: NextRequest) => {
       role: 'user',
       content: message,
     })
-
-    // Track user message for analytics
-    try {
-      trackMessageSent({
-        conversationId: conversation.id,
-        agentId: agentId ?? conversation.agentId ?? '',
-        role: 'user',
-        messageLength: message.length,
-        organizationId,
-        userId,
-      })
-    } catch (analyticsError) {
-      console.error('Failed to track user message', analyticsError)
-    }
 
     // Получаем инструкции агента и определяем этап воронки (если есть)
     let agentInstructions: string | null = null
@@ -571,20 +543,6 @@ export const POST = async (request: NextRequest) => {
         usedKnowledgeBase,
       },
     })
-
-    // Track assistant message for analytics
-    try {
-      trackMessageSent({
-        conversationId: conversation.id,
-        agentId: agentId ?? conversation.agentId ?? '',
-        role: 'agent',
-        messageLength: llmResponse.content.length,
-        organizationId,
-        userId,
-      })
-    } catch (analyticsError) {
-      console.error('Failed to track assistant message', analyticsError)
-    }
 
     // Логируем ответ агента (асинхронно, не блокируем ответ)
     if (agentId || conversation.agentId) {

@@ -1,13 +1,5 @@
-import { AgentTriggersTab } from '@/components/features/agents/AgentTriggersTab'
+import { EditAgentTriggersForm } from '@/components/features/agents/EditAgentTriggersForm'
 
-interface AgentTriggersPageProps {
-  params: Promise<{
-    tenantId: string
-    agentId: string
-  }>
-}
-
-export default async function AgentTriggersPage({ params }: AgentTriggersPageProps) {
-  const { tenantId, agentId } = await params
-  return <AgentTriggersTab tenantId={tenantId} agentId={agentId} />
+export default function TriggersPage() {
+  return <EditAgentTriggersForm />
 }

@@ -6,7 +6,6 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 import { auth } from '@/auth'
 import { backendFetch } from '@/lib/backend/client'
-import { trackCrmSynced } from '@/lib/analytics/examples'
 
 export const POST = async (request: NextRequest) => {
  const session = await auth()
@@ -33,7 +32,6 @@ export const POST = async (request: NextRequest) => {
 
  // Track CRM sync for analytics
  try {
- trackCrmSynced({
  integrationType: 'kommo',
  syncType: 'pipelines',
  itemsCount: 0, // Will be updated by backend
