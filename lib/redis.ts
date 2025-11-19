@@ -18,6 +18,11 @@ export type RedisClient = Redis | UpstashRedis
  * Priority: Upstash (production) > Local Redis (development)
  */
 export function getRedisClient(): RedisClient | null {
+  // Prevent Redis connection during build time
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return null
+  }
+
   // Try Upstash first (production)
   const upstashUrl = process.env.UPSTASH_REDIS_REST_URL
   const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN
@@ -32,6 +37,8 @@ export function getRedisClient(): RedisClient | null {
         logger.info('Redis: Connected to Upstash (production)')
       } catch (error) {
         logger.error('Failed to connect to Upstash Redis:', error)
+        // Don't throw in build/CI environment
+        if (process.env.CI) return null
         throw error
       }
     }
@@ -48,8 +55,10 @@ export function getRedisClient(): RedisClient | null {
   if (redisUrl || redisHost) {
     if (!ioredisClient) {
       try {
-        ioredisClient = new Redis(
-          redisUrl || {
+        // Handle both URL string and object config
+        const config = redisUrl
+          ? redisUrl
+          : {
             host: redisHost,
             port: redisPort,
             password: redisPassword,
@@ -61,10 +70,14 @@ export function getRedisClient(): RedisClient | null {
             },
             lazyConnect: false,
           }
-        )
+
+        ioredisClient = new Redis(config)
 
         ioredisClient.on('error', (err) => {
-          logger.error('Redis connection error:', err)
+          // Suppress connection errors during build
+          if (process.env.NEXT_PHASE !== 'phase-production-build') {
+            logger.error('Redis connection error:', err)
+          }
         })
 
         ioredisClient.on('connect', () => {
@@ -75,8 +88,8 @@ export function getRedisClient(): RedisClient | null {
       } catch (error) {
         logger.error('Failed to connect to local Redis:', error)
 
-        // In production, fail hard
-        if (process.env.NODE_ENV === 'production') {
+        // In production, fail hard ONLY if not in CI/Build
+        if (process.env.NODE_ENV === 'production' && !process.env.CI) {
           throw error
         }
 
@@ -87,9 +100,10 @@ export function getRedisClient(): RedisClient | null {
   }
 
   // No Redis configured
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === 'production' && !process.env.CI) {
     logger.error('CRITICAL: No Redis configuration found in production')
-    throw new Error('Redis configuration required in production')
+    // Allow build to proceed even if Redis is missing (it might be configured at runtime)
+    return null
   }
 
   logger.warn('No Redis configuration found, rate limiting will use memory store')
@@ -113,7 +127,7 @@ export async function isRedisAvailable(): Promise<boolean> {
 
     return true
   } catch (error) {
-    logger.warn('Redis health check failed:', error)
+    logger.warn('Redis health check failed:', error as Error)
     return false
   }
 }

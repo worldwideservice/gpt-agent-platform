@@ -12,6 +12,11 @@ export const setRedisClient = (client: Redis | null) => {
 export const getRedisClient = (): Redis | null => {
   if (redisClient) return redisClient
 
+  // Prevent Redis connection during build time
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return null
+  }
+
   const redisUrl = process.env.REDIS_URL
 
   // CRITICAL: In production, if no Redis URL configured, don't try to connect
@@ -26,11 +31,22 @@ export const getRedisClient = (): Redis | null => {
   }
 
   try {
-    redisClient = new Redis(redisUrl)
+    // @ts-ignore - Redis constructor types might mismatch slightly depending on version
+    redisClient = new Redis(redisUrl, {
+      // Don't crash on connection error
+      retryStrategy: (times) => {
+        if (times > 3) return null // Stop retrying after 3 attempts
+        return Math.min(times * 50, 2000)
+      },
+      maxRetriesPerRequest: 3,
+    })
 
     redisClient.on('error', (err) => {
-      logger.error('Redis connection error', { error: err.message })
-      redisClient = null
+      // Suppress excessive error logging during build/CI
+      if (!process.env.CI && process.env.NEXT_PHASE !== 'phase-production-build') {
+        logger.error('Redis connection error', { error: err.message })
+      }
+      // Don't nullify client immediately on error, it might reconnect
     })
 
     redisClient.on('connect', () => {

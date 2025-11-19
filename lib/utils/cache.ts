@@ -16,6 +16,11 @@ function getRedisClient(): Redis | null {
     return redisClient
   }
 
+  // Prevent Redis connection during build time
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return null
+  }
+
   const redisUrl = process.env.REDIS_URL
   if (!redisUrl) {
     logger.warn('REDIS_URL not configured, caching disabled')
@@ -24,15 +29,21 @@ function getRedisClient(): Redis | null {
 
   try {
     redisClient = new Redis(redisUrl, {
-      maxRetriesPerRequest: null,
+      maxRetriesPerRequest: 3,
       enableReadyCheck: true,
       connectTimeout: 10000,
       lazyConnect: true,
+      retryStrategy: (times) => {
+        if (times > 3) return null
+        return Math.min(times * 50, 2000)
+      }
     })
 
     redisClient.on('error', (error) => {
-      logger.error('Redis connection error', error, { message: error.message })
-      redisClient = null
+      if (!process.env.CI) {
+        logger.error('Redis connection error', error, { message: error.message })
+      }
+      // Don't nullify immediately, let it try to reconnect
     })
 
     return redisClient
