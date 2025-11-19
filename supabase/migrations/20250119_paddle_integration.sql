@@ -52,27 +52,6 @@ DROP INDEX IF EXISTS idx_subscriptions_lemon_squeezy_id;
 DROP INDEX IF EXISTS idx_subscriptions_lemon_customer_id;
 DROP INDEX IF EXISTS idx_subscriptions_variant_id;
 
--- Оновити таблицю billing_plans для Paddle price_id
-DO $$
-BEGIN
-  -- Додати price_id якщо не існує
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'billing_plans' AND column_name = 'price_id'
-  ) THEN
-    ALTER TABLE billing_plans ADD COLUMN price_id TEXT;
-  END IF;
-
-  -- Перейменувати variant_id якщо існує
-  IF EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'billing_plans' AND column_name = 'variant_id'
-  ) THEN
-    ALTER TABLE billing_plans RENAME COLUMN variant_id TO legacy_ls_variant_id;
-  END IF;
-END
-$$;
-
 -- Додати коментарі для документації
 COMMENT ON COLUMN subscriptions.paddle_subscription_id IS 'ID підписки в Paddle';
 COMMENT ON COLUMN subscriptions.paddle_customer_id IS 'ID клієнта в Paddle';
@@ -105,7 +84,7 @@ BEGIN
     FOR SELECT
     USING (
       org_id IN (
-        SELECT organization_id
+        SELECT org_id
         FROM organization_members
         WHERE user_id = auth.uid()
       )
@@ -128,22 +107,3 @@ $$;
 -- Оновлення існуючих записів (опціонально)
 -- Якщо потрібно зберегти старі Lemon Squeezy дані, вони вже перейменовані в legacy_ls_* колонки
 -- Нові підписки будуть створюватись через Paddle webhook з новими полями
-
--- Додати constraint для перевірки що хоча б один з ID присутній
--- (або Paddle, або legacy Lemon Squeezy)
-DO $$
-BEGIN
-  ALTER TABLE subscriptions
-    DROP CONSTRAINT IF EXISTS check_subscription_provider;
-
-  ALTER TABLE subscriptions
-    ADD CONSTRAINT check_subscription_provider
-    CHECK (
-      paddle_subscription_id IS NOT NULL OR
-      legacy_ls_subscription_id IS NOT NULL
-    );
-EXCEPTION
-  WHEN duplicate_object THEN
-    NULL; -- Constraint вже існує
-END
-$$;
