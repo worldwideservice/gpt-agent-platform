@@ -29,8 +29,8 @@ export async function POST(request: NextRequest) {
  return error // Возвращаем ошибку 400, если валидация не пройдена
  }
 
- // data теперь типизирована и безопасна
- const { email, password, firstName, lastName, organizationName } = data
+  // data теперь типизирована и безопасна
+  const { email, password, organizationName } = data
 
  // Check if user already exists
  const existingUser = await UserRepository.findUserByEmail(email)
@@ -41,15 +41,13 @@ export async function POST(request: NextRequest) {
  )
  }
 
- // Create user
- let user
- try {
- user = await UserRepository.createUser({
- email,
- password,
- firstName,
- lastName,
- })
+  // Create user
+  let user
+  try {
+    user = await UserRepository.createUser({
+      email,
+      password,
+    })
 
  if (!user) {
  logger.error('Registration: createUser returned null', undefined, {
@@ -77,12 +75,14 @@ export async function POST(request: NextRequest) {
 
  // Create organization for the user
  try {
- logger.log('Registration: Creating organization for user:', user.id)
+ logger.info('Registration: Creating organization for user:', { userId: user.id })
 
  // Use validated Supabase client
  const client = getSupabaseServiceRoleClient()
 
- const baseSlug = `${firstName.toLowerCase()}-${lastName.toLowerCase()}`.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') || `org-${Date.now()}`
+    // Generate slug from email (username part) or use timestamp
+    const emailUsername = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
+    const baseSlug = emailUsername || `org-${Date.now()}`
  let slugCandidate = baseSlug
  let counter = 0
 
@@ -107,8 +107,8 @@ export async function POST(request: NextRequest) {
  }
  }
 
- // Используем переданное имя организации или имя пользователя
- const orgName = organizationName?.trim() || `${firstName} ${lastName}`
+    // Используем переданное имя организации или email
+    const orgName = organizationName?.trim() || email.split('@')[0]
 
  const { data: organization, error: orgError } = await client
  .from('organizations')
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
  }
 
 
- logger.log('Registration: Organization created successfully:', organization.id)
+ logger.info('Registration: Organization created successfully:', { organizationId: organization.id })
  } else {
  logger.error('Registration: Failed to create organization:', orgError, {
    endpoint: '/api/auth/register',

@@ -475,13 +475,9 @@ export class UserRepository {
   static async createUser({
     email,
     password,
-    firstName,
-    lastName,
   }: {
     email: string
     password: string
-    firstName: string
-    lastName: string
   }): Promise<DatabaseUser | null> {
     try {
       // Hash password
@@ -494,7 +490,7 @@ export class UserRepository {
         .from('users')
         .insert({
           email: email.toLowerCase().trim(),
-          full_name: `${firstName.trim()} ${lastName.trim()}`.trim(),
+          full_name: null,
           password_hash: passwordHash,
         })
         .select()

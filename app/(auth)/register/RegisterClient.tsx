@@ -21,8 +21,6 @@ import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/components/ui/toast-context'
 
 const formSchema = z.object({
-  firstName: z.string().min(1, 'Имя обязательно'),
-  lastName: z.string().min(1, 'Фамилия обязательна'),
   email: z.string().email('Введите корректный email'),
   organizationName: z.string().optional(),
   password: z.string().min(6, 'Пароль должен содержать минимум 6 символов'),
@@ -40,8 +38,6 @@ export const RegisterClient = () => {
 
   const form = useForm<z.infer<typeof formSchema>>({
     defaultValues: {
-      firstName: '',
-      lastName: '',
       email: '',
       organizationName: '',
       password: '',
@@ -67,8 +63,6 @@ export const RegisterClient = () => {
           body: JSON.stringify({
             email: data.email,
             password: data.password,
-            firstName: data.firstName,
-            lastName: data.lastName,
             organizationName: data.organizationName?.trim() || undefined,
           }),
         })
@@ -161,48 +155,6 @@ export const RegisterClient = () => {
               className="w-full space-y-4 mt-8"
               onSubmit={form.handleSubmit(onSubmit)}
             >
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="firstName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Имя</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="text"
-                          placeholder="Имя"
-                          className="w-full"
-                          autoComplete="given-name"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="lastName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Фамилия</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="text"
-                          placeholder="Фамилия"
-                          className="w-full"
-                          autoComplete="family-name"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
               <FormField
                 control={form.control}
                 name="email"
