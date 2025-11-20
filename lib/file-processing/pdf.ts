@@ -10,7 +10,9 @@ let pdfParse: any = null
 
 async function getPdfParse() {
   if (!pdfParse) {
-    pdfParse = (await import('pdf-parse')).default
+    const pdfParseModule = await import('pdf-parse')
+    // Handle both ESM and CommonJS exports
+    pdfParse = 'default' in pdfParseModule ? pdfParseModule.default : pdfParseModule
   }
   return pdfParse
 }

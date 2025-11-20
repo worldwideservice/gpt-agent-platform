@@ -71,7 +71,7 @@ export function getRedisClient(): RedisClient | null {
             lazyConnect: false,
           }
 
-        ioredisClient = new Redis(config)
+        ioredisClient = new Redis(config as string | { host: string; port: number; password?: string; maxRetriesPerRequest: number; retryStrategy: (times: number) => number; lazyConnect: boolean })
 
         ioredisClient.on('error', (err) => {
           // Suppress connection errors during build
@@ -127,7 +127,7 @@ export async function isRedisAvailable(): Promise<boolean> {
 
     return true
   } catch (error) {
-    logger.warn('Redis health check failed:', error as Error)
+    logger.warn('Redis health check failed', { error: error instanceof Error ? error.message : String(error) })
     return false
   }
 }

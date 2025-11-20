@@ -79,15 +79,9 @@ export async function getAdminStats() {
  return acc
  }, {} as Record<string, number>)
 
- // Agents stats
- const { data: agents, error: agentsError } = await supabase
- .from('agents')
- .select('status, created_at')
-
- if (agentsError) throw agentsError
-
- const totalAgents = agents.length
- const activeAgents = agents.filter(agent => agent.status === 'active').length
+ // Removed agents stats - will be reimplemented for new architecture
+ const totalAgents = 0
+ const activeAgents = 0
 
  // Jobs stats
  const { data: jobs, error: jobsError } = await supabase
@@ -127,10 +121,11 @@ export async function getAdminStats() {
  total: totalOrganizations,
  byTier: organizationsByTier,
  },
- agents: {
- total: totalAgents,
- active: activeAgents,
- },
+ // Removed agents stats - will be reimplemented for new architecture
+ // agents: {
+ //   total: totalAgents,
+ //   active: activeAgents,
+ // },
  jobs: {
  total: totalJobs,
  byStatus: jobsByStatus,
@@ -163,7 +158,7 @@ export async function performAdminAction(action: string, payload: Record<string,
       case 'delete_user':
         return await deleteUser(asString(payload.userId))
       case 'update_feature_flag':
-        return await updateFeatureFlag(asString(payload.flagKey), payload.updates ?? {})
+        return await updateFeatureFlag(asString(payload.flagKey), (payload.updates ?? {}) as Record<string, unknown>)
       case 'clear_cache':
         return await clearCache()
  case 'restart_worker':
@@ -207,7 +202,7 @@ async function deleteUser(userId: string) {
 async function updateFeatureFlag(flagKey: string, updates: Record<string, unknown>) {
  // This would update feature flags in database/cache
  // For now, just log the action
- logger.info('Updating feature flag:', flagKey, updates)
+ logger.info('Updating feature flag:', { flagKey, updates })
  return { success: true }
 }
 

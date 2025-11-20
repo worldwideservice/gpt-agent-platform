@@ -16,7 +16,7 @@ const GetJobsQuerySchema = z.object({
 
 const CreateJobSchema = z.object({
   jobName: z.string().min(1, 'Job name is required'),
-  payload: z.record(z.unknown()).optional().default({}),
+  payload: z.record(z.string(), z.unknown()).optional(),
 })
 
 /**
@@ -54,7 +54,7 @@ export async function GET(request: Request) {
     const stats = await getQueueStats()
 
     // Get recent jobs if status is specified
-    let jobs = null
+    let jobs: Awaited<ReturnType<typeof getJobsByStatus>> | null = null
     if (status) {
       jobs = await getJobsByStatus(status, limit)
     }
@@ -119,7 +119,7 @@ export async function POST(request: Request) {
     const { jobName, payload } = bodyValidation.data
 
     const { addJobToQueue } = await import('@/lib/queue')
-    const job = await addJobToQueue(jobName, payload || {})
+    const job = await addJobToQueue(jobName, (payload || {}) as Record<string, unknown>)
 
     logger.info('Job created', {
       jobId: job.id,

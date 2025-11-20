@@ -288,7 +288,7 @@ export class KommoAPI {
       return {
         id: leadId,
         ...lead,
-      }
+      } as KommoLead
     }
 
     const response = await this.request<{ _embedded: { leads: KommoLead[] } }>('/leads', {
@@ -570,7 +570,7 @@ export class KommoAPI {
       return {
         id: taskId,
         ...task,
-      }
+      } as KommoTask
     }
 
     const response = await this.request<{ _embedded: { tasks: KommoTask[] } }>('/tasks', {
@@ -803,7 +803,7 @@ export class KommoAPI {
 
  if (!eventType) {
  // Если тип не найден, пробуем определить по структуре
- logger.warn('Unknown webhook event format:', Object.keys(payload))
+    logger.warn('Unknown webhook event format', { keys: Object.keys(payload) })
  return {
    type: 'unknown',
    data: payload,

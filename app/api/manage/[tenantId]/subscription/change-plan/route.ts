@@ -50,7 +50,6 @@ export async function POST(
     return NextResponse.json({
       success: true,
       newPlan: newPlanId,
-      interval,
       message: 'Plan successfully updated',
     })
   } catch (e) {

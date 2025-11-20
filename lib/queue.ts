@@ -41,15 +41,12 @@ function getJobQueue(): Queue<JobPayload, unknown, string> {
         },
       })
     } catch (error) {
-      logger.warn('Redis not available, queue operations will fail:', error)
+      logger.warn('Redis not available, queue operations will fail', { error: error instanceof Error ? error.message : String(error) })
       throw error
     }
   }
   return jobQueue
 }
-
-export type JobPayload = Record<string, unknown>
-export type QueuedJob = Job<JobPayload, unknown, string>
 
 // Add job to queue
 const defaultJobOptions: JobsOptions = {
@@ -77,16 +74,17 @@ export async function addJobToQueue(jobName: string, payload: JobPayload) {
 export async function getJobById(jobId: string): Promise<Job<JobPayload, unknown, string> | null> {
   const queue = getJobQueue()
   const job = await queue.getJob(jobId)
-  return job
+  return job ?? null
 }
 
 // Get jobs by status
 export async function getJobsByStatus(
   status: 'active' | 'waiting' | 'completed' | 'failed',
   limit = 10,
+  start = 0,
 ): Promise<Job<JobPayload, unknown, string>[]> {
   const queue = getJobQueue()
-  const jobs = await queue.getJobs([status], 0, limit - 1)
+  const jobs = await queue.getJobs([status], start, start + limit - 1)
   return jobs
 }
 

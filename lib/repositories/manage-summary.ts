@@ -1,6 +1,6 @@
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { getCrmConnectionData } from '@/lib/repositories/crm-connection'
-import { getDashboardStats } from '@/lib/repositories/agents'
+// Removed agent dependencies - will be reimplemented for new architecture
 import { getKnowledgeBaseStats } from '@/lib/repositories/knowledge-base'
 
 export interface WorkspaceSummary {
@@ -120,14 +120,12 @@ export const getWorkspaceSummary = async (organizationId: string): Promise<Works
   const supabase = getSupabaseServiceRoleClient()
 
   const [
-    dashboardStats,
     knowledgeStats,
     crmData,
     webhookLatestResult,
     webhookHistoryResult,
-    agentAssetsResult,
+    documentsResult,
   ] = await Promise.all([
-    getDashboardStats(organizationId).catch(() => null),
     getKnowledgeBaseStats(organizationId).catch(() => ({
       categoriesCount: 0,
       publishedArticlesCount: 0,
@@ -149,14 +147,13 @@ export const getWorkspaceSummary = async (organizationId: string): Promise<Works
       .order('created_at', { ascending: false })
       .limit(5),
     supabase
-      .from('agent_assets')
+      .from('documents')
       .select('created_at, status')
       .eq('org_id', organizationId)
       .order('created_at', { ascending: false })
       .limit(500),
   ])
 
-  const totalAgents = dashboardStats?.totalAgents ?? 0
   const lastWebhook = (webhookLatestResult.data ?? [])[0]
   const webhookHistory = (webhookHistoryResult.data ?? []).slice(0, 5)
 
@@ -165,13 +162,13 @@ export const getWorkspaceSummary = async (organizationId: string): Promise<Works
   const threshold = new Date(today.getTime() - dayMs * 7)
   const timelineMap = new Map<string, { count: number; pending: number }>()
 
-  for (const asset of agentAssetsResult.data ?? []) {
-    const createdAt = asset.created_at ? new Date(asset.created_at) : null
+  for (const doc of documentsResult.data ?? []) {
+    const createdAt = doc.created_at ? new Date(doc.created_at) : null
     if (!createdAt || createdAt < threshold) continue
     const day = createdAt.toISOString().split('T')[0]
     const entry = timelineMap.get(day) ?? { count: 0, pending: 0 }
     entry.count += 1
-    if (asset.status === 'pending' || asset.status === 'processing') {
+    if (doc.status === 'pending' || doc.status === 'processing') {
       entry.pending += 1
     }
     timelineMap.set(day, entry)
@@ -199,9 +196,9 @@ export const getWorkspaceSummary = async (organizationId: string): Promise<Works
 
   return {
     agents: {
-      total: totalAgents,
-      active: dashboardStats?.totalAgents ?? 0,
-      inactive: Math.max(totalAgents - (dashboardStats?.totalAgents ?? 0), 0),
+      total: 0,
+      active: 0,
+      inactive: 0,
     },
     knowledge: {
       categories: knowledgeStats.categoriesCount,

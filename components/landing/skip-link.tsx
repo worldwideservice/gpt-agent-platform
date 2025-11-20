@@ -6,10 +6,10 @@ import Link from 'next/link'
 
 import { brandTokens } from '@/design-tokens'
 
-const skipLinkStyles: CSSProperties = {
+const skipLinkStyles: CSSProperties & Record<string, string> = {
   '--skip-link-bg': brandTokens.accent,
   '--skip-link-color': brandTokens.accentForeground,
-}
+} as CSSProperties & Record<string, string>
 
 /**
  * Skip Link Component

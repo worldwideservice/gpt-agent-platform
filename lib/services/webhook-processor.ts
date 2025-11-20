@@ -616,6 +616,7 @@ async function handleMessageEvent(
 
 /**
  * Асинхронная обработка email через агента (не блокирует webhook)
+ * TODO: Реализовать обработку email для новой архитектуры
  */
 async function handleIncomingEmailForAgentAsync(
   orgId: string,
@@ -630,25 +631,19 @@ async function handleIncomingEmailForAgentAsync(
   }
 ): Promise<void> {
   try {
-    const { handleIncomingEmailForAgent } = await import('./agent-email-handler')
-    const result = await handleIncomingEmailForAgent(orgId, emailData)
-
-    if (result.success) {
-      logger.info(`Agent ${result.agentId} successfully responded to email in lead ${emailData.leadId}`, {
-        agentId: result.agentId,
-        leadId: emailData.leadId,
-        orgId
-      })
-    } else {
-      logger.warn(`Failed to handle email in lead ${emailData.leadId}: ${result.error}`, {
-        leadId: emailData.leadId,
-        error: result.error,
-        orgId
-      })
-    }
+    // TODO: Реализовать обработку email для новой архитектуры
+    logger.info(`Email received in lead ${emailData.leadId}`, {
+      leadId: emailData.leadId,
+      from: emailData.from,
+      subject: emailData.subject,
+      orgId
+    })
+    
+    // Пока просто логируем событие
+    // В будущем здесь будет обработка через новую архитектуру
   } catch (error) {
     logger.error('Error in async email handler', error, { orgId, leadId: emailData.leadId })
-    throw error
+    // Не выбрасываем ошибку, чтобы не прервать обработку webhook
   }
 }
 

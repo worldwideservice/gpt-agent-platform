@@ -1,30 +1,13 @@
 /**
- * OpenAI Embeddings Generation
+ * OpenRouter Embeddings Generation
  * Utilities for creating vector embeddings for semantic search
  */
 
-import OpenAI from 'openai'
+import { getOpenRouterClient } from '@/lib/services/ai/openrouter.client'
 import { logger } from '@/lib/logger'
 import type { EmbeddingOptions } from '@/lib/types/knowledge-base'
 
-// Lazy initialization to avoid build-time errors
-let openaiClient: OpenAI | null = null
-
-function getOpenAIClient(): OpenAI {
-  if (!openaiClient) {
-    const apiKey = process.env.OPENAI_API_KEY
-
-    if (!apiKey) {
-      throw new Error('OPENAI_API_KEY is not configured')
-    }
-
-    openaiClient = new OpenAI({ apiKey })
-  }
-
-  return openaiClient
-}
-
-const DEFAULT_EMBEDDING_MODEL = 'text-embedding-3-small'
+const DEFAULT_EMBEDDING_MODEL = 'openai/text-embedding-3-large'
 const DEFAULT_DIMENSIONS = 1536
 
 /**
@@ -36,22 +19,20 @@ export async function generateEmbedding(
 ): Promise<number[]> {
   try {
     const model = options.model || DEFAULT_EMBEDDING_MODEL
-    const dimensions = options.dimensions || DEFAULT_DIMENSIONS
 
     logger.debug('Generating embedding', {
       textLength: text.length,
       model,
-      dimensions,
     })
 
-    const openai = getOpenAIClient()
-    const response = await openai.embeddings.create({
-      model,
-      input: text,
-      dimensions: model.startsWith('text-embedding-3') ? dimensions : undefined,
-    })
+    const client = getOpenRouterClient()
+    const response = await client.embeddings(text, { model })
 
-    const embedding = response.data[0].embedding
+    const embedding = response.data[0]?.embedding
+
+    if (!embedding) {
+      throw new Error('No embedding returned from OpenRouter')
+    }
 
     logger.debug('Embedding generated', {
       dimensions: embedding.length,
@@ -73,20 +54,18 @@ export async function generateEmbeddings(
   texts: string[],
   options: Partial<EmbeddingOptions> = {}
 ): Promise<number[][]> {
-  const BATCH_SIZE = 100 // OpenAI allows up to 2048, but we use smaller batches
+  const BATCH_SIZE = 100 // OpenRouter allows up to 2048, but we use smaller batches
 
   try {
     const model = options.model || DEFAULT_EMBEDDING_MODEL
-    const dimensions = options.dimensions || DEFAULT_DIMENSIONS
 
     logger.info('Generating embeddings batch', {
       count: texts.length,
       model,
-      dimensions,
     })
 
     const embeddings: number[][] = []
-    const openai = getOpenAIClient()
+    const client = getOpenRouterClient()
 
     // Process in batches
     for (let i = 0; i < texts.length; i += BATCH_SIZE) {
@@ -97,11 +76,7 @@ export async function generateEmbeddings(
         batchSize: batch.length,
       })
 
-      const response = await openai.embeddings.create({
-        model,
-        input: batch,
-        dimensions: model.startsWith('text-embedding-3') ? dimensions : undefined,
-      })
+      const response = await client.embeddings(batch, { model })
 
       const batchEmbeddings = response.data.map((item) => item.embedding)
       embeddings.push(...batchEmbeddings)
@@ -133,7 +108,7 @@ export async function generateEmbeddings(
 
 /**
  * Calculate token count for text (approximate)
- * OpenAI uses ~4 characters per token on average for English
+ * Uses ~4 characters per token on average for English
  */
 export function estimateTokenCount(text: string): number {
   // Simple estimation: ~4 chars per token
@@ -142,19 +117,19 @@ export function estimateTokenCount(text: string): number {
 
 /**
  * Calculate embedding cost
- * Pricing: text-embedding-3-small = $0.00002 per 1K tokens
+ * Pricing based on OpenRouter models
  */
 export function calculateEmbeddingCost(
   tokenCount: number,
   model: string = DEFAULT_EMBEDDING_MODEL
 ): number {
   const pricePerToken: Record<string, number> = {
-    'text-embedding-3-small': 0.00002 / 1000,
-    'text-embedding-3-large': 0.00013 / 1000,
-    'text-embedding-ada-002': 0.0001 / 1000,
+    'openai/text-embedding-3-small': 0.00002 / 1000,
+    'openai/text-embedding-3-large': 0.00013 / 1000,
+    'openai/text-embedding-ada-002': 0.0001 / 1000,
   }
 
-  const price = pricePerToken[model] || pricePerToken['text-embedding-3-small']
+  const price = pricePerToken[model] || pricePerToken[DEFAULT_EMBEDDING_MODEL]
   return tokenCount * price
 }
 

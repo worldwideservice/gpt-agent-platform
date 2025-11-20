@@ -5,7 +5,21 @@ import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
 import { useFormatter, useTranslations } from 'next-intl'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
-import type { AgentAsset } from '@/lib/repositories/agent-assets'
+// Removed AgentAsset type - will be reimplemented for new architecture
+// import type { AgentAsset } from '@/lib/repositories/agent-assets'
+
+type AgentAsset = {
+  id: string
+  status: 'pending' | 'processing' | 'completed' | 'failed'
+  created_at: string
+  createdAt?: string
+  file_name?: string
+  sourceName?: string
+  type?: string
+  processedAt?: string
+  processingError?: string
+  chunksCount?: number
+}
 
 interface KnowledgeProcessingHistoryProps {
   items: AgentAsset[]
@@ -44,13 +58,18 @@ export function KnowledgeProcessingHistory({ items }: KnowledgeProcessingHistory
               return (
                 <li key={asset.id} className="flex items-start justify-between gap-3 rounded-lg border p-3">
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-gray-50">{asset.sourceName || asset.type}</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-50">
+                      {asset.sourceName || asset.type || asset.file_name || 'Unknown'}
+                    </p>
                     <p className="text-xs text-gray-500">
                       {t('uploadedAt', {
-                        created: format.dateTime(new Date(asset.createdAt), {
-                          dateStyle: 'short',
-                          timeStyle: 'short',
-                        }),
+                        created: format.dateTime(
+                          new Date(asset.createdAt || asset.created_at),
+                          {
+                            dateStyle: 'short',
+                            timeStyle: 'short',
+                          }
+                        ),
                       })}
                       {asset.processedAt
                         ? ` · ${t('completedAt', {

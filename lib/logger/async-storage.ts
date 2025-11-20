@@ -26,7 +26,8 @@ if (isServer) {
   try {
     const asyncHooks = require('async_hooks')
     const crypto = require('crypto')
-    asyncLocalStorage = new asyncHooks.AsyncLocalStorage<RequestContext>()
+    // AsyncLocalStorage without type argument for compatibility
+    asyncLocalStorage = new (asyncHooks.AsyncLocalStorage as any)()
     randomUUID = crypto.randomUUID
   } catch (error) {
     // Silently fail in environments without async_hooks

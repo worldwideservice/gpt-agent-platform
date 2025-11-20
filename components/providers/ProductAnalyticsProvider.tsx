@@ -21,7 +21,7 @@ interface ProductAnalyticsProviderProps {
   context?: ProductAnalyticsContext
 }
 
-function getCurrentUrl(pathname: string, searchParams: ReturnType<typeof useSearchParams>) {
+function getCurrentUrl(pathname: string, searchParams: ReturnType<typeof useSearchParams>): string | null {
   if (!searchParams || searchParams.size === 0) {
     return pathname
   }
@@ -71,13 +71,15 @@ export function ProductAnalyticsProvider({
     }
 
     const url = getCurrentUrl(pathname, searchParams)
+    if (!url) return
+    
     const pageProperties = {
       url,
       context,
     }
 
     if (window.__SEGMENT_ANALYTICS__) {
-      window.__SEGMENT_ANALYTICS__.then((analytics) => {
+      window.__SEGMENT_ANALYTICS__.then(([analytics]) => {
         analytics.page({
           name: context === 'app' ? 'Cabinet Page View' : 'Public Page View',
           properties: pageProperties,

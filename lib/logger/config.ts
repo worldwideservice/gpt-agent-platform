@@ -135,8 +135,8 @@ export function getPinoOptions(): LoggerOptions {
 
   return {
     ...pinoConfig,
-    ...(transport && { transport }),
-  }
+    ...(transport && { transport: transport as any }),
+  } as LoggerOptions
 }
 
 /**

@@ -1,9 +1,10 @@
 export { useCrmSync } from './use-crm-sync'
-export { useAgentForm } from './use-agent-form'
 export { useTableSearch } from './use-table-search'
-export {
-  useAgentIntegrations,
-  useInstallIntegration,
-  useUpdateIntegration,
-  useDeleteIntegration,
-} from './useAgentIntegrations'
+// Removed agent-related hooks - will be reimplemented for new architecture
+// export { useAgentForm } from './use-agent-form'
+// export {
+//   useAgentIntegrations,
+//   useInstallIntegration,
+//   useUpdateIntegration,
+//   useDeleteIntegration,
+// } from './useAgentIntegrations'

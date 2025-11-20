@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
-import { useInstallIntegration } from '@/lib/hooks'
+// Removed useInstallIntegration hook - will be reimplemented for new architecture
+// import { useInstallIntegration } from '@/lib/hooks'
 
 /**
  * Props for the InstallIntegrationModal component
@@ -27,8 +28,6 @@ interface InstallIntegrationModalProps {
   integrationId: string
   /** Display name of the integration */
   integrationName: string
-  /** ID of the agent to install the integration for */
-  agentId: string
 }
 
 /**
@@ -55,7 +54,6 @@ interface InstallIntegrationModalProps {
  *   onClose={() => setIsOpen(false)}
  *   integrationId={selectedIntegration.id}
  *   integrationName={selectedIntegration.name}
- *   agentId={agent.id}
  * />
  * ```
  */
@@ -64,7 +62,6 @@ export function InstallIntegrationModal({
   onClose,
   integrationId,
   integrationName,
-  agentId,
 }: InstallIntegrationModalProps) {
   const [clientId, setClientId] = useState('')
   const [clientSecret, setClientSecret] = useState('')
@@ -72,19 +69,26 @@ export function InstallIntegrationModal({
   const [isOAuthLoading, setIsOAuthLoading] = useState(false)
   const [oauthError, setOauthError] = useState<string | null>(null)
 
-  const { mutate: installIntegration, isPending } = useInstallIntegration(agentId)
+  // TODO: Reimplement for new architecture
+  // const { mutate: installIntegration, isPending } = useInstallIntegration(agentId)
+  const isPending = false
 
   /**
    * Handles manual installation with Client ID and Client Secret
    */
   const handleInstall = () => {
-    installIntegration(integrationId, {
-      onSuccess: () => {
-        onClose()
-        setClientId('')
-        setClientSecret('')
-      },
-    })
+    // TODO: Reimplement for new architecture
+    // installIntegration(integrationId, {
+    //   onSuccess: () => {
+    //     onClose()
+    //     setClientId('')
+    //     setClientSecret('')
+    //   },
+    // })
+    console.warn('InstallIntegrationModal: Not implemented yet')
+    onClose()
+    setClientId('')
+    setClientSecret('')
   }
 
   /**
@@ -93,10 +97,9 @@ export function InstallIntegrationModal({
    * Steps:
    * 1. Validates baseDomain input
    * 2. Calls OAuth start endpoint to generate authorization URL
-   * 3. Stores agentId and tenantId in cookies
-   * 4. Redirects user to integration provider's authorization page
-   * 5. On success, provider redirects back to callback URL
-   * 6. Callback creates integration record and redirects to integrations page
+   * 3. Redirects user to integration provider's authorization page
+   * 4. On success, provider redirects back to callback URL
+   * 5. Callback creates integration record and redirects to integrations page
    */
   const handleOAuthInstall = async () => {
     if (!baseDomain.trim()) {
@@ -108,16 +111,11 @@ export function InstallIntegrationModal({
     setOauthError(null)
 
     try {
-      // Get current tenant ID from URL
-      const pathParts = window.location.pathname.split('/')
-      const tenantId = pathParts[2] // /manage/[tenantId]/...
-
-      const response = await fetch(`/api/agents/${agentId}/integrations/kommo/oauth/start`, {
+      const response = await fetch('/api/integrations/kommo/oauth/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           baseDomain: baseDomain.trim(),
-          tenantId,
         }),
       })
 
@@ -143,7 +141,7 @@ export function InstallIntegrationModal({
         <DialogHeader>
           <DialogTitle>Установить {integrationName}</DialogTitle>
           <DialogDescription>
-            Выберите способ подключения интеграции к вашему агенту
+            Выберите способ подключения интеграции к вашей организации
           </DialogDescription>
         </DialogHeader>
 

@@ -31,7 +31,7 @@ export async function PUT(
     }
 
     const userId = session.user.id
-    const { tenantId } = params
+    const { tenantId } = await params
 
     // 2. Получаем organization ID из slug
     const supabase = getSupabaseServiceRoleClient()
@@ -90,8 +90,9 @@ export async function PUT(
       message: `${data?.length || 0} notifications marked as read`,
     })
   } catch (error: unknown) {
+    const { tenantId } = await params
     logger.error('Notifications read-all: Unexpected error', error, {
-      endpoint: `/api/manage/${params.tenantId}/notifications/read-all`,
+      endpoint: `/api/manage/${tenantId}/notifications/read-all`,
     })
     return NextResponse.json(
       { error: 'Internal server error' },

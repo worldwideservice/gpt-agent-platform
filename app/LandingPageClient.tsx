@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { 
   Bot, 
   Brain, 
@@ -227,22 +226,6 @@ export function LandingPageClient() {
               </>
             )}
           </div>
-          <ScrollAnimation direction="up" delay={160}>
-            <div className="relative mx-auto mt-8 max-w-5xl">
-              <Image
-                src="/brand/hero-illustration.svg"
-                alt="Иллюстрация интерфейса TON 18 с панелями и графиками"
-                width={640}
-                height={480}
-                priority
-                className="w-full rounded-3xl border border-white/40 shadow-2xl ring-1 ring-brand-focus/10 dark:ring-brand-focus/20"
-              />
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-br from-white/10 via-transparent to-brand-accent/10"
-              />
-            </div>
-          </ScrollAnimation>
         </div>
       </section>
 

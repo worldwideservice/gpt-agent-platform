@@ -5,15 +5,14 @@ import {
   getKnowledgeBaseCategories,
   getKnowledgeBaseArticles,
 } from '@/lib/repositories/knowledge-base'
-import { getAgentAssetsForOrganization } from '@/lib/repositories/agent-assets'
-import { listAgents } from '@/lib/services/agents'
+// Removed agent dependencies - will be reimplemented for new architecture
 
 import type {
   KnowledgeBaseArticle,
   KnowledgeBaseCategory,
   KnowledgeBaseStatsSummary,
 } from '@/types'
-import type { AgentAsset } from '@/lib/repositories/agent-assets'
+// Removed agent types - will be reimplemented for new architecture
 import { logger } from '@/lib/utils/logger'
 
 const overviewSchema = z
@@ -34,7 +33,7 @@ export interface KnowledgeOverview {
   stats: KnowledgeBaseStatsSummary | null
   categories: KnowledgeBaseCategory[]
   articles: KnowledgeBaseArticle[]
-  history: AgentAsset[]
+  history: Array<unknown> // Removed AgentAsset type - will be reimplemented
   agentOptions: Array<{ id: string; name: string }>
 }
 
@@ -50,25 +49,21 @@ export const getKnowledgeOverview = async (
   const includeAgentOptions = parsed?.includeAgentOptions ?? true
 
   try {
-    const [statsResult, categoriesResult, articlesResult, historyResult, agentsResult] = await Promise.all([
+    const [statsResult, categoriesResult, articlesResult] = await Promise.all([
       getKnowledgeBaseStats(organizationId).catch(() => null),
       getKnowledgeBaseCategories(organizationId).catch(() => [] as KnowledgeBaseCategory[]),
       getKnowledgeBaseArticles(organizationId).catch(() => [] as KnowledgeBaseArticle[]),
-      getAgentAssetsForOrganization(organizationId, historyLimit).catch(() => [] as AgentAsset[]),
-      includeAgentOptions
-        ? listAgents(organizationId, { limit: 50 }).catch(() => null)
-        : Promise.resolve(null),
+      // Removed agent-related calls - will be reimplemented for new architecture
     ])
 
-    const agentOptions = agentsResult?.agents
-      ? agentsResult.agents.map((agent) => ({ id: agent.id, name: agent.name }))
-      : []
+    // Removed agent options - will be reimplemented
+    const agentOptions: Array<{ id: string; name: string }> = []
 
     return {
       stats: statsResult,
       categories: categoriesResult,
       articles: articlesResult.slice(0, articlesLimit),
-      history: historyResult,
+      history: [], // Removed agent assets history - will be reimplemented
       agentOptions,
     }
   } catch (error) {

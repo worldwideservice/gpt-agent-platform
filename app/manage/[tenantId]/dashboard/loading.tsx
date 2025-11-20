@@ -1,9 +1,0 @@
-/**
- * Loading state for dashboard page
- */
-
-import { DashboardSkeleton } from '@/components/ui/loading-skeletons'
-
-export default function DashboardLoading() {
-  return <DashboardSkeleton />
-}

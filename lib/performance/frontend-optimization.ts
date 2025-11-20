@@ -188,9 +188,9 @@ export function reportWebVitals(onReport: (metric: WebVitalsMetric) => void): vo
   if (typeof window === 'undefined') return
 
   // Use web-vitals library if available
-  import('web-vitals').then(({ onCLS, onFID, onFCP, onLCP, onTTFB, onINP }) => {
+  import('web-vitals').then(({ onCLS, onFCP, onLCP, onTTFB, onINP }) => {
     onCLS(onReport)
-    onFID(onReport)
+    // onFID is deprecated in web-vitals v3+, use onINP instead
     onFCP(onReport)
     onLCP(onReport)
     onTTFB(onReport)

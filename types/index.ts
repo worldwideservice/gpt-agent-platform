@@ -1,36 +1,6 @@
-export interface AgentSettings {
- language?: string
- welcomeMessage?: string
- description?: string
- presencePenalty?: number
- frequencyPenalty?: number
- defaultChannels?: string[]
- maxResponseLength?: number
- enableMarkdown?: boolean
- knowledgeBaseAllCategories?: boolean
- createTaskOnNotFound?: boolean
- notFoundMessage?: string
- checkBeforeSending?: boolean
- dealFields?: string[]
- contactFields?: string[]
-}
-
-export interface Agent {
- id: string
- name: string
- status: 'active' | 'inactive' | 'draft'
- model: string | null
- messagesTotal: number
- lastActivityAt: string | null
- ownerName: string | null
- createdAt: string
- updatedAt: string
- temperature: number
- maxTokens: number
- responseDelaySeconds: number
- instructions?: string | null
- settings: AgentSettings
-}
+// Removed Agent types - will be reimplemented for new architecture
+// export interface AgentSettings { ... }
+// export interface Agent { ... }
 
 export interface DashboardStats {
  monthlyResponses: number

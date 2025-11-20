@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { ShieldCheck } from 'lucide-react'
 
-import { Button, Input } from '@/components/ui'
+import { Button, Input, Label } from '@/components/ui'
 import { Card } from '@/components/ui/Card'
 
 interface ConfirmFormProps {
@@ -81,28 +81,32 @@ export const ConfirmForm = ({ token }: ConfirmFormProps) => {
  </Link>
  </div>
  ) : (
- <form className="space-y-4" onSubmit={handleSubmit}>
- <Input
- id="password"
- label="Новый пароль"
- type="password"
- autoComplete="new-password"
- value={password}
- onChange={(event) => setPassword(event.target.value)}
- required
- minLength={8}
- />
+<form className="space-y-4" onSubmit={handleSubmit}>
+<div className="space-y-2">
+<Label htmlFor="password">Новый пароль</Label>
+<Input
+id="password"
+type="password"
+autoComplete="new-password"
+value={password}
+onChange={(event) => setPassword(event.target.value)}
+required
+minLength={8}
+/>
+</div>
 
- <Input
- id="passwordConfirm"
- label="Подтвердите пароль"
- type="password"
- autoComplete="new-password"
- value={passwordConfirm}
- onChange={(event) => setPasswordConfirm(event.target.value)}
- required
- minLength={8}
- />
+<div className="space-y-2">
+<Label htmlFor="passwordConfirm">Подтвердите пароль</Label>
+<Input
+id="passwordConfirm"
+type="password"
+autoComplete="new-password"
+value={passwordConfirm}
+onChange={(event) => setPasswordConfirm(event.target.value)}
+required
+minLength={8}
+/>
+</div>
 
  {error && <p className="text-sm text-red-600">{error}</p>}
 

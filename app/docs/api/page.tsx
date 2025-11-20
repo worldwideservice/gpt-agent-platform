@@ -18,33 +18,45 @@ export default function ApiPage() {
   const endpoints = [
     {
       method: 'POST',
-      path: '/api/agents',
-      description: 'Создание нового агента',
+      path: '/api/documents/upload',
+      description: 'Загрузка документа в базу знаний',
       auth: 'Требуется',
     },
     {
       method: 'GET',
-      path: '/api/agents',
-      description: 'Получение списка агентов',
+      path: '/api/knowledge-base/articles',
+      description: 'Получение статей базы знаний',
       auth: 'Требуется',
     },
     {
       method: 'GET',
-      path: '/api/agents/{id}',
-      description: 'Получение информации об агенте',
+      path: '/api/knowledge-base/categories',
+      description: 'Получение категорий базы знаний',
       auth: 'Требуется',
     },
     {
       method: 'POST',
-      path: '/api/chat',
-      description: 'Отправка сообщения агенту',
+      path: '/api/documents/search',
+      description: 'Семантический поиск по документам',
+      auth: 'Требуется',
+    },
+    {
+      method: 'POST',
+      path: '/api/integrations/kommo/oauth/start',
+      description: 'Запуск OAuth авторизации Kommo',
       auth: 'Требуется',
     },
     {
       method: 'GET',
-      path: '/api/knowledge-base',
-      description: 'Получение базы знаний',
+      path: '/api/integrations/kommo/status',
+      description: 'Получение статуса интеграции Kommo',
       auth: 'Требуется',
+    },
+    {
+      method: 'POST',
+      path: '/api/crm/webhook',
+      description: 'Webhook для получения событий из CRM',
+      auth: 'Не требуется',
     },
   ]
 
@@ -164,22 +176,21 @@ export default function ApiPage() {
           </CardHeader>
           <CardContent>
             <p className="text-gray-700 dark:text-gray-300 mb-4">
-              Пример создания нового агента:
+              Пример загрузки документа в базу знаний:
             </p>
             <div className="bg-gray-900 dark:bg-gray-800 rounded-lg p-4 font-mono text-sm text-gray-100 overflow-x-auto">
-              <div className="text-gray-400">{'// POST /api/agents'}</div>
+              <div className="text-gray-400">{'// POST /api/documents/upload'}</div>
               <div className="mt-2">
                 <div className="text-purple-400">curl</div>
                 <div className="text-blue-400"> -X POST</div>
-                <div className="text-green-400"> {`{BASE_URL}`}/api/agents</div>
+                <div className="text-green-400"> {`{BASE_URL}`}/api/documents/upload</div>
                 <div className="text-yellow-400">{' -H "Authorization: Bearer YOUR_TOKEN"'}</div>
-                <div className="text-yellow-400">{' -H "Content-Type: application/json"'}</div>
-                <div className="text-blue-400"> -d</div>
-                <div className="text-gray-300">{` '{`}</div>
-                <div className="text-gray-300 ml-4">{'  "name": "Мой агент",'}</div>
-                <div className="text-gray-300 ml-4">{'  "description": "Описание агента",'}</div>
-                <div className="text-gray-300 ml-4">{'  "model": "gpt-4o"'}</div>
-                <div className="text-gray-300">{' } \''}</div>
+                <div className="text-blue-400"> -F</div>
+                <div className="text-gray-300">{` 'file=@document.pdf'`}</div>
+                <div className="text-blue-400"> -F</div>
+                <div className="text-gray-300">{` 'title=Мой документ'`}</div>
+                <div className="text-blue-400"> -F</div>
+                <div className="text-gray-300">{` 'category=faq'`}</div>
               </div>
               <div className="text-gray-500 text-xs mt-3">
                 * Замените {`{BASE_URL}`} на актуальный базовый URL, полученный у поддержки

@@ -1,7 +1,5 @@
 /**
  * Admin Authentication and Authorization
- *
- * Задача 5.1: Security Audit
  * Усиленная проверка admin доступа для критичных endpoints
  */
 
@@ -35,8 +33,8 @@ export async function isAdmin(request: NextRequest): Promise<boolean> {
       return false
     }
 
-    // 3. Проверяем роль в сессии
-    if (session.user.role === 'admin') {
+    // 3. Проверяем роль в сессии (если есть)
+    if ('role' in session.user && session.user.role === 'admin') {
       return true
     }
 

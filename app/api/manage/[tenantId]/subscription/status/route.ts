@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { checkLicense, getOrganizationSubscription } from '@/lib/services/billing'
+import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { getErrorMessage } from '@/lib/utils'
 
 export async function GET(
@@ -37,14 +38,20 @@ export async function GET(
     const license = await checkLicense(tenantId)
 
     // Вычисляем дату истечения для UI
-    const expiryDate = subscription?.current_period_end || null
+    const expiryDate = subscription?.nextBillDate || null
 
     // Определяем название плана
-    let planName = 'Free'
-    if (subscription) {
-      // Можно брать из таблицы billing_plans по plan_id
-      planName = subscription.plan_id || 'Pro Plan'
-    }
+    const planName = subscription?.planName || 'Free'
+
+    // Получаем полную информацию о подписке из БД для деталей
+    const supabase = getSupabaseServiceRoleClient()
+    const { data: subDetails } = await supabase
+      .from('subscriptions')
+      .select('id, paddle_subscription_id, current_period_start, current_period_end, cancel_at_period_end, plan_id')
+      .eq('org_id', tenantId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
     return NextResponse.json({
       isValid: license.isValid,
@@ -52,13 +59,13 @@ export async function GET(
       daysLeft: license.daysLeft || 0,
       expiryDate: expiryDate,
       planName: planName,
-      subscription: subscription
+      subscription: subDetails
         ? {
-            id: subscription.id,
-            paddle_subscription_id: subscription.paddle_subscription_id,
-            current_period_start: subscription.current_period_start,
-            current_period_end: subscription.current_period_end,
-            cancel_at_period_end: subscription.cancel_at_period_end,
+            id: subDetails.id,
+            paddle_subscription_id: subDetails.paddle_subscription_id || null,
+            current_period_start: subDetails.current_period_start || null,
+            current_period_end: subDetails.current_period_end || null,
+            cancel_at_period_end: subDetails.cancel_at_period_end || false,
           }
         : null,
     })

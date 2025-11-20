@@ -39,7 +39,7 @@ export async function GET(
     }
 
     const userId = session.user.id
-    const { tenantId } = params
+    const { tenantId } = await params
 
     // 2. Валидация query параметров
     const searchParams = Object.fromEntries(request.nextUrl.searchParams)
@@ -153,8 +153,9 @@ export async function GET(
       unreadCount: unreadCount || 0,
     })
   } catch (error: unknown) {
+    const { tenantId } = await params
     logger.error('Notifications GET: Unexpected error', error, {
-      endpoint: `/api/manage/${params.tenantId}/notifications`,
+      endpoint: `/api/manage/${tenantId}/notifications`,
     })
     return NextResponse.json(
       { error: 'Internal server error' },

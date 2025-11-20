@@ -5,7 +5,7 @@ import { decryptSecret } from '../lib/crypto.ts'
 import { getSupabaseClient } from '../lib/supabase.ts'
 import { kommoApiRequest, refreshKommoToken } from '../providers/kommo'
 import type { Database, Json } from '../lib/types.ts'
-import { processAsset } from './process-asset'
+// Removed process-asset task - will be reimplemented for new architecture
 import { extractKnowledgeGraph } from './extract-knowledge-graph'
 import { processLargeFile, generateReport, processBulkData, fineTuneModel } from './heavy-processing'
 import { KommoAPI } from '@/lib/crm/kommo'
@@ -696,9 +696,10 @@ export const getTaskHandlers = () => {
  }) => {
  await sendKommoMessage(payload)
  },
- 'process-asset': async (payload: { assetId: string; organizationId: string }) => {
- await processAsset(payload)
- },
+ // Removed process-asset task - will be reimplemented for new architecture
+ // 'process-asset': async (payload: { assetId: string; organizationId: string }) => {
+ //   await processAsset(payload)
+ // },
  'extract-knowledge-graph': async (payload: {
  assetId?: string
  articleId?: string

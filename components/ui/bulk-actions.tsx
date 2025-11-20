@@ -201,7 +201,7 @@ export function BulkSelectHeader({
   return (
     <Checkbox
       checked={checked}
-      indeterminate={indeterminate}
+      data-state={indeterminate ? 'indeterminate' : checked ? 'checked' : 'unchecked'}
       onCheckedChange={onCheckedChange}
       aria-label={ariaLabel}
     />

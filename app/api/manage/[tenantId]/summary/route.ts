@@ -16,17 +16,18 @@ const isDemoEnvironment = () =>
 
 export const GET = async (_request: NextRequest, { params }: { params: Promise<{ tenantId: string }> }) => {
   const session = await auth()
+  const { tenantId } = await params
 
   if (isDemoEnvironment()) {
-    const tenantId = session?.user?.orgId ?? params.tenantId
-    return NextResponse.json({ success: true, data: createDemoWorkspaceSummary(tenantId) })
+    const orgId = session?.user?.orgId ?? tenantId
+    return NextResponse.json({ success: true, data: createDemoWorkspaceSummary(orgId) })
   }
 
   if (!session?.user?.orgId) {
     return NextResponse.json({ success: false, error: 'Не авторизовано' }, { status: 401 })
   }
 
-  if (session.user.orgId !== params.tenantId && params.tenantId !== session.user.orgId) {
+  if (session.user.orgId !== tenantId && tenantId !== session.user.orgId) {
     return NextResponse.json({ success: false, error: 'Доступ запрещён' }, { status: 403 })
   }
 

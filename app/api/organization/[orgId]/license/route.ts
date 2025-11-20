@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from '@/lib/auth'
-import { authOptions } from '@/lib/providers/auth-provider'
+import { authOptions } from '@/lib/auth'
 import { getSubscription } from '@/lib/repositories/subscriptions'
 import { logger } from '@/lib/utils/logger'
 

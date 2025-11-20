@@ -34,8 +34,6 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   categories: 'Категории',
   articles: 'Статьи',
 
-  // Test Chat
-  'test-chat': 'Тестовый чат',
 
   // Integrations
   integrations: 'Интеграции',
@@ -57,7 +55,7 @@ const BREADCRUMB_LABELS: Record<string, string> = {
  */
 function generateBreadcrumbs(pathname: string, tenantId: string) {
   const segments = pathname.split('/').filter(Boolean)
-  const breadcrumbs: Array<{ label: string; href?: string }> = []
+  const breadcrumbs: Array<{ label: string; href?: string; icon?: React.ReactNode }> = []
 
   // Начинаем с "Главная" если мы не на главной странице
   if (segments.length > 2) {
@@ -137,7 +135,7 @@ export function PageBreadcrumbs({
   const { tenantId } = useTenant()
 
   // Используем кастомные items или генерируем автоматически
-  const breadcrumbs = items || generateBreadcrumbs(pathname, tenantId)
+  const breadcrumbs = items || generateBreadcrumbs(pathname, tenantId ?? '')
 
   // Не показываем breadcrumbs если меньше 2 элементов
   if (breadcrumbs.length < 2) {
@@ -158,7 +156,7 @@ export function PageBreadcrumbs({
                   {isLast ? (
                     <BreadcrumbPage className="flex items-center gap-1.5">
                       {isFirst && showHomeIcon && <Home className="h-4 w-4" />}
-                      {item.icon}
+                      {item.icon && item.icon}
                       {item.label}
                     </BreadcrumbPage>
                   ) : (
@@ -168,7 +166,7 @@ export function PageBreadcrumbs({
                         className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
                       >
                         {isFirst && showHomeIcon && <Home className="h-4 w-4" />}
-                        {item.icon}
+                        {item.icon && item.icon}
                         {item.label}
                       </Link>
                     </BreadcrumbLink>

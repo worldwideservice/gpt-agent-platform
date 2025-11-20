@@ -106,7 +106,7 @@ export const getNotifications = async (
  const { data, error } = await query
 
  if (error) {
- logger.error('Failed to fetch notifications', error, { organizationId, userId, unreadOnly: options?.unreadOnly })
+ logger.error('Failed to fetch notifications', { error: error?.message || String(error), organizationId, userId, unreadOnly: options?.unreadOnly })
  throw new Error('Не удалось загрузить уведомления')
  }
 
@@ -146,7 +146,7 @@ export const markAllNotificationsAsRead = async (organizationId: string, userId?
  const { error } = await query
 
  if (error) {
- logger.error('Failed to mark all notifications as read', error, { organizationId, userId })
+ logger.error('Failed to mark all notifications as read', { error: error?.message || String(error), organizationId, userId })
  throw new Error('Не удалось отметить все уведомления как прочитанные')
  }
 }

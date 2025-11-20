@@ -40,7 +40,7 @@ export function KnowledgeBaseClient({ tenantId }: KnowledgeBaseClientProps) {
     <div className="space-y-6">
       <KnowledgeBaseOverview tenantId={tenantId} stats={data.stats} />
       <KnowledgeBaseCollections categories={data.categories} articles={data.articles} />
-      <KnowledgeProcessingHistory items={data.history} />
+      <KnowledgeProcessingHistory items={(data.history || []) as any[]} />
     </div>
   )
 }

@@ -33,7 +33,7 @@ function getBaseLogger(): PinoLogger {
       baseLogger = pino(getPinoOptions())
     } catch (error) {
       // Fallback to simple console logger if pino fails during build
-      baseLogger = {
+      const fallbackLogger = {
         info: (...args: any[]) => console.log('[INFO]', ...args),
         warn: (...args: any[]) => console.warn('[WARN]', ...args),
         error: (...args: any[]) => console.error('[ERROR]', ...args),
@@ -41,10 +41,11 @@ function getBaseLogger(): PinoLogger {
         trace: (...args: any[]) => console.log('[TRACE]', ...args),
         fatal: (...args: any[]) => console.error('[FATAL]', ...args),
         child: () => getBaseLogger(),
-      } as any
+      }
+      baseLogger = fallbackLogger as unknown as PinoLogger
     }
   }
-  return baseLogger
+  return baseLogger as PinoLogger
 }
 
 /**
@@ -277,4 +278,4 @@ export const logger = new EnhancedLogger(getBaseLogger())
 // Export types and utilities
 export * from './async-storage'
 export * from './config'
-export type { LogContext, LogLevel }
+// LogContext and LogLevel are already exported above, no need to re-export

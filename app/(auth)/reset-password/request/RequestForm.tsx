@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { Mail } from 'lucide-react'
 
-import { Button, Input } from '@/components/ui'
+import { Button, Input, Label } from '@/components/ui'
 import { Card } from '@/components/ui/Card'
 
 interface ResetResponse {
@@ -60,16 +60,18 @@ export const RequestForm = () => {
  </p>
  </div>
 
- <form className="space-y-4" onSubmit={handleSubmit}>
- <Input
- id="email"
- label="Email"
- type="email"
- autoComplete="email"
- value={email}
- onChange={(event) => setEmail(event.target.value)}
- required
- />
+<form className="space-y-4" onSubmit={handleSubmit}>
+<div className="space-y-2">
+<Label htmlFor="email">Email</Label>
+<Input
+id="email"
+type="email"
+autoComplete="email"
+value={email}
+onChange={(event) => setEmail(event.target.value)}
+required
+/>
+</div>
 
  {error && <p className="text-sm text-red-600">{error}</p>}
 

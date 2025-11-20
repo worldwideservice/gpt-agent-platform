@@ -35,7 +35,7 @@ export async function POST(
     }
 
     // Отменяем подписку через Paddle API
-    const { cancelAtPeriodEnd } = validation.data
+    const { cancelAtPeriodEnd = true } = validation.data
     const success = await cancelSubscription(tenantId, cancelAtPeriodEnd)
 
     if (!success) {

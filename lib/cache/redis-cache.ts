@@ -3,8 +3,16 @@
  * Caching layer for API responses and database queries
  */
 
-import { redis } from '../redis'
+import { getRedisClient } from '../redis'
 import { logger } from '../logger'
+
+function getRedis() {
+  const client = getRedisClient()
+  if (!client) {
+    throw new Error('Redis client not available')
+  }
+  return client
+}
 
 export interface CacheOptions {
   /** Cache TTL in seconds */
@@ -31,11 +39,12 @@ export async function getCache<T = any>(
   const cacheKey = `${prefix}:${key}`
 
   try {
+    const redis = getRedis()
     const cached = await redis.get(cacheKey)
 
     if (!cached) return null
 
-    const parsed = JSON.parse(cached)
+    const parsed = JSON.parse(cached as string)
 
     logger.debug('Cache hit', { key: cacheKey })
 
@@ -63,6 +72,7 @@ export async function setCache<T = any>(
   }
 
   try {
+    const redis = getRedis()
     const serialized = JSON.stringify(value)
 
     await redis.setex(cacheKey, ttl, serialized)
@@ -84,6 +94,7 @@ export async function deleteCache(
   const cacheKey = `${prefix}:${key}`
 
   try {
+    const redis = getRedis()
     await redis.del(cacheKey)
 
     logger.debug('Cache deleted', { key: cacheKey })
@@ -97,6 +108,7 @@ export async function deleteCache(
  */
 export async function clearCache(prefix: string = DEFAULT_PREFIX): Promise<void> {
   try {
+    const redis = getRedis()
     const keys = await redis.keys(`${prefix}:*`)
 
     if (keys.length > 0) {
@@ -137,6 +149,7 @@ export async function cacheOrFetch<T = any>(
  */
 export async function invalidatePattern(pattern: string): Promise<void> {
   try {
+    const redis = getRedis()
     const keys = await redis.keys(pattern)
 
     if (keys.length > 0) {
@@ -209,8 +222,12 @@ export async function getCacheStats(prefix: string = DEFAULT_PREFIX): Promise<{
   memory: string
 }> {
   try {
+    const redis = getRedis()
     const keys = await redis.keys(`${prefix}:*`)
-    const info = await redis.info('memory')
+    // Redis info method may not be available on all clients
+    const info = 'info' in redis && typeof redis.info === 'function' 
+      ? await redis.info('memory') 
+      : 'used_memory_human:0B'
 
     const memoryMatch = info.match(/used_memory_human:(.+)/)
     const memory = memoryMatch ? memoryMatch[1].trim() : 'unknown'

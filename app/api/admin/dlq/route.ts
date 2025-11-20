@@ -131,7 +131,8 @@ export async function POST(request: NextRequest) {
     const queueName = process.env.JOB_QUEUE_NAME || 'default-queue'
     const mainQueue = new Queue(queueName, { connection })
 
-    const success = await dlqInstance.retryFromDeadLetter(dlqJobId, mainQueue)
+    // Type assertion для решения проблемы с разными версиями BullMQ
+    const success = await dlqInstance.retryFromDeadLetter(dlqJobId, mainQueue as any)
 
     await mainQueue.close()
 

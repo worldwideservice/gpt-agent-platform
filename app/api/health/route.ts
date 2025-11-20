@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 
 import { checkCacheHealth } from '@/lib/cache'
-import { checkRateLimitHealth, getRateLimitBackend } from '@/lib/rate-limit'
+import { checkRateLimitHealth } from '@/lib/rate-limit'
 import { logger } from '@/lib/utils/logger'
 
 export const GET = async (request: NextRequest) => {
@@ -34,7 +34,8 @@ export const GET = async (request: NextRequest) => {
  }
  )
 
- const { error } = await supabase.from('agents').select('id').limit(1)
+ // Removed agents table check - will be reimplemented for new architecture
+ const { error } = await supabase.from('organizations').select('id').limit(1)
 
  health.database = error ? 'error' : 'ok'
  health.database_error = error?.message
@@ -68,12 +69,9 @@ health.redis_error = redisError instanceof Error ? redisError.message : 'Unknown
  // Check rate limiting backend
  try {
    const rateLimitHealth = await checkRateLimitHealth()
-   health.rateLimit = rateLimitHealth.status
-   health.rateLimit_backend = rateLimitHealth.backend
-   health.rateLimit_message = rateLimitHealth.message
-
-   if (rateLimitHealth.details) {
-     health.rateLimit_details = rateLimitHealth.details
+   health.rateLimit = rateLimitHealth.healthy ? 'ok' : 'error'
+   if (!rateLimitHealth.healthy) {
+     health.rateLimit_error = rateLimitHealth.error
    }
  } catch (rateLimitError) {
    health.rateLimit = 'error'
@@ -86,7 +84,7 @@ health.redis_error = redisError instanceof Error ? redisError.message : 'Unknown
    const queueStats = await getQueueStats()
 
    health.queue = 'ok'
-   health.queue_stats = queueStats
+   health.queue_stats = JSON.stringify(queueStats) // Convert to string for health object
  } catch (queueError) {
    health.queue = 'error'
    health.queue_error = queueError instanceof Error ? queueError.message : 'Unknown error'

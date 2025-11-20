@@ -36,7 +36,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     // Log error to logger
     logger.error('ErrorBoundary caught an error', {
-      error: error.message,
+      message: error.message,
       stack: error.stack,
       componentStack: errorInfo.componentStack,
     })
@@ -68,7 +68,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     window.location.href = '/'
   }
 
-  handleReportError = async (): void => {
+  handleReportError = async (): Promise<void> => {
     const { error, errorInfo } = this.state
 
     if (!error) return

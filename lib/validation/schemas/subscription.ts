@@ -21,6 +21,7 @@ export const cancelSubscriptionSchema = z.object({
   confirm: z.literal(true, {
     errorMap: () => ({ message: 'Confirmation is required to cancel.' }),
   }),
+  cancelAtPeriodEnd: z.boolean().optional().default(true),
 })
 
 export type CancelSubscriptionInput = z.infer<typeof cancelSubscriptionSchema>

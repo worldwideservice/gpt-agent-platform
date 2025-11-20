@@ -8,7 +8,7 @@
 
 import React, { Component, ReactNode } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/Card'
-import { Button } from './ui/button'
+import { Button } from './ui/Button'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { logger } from '@/lib/logger'
 

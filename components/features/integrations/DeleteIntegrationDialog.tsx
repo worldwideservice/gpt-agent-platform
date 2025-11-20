@@ -10,7 +10,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { useDeleteIntegration } from '@/lib/hooks'
+// Removed useDeleteIntegration hook - will be reimplemented for new architecture
+// import { useDeleteIntegration } from '@/lib/hooks'
 
 /**
  * Props for the DeleteIntegrationDialog component
@@ -24,8 +25,6 @@ interface DeleteIntegrationDialogProps {
   integrationId: string
   /** Display name of the integration (shown in confirmation message) */
   integrationName: string
-  /** ID of the agent this integration belongs to */
-  agentId: string
 }
 
 /**
@@ -52,7 +51,6 @@ interface DeleteIntegrationDialogProps {
  *   onClose={() => setIsDeleteOpen(false)}
  *   integrationId={toDelete.id}
  *   integrationName={toDelete.name}
- *   agentId={agent.id}
  * />
  * ```
  */
@@ -61,16 +59,26 @@ export function DeleteIntegrationDialog({
   onClose,
   integrationId,
   integrationName,
-  agentId,
 }: DeleteIntegrationDialogProps) {
-  const { mutate: deleteIntegration, isPending } = useDeleteIntegration(agentId)
+  const [isPending, setIsPending] = useState(false)
 
-  const handleDelete = () => {
-    deleteIntegration(integrationId, {
-      onSuccess: () => {
-        onClose()
-      },
-    })
+  const handleDelete = async () => {
+    setIsPending(true)
+    try {
+      // TODO: Implement API endpoint for deleting integration
+      // const response = await fetch(`/api/integrations/${integrationId}`, {
+      //   method: 'DELETE',
+      // })
+      // if (!response.ok) {
+      //   throw new Error('Не удалось удалить интеграцию')
+      // }
+      console.warn('DeleteIntegrationDialog: Not implemented yet')
+      onClose()
+    } catch (error) {
+      console.error('Failed to delete integration:', error)
+    } finally {
+      setIsPending(false)
+    }
   }
 
   return (

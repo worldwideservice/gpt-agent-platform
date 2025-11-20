@@ -61,73 +61,7 @@ export async function GET(request: NextRequest) {
     if (backendResult.success && backendResult.connection?.org_id) {
       const organization = await getOrganizationById(backendResult.connection.org_id)
 
-      // Check if this is an agent-specific OAuth flow
-      const cookieStore = await cookies()
-      const agentId = cookieStore.get('kommo_oauth_agent_id')?.value
-      const tenantId = cookieStore.get('kommo_oauth_tenant_id')?.value
-
-      if (agentId && tenantId && organization?.slug) {
-        // Create agent integration record
-        try {
-          const supabase = getSupabaseServiceRoleClient()
-
-          // Check if integration already exists
-          const { data: existing } = await supabase
-            .from('agent_integrations')
-            .select('id')
-            .eq('agent_id', agentId)
-            .eq('org_id', backendResult.connection.org_id)
-            .eq('integration_type', 'kommo')
-            .single()
-
-          if (!existing) {
-            // Create new agent integration
-            await supabase.from('agent_integrations').insert({
-              agent_id: agentId,
-              org_id: backendResult.connection.org_id,
-              integration_type: 'kommo',
-              is_installed: true,
-              is_active: true,
-              settings: {
-                oauth: true,
-                base_domain: backendResult.connection.base_domain,
-              },
-            })
-          } else {
-            // Update existing integration
-            await supabase
-              .from('agent_integrations')
-              .update({
-                is_installed: true,
-                is_active: true,
-                settings: {
-                  oauth: true,
-                  base_domain: backendResult.connection.base_domain,
-                },
-              })
-              .eq('id', existing.id)
-          }
-
-          // Clear cookies
-          cookieStore.delete('kommo_oauth_agent_id')
-          cookieStore.delete('kommo_oauth_tenant_id')
-
-          // Redirect to agent integrations page
-          const origin = new URL(request.url).origin
-          const redirectUrl = new URL(
-            `/manage/${tenantId}/ai-agents/${agentId}/edit/integrations`,
-            origin
-          )
-          redirectUrl.searchParams.set('provider', 'kommo')
-          redirectUrl.searchParams.set('status', 'success')
-          return NextResponse.redirect(redirectUrl)
-        } catch (dbError) {
-          console.error('Failed to create agent integration:', dbError)
-          // Fall through to organization-level redirect
-        }
-      }
-
-      // Organization-level redirect (default)
+      // Organization-level redirect
       if (organization?.slug) {
         const origin = new URL(request.url).origin
         const redirectUrl = new URL(`/manage/${organization.slug}/integrations`, origin)

@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from '@/lib/auth'
-import { authOptions } from '@/lib/providers/auth-provider'
+import { authOptions } from '@/lib/auth'
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/admin'
 import { logger } from '@/lib/utils/logger'
 
@@ -128,14 +128,6 @@ export async function GET(request: NextRequest) {
         url: `/manage/${orgId}/integrations`,
         category: 'page' as const,
         icon: 'Plug',
-      },
-      {
-        id: 'test-chat',
-        title: 'Test Chat',
-        description: 'Test your agents',
-        url: `/manage/${orgId}/test-chat`,
-        category: 'page' as const,
-        icon: 'MessageSquare',
       },
       {
         id: 'settings',

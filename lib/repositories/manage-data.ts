@@ -1,13 +1,15 @@
 import { cache } from 'react'
 
-import { listAgents } from '@/lib/services/agents'
+// Removed agent dependencies - will be reimplemented for new architecture
+// import { listAgents } from '@/lib/services/agents'
 import { getKnowledgeOverview } from '@/lib/services/knowledge'
 import { getWorkspaceSummary, type WorkspaceSummary } from '@/lib/repositories/manage-summary'
 import { getIntegrationOverview } from '@/lib/services/integrations'
 import type { KnowledgeOverview } from '@/lib/services/knowledge'
-import type { Agent } from '@/types'
+// Removed Agent type - will be reimplemented for new architecture
+// import type { Agent } from '@/types'
 import type { DashboardStats } from '@/types'
-import { getDashboardStats } from '@/lib/repositories/agents'
+// Removed agent dependencies - will be reimplemented for new architecture
 
 export type ManageDataError = 'fetchFailed'
 
@@ -27,7 +29,7 @@ export interface ManageDashboardData {
 }
 
 export interface ManageAgentsData {
-  agents: Agent[]
+  agents: Array<unknown> // Removed Agent type - will be reimplemented
   total: number
   summary: WorkspaceSummary | null
   error?: ManageDataError
@@ -45,36 +47,33 @@ export interface ManageIntegrationsData {
 }
 
 export const loadManageDashboardData = cache(async (organizationId: string): Promise<ManageDashboardData> => {
-  const [statsResult, summaryResult] = await Promise.allSettled([
-    getDashboardStats(organizationId),
+  const [summaryResult] = await Promise.allSettled([
+    // Removed getDashboardStats - will be reimplemented for new architecture
     getWorkspaceSummary(organizationId),
   ])
 
-  const stats = statsResult.status === 'fulfilled' ? statsResult.value : null
   const summary = summaryResult.status === 'fulfilled' ? summaryResult.value : null
-  const error =
-    statsResult.status === 'rejected' || summaryResult.status === 'rejected' ? ('fetchFailed' as ManageDataError) : undefined
+  const error = summaryResult.status === 'rejected' ? ('fetchFailed' as ManageDataError) : undefined
 
   return {
-    stats: stats ?? ZERO_DASHBOARD_STATS,
+    stats: ZERO_DASHBOARD_STATS, // Removed stats - will be reimplemented
     summary,
     error,
   }
 })
 
 export const loadManageAgentsData = cache(async (organizationId: string): Promise<ManageAgentsData> => {
-  const [agentsResult, summaryResult] = await Promise.allSettled([
-    listAgents(organizationId, { limit: 50 }),
+  // Removed agent loading - will be reimplemented for new architecture
+  const [summaryResult] = await Promise.allSettled([
     getWorkspaceSummary(organizationId),
   ])
 
-  const agentsValue = agentsResult.status === 'fulfilled' ? agentsResult.value : null
   const summary = summaryResult.status === 'fulfilled' ? summaryResult.value : null
-  const error = agentsResult.status === 'rejected' || summaryResult.status === 'rejected' ? 'fetchFailed' : undefined
+  const error = summaryResult.status === 'rejected' ? 'fetchFailed' : undefined
 
   return {
-    agents: agentsValue?.agents ?? [],
-    total: agentsValue?.total ?? 0,
+    agents: [], // Removed agents - will be reimplemented
+    total: 0,
     summary,
     error,
   }
@@ -83,35 +82,29 @@ export const loadManageAgentsData = cache(async (organizationId: string): Promis
 export const loadManageKnowledgeData = cache(async (organizationId: string): Promise<ManageKnowledgeData> => {
   const results = await Promise.allSettled([
     getKnowledgeOverview(organizationId, { articlesLimit: 5, historyLimit: 10 }),
-    listAgents(organizationId, { limit: 50 }),
+    // Removed listAgents - will be reimplemented for new architecture
     getWorkspaceSummary(organizationId),
   ])
 
-  const [overviewResult, agentsResult, summaryResult] = results
+  const [overviewResult, summaryResult] = results
 
   const overview = overviewResult.status === 'fulfilled'
     ? overviewResult.value
     : ({ stats: null, categories: [], articles: [], history: [], agentOptions: [] } satisfies KnowledgeOverview)
 
-  const agentOptions =
-    agentsResult.status === 'fulfilled'
-      ? agentsResult.value.agents.map((agent) => ({ id: agent.id, name: agent.name }))
-      : overview.agentOptions
-
   const summary = summaryResult.status === 'fulfilled' ? summaryResult.value : null
 
   const knowledgeFailed = overviewResult.status === 'rejected'
-  const agentsFailed = agentsResult.status === 'rejected'
   const summaryFailed = summaryResult.status === 'rejected'
 
-  const error = knowledgeFailed && agentsFailed && summaryFailed ? ('fetchFailed' as ManageDataError) : undefined
+  const error = knowledgeFailed && summaryFailed ? ('fetchFailed' as ManageDataError) : undefined
 
   return {
     stats: overview.stats,
     categories: overview.categories,
     articles: overview.articles,
     history: overview.history,
-    agentOptions,
+    agentOptions: overview.agentOptions,
     summary,
     error,
   }
