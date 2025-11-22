@@ -68,11 +68,6 @@ const syncPipelinesSchema = z.object({
  provider: z.string().optional(),
 })
 
-const syncContactsSchema = z.object({
- orgId: z.string().uuid(),
- provider: z.string().optional(),
-})
-
 const sendMessageSchema = z.object({
  orgId: z.string().uuid(),
  provider: z.string().optional(),
@@ -213,11 +208,6 @@ export const registerKommoRoutes = async (fastify: FastifyInstance) => {
  requestedAt: queuedAt,
  error: null,
  },
- contacts: {
- status: 'queued',
- requestedAt: queuedAt,
- error: null,
- },
  })
 
  const { data: updatedConnection, error: updateError } = await supabase
@@ -231,6 +221,7 @@ export const registerKommoRoutes = async (fastify: FastifyInstance) => {
  throw updateError ?? new Error('Failed to update CRM connection metadata')
  }
 
+ // Синхронизируем воронки, кастомные поля и действия
  await enqueueJob(queue, {
  type: 'crm:sync-pipelines',
  provider: 'kommo',
@@ -238,18 +229,6 @@ export const registerKommoRoutes = async (fastify: FastifyInstance) => {
  connectionId: updatedConnection.id,
  baseDomain: updatedConnection.base_domain,
  })
-
- await enqueueJob(
- queue,
- {
- type: 'crm:sync-contacts',
- provider: 'kommo',
- orgId: updatedConnection.org_id,
- connectionId: updatedConnection.id,
- baseDomain: updatedConnection.base_domain,
- },
- { jobId: `crm-sync-contacts-${updatedConnection.id}` },
- )
 
  reply.send({ success: true, connection: updatedConnection })
  })
@@ -313,51 +292,8 @@ export const registerKommoRoutes = async (fastify: FastifyInstance) => {
  reply.send({ success: true })
 })
 
- fastify.post('/sync/contacts', async (request, reply) => {
- const payload = syncContactsSchema.parse(request.body)
-
- const connection = await getKommoConnection(supabase, payload.orgId, payload.provider ?? 'kommo')
-
- if (!connection) {
- reply.status(404).send({ success: false, error: 'Kommo connection not found' })
- return
- }
-
- const queuedAt = new Date().toISOString()
-
- const { error: updateError } = await supabase
- .from('crm_connections')
- .update({
- metadata: mergeSyncMetadata(connection.metadata, {
- status: 'queued',
- provider: connection.provider,
- contacts: {
- status: 'queued',
- requestedAt: queuedAt,
- error: null,
- },
- }),
- })
- .eq('id', connection.id)
-
- if (updateError) {
- throw updateError
- }
-
- await enqueueJob(
- queue,
- {
- type: 'crm:sync-contacts',
- provider: 'kommo',
- orgId: payload.orgId,
- connectionId: connection.id,
- baseDomain: connection.base_domain,
- },
- { jobId: `crm-sync-contacts-${connection.id}` },
- )
-
- reply.send({ success: true })
- })
+ // DEPRECATED: Endpoint /sync/contacts удален - синхронизация контактов не требуется
+ // Синхронизируются только: воронки, этапы, кастомные поля, действия
 
  fastify.post('/messages/send', async (request, reply) => {
  const payload = sendMessageSchema.parse(request.body)

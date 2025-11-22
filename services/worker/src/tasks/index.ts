@@ -8,7 +8,7 @@ import type { Database, Json } from '../lib/types.ts'
 // Removed process-asset task - will be reimplemented for new architecture
 import { extractKnowledgeGraph } from './extract-knowledge-graph'
 import { processLargeFile, generateReport, processBulkData, fineTuneModel } from './heavy-processing'
-import { KommoAPI } from '@/lib/crm/kommo'
+import { KommoAPI, KOMMO_AVAILABLE_ACTIONS, type KommoCustomField, type KommoAction } from '@/lib/crm/kommo'
 import { extractWebhookMetadata, processWebhookEvent, saveWebhookEvent } from '@/lib/services/webhook-processor'
 
 const supabase = getSupabaseClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY)
@@ -315,6 +315,124 @@ const buildPipelineInputs = (pipelines: KommoPipeline[]): PipelineInput[] => {
  })
 }
 
+const syncKommoCustomFields = async (
+ connection: CrmConnectionRow,
+ credentials: CrmCredentials,
+) => {
+ const ensuredConnection = await ensureAccessToken(connection, credentials)
+
+ const kommoApi = new KommoAPI({
+ domain: ensuredConnection.base_domain,
+ clientId: credentials.client_id,
+ clientSecret: credentials.client_secret,
+ redirectUri: credentials.redirect_uri || '',
+ accessToken: ensuredConnection.access_token,
+ refreshToken: ensuredConnection.refresh_token,
+ })
+
+ // Получаем кастомные поля для всех типов сущностей
+ const allFields = await kommoApi.getAllCustomFields()
+
+ // Удаляем старые поля этого connection
+ await supabase.from('crm_custom_fields').delete().eq('connection_id', ensuredConnection.id)
+
+ const fieldsToInsert: Array<{
+ connection_id: string
+ external_id: string
+ entity_type: string
+ name: string
+ field_type: string
+ code: string | null
+ is_required: boolean
+ is_editable: boolean
+ is_visible: boolean
+ is_deletable: boolean
+ is_api_only: boolean
+ sort_order: number
+ enums: Json | null
+ settings: Json
+ metadata: Json
+ }> = []
+
+ // Преобразуем поля для каждого типа сущности
+ const processFields = (fields: KommoCustomField[], entityType: string) => {
+ fields.forEach((field) => {
+ fieldsToInsert.push({
+ connection_id: ensuredConnection.id,
+ external_id: String(field.id),
+ entity_type: entityType.slice(0, -1), // 'leads' -> 'lead'
+ name: field.name,
+ field_type: field.type,
+ code: field.code || null,
+ is_required: field.is_required || false,
+ is_editable: field.is_deletable !== false, // если deletable = false, то и editable = false
+ is_visible: field.is_visible !== false,
+ is_deletable: field.is_deletable !== false,
+ is_api_only: field.is_api_only || false,
+ sort_order: field.sort || 0,
+ enums: field.enums ? (field.enums as Json) : null,
+ settings: field.nested ? ({ nested: field.nested } as Json) : ({} as Json),
+ metadata: field as unknown as Json,
+ })
+ })
+ }
+
+ processFields(allFields.leads, 'leads')
+ processFields(allFields.contacts, 'contacts')
+ processFields(allFields.companies, 'companies')
+ processFields(allFields.customers, 'customers')
+
+ // Вставляем новые поля
+ if (fieldsToInsert.length > 0) {
+ const { error: insertError } = await supabase.from('crm_custom_fields').insert(fieldsToInsert)
+
+ if (insertError) {
+ throw insertError
+ }
+ }
+
+ return {
+ connection: ensuredConnection,
+ fieldsCount: fieldsToInsert.length,
+ fieldsByEntity: {
+ leads: allFields.leads.length,
+ contacts: allFields.contacts.length,
+ companies: allFields.companies.length,
+ customers: allFields.customers.length,
+ },
+ }
+}
+
+const syncKommoActions = async (connection: CrmConnectionRow) => {
+ // Удаляем старые действия этого connection
+ await supabase.from('crm_actions').delete().eq('connection_id', connection.id)
+
+ const actionsToInsert = KOMMO_AVAILABLE_ACTIONS.map((action) => ({
+ connection_id: connection.id,
+ action_code: action.code,
+ action_name: action.name,
+ description: action.description,
+ entity_types: action.entityTypes,
+ required_params: action.requiredParams as Json,
+ optional_params: action.optionalParams as Json,
+ is_enabled: true,
+ metadata: {} as Json,
+ }))
+
+ if (actionsToInsert.length > 0) {
+ const { error: insertError } = await supabase.from('crm_actions').insert(actionsToInsert)
+
+ if (insertError) {
+ throw insertError
+ }
+ }
+
+ return {
+ actionsCount: actionsToInsert.length,
+ actions: KOMMO_AVAILABLE_ACTIONS.map((a) => ({ code: a.code, name: a.name })),
+ }
+}
+
 const syncKommoPipelines = async (
  connection: CrmConnectionRow,
  credentials: CrmCredentials,
@@ -349,31 +467,8 @@ const syncKommoPipelines = async (
  }
 }
 
-const syncKommoContacts = async (
- connection: CrmConnectionRow,
- credentials: CrmCredentials,
-) => {
- const ensuredConnection = await ensureAccessToken(connection, credentials)
-
- const contactsResponse = await kommoApiRequest<{ _embedded?: { contacts?: KommoContact[] } }>({
- baseDomain: ensuredConnection.base_domain,
- accessToken: ensuredConnection.access_token,
- path: '/contacts?limit=50',
- })
-
- const contacts = contactsResponse?._embedded?.contacts ?? []
-
- const newestContact = contacts
- .slice()
- .sort((a, b) => (Number(b.updated_at ?? b.created_at ?? 0) - Number(a.updated_at ?? a.created_at ?? 0)))[0]
-
- return {
- connection: ensuredConnection,
- contactsCount: contacts.length,
- latestContactAt: newestContact?.updated_at || newestContact?.created_at || null,
- sampleContact: newestContact ?? null,
- }
-}
+// DEPRECATED: Функция syncKommoContacts больше не используется
+// const syncKommoContacts = async (connection, credentials) => { ... }
 
 const logTokenUsage = async (orgId: string, tokens: number, responses = 1) => {
  const today = new Date().toISOString().slice(0, 10)
@@ -476,27 +571,50 @@ const handleCrmSyncPipelines = async (payload: CrmSyncPipelinesJob) => {
 
  try {
  const credentials = await fetchCrmCredentials(payload.orgId, provider)
- const syncResult = await syncKommoPipelines(connection, credentials)
+
+ // Синхронизируем воронки
+ const syncPipelinesResult = await syncKommoPipelines(connection, credentials)
+
+ // Синхронизируем кастомные поля
+ const syncFieldsResult = await syncKommoCustomFields(syncPipelinesResult.connection, credentials)
+
+ // Синхронизируем доступные действия
+ const syncActionsResult = await syncKommoActions(syncFieldsResult.connection)
 
  const completedAt = new Date().toISOString()
 
- metadata = await updateSyncMetadata(syncResult.connection.id, metadata, {
+ metadata = await updateSyncMetadata(syncFieldsResult.connection.id, metadata, {
  status: 'completed',
  completedAt,
  error: null,
  provider,
- baseDomain: syncResult.connection.base_domain,
+ baseDomain: syncFieldsResult.connection.base_domain,
  pipelines: {
  status: 'completed',
  completedAt,
  error: null,
- pipelinesCount: syncResult.pipelinesCount,
- stagesCount: syncResult.stagesCount,
- preview: syncResult.pipelinePreview,
+ pipelinesCount: syncPipelinesResult.pipelinesCount,
+ stagesCount: syncPipelinesResult.stagesCount,
+ preview: syncPipelinesResult.pipelinePreview,
  },
- pipelinesCount: syncResult.pipelinesCount,
- stagesCount: syncResult.stagesCount,
- pipelinesPreview: syncResult.pipelinePreview,
+ customFields: {
+ status: 'completed',
+ completedAt,
+ error: null,
+ fieldsCount: syncFieldsResult.fieldsCount,
+ fieldsByEntity: syncFieldsResult.fieldsByEntity,
+ },
+ actions: {
+ status: 'completed',
+ completedAt,
+ error: null,
+ actionsCount: syncActionsResult.actionsCount,
+ },
+ pipelinesCount: syncPipelinesResult.pipelinesCount,
+ stagesCount: syncPipelinesResult.stagesCount,
+ fieldsCount: syncFieldsResult.fieldsCount,
+ actionsCount: syncActionsResult.actionsCount,
+ pipelinesPreview: syncPipelinesResult.pipelinePreview,
  })
 
  return metadata
@@ -577,73 +695,8 @@ export const getTaskHandlers = () => {
   'crm:sync-pipelines': async (payload: CrmSyncPipelinesJob) => {
    await handleCrmSyncPipelines(payload)
   },
-  'crm:sync-contacts': async (payload: CrmSyncContactsJob) => {
-   const provider = normalizeProvider(payload.provider)
-
-   if (provider !== 'kommo') {
-    throw new Error(`CRM provider ${provider} is not yet supported`)
-   }
-
-   const connection = await fetchCrmConnection({
-    orgId: payload.orgId,
-    provider,
-    connectionId: payload.connectionId,
-    baseDomain: payload.baseDomain,
-   })
-
-   if (!connection) {
-    throw new Error('CRM connection not found')
-   }
-
-   const startedAt = new Date().toISOString()
-   let metadata = await updateSyncMetadata(connection.id, connection.metadata, {
-    status: 'running',
-    startedAt,
-    error: null,
-    contacts: {
-     status: 'running',
-     startedAt,
-     error: null,
-    },
-   })
-
-   try {
-    const credentials = await fetchCrmCredentials(payload.orgId, provider)
-    const syncResult = await syncKommoContacts(connection, credentials)
-
-    const completedAt = new Date().toISOString()
-
-    metadata = await updateSyncMetadata(syncResult.connection.id, metadata, {
-     status: 'completed',
-     completedAt,
-     error: null,
-     contacts: {
-      status: 'completed',
-      completedAt,
-      error: null,
-      contactsCount: syncResult.contactsCount,
-      latestContactAt: syncResult.latestContactAt,
-      sampleContact: syncResult.sampleContact,
-     },
-     contactsCount: syncResult.contactsCount,
-    })
-
-    return metadata
-   } catch (error) {
-    await updateSyncMetadata(connection.id, metadata, {
-     status: 'failed',
-     failedAt: new Date().toISOString(),
-     error: error instanceof Error ? error.message : 'Unknown error',
-     contacts: {
-      status: 'failed',
-      failedAt: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Unknown error',
-     },
-    })
-
-    throw error
-   }
-  },
+  // DEPRECATED: Синхронизация контактов не требуется - синхронизируем только поля, воронки и действия
+  // 'crm:sync-contacts': async (payload: CrmSyncContactsJob) => { ... },
   'kommo:sync-pipelines': async (payload: { orgId: string; baseDomain: string }) => {
    await handleCrmSyncPipelines({
     provider: 'kommo',

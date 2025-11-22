@@ -705,6 +705,7 @@ export class KommoAPI {
 
  /**
  * Получение кастомных полей
+ * @deprecated Используйте getCustomFieldsByEntity для получения полей по типу сущности
  */
  async getCustomFields(): Promise<KommoCustomField[]> {
  const response = await this.request<{ _embedded: { custom_fields: KommoCustomField[] } }>(
@@ -712,6 +713,135 @@ export class KommoAPI {
  )
 
  return response._embedded?.custom_fields || []
+ }
+
+ /**
+ * Получение кастомных полей по типу сущности
+ */
+ async getCustomFieldsByEntity(entityType: 'leads' | 'contacts' | 'companies' | 'customers'): Promise<KommoCustomField[]> {
+ if (this.isDemoMode) {
+ return this.getDemoCustomFields(entityType)
+ }
+
+ const response = await this.request<{ _embedded: { custom_fields: KommoCustomField[] } }>(
+ `/${entityType}/custom_fields`
+ )
+
+ return response._embedded?.custom_fields || []
+ }
+
+ /**
+ * Получение всех кастомных полей для всех типов сущностей
+ */
+ async getAllCustomFields(): Promise<{
+ leads: KommoCustomField[]
+ contacts: KommoCustomField[]
+ companies: KommoCustomField[]
+ customers: KommoCustomField[]
+ }> {
+ const [leads, contacts, companies, customers] = await Promise.all([
+ this.getCustomFieldsByEntity('leads'),
+ this.getCustomFieldsByEntity('contacts'),
+ this.getCustomFieldsByEntity('companies'),
+ this.getCustomFieldsByEntity('customers'),
+ ])
+
+ return { leads, contacts, companies, customers }
+ }
+
+ /**
+ * Демо-данные кастомных полей для режима демо
+ */
+ private getDemoCustomFields(entityType: 'leads' | 'contacts' | 'companies' | 'customers'): KommoCustomField[] {
+ const commonFields: KommoCustomField[] = [
+ {
+ id: 1,
+ name: 'Телефон',
+ type: 'text',
+ element_type: entityType.slice(0, -1) as 'lead' | 'contact' | 'company',
+ code: 'PHONE',
+ is_required: false,
+ is_deletable: false,
+ is_visible: true,
+ is_api_only: false,
+ sort: 1
+ },
+ {
+ id: 2,
+ name: 'Email',
+ type: 'text',
+ element_type: entityType.slice(0, -1) as 'lead' | 'contact' | 'company',
+ code: 'EMAIL',
+ is_required: false,
+ is_deletable: false,
+ is_visible: true,
+ is_api_only: false,
+ sort: 2
+ }
+ ]
+
+ if (entityType === 'leads') {
+ return [
+ ...commonFields,
+ {
+ id: 10,
+ name: 'Источник',
+ type: 'select',
+ element_type: 'lead',
+ is_required: false,
+ is_deletable: true,
+ is_visible: true,
+ is_api_only: false,
+ sort: 3,
+ enums: {
+ '100': 'Сайт',
+ '101': 'Реклама',
+ '102': 'Рекомендация'
+ }
+ },
+ {
+ id: 11,
+ name: 'Бюджет',
+ type: 'numeric',
+ element_type: 'lead',
+ is_required: false,
+ is_deletable: true,
+ is_visible: true,
+ is_api_only: false,
+ sort: 4
+ }
+ ]
+ }
+
+ if (entityType === 'contacts') {
+ return [
+ ...commonFields,
+ {
+ id: 20,
+ name: 'Должность',
+ type: 'text',
+ element_type: 'contact',
+ is_required: false,
+ is_deletable: true,
+ is_visible: true,
+ is_api_only: false,
+ sort: 3
+ },
+ {
+ id: 21,
+ name: 'Дата рождения',
+ type: 'birthday',
+ element_type: 'contact',
+ is_required: false,
+ is_deletable: true,
+ is_visible: true,
+ is_api_only: false,
+ sort: 4
+ }
+ ]
+ }
+
+ return commonFields
  }
 
  /**
@@ -818,6 +948,117 @@ export class KommoAPI {
  }
  }
 }
+
+/**
+ * Доступные действия в Kommo CRM для автоматизации
+ */
+export interface KommoAction {
+ code: string
+ name: string
+ description: string
+ entityTypes: Array<'lead' | 'contact' | 'company'>
+ requiredParams: string[]
+ optionalParams: string[]
+}
+
+export const KOMMO_AVAILABLE_ACTIONS: KommoAction[] = [
+ {
+ code: 'generate_message',
+ name: 'Сгенерировать сообщение',
+ description: 'Генерирует персонализированное сообщение для клиента',
+ entityTypes: ['lead', 'contact'],
+ requiredParams: ['text'],
+ optionalParams: ['template_id', 'variables']
+ },
+ {
+ code: 'create_task',
+ name: 'Создать задачу',
+ description: 'Создает задачу для ответственного менеджера',
+ entityTypes: ['lead', 'contact', 'company'],
+ requiredParams: ['text', 'task_type_id'],
+ optionalParams: ['complete_till', 'responsible_user_id']
+ },
+ {
+ code: 'run_salesbot',
+ name: 'Запустить Salesbot',
+ description: 'Запускает цифрового сотрудника (Salesbot)',
+ entityTypes: ['lead'],
+ requiredParams: ['salesbot_id'],
+ optionalParams: []
+ },
+ {
+ code: 'add_lead_tags',
+ name: 'Добавить теги сделки',
+ description: 'Добавляет теги к сделке',
+ entityTypes: ['lead'],
+ requiredParams: ['tags'],
+ optionalParams: []
+ },
+ {
+ code: 'add_contact_tags',
+ name: 'Добавить теги контакта',
+ description: 'Добавляет теги к контакту',
+ entityTypes: ['contact'],
+ requiredParams: ['tags'],
+ optionalParams: []
+ },
+ {
+ code: 'add_lead_note',
+ name: 'Добавить примечание к сделке',
+ description: 'Добавляет примечание к сделке',
+ entityTypes: ['lead'],
+ requiredParams: ['text'],
+ optionalParams: ['note_type']
+ },
+ {
+ code: 'add_contact_note',
+ name: 'Добавить примечание к контакту',
+ description: 'Добавляет примечание к контакту',
+ entityTypes: ['contact'],
+ requiredParams: ['text'],
+ optionalParams: ['note_type']
+ },
+ {
+ code: 'change_responsible',
+ name: 'Изменить ответственного',
+ description: 'Меняет ответственного менеджера',
+ entityTypes: ['lead', 'contact', 'company'],
+ requiredParams: ['responsible_user_id'],
+ optionalParams: []
+ },
+ {
+ code: 'update_field',
+ name: 'Обновить поле',
+ description: 'Обновляет значение кастомного поля',
+ entityTypes: ['lead', 'contact', 'company'],
+ requiredParams: ['field_id', 'value'],
+ optionalParams: []
+ },
+ {
+ code: 'send_email',
+ name: 'Отправить email',
+ description: 'Отправляет email клиенту',
+ entityTypes: ['lead', 'contact'],
+ requiredParams: ['to', 'subject', 'body'],
+ optionalParams: ['from', 'cc', 'bcc', 'template_id']
+ },
+ {
+ code: 'change_pipeline_stage',
+ name: 'Изменить этап воронки',
+ description: 'Перемещает сделку на другой этап',
+ entityTypes: ['lead'],
+ requiredParams: ['status_id'],
+ optionalParams: ['pipeline_id']
+ },
+ {
+ code: 'webhook',
+ name: 'Отправить вебхук',
+ description: 'Отправляет вебхук на внешний URL',
+ entityTypes: ['lead', 'contact', 'company'],
+ requiredParams: ['url'],
+ optionalParams: ['method', 'headers', 'body']
+ }
+]
 
 /**
  * Вспомогательные функции для работы с Kommo

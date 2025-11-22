@@ -203,6 +203,62 @@ for each row execute procedure trigger_set_timestamp();
 
 create index if not exists idx_crm_pipeline_stages_pipeline on crm_pipeline_stages(pipeline_id);
 
+-- CRM Custom Fields ---------------------------------------------------------
+create table if not exists crm_custom_fields (
+  id uuid primary key default gen_random_uuid(),
+  connection_id uuid not null references crm_connections(id) on delete cascade,
+  external_id text not null,
+  entity_type text not null,
+  name text not null,
+  field_type text not null,
+  code text,
+  is_required boolean default false,
+  is_editable boolean default true,
+  is_visible boolean default true,
+  is_deletable boolean default true,
+  is_api_only boolean default false,
+  sort_order integer default 0,
+  enums jsonb,
+  settings jsonb default '{}'::jsonb,
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique (connection_id, external_id, entity_type)
+);
+
+create trigger crm_custom_fields_updated_at
+before update on crm_custom_fields
+for each row execute procedure trigger_set_timestamp();
+
+create index if not exists idx_crm_custom_fields_connection on crm_custom_fields(connection_id);
+create index if not exists idx_crm_custom_fields_entity_type on crm_custom_fields(connection_id, entity_type);
+create index if not exists idx_crm_custom_fields_code on crm_custom_fields(connection_id, code) where code is not null;
+
+-- CRM Actions ---------------------------------------------------------------
+create table if not exists crm_actions (
+  id uuid primary key default gen_random_uuid(),
+  connection_id uuid not null references crm_connections(id) on delete cascade,
+  action_code text not null,
+  action_name text not null,
+  description text,
+  entity_types text[],
+  required_params jsonb default '[]'::jsonb,
+  optional_params jsonb default '[]'::jsonb,
+  is_enabled boolean default true,
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique (connection_id, action_code)
+);
+
+create trigger crm_actions_updated_at
+before update on crm_actions
+for each row execute procedure trigger_set_timestamp();
+
+create index if not exists idx_crm_actions_connection on crm_actions(connection_id);
+create index if not exists idx_crm_actions_code on crm_actions(connection_id, action_code);
+create index if not exists idx_crm_actions_enabled on crm_actions(connection_id, is_enabled) where is_enabled = true;
+
 create table if not exists oauth_states (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references organizations(id) on delete cascade,
